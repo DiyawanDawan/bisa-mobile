@@ -1,0 +1,25 @@
+{
+    "flutter": {
+        "platforms": {
+            "android": {
+                "default": {
+                    "projectId": "bisa-51853",
+                    "appId": "1:94564351976:android:c9a0d658d93a02b0442e5d",
+                    "fileOutput": "android/app/google-services.json"
+                }
+            },
+            "dart": {
+                "lib/firebase_options.dart": {
+                    "projectId": "bisa-51853",
+                    "configurations": {
+                        "android": "1:94564351976:android:c9a0d658d93a02b0442e5d",
+                        "ios": "1:94564351976:ios:c867388093b2531b442e5d",
+                        "macos": "1:94564351976:ios:c867388093b2531b442e5d",
+                        "web": "1:94564351976:web:3753185670ffe399442e5d",
+                        "windows": "1:94564351976:web:f53fa76788d511f5442e5d"
+                    }
+                }
+            }
+        }
+    }
+}

@@ -1,0 +1,159 @@
+name: mobile_bisa
+description: "Mobile BISA - Flutter Clean Architecture App"
+publish_to: 'none'
+
+version: 1.0.0+1
+
+environment:
+  sdk: ^3.8.0
+
+dependencies:
+  flutter:
+    sdk: flutter
+
+  cupertino_icons: ^1.0.8
+
+  # UI & Navigation
+  flutter_svg: ^2.2.3
+  flutter_screenutil: ^5.9.3
+  go_router: ^17.0.1
+  cached_network_image: ^3.4.1
+  geolocator: ^14.0.2
+  skeletonizer: ^2.1.2
+  visibility_detector: ^0.4.0+2
+  webview_flutter: ^4.10.0
+  
+  # Localization
+  easy_localization: ^3.0.8
+  intl: ^0.20.2
+  
+  # State Management
+  provider: ^6.1.5+1
+  flutter_bloc: ^9.1.1
+  equatable: ^2.0.8
+  jwt_decoder: ^2.0.1
+
+  # Location & Maps
+  location_picker_flutter_map: ^4.1.0
+  hydrated_bloc: ^10.1.1
+  
+  # Network & API
+  dio: ^5.9.0
+  talker_dio_logger: ^5.1.9
+  connectivity_plus: ^7.0.0
+  flutter_dotenv: ^6.0.0
+  
+  # Storage
+  shared_preferences: ^2.5.4
+  flutter_secure_storage: ^10.0.0
+  path_provider: ^2.1.5
+  
+  # Authentication & Security
+  local_auth: ^3.0.0
+  local_auth_android: ^2.0.4
+  permission_handler: ^12.0.1
+  
+  # Dependency Injection
+  get_it: ^9.2.0
+  
+  # Utilities
+  freezed_annotation: ^3.1.0
+  json_annotation: ^4.11.0
+  logger: ^2.6.2
+  url_launcher: ^6.3.2
+  device_info_plus: ^12.3.0
+  package_info_plus: ^9.0.0
+  
+  # Icons
+  lucide_icons_flutter: ^3.1.13
+  fl_chart: ^0.71.0
+  
+  # UI Components
+  pinput: ^6.0.1
+  
+  # Map
+  flutter_map: ^8.2.1
+  latlong2: ^0.9.0
+
+  # Platform
+  back_button_interceptor: ^8.0.4
+  
+  # Image Picker
+  image_picker: ^1.2.1
+  firebase_core: ^3.15.2
+  firebase_analytics: ^11.3.1
+  firebase_messaging: ^15.2.10
+  google_sign_in: ^6.2.1
+  share_plus: ^12.0.1
+  pdf: ^3.11.3
+  
+  # Payment Enhancements
+  qr_flutter: ^4.1.0
+  
+  # Awesome Notifications (replaces firebase_messaging & flutter_local_notifications)
+  awesome_notifications: ^0.10.1
+  awesome_notifications_fcm: ^0.10.1
+  pusher_channels_flutter: ^2.6.0
+  google_fonts: ^8.0.0
+  dartz: ^0.10.1
+  timeago: ^3.7.1
+  flutter_staggered_grid_view: ^0.7.0
+  mobile_scanner: ^6.0.2
+
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  flutter_lints: ^4.0.0
+  flutter_launcher_icons: ^0.14.3
+  flutter_native_splash: ^2.4.4
+  
+  freezed: 3.2.5
+  json_serializable: ^6.8.0
+  build_runner: ^2.14.1
+
+flutter_launcher_icons:
+  android: true
+  ios: true
+  image_path: assets/icons/logo.png
+  adaptive_icon_background: "#135122"
+  adaptive_icon_foreground: assets/icons/logo.png
+  adaptive_icon_foreground_inset: 18
+  remove_alpha_ios: true
+  min_sdk_android: 21
+
+flutter_native_splash:
+  color: "#135122"
+  background_image: assets/icons/splash_full.png
+  android: true
+  ios: true
+  web: false
+  android_12:
+    color: "#135122"
+    image: assets/icons/splash_icon.png
+    icon_background_color: "#FFFFFF"
+    branding: assets/icons/splash_branding.png
+    branding_mode: bottom
+    branding_bottom_padding: 72
+
+flutter:
+  uses-material-design: true
+  assets:
+    - assets/images/
+    - assets/icons/
+    - assets/animations/
+    - assets/translations/
+    - assets/indonesia_provinces.json
+    # SEC-MOB-002 hardening: konfigurasi runtime dipindah ke `--dart-define`.
+    # Jangan bundle file .env ke APK production.
+
+#  fonts:
+#    - family: Poppins
+#      fonts:
+#        - asset: assets/fonts/Poppins-Regular.ttf
+#        - asset: assets/fonts/Poppins-Medium.ttf
+#          weight: 500
+#        - asset: assets/fonts/Poppins-SemiBold.ttf
+#          weight: 600
+#        - asset: assets/fonts/Poppins-Bold.ttf
+#          weight: 700

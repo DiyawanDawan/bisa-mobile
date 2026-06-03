@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  SEC-MOB-016: full-backup-content config (legacy, Android < 12).
+  Exclude semua data sensitif dari `adb backup` / Google Auto-Backup.
+-->
+<full-backup-content>
+  <exclude domain="sharedpref" path="."/>
+  <exclude domain="database" path="."/>
+  <exclude domain="file" path="."/>
+  <exclude domain="root" path="."/>
+</full-backup-content>

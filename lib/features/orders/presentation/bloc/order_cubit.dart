@@ -1,0 +1,353 @@
+import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:freezed_annotation/freezed_annotation.dart';
+import '../../domain/entities/order_entity.dart';
+import '../../domain/repositories/order_repository.dart';
+
+part 'order_state.dart';
+part 'order_cubit.freezed.dart';
+
+class OrderCubit extends Cubit<OrderState> {
+  final OrderRepository _repository;
+
+  OrderCubit(this._repository) : super(const OrderState.initial());
+
+  Future<void> getMyPurchases({String? search}) async {
+    emit(const OrderState.loading());
+    final q = search?.trim();
+    final result = await _repository.getMyPurchases(
+      limit: q != null && q.isNotEmpty ? 50 : 20,
+      search: q != null && q.isNotEmpty ? q : null,
+    );
+    result.fold(
+      (failure) => emit(OrderState.error(failure.message)),
+      (orders) => emit(OrderState.loaded(orders)),
+    );
+  }
+
+  Future<void> getMySales({String? search}) async {
+    emit(const OrderState.loading());
+    final q = search?.trim();
+    final result = await _repository.getMySales(
+      limit: q != null && q.isNotEmpty ? 50 : 20,
+      search: q != null && q.isNotEmpty ? q : null,
+    );
+    result.fold(
+      (failure) => emit(OrderState.error(failure.message)),
+      (orders) => emit(OrderState.loaded(orders)),
+    );
+  }
+
+  Future<OrderEntity?> getOrderDetail(String id, {bool silent = false}) async {
+    if (!silent) {
+      emit(const OrderState.loading());
+    }
+    final result = await _repository.getOrderDetail(id);
+    return result.fold(
+      (failure) {
+        if (!silent) {
+          emit(OrderState.error(failure.message));
+        }
+        return null;
+      },
+      (order) {
+        emit(OrderState.loaded([order]));
+        return order;
+      },
+    );
+  }
+
+  /// Returns payment payload on success, `null` on failure (also emits error state).
+  Future<Map<String, dynamic>?> initializePayment(
+    String orderId,
+    String channelCode, {
+    bool forceNew = false,
+  }) async {
+    final previousOrders = state.maybeWhen(
+      loaded: (orders) => orders,
+      orElse: () => null,
+    );
+
+    emit(const OrderState.loading());
+    final result = await _repository.initializePayment(
+      orderId,
+      channelCode,
+      forceNew: forceNew,
+    );
+
+    return result.fold(
+      (failure) {
+        emit(OrderState.error(failure.message));
+        return null;
+      },
+      (data) {
+        if (previousOrders != null) {
+          emit(OrderState.loaded(previousOrders));
+        } else {
+          emit(OrderState.paymentSuccess(data));
+        }
+        return data;
+      },
+    );
+  }
+
+  /// Satu pembayaran gabungan untuk semua pesanan checkout cart.
+  Future<Map<String, dynamic>?> initializeBatchPayment(
+    List<String> orderIds,
+    String channelCode, {
+    bool forceNew = false,
+  }) async {
+    final previousOrders = state.maybeWhen(
+      loaded: (orders) => orders,
+      orElse: () => null,
+    );
+
+    emit(const OrderState.loading());
+    final result = await _repository.initializeBatchPayment(
+      orderIds,
+      channelCode,
+      forceNew: forceNew,
+    );
+
+    return result.fold(
+      (failure) {
+        emit(OrderState.error(failure.message));
+        return null;
+      },
+      (data) {
+        if (previousOrders != null) {
+          emit(OrderState.loaded(previousOrders));
+        } else {
+          emit(OrderState.paymentSuccess(data));
+        }
+        return data;
+      },
+    );
+  }
+
+  Future<Map<String, dynamic>?> getSalesStats() async {
+    final result = await _repository.getSalesStats();
+    return result.fold(
+      (failure) => null,
+      (stats) => stats,
+    );
+  }
+
+  Future<void> releaseEscrow(String id) async {
+    emit(const OrderState.loading());
+    final result = await _repository.releaseEscrow(id);
+    result.fold(
+      (failure) => emit(OrderState.error(failure.message)),
+      (_) => getOrderDetail(id),
+    );
+  }
+
+  Future<void> raiseDispute(
+    String id,
+    String reason,
+    String description,
+    List<String> evidenceImagePaths,
+  ) async {
+    emit(const OrderState.loading());
+    final result = await _repository.raiseDispute(
+      id,
+      reason,
+      description,
+      evidenceImagePaths,
+    );
+    result.fold(
+      (failure) => emit(OrderState.error(failure.message)),
+      (_) => getOrderDetail(id),
+    );
+  }
+
+  Future<void> respondToDispute(
+    String id,
+    String response,
+    List<String> evidenceImagePaths,
+  ) async {
+    emit(const OrderState.loading());
+    final result = await _repository.respondToDispute(
+      id,
+      response,
+      evidenceImagePaths,
+    );
+    result.fold(
+      (failure) => emit(OrderState.error(failure.message)),
+      (_) => getOrderDetail(id),
+    );
+  }
+
+  Future<void> updateTracking(String id, Map<String, dynamic> data) async {
+    emit(const OrderState.loading());
+    final result = await _repository.updateTracking(id, data);
+    result.fold(
+      (failure) => emit(OrderState.error(failure.message)),
+      (_) => getOrderDetail(id),
+    );
+  }
+
+  /// Direct checkout dari cart. Tidak emit state karena UI cart yang akan
+  /// menampilkan dialog/snackbar berdasarkan hasil.
+  ///
+  /// Return `DirectOrderResult.success(orders)` jika berhasil, atau
+  /// `DirectOrderResult.failure(message)` jika gagal.
+  Future<DirectOrderResult> createDirectOrder({
+    required List<Map<String, dynamic>> items,
+    String? shippingAddress,
+    Map<String, dynamic>? shippingSnapshot,
+    List<Map<String, dynamic>>? shippingSelections,
+    String? notes,
+  }) async {
+    final result = await _repository.createDirectOrder(
+      items: items,
+      shippingAddress: shippingAddress,
+      shippingSnapshot: shippingSnapshot,
+      shippingSelections: shippingSelections,
+      notes: notes,
+    );
+    return result.fold(
+      (failure) => DirectOrderResult.failure(failure.message),
+      (data) {
+        final orders = (data['orders'] as List?) ?? const [];
+        final parsed = orders
+            .map((e) => Map<String, dynamic>.from(e as Map))
+            .toList();
+        return DirectOrderResult.success(parsed);
+      },
+    );
+  }
+
+  Future<Map<String, dynamic>?> previewDirectOrder({
+    required List<Map<String, dynamic>> items,
+    String? shippingAddress,
+    Map<String, dynamic>? shippingSnapshot,
+    List<Map<String, dynamic>>? shippingSelections,
+    String? notes,
+  }) async {
+    final result = await _repository.previewDirectOrder(
+      items: items,
+      shippingAddress: shippingAddress,
+      shippingSnapshot: shippingSnapshot,
+      shippingSelections: shippingSelections,
+      notes: notes,
+    );
+    return result.fold((_) => null, (data) => data);
+  }
+
+  Future<Map<String, dynamic>?> getShippingOrigin() async {
+    final result = await _repository.getShippingOrigin();
+    return result.fold((_) => null, (data) => data);
+  }
+
+  Future<ShippingDestinationSearchResult> searchShippingDestinations({
+    required String search,
+    int limit = 20,
+    int offset = 0,
+  }) async {
+    final result = await _repository.searchShippingDestinations(
+      search: search,
+      limit: limit,
+      offset: offset,
+    );
+    return result.fold(
+      (failure) => ShippingDestinationSearchResult.failure(failure.message),
+      (data) => ShippingDestinationSearchResult.success(data),
+    );
+  }
+
+  Future<List<Map<String, dynamic>>> calculateDomesticShipping({
+    required int originId,
+    required int destinationId,
+    required int weightGrams,
+    String? courier,
+  }) async {
+    final result = await _repository.calculateDomesticShipping(
+      originId: originId,
+      destinationId: destinationId,
+      weightGrams: weightGrams,
+      courier: courier,
+    );
+    return result.fold((_) => const [], (data) => data);
+  }
+
+  Future<Map<String, dynamic>?> syncTrackingFromRajaOngkir({
+    required String orderId,
+    required String awb,
+    required String courier,
+    String? lastPhoneNumber,
+  }) async {
+    final result = await _repository.trackShipment(
+      awb: awb,
+      courier: courier,
+      lastPhoneNumber: lastPhoneNumber,
+      orderId: orderId,
+    );
+    return result.fold((_) => null, (data) => data);
+  }
+
+  Future<List<Map<String, dynamic>>> getPickupVehicles() async {
+    final result = await _repository.getPickupVehicles();
+    return result.fold((_) => const [], (data) => data);
+  }
+
+  Future<List<String>> getActiveCouriers() async {
+    final result = await _repository.getActiveCouriers();
+    return result.fold((_) => const [], (data) => data);
+  }
+
+  Future<List<Map<String, dynamic>>> requestPickup({
+    required String pickupDate,
+    required String pickupTime,
+    required String pickupVehicle,
+    required List<String> orderNumbers,
+  }) async {
+    final result = await _repository.requestPickup(
+      pickupDate: pickupDate,
+      pickupTime: pickupTime,
+      pickupVehicle: pickupVehicle,
+      orderNumbers: orderNumbers,
+    );
+    return result.fold((_) => const [], (data) => data);
+  }
+}
+
+class ShippingDestinationSearchResult {
+  final List<Map<String, dynamic>> items;
+  final String? errorMessage;
+
+  const ShippingDestinationSearchResult._({
+    required this.items,
+    this.errorMessage,
+  });
+
+  factory ShippingDestinationSearchResult.success(
+    List<Map<String, dynamic>> items,
+  ) =>
+      ShippingDestinationSearchResult._(items: items);
+
+  factory ShippingDestinationSearchResult.failure(String message) =>
+      ShippingDestinationSearchResult._(items: const [], errorMessage: message);
+
+  bool get quotaExceeded {
+    final msg = errorMessage?.toLowerCase() ?? '';
+    return msg.contains('kuota') || msg.contains('daily limit');
+  }
+}
+
+class DirectOrderResult {
+  final bool isSuccess;
+  final List<Map<String, dynamic>> orders;
+  final String? errorMessage;
+
+  const DirectOrderResult._({
+    required this.isSuccess,
+    this.orders = const [],
+    this.errorMessage,
+  });
+
+  factory DirectOrderResult.success(List<Map<String, dynamic>> orders) =>
+      DirectOrderResult._(isSuccess: true, orders: orders);
+
+  factory DirectOrderResult.failure(String message) =>
+      DirectOrderResult._(isSuccess: false, errorMessage: message);
+}

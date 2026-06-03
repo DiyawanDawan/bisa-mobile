@@ -1,0 +1,82 @@
+{
+  "project_info": {
+    "project_number": "94564351976",
+    "project_id": "bisa-51853",
+    "storage_bucket": "bisa-51853.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:94564351976:android:c9a0d658d93a02b0442e5d",
+        "android_client_info": {
+          "package_name": "com.apps.mobile_bisa"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "94564351976-o1k5d6sd9pna74e7angarlr8qrvln2pv.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBJS4uO42KIFUGcDiyhlA7OQa_CbnzL8UA"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "94564351976-o1k5d6sd9pna74e7angarlr8qrvln2pv.apps.googleusercontent.com",
+              "client_type": 3
+            },
+            {
+              "client_id": "94564351976-35sat6m9m2pkajrc1upp98rhetq50esi.apps.googleusercontent.com",
+              "client_type": 2,
+              "ios_info": {
+                "bundle_id": "com.apps.mobileBisa"
+              }
+            }
+          ]
+        }
+      }
+    },
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:94564351976:android:8927fdeaf73e25ec442e5d",
+        "android_client_info": {
+          "package_name": "com.example.mobile_bisa"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "94564351976-o1k5d6sd9pna74e7angarlr8qrvln2pv.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBJS4uO42KIFUGcDiyhlA7OQa_CbnzL8UA"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "94564351976-o1k5d6sd9pna74e7angarlr8qrvln2pv.apps.googleusercontent.com",
+              "client_type": 3
+            },
+            {
+              "client_id": "94564351976-35sat6m9m2pkajrc1upp98rhetq50esi.apps.googleusercontent.com",
+              "client_type": 2,
+              "ios_info": {
+                "bundle_id": "com.apps.mobileBisa"
+              }
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
