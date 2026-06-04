@@ -9,4 +9,10 @@ extension NegotiationEntityChatPurpose on NegotiationEntity {
       (specifications?.startsWith(negotiationPurposeInquiryTag) ?? false);
 
   bool get isNegotiationChat => !isInquiryChat;
+
+  bool isParticipant(String userId) =>
+      buyerId == userId || sellerId == userId;
+
+  /// Penjual di ruang ini (bukan role global akun).
+  bool isSellerParticipant(String userId) => sellerId == userId;
 }

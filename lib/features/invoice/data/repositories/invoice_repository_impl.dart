@@ -19,6 +19,7 @@ class InvoiceRepositoryImpl implements InvoiceRepository {
   Future<Either<Failure, InvoicePreviewEntity>> getInvoicePreview(
     String negotiationId, {
     Map<String, dynamic>? shippingSelection,
+    Map<String, dynamic>? shippingSnapshot,
     double? quantity,
     double? pricePerUnit,
   }) async {
@@ -26,10 +27,25 @@ class InvoiceRepositoryImpl implements InvoiceRepository {
       final preview = await remoteDataSource.getInvoicePreview(
         negotiationId,
         shippingSelection: shippingSelection,
+        shippingSnapshot: shippingSnapshot,
         quantity: quantity,
         pricePerUnit: pricePerUnit,
       );
-      return Right(preview.toEntity());
+      return Right(preview);
+    } on DioException catch (e) {
+      return Left(_mapDioExceptionToFailure(e));
+    } catch (_) {
+      return const Left(UnexpectedFailure());
+    }
+  }
+
+  @override
+  Future<Either<Failure, Map<String, dynamic>>> getBuyerShippingAddresses(
+    String negotiationId,
+  ) async {
+    try {
+      final data = await remoteDataSource.getBuyerShippingAddresses(negotiationId);
+      return Right(data);
     } on DioException catch (e) {
       return Left(_mapDioExceptionToFailure(e));
     } catch (_) {

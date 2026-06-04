@@ -1,5 +1,6 @@
 import 'package:freezed_annotation/freezed_annotation.dart';
 import '../../../../core/utils/media_url_utils.dart';
+import '../../../invoice/domain/entities/invoice_deal_economics.dart';
 import '../../domain/entities/negotiation_entity.dart';
 
 part 'negotiation_model.freezed.dart';
@@ -78,6 +79,7 @@ abstract class NegotiationModel with _$NegotiationModel {
     required NegotiationParticipantModel seller,
     List<NegotiationMessageModel>? messages,
     int? messagesTotal,
+    Map<String, dynamic>? economics,
   }) = _NegotiationModel;
 
   factory NegotiationModel.fromJson(Map<String, dynamic> json) => _$NegotiationModelFromJson(json);
@@ -107,6 +109,9 @@ abstract class NegotiationModel with _$NegotiationModel {
         seller: seller.toEntity(),
         messages: messages?.map((e) => e.toEntity()).toList(),
         messagesTotal: messagesTotal,
+        economics: economics != null
+            ? InvoiceDealEconomics.fromJson(economics!)
+            : null,
       );
 }
 
@@ -119,6 +124,7 @@ abstract class NegotiationProductModel with _$NegotiationProductModel {
     required dynamic pricePerUnit,
     required String unit,
     @Default(1) dynamic minOrder,
+    @Default(0) dynamic stock,
     String? description,
     String? biomassaType,
     String? regency,
@@ -138,6 +144,7 @@ abstract class NegotiationProductModel with _$NegotiationProductModel {
         pricePerUnit: double.tryParse(pricePerUnit.toString()) ?? 0.0,
         unit: unit,
         minOrder: double.tryParse(minOrder.toString()) ?? 1.0,
+        stock: double.tryParse(stock.toString()) ?? 0.0,
         description: description,
         biomassaType: biomassaType,
         regency: regency,

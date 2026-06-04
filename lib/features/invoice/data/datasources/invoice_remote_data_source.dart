@@ -1,13 +1,17 @@
 import 'package:dio/dio.dart';
+import '../../domain/entities/invoice_preview_entity.dart';
 import '../models/invoice_preview_model.dart';
 
 abstract class InvoiceRemoteDataSource {
-  Future<InvoicePreviewModel> getInvoicePreview(
+  Future<InvoicePreviewEntity> getInvoicePreview(
     String negotiationId, {
     Map<String, dynamic>? shippingSelection,
+    Map<String, dynamic>? shippingSnapshot,
     double? quantity,
     double? pricePerUnit,
   });
+
+  Future<Map<String, dynamic>> getBuyerShippingAddresses(String negotiationId);
   Future<void> updatePendingInvoice(
     String orderId, {
     Map<String, dynamic>? shippingSnapshot,
@@ -21,13 +25,15 @@ class InvoiceRemoteDataSourceImpl implements InvoiceRemoteDataSource {
   InvoiceRemoteDataSourceImpl({required this.dio});
 
   @override
-  Future<InvoicePreviewModel> getInvoicePreview(
+  Future<InvoicePreviewEntity> getInvoicePreview(
     String negotiationId, {
     Map<String, dynamic>? shippingSelection,
+    Map<String, dynamic>? shippingSnapshot,
     double? quantity,
     double? pricePerUnit,
   }) async {
     final hasBody = shippingSelection != null ||
+        shippingSnapshot != null ||
         quantity != null ||
         pricePerUnit != null;
     final Response<dynamic> response;
@@ -36,6 +42,7 @@ class InvoiceRemoteDataSourceImpl implements InvoiceRemoteDataSource {
         '/negotiations/$negotiationId/invoice-preview',
         data: {
           if (shippingSelection != null) 'shippingSelection': shippingSelection,
+          if (shippingSnapshot != null) 'shippingSnapshot': shippingSnapshot,
           if (quantity != null) 'quantity': quantity,
           if (pricePerUnit != null) 'pricePerUnit': pricePerUnit,
         },
@@ -43,9 +50,18 @@ class InvoiceRemoteDataSourceImpl implements InvoiceRemoteDataSource {
     } else {
       response = await dio.get('/negotiations/$negotiationId/invoice-preview');
     }
-    return InvoicePreviewModel.fromJson(
-      response.data['data'] as Map<String, dynamic>,
+    final raw = Map<String, dynamic>.from(response.data['data'] as Map);
+    return InvoicePreviewModel.fromJson(raw).toEntity(raw: raw);
+  }
+
+  @override
+  Future<Map<String, dynamic>> getBuyerShippingAddresses(
+    String negotiationId,
+  ) async {
+    final response = await dio.get(
+      '/negotiations/$negotiationId/buyer-shipping-addresses',
     );
+    return Map<String, dynamic>.from(response.data['data'] as Map);
   }
 
   @override

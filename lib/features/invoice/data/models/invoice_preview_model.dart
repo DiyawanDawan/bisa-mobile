@@ -1,4 +1,5 @@
 import 'package:freezed_annotation/freezed_annotation.dart';
+import '../../domain/entities/invoice_deal_economics.dart';
 import '../../domain/entities/invoice_preview_entity.dart';
 
 part 'invoice_preview_model.freezed.dart';
@@ -30,25 +31,77 @@ abstract class InvoicePreviewModel with _$InvoicePreviewModel {
 
   const InvoicePreviewModel._();
 
-  InvoicePreviewEntity toEntity() => InvoicePreviewEntity(
-        negotiationId: negotiationId,
-        productId: product.id,
-        productName: product.name,
-        productUnit: product.unit,
-        productThumbnailUrl: product.thumbnailUrl,
-        buyerId: buyer.id,
-        buyerName: buyer.name,
-        buyerCompanyName: buyer.profile?.companyName,
-        quantity: _parseNum(quantity),
-        pricePerUnit: _parseNum(pricePerUnit),
-        subtotal: _parseNum(subtotal),
-        platformFee: _parseNum(platformFee),
-        logisticsFee: _parseNum(logisticsFee),
-        vatAmount: _parseNum(vatAmount),
-        totalAmount: _parseNum(totalAmount),
-        specifications: specifications,
-        shippingSnapshot: shippingSnapshot,
+  InvoicePreviewEntity toEntity({Map<String, dynamic>? raw}) {
+    final qty = _parseNum(quantity);
+    final negoUnit = _parseNum(pricePerUnit);
+    final fee = _parseNum(platformFee);
+    InvoiceDealEconomics? economics;
+    final economicsJson = raw?['economics'];
+    if (economicsJson is Map<String, dynamic>) {
+      economics = InvoiceDealEconomics.fromJson(economicsJson);
+    } else {
+      economics = InvoiceDealEconomics.compute(
+        catalogPricePerUnit: _parseNum(product.pricePerUnit),
+        negotiatedPricePerUnit: negoUnit,
+        quantity: qty,
+        platformFee: fee,
+        productStock: _parseNum(product.stock),
+        unit: product.unit,
       );
+    }
+
+    return InvoicePreviewEntity(
+      negotiationId: negotiationId,
+      productId: product.id,
+      productName: product.name,
+      productUnit: product.unit,
+      productThumbnailUrl: product.thumbnailUrl,
+      buyerId: buyer.id,
+      buyerName: buyer.name,
+      buyerCompanyName: buyer.profile?.companyName,
+      quantity: qty,
+      pricePerUnit: negoUnit,
+      subtotal: _parseNum(subtotal),
+      platformFee: fee,
+      logisticsFee: _parseNum(logisticsFee),
+      vatAmount: _parseNum(vatAmount),
+      totalAmount: _parseNum(totalAmount),
+      specifications: specifications,
+      shippingSnapshot: shippingSnapshot,
+      sellerShippingSnapshot: _parseSellerShipping(raw),
+      sellerOriginId: _parseSellerOriginId(raw),
+      sellerOriginLabel: _parseSellerOriginLabel(raw),
+      sellerOriginResolvedFrom: _parseSellerOriginResolvedFrom(raw),
+      economics: economics,
+    );
+  }
+
+  static Map<String, dynamic>? _parseSellerShipping(Map<String, dynamic>? raw) {
+    final ship = raw?['sellerShipping'];
+    if (ship is! Map) return null;
+    final snap = ship['snapshot'];
+    if (snap is Map<String, dynamic>) return snap;
+    if (snap is Map) return Map<String, dynamic>.from(snap);
+    return null;
+  }
+
+  static int? _parseSellerOriginId(Map<String, dynamic>? raw) {
+    final ship = raw?['sellerShipping'];
+    if (ship is! Map) return null;
+    return int.tryParse(ship['originId']?.toString() ?? '');
+  }
+
+  static String? _parseSellerOriginLabel(Map<String, dynamic>? raw) {
+    final ship = raw?['sellerShipping'];
+    if (ship is! Map) return null;
+    return ship['originLabel']?.toString();
+  }
+
+  static String? _parseSellerOriginResolvedFrom(Map<String, dynamic>? raw) {
+    final ship = raw?['sellerShipping'];
+    if (ship is! Map) return null;
+    return ship['resolvedFrom']?.toString();
+  }
 }
 
 @freezed
@@ -58,6 +111,9 @@ abstract class InvoicePreviewProductModel with _$InvoicePreviewProductModel {
     required String name,
     required String unit,
     String? thumbnailUrl,
+    @Default(0) dynamic pricePerUnit,
+    @Default(0) dynamic stock,
+    @Default(1) dynamic minOrder,
   }) = _InvoicePreviewProductModel;
 
   factory InvoicePreviewProductModel.fromJson(Map<String, dynamic> json) =>

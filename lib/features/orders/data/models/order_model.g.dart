@@ -104,6 +104,7 @@ _OrderItemProductModel _$OrderItemProductModelFromJson(
   Map<String, dynamic> json,
 ) => _OrderItemProductModel(
   name: json['name'] as String,
+  unit: json['unit'] as String?,
   thumbnailUrl: json['thumbnailUrl'] as String?,
 );
 
@@ -111,6 +112,7 @@ Map<String, dynamic> _$OrderItemProductModelToJson(
   _OrderItemProductModel instance,
 ) => <String, dynamic>{
   'name': instance.name,
+  'unit': instance.unit,
   'thumbnailUrl': instance.thumbnailUrl,
 };
 

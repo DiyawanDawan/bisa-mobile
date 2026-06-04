@@ -45,11 +45,21 @@ class _FollowButtonState extends State<FollowButton> {
     if (currentUser.id == widget.userId) return;
 
     setState(() => _loading = true);
-    await context.read<FollowCubit>().toggleFollow(
+    final error = await context.read<FollowCubit>().toggleFollow(
           widget.userId,
           currentUserId: currentUser.id,
         );
-    if (mounted) setState(() => _loading = false);
+    if (!mounted) return;
+    setState(() => _loading = false);
+    if (error != null && error.isNotEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(error),
+          backgroundColor: AppColors.error,
+          behavior: SnackBarBehavior.floating,
+        ),
+      );
+    }
   }
 
   @override
@@ -63,39 +73,106 @@ class _FollowButtonState extends State<FollowButton> {
     return BlocBuilder<FollowCubit, FollowState>(
       builder: (context, state) {
         final isFollowing = state.isFollowing(widget.userId);
-        final bgColor = isFollowing ? AppColors.grey100 : AppColors.primary.withOpacity(0.08);
-        final textColor = isFollowing ? AppColors.textSecondary : AppColors.primary;
+        final bgColor = isFollowing
+            ? AppColors.grey100
+            : AppColors.primary.withValues(alpha: 0.08);
+        final textColor =
+            isFollowing ? AppColors.textSecondary : AppColors.primary;
         final label = isFollowing ? 'Mengikuti' : 'Ikuti';
 
         return GestureDetector(
           onTap: _loading ? null : () => _onTap(context),
           child: Container(
+            constraints: BoxConstraints(maxWidth: widget.compact ? 108.w : 130.w),
             padding: EdgeInsets.symmetric(
-              horizontal: widget.compact ? 14.w : 18.w,
+              horizontal: widget.compact ? 12.w : 16.w,
               vertical: widget.compact ? 8.h : 10.h,
             ),
             decoration: BoxDecoration(
               color: bgColor,
               borderRadius: BorderRadius.circular(20.r),
               border: Border.all(
-                color: isFollowing ? AppColors.grey200 : AppColors.primary.withOpacity(0.2),
+                color: isFollowing
+                    ? AppColors.grey200
+                    : AppColors.primary.withValues(alpha: 0.2),
               ),
             ),
             child: _loading
                 ? SizedBox(
                     width: 14.w,
                     height: 14.w,
-                    child: CircularProgressIndicator(strokeWidth: 2, color: textColor),
-                  )
-                : Text(
-                    label,
-                    style: TextStyle(
+                    child: CircularProgressIndicator(
+                      strokeWidth: 2,
                       color: textColor,
-                      fontSize: 12.sp,
-                      fontWeight: FontWeight.w800,
+                    ),
+                  )
+                : FittedBox(
+                    fit: BoxFit.scaleDown,
+                    child: Text(
+                      label,
+                      style: TextStyle(
+                        color: textColor,
+                        fontSize: 12.sp,
+                        fontWeight: FontWeight.w800,
+                      ),
                     ),
                   ),
           ),
+        );
+      },
+    );
+  }
+}
+
+/// Stats mengikuti/pengikut untuk user yang sedang dilihat (mis. profil supplier).
+class UserFollowStatsRow extends StatefulWidget {
+  final String userId;
+
+  const UserFollowStatsRow({super.key, required this.userId});
+
+  @override
+  State<UserFollowStatsRow> createState() => _UserFollowStatsRowState();
+}
+
+class _UserFollowStatsRowState extends State<UserFollowStatsRow> {
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) return;
+      context.read<FollowCubit>().loadFollowStatsForUser(widget.userId);
+    });
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return BlocBuilder<FollowCubit, FollowState>(
+      builder: (context, state) {
+        final stats = state.statsForUser(widget.userId);
+        if (stats == null) {
+          return Padding(
+            padding: EdgeInsets.symmetric(vertical: 4.h),
+            child: SizedBox(
+              width: 16.w,
+              height: 16.w,
+              child: const CircularProgressIndicator(strokeWidth: 2),
+            ),
+          );
+        }
+
+        return Row(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            _StatChip(
+              value: '${stats.followingCount}',
+              label: 'Mengikuti',
+            ),
+            SizedBox(width: 20.w),
+            _StatChip(
+              value: '${stats.followersCount}',
+              label: 'Pengikut',
+            ),
+          ],
         );
       },
     );
@@ -132,6 +209,37 @@ class FollowStatsRow extends StatelessWidget {
           ],
         );
       },
+    );
+  }
+}
+
+class _StatChip extends StatelessWidget {
+  const _StatChip({required this.value, required this.label});
+
+  final String value;
+  final String label;
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      children: [
+        Text(
+          value,
+          style: TextStyle(
+            fontSize: 15.sp,
+            fontWeight: FontWeight.w900,
+            color: AppColors.textPrimary,
+          ),
+        ),
+        Text(
+          label,
+          style: TextStyle(
+            fontSize: 11.sp,
+            color: AppColors.textSecondary,
+            fontWeight: FontWeight.w600,
+          ),
+        ),
+      ],
     );
   }
 }

@@ -12,12 +12,21 @@ import 'package:mobile_bisa/injection_container.dart';
 class InvoiceExportHelper {
   static Future<void> exportPreview(
     BuildContext context,
-    InvoicePreviewEntity preview,
-  ) async {
+    InvoicePreviewEntity preview, {
+    Map<String, dynamic>? sellerShippingSnapshot,
+    String? sellerOriginLabel,
+    Map<String, dynamic>? shippingSelection,
+  }) async {
     final supplierName = _currentUserName(context) ?? 'Supplier BISA';
     await _runExport(
       context,
-      InvoicePdfData.fromPreview(preview, supplierName: supplierName),
+      InvoicePdfData.fromPreview(
+        preview,
+        supplierName: supplierName,
+        sellerShippingSnapshot: sellerShippingSnapshot,
+        sellerOriginLabel: sellerOriginLabel,
+        shippingSelection: shippingSelection,
+      ),
     );
   }
 
@@ -38,7 +47,10 @@ class InvoiceExportHelper {
     InvoicePreviewEntity preview,
   ) async {
     final supplierName = _currentUserName(context) ?? 'Supplier BISA';
-    final data = InvoicePdfData.fromPreview(preview, supplierName: supplierName);
+    final data = InvoicePdfData.fromPreview(
+      preview,
+      supplierName: supplierName,
+    );
     return _sendPdfToChat(
       context,
       negotiationId,

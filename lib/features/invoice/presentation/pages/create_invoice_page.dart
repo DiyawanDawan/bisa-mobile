@@ -9,7 +9,11 @@ import 'package:mobile_bisa/features/invoice/presentation/bloc/create_invoice_cu
 import 'package:mobile_bisa/features/invoice/presentation/utils/invoice_export_helper.dart';
 import 'package:mobile_bisa/features/invoice/presentation/widgets/invoice_breakdown_card.dart';
 import 'package:mobile_bisa/features/invoice/presentation/widgets/invoice_negotiation_shipping_card.dart';
-import 'package:mobile_bisa/features/invoice/presentation/widgets/invoice_shipping_edit_card.dart';
+import 'package:mobile_bisa/features/invoice/presentation/widgets/invoice_buyer_shipping_panel.dart';
+import 'package:mobile_bisa/features/invoice/presentation/widgets/invoice_deal_economics_card.dart';
+import 'package:mobile_bisa/features/invoice/presentation/widgets/invoice_shipping_route_overview.dart';
+import 'package:mobile_bisa/features/invoice/presentation/widgets/invoice_issue_checklist_card.dart';
+import 'package:mobile_bisa/features/invoice/presentation/utils/invoice_issue_readiness.dart';
 import 'package:mobile_bisa/features/orders/presentation/bloc/order_cubit.dart';
 import 'package:mobile_bisa/injection_container.dart';
 import 'package:mobile_bisa/shared/widgets/bisa_app_bar.dart';
@@ -77,6 +81,12 @@ class _CreateInvoicePageState extends State<CreateInvoicePage> {
                       : () => InvoiceExportHelper.exportPreview(
                             context,
                             exportPreview,
+                            sellerShippingSnapshot:
+                                state.sellerShippingSnapshot ??
+                                    exportPreview.sellerShippingSnapshot,
+                            sellerOriginLabel: state.sellerOriginLabel ??
+                                exportPreview.sellerOriginLabel,
+                            shippingSelection: state.shippingSelection,
                           ),
                 );
               },
@@ -133,6 +143,8 @@ class _CreateInvoicePageState extends State<CreateInvoicePage> {
             final isSubmitting =
                 state.status == CreateInvoiceStatus.submitting;
             final exportPreview = state.previewWithDraft!;
+            final cubit = context.read<CreateInvoiceCubit>();
+            final readiness = cubit.issueReadiness;
             _syncTermControllers(preview);
 
             return Column(
@@ -188,6 +200,43 @@ class _CreateInvoicePageState extends State<CreateInvoicePage> {
                             ],
                           ),
                         ),
+                        if (exportPreview.economics != null) ...[
+                          SizedBox(height: 14.h),
+                          InvoiceDealEconomicsCard(
+                            economics: exportPreview.economics!,
+                          ),
+                        ],
+                        SizedBox(height: 14.h),
+                        _sectionTitle('Alamat Pengiriman'),
+                        SizedBox(height: 8.h),
+                        InvoiceShippingRouteOverview(
+                          sellerSnapshot: state.sellerShippingSnapshot ??
+                              exportPreview.sellerShippingSnapshot,
+                          buyerDraft: draft,
+                          sellerOriginLabel: state.sellerOriginLabel ??
+                              exportPreview.sellerOriginLabel,
+                          sellerOriginResolved: (state.sellerOriginId ??
+                                  exportPreview.sellerOriginId) !=
+                              null,
+                        ),
+                        SizedBox(height: 12.h),
+                        _sectionTitle('Alamat Penerima (Pembeli)'),
+                        SizedBox(height: 8.h),
+                        InvoiceBuyerShippingPanel(
+                          negotiationId: widget.negotiationId,
+                          draft: draft,
+                          onDraftChanged: (updated) async {
+                            final cubit = context.read<CreateInvoiceCubit>();
+                            final shouldRefresh = cubit.updateDraft(updated);
+                            if (shouldRefresh) {
+                              await cubit.refreshPreview(widget.negotiationId);
+                            }
+                          },
+                        ),
+                        SizedBox(height: 14.h),
+                        InvoiceNegotiationShippingCard(
+                          negotiationId: widget.negotiationId,
+                        ),
                         SizedBox(height: 14.h),
                         InvoiceBreakdownCard(
                           title: 'Rincian Tagihan',
@@ -196,19 +245,6 @@ class _CreateInvoicePageState extends State<CreateInvoicePage> {
                           logisticsFee: exportPreview.logisticsFee,
                           vatAmount: exportPreview.vatAmount,
                           totalAmount: exportPreview.totalAmount,
-                        ),
-                        SizedBox(height: 14.h),
-                        InvoiceNegotiationShippingCard(
-                          negotiationId: widget.negotiationId,
-                          preview: preview,
-                        ),
-                        SizedBox(height: 14.h),
-                        InvoiceShippingEditCard(
-                          draft: draft,
-                          hintText: 'Dapat disesuaikan sebelum & sesudah tagihan diterbitkan',
-                          onChanged: (updated) {
-                            context.read<CreateInvoiceCubit>().updateDraft(updated);
-                          },
                         ),
                         SizedBox(height: 14.h),
                         _sectionTitle('Catatan / Spesifikasi'),
@@ -233,77 +269,139 @@ class _CreateInvoicePageState extends State<CreateInvoicePage> {
                             },
                           ),
                         ),
+                        SizedBox(height: 14.h),
+                        InvoiceIssueChecklistCard(readiness: readiness),
                       ],
                     ),
                   ),
                 ),
-                Container(
-                  padding: EdgeInsets.fromLTRB(16.w, 12.h, 16.w, 16.h),
-                  decoration: const BoxDecoration(
-                    color: Colors.white,
-                    border: Border(top: BorderSide(color: AppColors.grey200)),
-                  ),
-                  child: Column(
-                    children: [
-                      CustomButton(
-                        text: isSubmitting
-                            ? 'Menerbitkan...'
-                            : 'Terbitkan Tagihan',
-                        useGradient: true,
-                        height: 50.h,
-                        onPressed: isSubmitting
-                            ? null
-                            : () => context
-                                .read<CreateInvoiceCubit>()
-                                .issueInvoice(widget.negotiationId),
-                      ),
-                      SizedBox(height: 8.h),
-                      Text(
-                        'Setelah diterbitkan, tagihan masih bisa diedit sebelum pembayaran',
-                        textAlign: TextAlign.center,
-                        style: TextStyle(
-                          fontSize: 11.sp,
-                          color: AppColors.textHint,
-                        ),
-                      ),
-                      SizedBox(height: 8.h),
-                      CustomButton(
-                        text: 'Export PDF',
-                        height: 46.h,
-                        isOutlined: true,
-                        onPressed: isSubmitting
-                            ? null
-                            : () => InvoiceExportHelper.exportPreview(
-                                  context,
-                                  exportPreview,
-                                ),
-                      ),
-                      SizedBox(height: 8.h),
-                      CustomButton(
-                        text: 'Kirim PDF ke Chat',
-                        height: 46.h,
-                        isOutlined: true,
-                        onPressed: isSubmitting
-                            ? null
-                            : () => InvoiceExportHelper.sendPreviewToChat(
-                                  context,
-                                  widget.negotiationId,
-                                  exportPreview,
-                                ),
-                      ),
-                      SizedBox(height: 8.h),
-                      CustomButton(
-                        text: 'Kembali ke Chat',
-                        height: 46.h,
-                        isOutlined: true,
-                        onPressed: isSubmitting ? null : () => context.pop(),
-                      ),
-                    ],
-                  ),
+                _buildActionFooter(
+                  context,
+                  state: state,
+                  isSubmitting: isSubmitting,
+                  exportPreview: exportPreview,
+                  readiness: readiness,
                 ),
               ],
             );
           },
+        ),
+      ),
+    );
+  }
+
+  Widget _buildActionFooter(
+    BuildContext context, {
+    required CreateInvoiceState state,
+    required bool isSubmitting,
+    required InvoicePreviewEntity exportPreview,
+    required InvoiceIssueReadiness readiness,
+  }) {
+    final canIssue = readiness.canIssue && !isSubmitting;
+    return DecoratedBox(
+      decoration: BoxDecoration(
+        color: Colors.white,
+        border: Border(top: BorderSide(color: AppColors.grey200)),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.06),
+            blurRadius: 16,
+            offset: const Offset(0, -4),
+          ),
+        ],
+      ),
+      child: SafeArea(
+        top: false,
+        minimum: EdgeInsets.only(bottom: 12.h),
+        child: Padding(
+          padding: EdgeInsets.fromLTRB(16.w, 12.h, 16.w, 8.h),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              CustomButton(
+                text: isSubmitting ? 'Menerbitkan...' : 'Terbitkan Tagihan',
+                useGradient: canIssue,
+                height: 48.h,
+                onPressed: canIssue
+                    ? () => context
+                        .read<CreateInvoiceCubit>()
+                        .issueInvoice(widget.negotiationId)
+                    : null,
+              ),
+              SizedBox(height: 6.h),
+              Text(
+                'Setelah diterbitkan, tagihan masih bisa diedit sebelum pembayaran',
+                textAlign: TextAlign.center,
+                style: TextStyle(
+                  fontSize: 11.sp,
+                  color: AppColors.textHint,
+                  height: 1.35,
+                ),
+              ),
+              SizedBox(height: 12.h),
+              Row(
+                children: [
+                  Expanded(
+                    child: CustomButton(
+                      text: 'Export PDF',
+                      height: 44.h,
+                      isOutlined: true,
+                      onPressed: isSubmitting
+                          ? null
+                          : () => InvoiceExportHelper.exportPreview(
+                                context,
+                                exportPreview,
+                                sellerShippingSnapshot:
+                                    state.sellerShippingSnapshot ??
+                                        exportPreview.sellerShippingSnapshot,
+                                sellerOriginLabel: state.sellerOriginLabel ??
+                                    exportPreview.sellerOriginLabel,
+                                shippingSelection: state.shippingSelection,
+                              ),
+                    ),
+                  ),
+                  SizedBox(width: 10.w),
+                  Expanded(
+                    child: CustomButton(
+                      text: 'Kirim ke Chat',
+                      height: 44.h,
+                      isOutlined: true,
+                      onPressed: isSubmitting
+                          ? null
+                          : () => InvoiceExportHelper.sendPreviewToChat(
+                                context,
+                                widget.negotiationId,
+                                exportPreview,
+                              ),
+                    ),
+                  ),
+                ],
+              ),
+              SizedBox(height: 4.h),
+              TextButton(
+                onPressed: isSubmitting ? null : () => context.pop(),
+                style: TextButton.styleFrom(
+                  foregroundColor: AppColors.textSecondary,
+                  padding: EdgeInsets.symmetric(vertical: 10.h),
+                  minimumSize: Size(double.infinity, 40.h),
+                ),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Icon(Icons.arrow_back_rounded, size: 18.sp),
+                    SizedBox(width: 6.w),
+                    Text(
+                      'Kembali ke Chat',
+                      style: TextStyle(
+                        fontSize: 14.sp,
+                        fontWeight: FontWeight.w700,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
         ),
       ),
     );

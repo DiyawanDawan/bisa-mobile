@@ -3,12 +3,15 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:go_router/go_router.dart';
 import 'package:mobile_bisa/core/constants/app_colors.dart';
+import 'package:mobile_bisa/features/invoice/domain/entities/invoice_draft.dart';
 import 'package:mobile_bisa/features/invoice/domain/entities/invoice_pdf_data.dart';
+import 'package:mobile_bisa/features/orders/domain/entities/order_entity.dart';
 import 'package:mobile_bisa/features/invoice/presentation/bloc/edit_invoice_cubit.dart';
 import 'package:mobile_bisa/features/invoice/presentation/utils/invoice_export_helper.dart';
 import 'package:mobile_bisa/features/invoice/presentation/widgets/invoice_breakdown_card.dart';
 import 'package:mobile_bisa/features/invoice/presentation/widgets/invoice_shipping_edit_card.dart';
 import 'package:mobile_bisa/features/invoice/presentation/widgets/invoice_status_banner.dart';
+import 'package:mobile_bisa/features/invoice/presentation/widgets/invoice_issue_checklist_card.dart';
 import 'package:mobile_bisa/injection_container.dart';
 import 'package:mobile_bisa/shared/widgets/bisa_app_bar.dart';
 import 'package:mobile_bisa/shared/widgets/custom_button.dart';
@@ -113,6 +116,8 @@ class _EditInvoicePageState extends State<EditInvoicePage> {
             final product = order.items.isNotEmpty ? order.items.first : null;
             final isSubmitting = state.status == EditInvoiceStatus.submitting;
             final canEdit = state.canEdit;
+            final saveReadiness = state.saveReadiness;
+            final canSave = saveReadiness.canIssue && !isSubmitting;
 
             return Column(
               children: [
@@ -197,53 +202,120 @@ class _EditInvoicePageState extends State<EditInvoicePage> {
                                 : null,
                           ),
                         ),
+                        if (canEdit) ...[
+                          SizedBox(height: 14.h),
+                          InvoiceIssueChecklistCard(
+                            readiness: saveReadiness,
+                            readyText: 'Alamat lengkap — siap disimpan',
+                            pendingTitle:
+                                'Lengkapi data berikut sebelum simpan',
+                          ),
+                        ],
                       ],
                     ),
                   ),
                 ),
-                Container(
-                  padding: EdgeInsets.fromLTRB(16.w, 12.h, 16.w, 16.h),
-                  decoration: const BoxDecoration(
-                    color: Colors.white,
-                    border: Border(top: BorderSide(color: AppColors.grey200)),
-                  ),
-                  child: Column(
-                    children: [
-                      if (canEdit)
-                        CustomButton(
-                          text: isSubmitting ? 'Menyimpan...' : 'Simpan Perubahan',
-                          useGradient: true,
-                          height: 50.h,
-                          onPressed: isSubmitting
-                              ? null
-                              : () =>
-                                  context.read<EditInvoiceCubit>().saveChanges(),
-                        ),
-                      if (canEdit) SizedBox(height: 8.h),
-                      CustomButton(
-                        text: 'Download PDF',
-                        height: 46.h,
-                        isOutlined: true,
-                        onPressed: isSubmitting
-                            ? null
-                            : () => InvoiceExportHelper.exportPdfData(
-                                  context,
-                                  InvoicePdfData.fromOrderDraft(order, draft),
-                                ),
-                      ),
-                      SizedBox(height: 8.h),
-                      CustomButton(
-                        text: 'Kembali ke Chat',
-                        height: 46.h,
-                        isOutlined: true,
-                        onPressed: isSubmitting ? null : () => context.pop(),
-                      ),
-                    ],
-                  ),
+                _buildActionFooter(
+                  context,
+                  canEdit: canEdit,
+                  canSave: canSave,
+                  isSubmitting: isSubmitting,
+                  order: order,
+                  draft: draft,
                 ),
               ],
             );
           },
+        ),
+      ),
+    );
+  }
+
+  Widget _buildActionFooter(
+    BuildContext context, {
+    required bool canEdit,
+    required bool canSave,
+    required bool isSubmitting,
+    required OrderEntity order,
+    required InvoiceDraft draft,
+  }) {
+    return DecoratedBox(
+      decoration: BoxDecoration(
+        color: Colors.white,
+        border: Border(top: BorderSide(color: AppColors.grey200)),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.06),
+            blurRadius: 16,
+            offset: const Offset(0, -4),
+          ),
+        ],
+      ),
+      child: SafeArea(
+        top: false,
+        minimum: EdgeInsets.only(bottom: 12.h),
+        child: Padding(
+          padding: EdgeInsets.fromLTRB(16.w, 12.h, 16.w, 8.h),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              if (canEdit) ...[
+                CustomButton(
+                  text: isSubmitting ? 'Menyimpan...' : 'Simpan Perubahan',
+                  useGradient: canSave,
+                  height: 48.h,
+                  onPressed: canSave
+                      ? () => context.read<EditInvoiceCubit>().saveChanges()
+                      : null,
+                ),
+                SizedBox(height: 6.h),
+                Text(
+                  'Perbaiki typo alamat sebelum pembeli melakukan pembayaran',
+                  textAlign: TextAlign.center,
+                  style: TextStyle(
+                    fontSize: 11.sp,
+                    color: AppColors.textHint,
+                    height: 1.35,
+                  ),
+                ),
+                SizedBox(height: 12.h),
+              ],
+              CustomButton(
+                text: 'Download PDF',
+                height: 44.h,
+                isOutlined: true,
+                onPressed: isSubmitting
+                    ? null
+                    : () => InvoiceExportHelper.exportPdfData(
+                          context,
+                          InvoicePdfData.fromOrderDraft(order, draft),
+                        ),
+              ),
+              SizedBox(height: 4.h),
+              TextButton(
+                onPressed: isSubmitting ? null : () => context.pop(),
+                style: TextButton.styleFrom(
+                  foregroundColor: AppColors.textSecondary,
+                  padding: EdgeInsets.symmetric(vertical: 10.h),
+                  minimumSize: Size(double.infinity, 40.h),
+                ),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Icon(Icons.arrow_back_rounded, size: 18.sp),
+                    SizedBox(width: 6.w),
+                    Text(
+                      'Kembali ke Chat',
+                      style: TextStyle(
+                        fontWeight: FontWeight.w700,
+                        fontSize: 13.sp,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
         ),
       ),
     );

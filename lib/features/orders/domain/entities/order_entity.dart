@@ -64,6 +64,7 @@ abstract class OrderItemEntity with _$OrderItemEntity {
     required double quantity,
     required double pricePerUnit,
     required double subtotal,
+    String? productUnit,
     String? thumbnailUrl,
   }) = _OrderItemEntity;
 }

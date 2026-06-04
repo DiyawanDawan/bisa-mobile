@@ -805,7 +805,7 @@ $OrderItemProductModelCopyWith<$Res> get product {
 /// @nodoc
 mixin _$OrderItemProductModel {
 
- String get name; String? get thumbnailUrl;
+ String get name; String? get unit; String? get thumbnailUrl;
 /// Create a copy of OrderItemProductModel
 /// with the given fields replaced by the non-null parameter values.
 @JsonKey(includeFromJson: false, includeToJson: false)
@@ -818,16 +818,16 @@ $OrderItemProductModelCopyWith<OrderItemProductModel> get copyWith => _$OrderIte
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is OrderItemProductModel&&(identical(other.name, name) || other.name == name)&&(identical(other.thumbnailUrl, thumbnailUrl) || other.thumbnailUrl == thumbnailUrl));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is OrderItemProductModel&&(identical(other.name, name) || other.name == name)&&(identical(other.unit, unit) || other.unit == unit)&&(identical(other.thumbnailUrl, thumbnailUrl) || other.thumbnailUrl == thumbnailUrl));
 }
 
 @JsonKey(includeFromJson: false, includeToJson: false)
 @override
-int get hashCode => Object.hash(runtimeType,name,thumbnailUrl);
+int get hashCode => Object.hash(runtimeType,name,unit,thumbnailUrl);
 
 @override
 String toString() {
-  return 'OrderItemProductModel(name: $name, thumbnailUrl: $thumbnailUrl)';
+  return 'OrderItemProductModel(name: $name, unit: $unit, thumbnailUrl: $thumbnailUrl)';
 }
 
 
@@ -838,7 +838,7 @@ abstract mixin class $OrderItemProductModelCopyWith<$Res>  {
   factory $OrderItemProductModelCopyWith(OrderItemProductModel value, $Res Function(OrderItemProductModel) _then) = _$OrderItemProductModelCopyWithImpl;
 @useResult
 $Res call({
- String name, String? thumbnailUrl
+ String name, String? unit, String? thumbnailUrl
 });
 
 
@@ -855,10 +855,11 @@ class _$OrderItemProductModelCopyWithImpl<$Res>
 
 /// Create a copy of OrderItemProductModel
 /// with the given fields replaced by the non-null parameter values.
-@pragma('vm:prefer-inline') @override $Res call({Object? name = null,Object? thumbnailUrl = freezed,}) {
+@pragma('vm:prefer-inline') @override $Res call({Object? name = null,Object? unit = freezed,Object? thumbnailUrl = freezed,}) {
   return _then(_self.copyWith(
 name: null == name ? _self.name : name // ignore: cast_nullable_to_non_nullable
-as String,thumbnailUrl: freezed == thumbnailUrl ? _self.thumbnailUrl : thumbnailUrl // ignore: cast_nullable_to_non_nullable
+as String,unit: freezed == unit ? _self.unit : unit // ignore: cast_nullable_to_non_nullable
+as String?,thumbnailUrl: freezed == thumbnailUrl ? _self.thumbnailUrl : thumbnailUrl // ignore: cast_nullable_to_non_nullable
 as String?,
   ));
 }
@@ -944,10 +945,10 @@ return $default(_that);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( String name,  String? thumbnailUrl)?  $default,{required TResult orElse(),}) {final _that = this;
+@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( String name,  String? unit,  String? thumbnailUrl)?  $default,{required TResult orElse(),}) {final _that = this;
 switch (_that) {
 case _OrderItemProductModel() when $default != null:
-return $default(_that.name,_that.thumbnailUrl);case _:
+return $default(_that.name,_that.unit,_that.thumbnailUrl);case _:
   return orElse();
 
 }
@@ -965,10 +966,10 @@ return $default(_that.name,_that.thumbnailUrl);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( String name,  String? thumbnailUrl)  $default,) {final _that = this;
+@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( String name,  String? unit,  String? thumbnailUrl)  $default,) {final _that = this;
 switch (_that) {
 case _OrderItemProductModel():
-return $default(_that.name,_that.thumbnailUrl);case _:
+return $default(_that.name,_that.unit,_that.thumbnailUrl);case _:
   throw StateError('Unexpected subclass');
 
 }
@@ -985,10 +986,10 @@ return $default(_that.name,_that.thumbnailUrl);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( String name,  String? thumbnailUrl)?  $default,) {final _that = this;
+@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( String name,  String? unit,  String? thumbnailUrl)?  $default,) {final _that = this;
 switch (_that) {
 case _OrderItemProductModel() when $default != null:
-return $default(_that.name,_that.thumbnailUrl);case _:
+return $default(_that.name,_that.unit,_that.thumbnailUrl);case _:
   return null;
 
 }
@@ -1000,10 +1001,11 @@ return $default(_that.name,_that.thumbnailUrl);case _:
 @JsonSerializable()
 
 class _OrderItemProductModel implements OrderItemProductModel {
-  const _OrderItemProductModel({required this.name, this.thumbnailUrl});
+  const _OrderItemProductModel({required this.name, this.unit, this.thumbnailUrl});
   factory _OrderItemProductModel.fromJson(Map<String, dynamic> json) => _$OrderItemProductModelFromJson(json);
 
 @override final  String name;
+@override final  String? unit;
 @override final  String? thumbnailUrl;
 
 /// Create a copy of OrderItemProductModel
@@ -1019,16 +1021,16 @@ Map<String, dynamic> toJson() {
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is _OrderItemProductModel&&(identical(other.name, name) || other.name == name)&&(identical(other.thumbnailUrl, thumbnailUrl) || other.thumbnailUrl == thumbnailUrl));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is _OrderItemProductModel&&(identical(other.name, name) || other.name == name)&&(identical(other.unit, unit) || other.unit == unit)&&(identical(other.thumbnailUrl, thumbnailUrl) || other.thumbnailUrl == thumbnailUrl));
 }
 
 @JsonKey(includeFromJson: false, includeToJson: false)
 @override
-int get hashCode => Object.hash(runtimeType,name,thumbnailUrl);
+int get hashCode => Object.hash(runtimeType,name,unit,thumbnailUrl);
 
 @override
 String toString() {
-  return 'OrderItemProductModel(name: $name, thumbnailUrl: $thumbnailUrl)';
+  return 'OrderItemProductModel(name: $name, unit: $unit, thumbnailUrl: $thumbnailUrl)';
 }
 
 
@@ -1039,7 +1041,7 @@ abstract mixin class _$OrderItemProductModelCopyWith<$Res> implements $OrderItem
   factory _$OrderItemProductModelCopyWith(_OrderItemProductModel value, $Res Function(_OrderItemProductModel) _then) = __$OrderItemProductModelCopyWithImpl;
 @override @useResult
 $Res call({
- String name, String? thumbnailUrl
+ String name, String? unit, String? thumbnailUrl
 });
 
 
@@ -1056,10 +1058,11 @@ class __$OrderItemProductModelCopyWithImpl<$Res>
 
 /// Create a copy of OrderItemProductModel
 /// with the given fields replaced by the non-null parameter values.
-@override @pragma('vm:prefer-inline') $Res call({Object? name = null,Object? thumbnailUrl = freezed,}) {
+@override @pragma('vm:prefer-inline') $Res call({Object? name = null,Object? unit = freezed,Object? thumbnailUrl = freezed,}) {
   return _then(_OrderItemProductModel(
 name: null == name ? _self.name : name // ignore: cast_nullable_to_non_nullable
-as String,thumbnailUrl: freezed == thumbnailUrl ? _self.thumbnailUrl : thumbnailUrl // ignore: cast_nullable_to_non_nullable
+as String,unit: freezed == unit ? _self.unit : unit // ignore: cast_nullable_to_non_nullable
+as String?,thumbnailUrl: freezed == thumbnailUrl ? _self.thumbnailUrl : thumbnailUrl // ignore: cast_nullable_to_non_nullable
 as String?,
   ));
 }

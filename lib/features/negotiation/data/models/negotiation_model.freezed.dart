@@ -15,7 +15,7 @@ T _$identity<T>(T value) => value;
 /// @nodoc
 mixin _$NegotiationModel {
 
- String get id; String? get orderId;@JsonKey(fromJson: negotiationOrderFromJson, toJson: negotiationOrderToJson) NegotiationOrderSummaryModel? get order; String get productId; String get buyerId; String get sellerId; dynamic get quantity; dynamic get pricePerUnit; dynamic get totalEstimate; String? get specifications; String get roomType; String get status; bool get isLocked; String? get rejectionReason; String? get closedBy; String get createdAt; String get updatedAt; NegotiationProductModel get product; NegotiationParticipantModel get buyer; NegotiationParticipantModel get seller; List<NegotiationMessageModel>? get messages; int? get messagesTotal;
+ String get id; String? get orderId;@JsonKey(fromJson: negotiationOrderFromJson, toJson: negotiationOrderToJson) NegotiationOrderSummaryModel? get order; String get productId; String get buyerId; String get sellerId; dynamic get quantity; dynamic get pricePerUnit; dynamic get totalEstimate; String? get specifications; String get roomType; String get status; bool get isLocked; String? get rejectionReason; String? get closedBy; String get createdAt; String get updatedAt; NegotiationProductModel get product; NegotiationParticipantModel get buyer; NegotiationParticipantModel get seller; List<NegotiationMessageModel>? get messages; int? get messagesTotal; Map<String, dynamic>? get economics;
 /// Create a copy of NegotiationModel
 /// with the given fields replaced by the non-null parameter values.
 @JsonKey(includeFromJson: false, includeToJson: false)
@@ -28,16 +28,16 @@ $NegotiationModelCopyWith<NegotiationModel> get copyWith => _$NegotiationModelCo
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is NegotiationModel&&(identical(other.id, id) || other.id == id)&&(identical(other.orderId, orderId) || other.orderId == orderId)&&(identical(other.order, order) || other.order == order)&&(identical(other.productId, productId) || other.productId == productId)&&(identical(other.buyerId, buyerId) || other.buyerId == buyerId)&&(identical(other.sellerId, sellerId) || other.sellerId == sellerId)&&const DeepCollectionEquality().equals(other.quantity, quantity)&&const DeepCollectionEquality().equals(other.pricePerUnit, pricePerUnit)&&const DeepCollectionEquality().equals(other.totalEstimate, totalEstimate)&&(identical(other.specifications, specifications) || other.specifications == specifications)&&(identical(other.roomType, roomType) || other.roomType == roomType)&&(identical(other.status, status) || other.status == status)&&(identical(other.isLocked, isLocked) || other.isLocked == isLocked)&&(identical(other.rejectionReason, rejectionReason) || other.rejectionReason == rejectionReason)&&(identical(other.closedBy, closedBy) || other.closedBy == closedBy)&&(identical(other.createdAt, createdAt) || other.createdAt == createdAt)&&(identical(other.updatedAt, updatedAt) || other.updatedAt == updatedAt)&&(identical(other.product, product) || other.product == product)&&(identical(other.buyer, buyer) || other.buyer == buyer)&&(identical(other.seller, seller) || other.seller == seller)&&const DeepCollectionEquality().equals(other.messages, messages)&&(identical(other.messagesTotal, messagesTotal) || other.messagesTotal == messagesTotal));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is NegotiationModel&&(identical(other.id, id) || other.id == id)&&(identical(other.orderId, orderId) || other.orderId == orderId)&&(identical(other.order, order) || other.order == order)&&(identical(other.productId, productId) || other.productId == productId)&&(identical(other.buyerId, buyerId) || other.buyerId == buyerId)&&(identical(other.sellerId, sellerId) || other.sellerId == sellerId)&&const DeepCollectionEquality().equals(other.quantity, quantity)&&const DeepCollectionEquality().equals(other.pricePerUnit, pricePerUnit)&&const DeepCollectionEquality().equals(other.totalEstimate, totalEstimate)&&(identical(other.specifications, specifications) || other.specifications == specifications)&&(identical(other.roomType, roomType) || other.roomType == roomType)&&(identical(other.status, status) || other.status == status)&&(identical(other.isLocked, isLocked) || other.isLocked == isLocked)&&(identical(other.rejectionReason, rejectionReason) || other.rejectionReason == rejectionReason)&&(identical(other.closedBy, closedBy) || other.closedBy == closedBy)&&(identical(other.createdAt, createdAt) || other.createdAt == createdAt)&&(identical(other.updatedAt, updatedAt) || other.updatedAt == updatedAt)&&(identical(other.product, product) || other.product == product)&&(identical(other.buyer, buyer) || other.buyer == buyer)&&(identical(other.seller, seller) || other.seller == seller)&&const DeepCollectionEquality().equals(other.messages, messages)&&(identical(other.messagesTotal, messagesTotal) || other.messagesTotal == messagesTotal)&&const DeepCollectionEquality().equals(other.economics, economics));
 }
 
 @JsonKey(includeFromJson: false, includeToJson: false)
 @override
-int get hashCode => Object.hashAll([runtimeType,id,orderId,order,productId,buyerId,sellerId,const DeepCollectionEquality().hash(quantity),const DeepCollectionEquality().hash(pricePerUnit),const DeepCollectionEquality().hash(totalEstimate),specifications,roomType,status,isLocked,rejectionReason,closedBy,createdAt,updatedAt,product,buyer,seller,const DeepCollectionEquality().hash(messages),messagesTotal]);
+int get hashCode => Object.hashAll([runtimeType,id,orderId,order,productId,buyerId,sellerId,const DeepCollectionEquality().hash(quantity),const DeepCollectionEquality().hash(pricePerUnit),const DeepCollectionEquality().hash(totalEstimate),specifications,roomType,status,isLocked,rejectionReason,closedBy,createdAt,updatedAt,product,buyer,seller,const DeepCollectionEquality().hash(messages),messagesTotal,const DeepCollectionEquality().hash(economics)]);
 
 @override
 String toString() {
-  return 'NegotiationModel(id: $id, orderId: $orderId, order: $order, productId: $productId, buyerId: $buyerId, sellerId: $sellerId, quantity: $quantity, pricePerUnit: $pricePerUnit, totalEstimate: $totalEstimate, specifications: $specifications, roomType: $roomType, status: $status, isLocked: $isLocked, rejectionReason: $rejectionReason, closedBy: $closedBy, createdAt: $createdAt, updatedAt: $updatedAt, product: $product, buyer: $buyer, seller: $seller, messages: $messages, messagesTotal: $messagesTotal)';
+  return 'NegotiationModel(id: $id, orderId: $orderId, order: $order, productId: $productId, buyerId: $buyerId, sellerId: $sellerId, quantity: $quantity, pricePerUnit: $pricePerUnit, totalEstimate: $totalEstimate, specifications: $specifications, roomType: $roomType, status: $status, isLocked: $isLocked, rejectionReason: $rejectionReason, closedBy: $closedBy, createdAt: $createdAt, updatedAt: $updatedAt, product: $product, buyer: $buyer, seller: $seller, messages: $messages, messagesTotal: $messagesTotal, economics: $economics)';
 }
 
 
@@ -48,7 +48,7 @@ abstract mixin class $NegotiationModelCopyWith<$Res>  {
   factory $NegotiationModelCopyWith(NegotiationModel value, $Res Function(NegotiationModel) _then) = _$NegotiationModelCopyWithImpl;
 @useResult
 $Res call({
- String id, String? orderId,@JsonKey(fromJson: negotiationOrderFromJson, toJson: negotiationOrderToJson) NegotiationOrderSummaryModel? order, String productId, String buyerId, String sellerId, dynamic quantity, dynamic pricePerUnit, dynamic totalEstimate, String? specifications, String roomType, String status, bool isLocked, String? rejectionReason, String? closedBy, String createdAt, String updatedAt, NegotiationProductModel product, NegotiationParticipantModel buyer, NegotiationParticipantModel seller, List<NegotiationMessageModel>? messages, int? messagesTotal
+ String id, String? orderId,@JsonKey(fromJson: negotiationOrderFromJson, toJson: negotiationOrderToJson) NegotiationOrderSummaryModel? order, String productId, String buyerId, String sellerId, dynamic quantity, dynamic pricePerUnit, dynamic totalEstimate, String? specifications, String roomType, String status, bool isLocked, String? rejectionReason, String? closedBy, String createdAt, String updatedAt, NegotiationProductModel product, NegotiationParticipantModel buyer, NegotiationParticipantModel seller, List<NegotiationMessageModel>? messages, int? messagesTotal, Map<String, dynamic>? economics
 });
 
 
@@ -65,7 +65,7 @@ class _$NegotiationModelCopyWithImpl<$Res>
 
 /// Create a copy of NegotiationModel
 /// with the given fields replaced by the non-null parameter values.
-@pragma('vm:prefer-inline') @override $Res call({Object? id = null,Object? orderId = freezed,Object? order = freezed,Object? productId = null,Object? buyerId = null,Object? sellerId = null,Object? quantity = freezed,Object? pricePerUnit = freezed,Object? totalEstimate = freezed,Object? specifications = freezed,Object? roomType = null,Object? status = null,Object? isLocked = null,Object? rejectionReason = freezed,Object? closedBy = freezed,Object? createdAt = null,Object? updatedAt = null,Object? product = null,Object? buyer = null,Object? seller = null,Object? messages = freezed,Object? messagesTotal = freezed,}) {
+@pragma('vm:prefer-inline') @override $Res call({Object? id = null,Object? orderId = freezed,Object? order = freezed,Object? productId = null,Object? buyerId = null,Object? sellerId = null,Object? quantity = freezed,Object? pricePerUnit = freezed,Object? totalEstimate = freezed,Object? specifications = freezed,Object? roomType = null,Object? status = null,Object? isLocked = null,Object? rejectionReason = freezed,Object? closedBy = freezed,Object? createdAt = null,Object? updatedAt = null,Object? product = null,Object? buyer = null,Object? seller = null,Object? messages = freezed,Object? messagesTotal = freezed,Object? economics = freezed,}) {
   return _then(_self.copyWith(
 id: null == id ? _self.id : id // ignore: cast_nullable_to_non_nullable
 as String,orderId: freezed == orderId ? _self.orderId : orderId // ignore: cast_nullable_to_non_nullable
@@ -89,7 +89,8 @@ as NegotiationProductModel,buyer: null == buyer ? _self.buyer : buyer // ignore:
 as NegotiationParticipantModel,seller: null == seller ? _self.seller : seller // ignore: cast_nullable_to_non_nullable
 as NegotiationParticipantModel,messages: freezed == messages ? _self.messages : messages // ignore: cast_nullable_to_non_nullable
 as List<NegotiationMessageModel>?,messagesTotal: freezed == messagesTotal ? _self.messagesTotal : messagesTotal // ignore: cast_nullable_to_non_nullable
-as int?,
+as int?,economics: freezed == economics ? _self.economics : economics // ignore: cast_nullable_to_non_nullable
+as Map<String, dynamic>?,
   ));
 }
 /// Create a copy of NegotiationModel
@@ -201,10 +202,10 @@ return $default(_that);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( String id,  String? orderId, @JsonKey(fromJson: negotiationOrderFromJson, toJson: negotiationOrderToJson)  NegotiationOrderSummaryModel? order,  String productId,  String buyerId,  String sellerId,  dynamic quantity,  dynamic pricePerUnit,  dynamic totalEstimate,  String? specifications,  String roomType,  String status,  bool isLocked,  String? rejectionReason,  String? closedBy,  String createdAt,  String updatedAt,  NegotiationProductModel product,  NegotiationParticipantModel buyer,  NegotiationParticipantModel seller,  List<NegotiationMessageModel>? messages,  int? messagesTotal)?  $default,{required TResult orElse(),}) {final _that = this;
+@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( String id,  String? orderId, @JsonKey(fromJson: negotiationOrderFromJson, toJson: negotiationOrderToJson)  NegotiationOrderSummaryModel? order,  String productId,  String buyerId,  String sellerId,  dynamic quantity,  dynamic pricePerUnit,  dynamic totalEstimate,  String? specifications,  String roomType,  String status,  bool isLocked,  String? rejectionReason,  String? closedBy,  String createdAt,  String updatedAt,  NegotiationProductModel product,  NegotiationParticipantModel buyer,  NegotiationParticipantModel seller,  List<NegotiationMessageModel>? messages,  int? messagesTotal,  Map<String, dynamic>? economics)?  $default,{required TResult orElse(),}) {final _that = this;
 switch (_that) {
 case _NegotiationModel() when $default != null:
-return $default(_that.id,_that.orderId,_that.order,_that.productId,_that.buyerId,_that.sellerId,_that.quantity,_that.pricePerUnit,_that.totalEstimate,_that.specifications,_that.roomType,_that.status,_that.isLocked,_that.rejectionReason,_that.closedBy,_that.createdAt,_that.updatedAt,_that.product,_that.buyer,_that.seller,_that.messages,_that.messagesTotal);case _:
+return $default(_that.id,_that.orderId,_that.order,_that.productId,_that.buyerId,_that.sellerId,_that.quantity,_that.pricePerUnit,_that.totalEstimate,_that.specifications,_that.roomType,_that.status,_that.isLocked,_that.rejectionReason,_that.closedBy,_that.createdAt,_that.updatedAt,_that.product,_that.buyer,_that.seller,_that.messages,_that.messagesTotal,_that.economics);case _:
   return orElse();
 
 }
@@ -222,10 +223,10 @@ return $default(_that.id,_that.orderId,_that.order,_that.productId,_that.buyerId
 /// }
 /// ```
 
-@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( String id,  String? orderId, @JsonKey(fromJson: negotiationOrderFromJson, toJson: negotiationOrderToJson)  NegotiationOrderSummaryModel? order,  String productId,  String buyerId,  String sellerId,  dynamic quantity,  dynamic pricePerUnit,  dynamic totalEstimate,  String? specifications,  String roomType,  String status,  bool isLocked,  String? rejectionReason,  String? closedBy,  String createdAt,  String updatedAt,  NegotiationProductModel product,  NegotiationParticipantModel buyer,  NegotiationParticipantModel seller,  List<NegotiationMessageModel>? messages,  int? messagesTotal)  $default,) {final _that = this;
+@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( String id,  String? orderId, @JsonKey(fromJson: negotiationOrderFromJson, toJson: negotiationOrderToJson)  NegotiationOrderSummaryModel? order,  String productId,  String buyerId,  String sellerId,  dynamic quantity,  dynamic pricePerUnit,  dynamic totalEstimate,  String? specifications,  String roomType,  String status,  bool isLocked,  String? rejectionReason,  String? closedBy,  String createdAt,  String updatedAt,  NegotiationProductModel product,  NegotiationParticipantModel buyer,  NegotiationParticipantModel seller,  List<NegotiationMessageModel>? messages,  int? messagesTotal,  Map<String, dynamic>? economics)  $default,) {final _that = this;
 switch (_that) {
 case _NegotiationModel():
-return $default(_that.id,_that.orderId,_that.order,_that.productId,_that.buyerId,_that.sellerId,_that.quantity,_that.pricePerUnit,_that.totalEstimate,_that.specifications,_that.roomType,_that.status,_that.isLocked,_that.rejectionReason,_that.closedBy,_that.createdAt,_that.updatedAt,_that.product,_that.buyer,_that.seller,_that.messages,_that.messagesTotal);case _:
+return $default(_that.id,_that.orderId,_that.order,_that.productId,_that.buyerId,_that.sellerId,_that.quantity,_that.pricePerUnit,_that.totalEstimate,_that.specifications,_that.roomType,_that.status,_that.isLocked,_that.rejectionReason,_that.closedBy,_that.createdAt,_that.updatedAt,_that.product,_that.buyer,_that.seller,_that.messages,_that.messagesTotal,_that.economics);case _:
   throw StateError('Unexpected subclass');
 
 }
@@ -242,10 +243,10 @@ return $default(_that.id,_that.orderId,_that.order,_that.productId,_that.buyerId
 /// }
 /// ```
 
-@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( String id,  String? orderId, @JsonKey(fromJson: negotiationOrderFromJson, toJson: negotiationOrderToJson)  NegotiationOrderSummaryModel? order,  String productId,  String buyerId,  String sellerId,  dynamic quantity,  dynamic pricePerUnit,  dynamic totalEstimate,  String? specifications,  String roomType,  String status,  bool isLocked,  String? rejectionReason,  String? closedBy,  String createdAt,  String updatedAt,  NegotiationProductModel product,  NegotiationParticipantModel buyer,  NegotiationParticipantModel seller,  List<NegotiationMessageModel>? messages,  int? messagesTotal)?  $default,) {final _that = this;
+@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( String id,  String? orderId, @JsonKey(fromJson: negotiationOrderFromJson, toJson: negotiationOrderToJson)  NegotiationOrderSummaryModel? order,  String productId,  String buyerId,  String sellerId,  dynamic quantity,  dynamic pricePerUnit,  dynamic totalEstimate,  String? specifications,  String roomType,  String status,  bool isLocked,  String? rejectionReason,  String? closedBy,  String createdAt,  String updatedAt,  NegotiationProductModel product,  NegotiationParticipantModel buyer,  NegotiationParticipantModel seller,  List<NegotiationMessageModel>? messages,  int? messagesTotal,  Map<String, dynamic>? economics)?  $default,) {final _that = this;
 switch (_that) {
 case _NegotiationModel() when $default != null:
-return $default(_that.id,_that.orderId,_that.order,_that.productId,_that.buyerId,_that.sellerId,_that.quantity,_that.pricePerUnit,_that.totalEstimate,_that.specifications,_that.roomType,_that.status,_that.isLocked,_that.rejectionReason,_that.closedBy,_that.createdAt,_that.updatedAt,_that.product,_that.buyer,_that.seller,_that.messages,_that.messagesTotal);case _:
+return $default(_that.id,_that.orderId,_that.order,_that.productId,_that.buyerId,_that.sellerId,_that.quantity,_that.pricePerUnit,_that.totalEstimate,_that.specifications,_that.roomType,_that.status,_that.isLocked,_that.rejectionReason,_that.closedBy,_that.createdAt,_that.updatedAt,_that.product,_that.buyer,_that.seller,_that.messages,_that.messagesTotal,_that.economics);case _:
   return null;
 
 }
@@ -257,7 +258,7 @@ return $default(_that.id,_that.orderId,_that.order,_that.productId,_that.buyerId
 @JsonSerializable()
 
 class _NegotiationModel extends NegotiationModel {
-  const _NegotiationModel({required this.id, this.orderId, @JsonKey(fromJson: negotiationOrderFromJson, toJson: negotiationOrderToJson) this.order, required this.productId, required this.buyerId, required this.sellerId, required this.quantity, required this.pricePerUnit, required this.totalEstimate, this.specifications, this.roomType = 'NEGOTIATION', required this.status, required this.isLocked, this.rejectionReason, this.closedBy, required this.createdAt, required this.updatedAt, required this.product, required this.buyer, required this.seller, final  List<NegotiationMessageModel>? messages, this.messagesTotal}): _messages = messages,super._();
+  const _NegotiationModel({required this.id, this.orderId, @JsonKey(fromJson: negotiationOrderFromJson, toJson: negotiationOrderToJson) this.order, required this.productId, required this.buyerId, required this.sellerId, required this.quantity, required this.pricePerUnit, required this.totalEstimate, this.specifications, this.roomType = 'NEGOTIATION', required this.status, required this.isLocked, this.rejectionReason, this.closedBy, required this.createdAt, required this.updatedAt, required this.product, required this.buyer, required this.seller, final  List<NegotiationMessageModel>? messages, this.messagesTotal, final  Map<String, dynamic>? economics}): _messages = messages,_economics = economics,super._();
   factory _NegotiationModel.fromJson(Map<String, dynamic> json) => _$NegotiationModelFromJson(json);
 
 @override final  String id;
@@ -290,6 +291,15 @@ class _NegotiationModel extends NegotiationModel {
 }
 
 @override final  int? messagesTotal;
+ final  Map<String, dynamic>? _economics;
+@override Map<String, dynamic>? get economics {
+  final value = _economics;
+  if (value == null) return null;
+  if (_economics is EqualUnmodifiableMapView) return _economics;
+  // ignore: implicit_dynamic_type
+  return EqualUnmodifiableMapView(value);
+}
+
 
 /// Create a copy of NegotiationModel
 /// with the given fields replaced by the non-null parameter values.
@@ -304,16 +314,16 @@ Map<String, dynamic> toJson() {
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is _NegotiationModel&&(identical(other.id, id) || other.id == id)&&(identical(other.orderId, orderId) || other.orderId == orderId)&&(identical(other.order, order) || other.order == order)&&(identical(other.productId, productId) || other.productId == productId)&&(identical(other.buyerId, buyerId) || other.buyerId == buyerId)&&(identical(other.sellerId, sellerId) || other.sellerId == sellerId)&&const DeepCollectionEquality().equals(other.quantity, quantity)&&const DeepCollectionEquality().equals(other.pricePerUnit, pricePerUnit)&&const DeepCollectionEquality().equals(other.totalEstimate, totalEstimate)&&(identical(other.specifications, specifications) || other.specifications == specifications)&&(identical(other.roomType, roomType) || other.roomType == roomType)&&(identical(other.status, status) || other.status == status)&&(identical(other.isLocked, isLocked) || other.isLocked == isLocked)&&(identical(other.rejectionReason, rejectionReason) || other.rejectionReason == rejectionReason)&&(identical(other.closedBy, closedBy) || other.closedBy == closedBy)&&(identical(other.createdAt, createdAt) || other.createdAt == createdAt)&&(identical(other.updatedAt, updatedAt) || other.updatedAt == updatedAt)&&(identical(other.product, product) || other.product == product)&&(identical(other.buyer, buyer) || other.buyer == buyer)&&(identical(other.seller, seller) || other.seller == seller)&&const DeepCollectionEquality().equals(other._messages, _messages)&&(identical(other.messagesTotal, messagesTotal) || other.messagesTotal == messagesTotal));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is _NegotiationModel&&(identical(other.id, id) || other.id == id)&&(identical(other.orderId, orderId) || other.orderId == orderId)&&(identical(other.order, order) || other.order == order)&&(identical(other.productId, productId) || other.productId == productId)&&(identical(other.buyerId, buyerId) || other.buyerId == buyerId)&&(identical(other.sellerId, sellerId) || other.sellerId == sellerId)&&const DeepCollectionEquality().equals(other.quantity, quantity)&&const DeepCollectionEquality().equals(other.pricePerUnit, pricePerUnit)&&const DeepCollectionEquality().equals(other.totalEstimate, totalEstimate)&&(identical(other.specifications, specifications) || other.specifications == specifications)&&(identical(other.roomType, roomType) || other.roomType == roomType)&&(identical(other.status, status) || other.status == status)&&(identical(other.isLocked, isLocked) || other.isLocked == isLocked)&&(identical(other.rejectionReason, rejectionReason) || other.rejectionReason == rejectionReason)&&(identical(other.closedBy, closedBy) || other.closedBy == closedBy)&&(identical(other.createdAt, createdAt) || other.createdAt == createdAt)&&(identical(other.updatedAt, updatedAt) || other.updatedAt == updatedAt)&&(identical(other.product, product) || other.product == product)&&(identical(other.buyer, buyer) || other.buyer == buyer)&&(identical(other.seller, seller) || other.seller == seller)&&const DeepCollectionEquality().equals(other._messages, _messages)&&(identical(other.messagesTotal, messagesTotal) || other.messagesTotal == messagesTotal)&&const DeepCollectionEquality().equals(other._economics, _economics));
 }
 
 @JsonKey(includeFromJson: false, includeToJson: false)
 @override
-int get hashCode => Object.hashAll([runtimeType,id,orderId,order,productId,buyerId,sellerId,const DeepCollectionEquality().hash(quantity),const DeepCollectionEquality().hash(pricePerUnit),const DeepCollectionEquality().hash(totalEstimate),specifications,roomType,status,isLocked,rejectionReason,closedBy,createdAt,updatedAt,product,buyer,seller,const DeepCollectionEquality().hash(_messages),messagesTotal]);
+int get hashCode => Object.hashAll([runtimeType,id,orderId,order,productId,buyerId,sellerId,const DeepCollectionEquality().hash(quantity),const DeepCollectionEquality().hash(pricePerUnit),const DeepCollectionEquality().hash(totalEstimate),specifications,roomType,status,isLocked,rejectionReason,closedBy,createdAt,updatedAt,product,buyer,seller,const DeepCollectionEquality().hash(_messages),messagesTotal,const DeepCollectionEquality().hash(_economics)]);
 
 @override
 String toString() {
-  return 'NegotiationModel(id: $id, orderId: $orderId, order: $order, productId: $productId, buyerId: $buyerId, sellerId: $sellerId, quantity: $quantity, pricePerUnit: $pricePerUnit, totalEstimate: $totalEstimate, specifications: $specifications, roomType: $roomType, status: $status, isLocked: $isLocked, rejectionReason: $rejectionReason, closedBy: $closedBy, createdAt: $createdAt, updatedAt: $updatedAt, product: $product, buyer: $buyer, seller: $seller, messages: $messages, messagesTotal: $messagesTotal)';
+  return 'NegotiationModel(id: $id, orderId: $orderId, order: $order, productId: $productId, buyerId: $buyerId, sellerId: $sellerId, quantity: $quantity, pricePerUnit: $pricePerUnit, totalEstimate: $totalEstimate, specifications: $specifications, roomType: $roomType, status: $status, isLocked: $isLocked, rejectionReason: $rejectionReason, closedBy: $closedBy, createdAt: $createdAt, updatedAt: $updatedAt, product: $product, buyer: $buyer, seller: $seller, messages: $messages, messagesTotal: $messagesTotal, economics: $economics)';
 }
 
 
@@ -324,7 +334,7 @@ abstract mixin class _$NegotiationModelCopyWith<$Res> implements $NegotiationMod
   factory _$NegotiationModelCopyWith(_NegotiationModel value, $Res Function(_NegotiationModel) _then) = __$NegotiationModelCopyWithImpl;
 @override @useResult
 $Res call({
- String id, String? orderId,@JsonKey(fromJson: negotiationOrderFromJson, toJson: negotiationOrderToJson) NegotiationOrderSummaryModel? order, String productId, String buyerId, String sellerId, dynamic quantity, dynamic pricePerUnit, dynamic totalEstimate, String? specifications, String roomType, String status, bool isLocked, String? rejectionReason, String? closedBy, String createdAt, String updatedAt, NegotiationProductModel product, NegotiationParticipantModel buyer, NegotiationParticipantModel seller, List<NegotiationMessageModel>? messages, int? messagesTotal
+ String id, String? orderId,@JsonKey(fromJson: negotiationOrderFromJson, toJson: negotiationOrderToJson) NegotiationOrderSummaryModel? order, String productId, String buyerId, String sellerId, dynamic quantity, dynamic pricePerUnit, dynamic totalEstimate, String? specifications, String roomType, String status, bool isLocked, String? rejectionReason, String? closedBy, String createdAt, String updatedAt, NegotiationProductModel product, NegotiationParticipantModel buyer, NegotiationParticipantModel seller, List<NegotiationMessageModel>? messages, int? messagesTotal, Map<String, dynamic>? economics
 });
 
 
@@ -341,7 +351,7 @@ class __$NegotiationModelCopyWithImpl<$Res>
 
 /// Create a copy of NegotiationModel
 /// with the given fields replaced by the non-null parameter values.
-@override @pragma('vm:prefer-inline') $Res call({Object? id = null,Object? orderId = freezed,Object? order = freezed,Object? productId = null,Object? buyerId = null,Object? sellerId = null,Object? quantity = freezed,Object? pricePerUnit = freezed,Object? totalEstimate = freezed,Object? specifications = freezed,Object? roomType = null,Object? status = null,Object? isLocked = null,Object? rejectionReason = freezed,Object? closedBy = freezed,Object? createdAt = null,Object? updatedAt = null,Object? product = null,Object? buyer = null,Object? seller = null,Object? messages = freezed,Object? messagesTotal = freezed,}) {
+@override @pragma('vm:prefer-inline') $Res call({Object? id = null,Object? orderId = freezed,Object? order = freezed,Object? productId = null,Object? buyerId = null,Object? sellerId = null,Object? quantity = freezed,Object? pricePerUnit = freezed,Object? totalEstimate = freezed,Object? specifications = freezed,Object? roomType = null,Object? status = null,Object? isLocked = null,Object? rejectionReason = freezed,Object? closedBy = freezed,Object? createdAt = null,Object? updatedAt = null,Object? product = null,Object? buyer = null,Object? seller = null,Object? messages = freezed,Object? messagesTotal = freezed,Object? economics = freezed,}) {
   return _then(_NegotiationModel(
 id: null == id ? _self.id : id // ignore: cast_nullable_to_non_nullable
 as String,orderId: freezed == orderId ? _self.orderId : orderId // ignore: cast_nullable_to_non_nullable
@@ -365,7 +375,8 @@ as NegotiationProductModel,buyer: null == buyer ? _self.buyer : buyer // ignore:
 as NegotiationParticipantModel,seller: null == seller ? _self.seller : seller // ignore: cast_nullable_to_non_nullable
 as NegotiationParticipantModel,messages: freezed == messages ? _self._messages : messages // ignore: cast_nullable_to_non_nullable
 as List<NegotiationMessageModel>?,messagesTotal: freezed == messagesTotal ? _self.messagesTotal : messagesTotal // ignore: cast_nullable_to_non_nullable
-as int?,
+as int?,economics: freezed == economics ? _self._economics : economics // ignore: cast_nullable_to_non_nullable
+as Map<String, dynamic>?,
   ));
 }
 
@@ -403,7 +414,7 @@ $NegotiationParticipantModelCopyWith<$Res> get seller {
 /// @nodoc
 mixin _$NegotiationProductModel {
 
- String get id; String get name; String? get thumbnailUrl; dynamic get pricePerUnit; String get unit; dynamic get minOrder; String? get description; String? get biomassaType; String? get regency; String? get province; String? get status;
+ String get id; String get name; String? get thumbnailUrl; dynamic get pricePerUnit; String get unit; dynamic get minOrder; dynamic get stock; String? get description; String? get biomassaType; String? get regency; String? get province; String? get status;
 /// Create a copy of NegotiationProductModel
 /// with the given fields replaced by the non-null parameter values.
 @JsonKey(includeFromJson: false, includeToJson: false)
@@ -416,16 +427,16 @@ $NegotiationProductModelCopyWith<NegotiationProductModel> get copyWith => _$Nego
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is NegotiationProductModel&&(identical(other.id, id) || other.id == id)&&(identical(other.name, name) || other.name == name)&&(identical(other.thumbnailUrl, thumbnailUrl) || other.thumbnailUrl == thumbnailUrl)&&const DeepCollectionEquality().equals(other.pricePerUnit, pricePerUnit)&&(identical(other.unit, unit) || other.unit == unit)&&const DeepCollectionEquality().equals(other.minOrder, minOrder)&&(identical(other.description, description) || other.description == description)&&(identical(other.biomassaType, biomassaType) || other.biomassaType == biomassaType)&&(identical(other.regency, regency) || other.regency == regency)&&(identical(other.province, province) || other.province == province)&&(identical(other.status, status) || other.status == status));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is NegotiationProductModel&&(identical(other.id, id) || other.id == id)&&(identical(other.name, name) || other.name == name)&&(identical(other.thumbnailUrl, thumbnailUrl) || other.thumbnailUrl == thumbnailUrl)&&const DeepCollectionEquality().equals(other.pricePerUnit, pricePerUnit)&&(identical(other.unit, unit) || other.unit == unit)&&const DeepCollectionEquality().equals(other.minOrder, minOrder)&&const DeepCollectionEquality().equals(other.stock, stock)&&(identical(other.description, description) || other.description == description)&&(identical(other.biomassaType, biomassaType) || other.biomassaType == biomassaType)&&(identical(other.regency, regency) || other.regency == regency)&&(identical(other.province, province) || other.province == province)&&(identical(other.status, status) || other.status == status));
 }
 
 @JsonKey(includeFromJson: false, includeToJson: false)
 @override
-int get hashCode => Object.hash(runtimeType,id,name,thumbnailUrl,const DeepCollectionEquality().hash(pricePerUnit),unit,const DeepCollectionEquality().hash(minOrder),description,biomassaType,regency,province,status);
+int get hashCode => Object.hash(runtimeType,id,name,thumbnailUrl,const DeepCollectionEquality().hash(pricePerUnit),unit,const DeepCollectionEquality().hash(minOrder),const DeepCollectionEquality().hash(stock),description,biomassaType,regency,province,status);
 
 @override
 String toString() {
-  return 'NegotiationProductModel(id: $id, name: $name, thumbnailUrl: $thumbnailUrl, pricePerUnit: $pricePerUnit, unit: $unit, minOrder: $minOrder, description: $description, biomassaType: $biomassaType, regency: $regency, province: $province, status: $status)';
+  return 'NegotiationProductModel(id: $id, name: $name, thumbnailUrl: $thumbnailUrl, pricePerUnit: $pricePerUnit, unit: $unit, minOrder: $minOrder, stock: $stock, description: $description, biomassaType: $biomassaType, regency: $regency, province: $province, status: $status)';
 }
 
 
@@ -436,7 +447,7 @@ abstract mixin class $NegotiationProductModelCopyWith<$Res>  {
   factory $NegotiationProductModelCopyWith(NegotiationProductModel value, $Res Function(NegotiationProductModel) _then) = _$NegotiationProductModelCopyWithImpl;
 @useResult
 $Res call({
- String id, String name, String? thumbnailUrl, dynamic pricePerUnit, String unit, dynamic minOrder, String? description, String? biomassaType, String? regency, String? province, String? status
+ String id, String name, String? thumbnailUrl, dynamic pricePerUnit, String unit, dynamic minOrder, dynamic stock, String? description, String? biomassaType, String? regency, String? province, String? status
 });
 
 
@@ -453,7 +464,7 @@ class _$NegotiationProductModelCopyWithImpl<$Res>
 
 /// Create a copy of NegotiationProductModel
 /// with the given fields replaced by the non-null parameter values.
-@pragma('vm:prefer-inline') @override $Res call({Object? id = null,Object? name = null,Object? thumbnailUrl = freezed,Object? pricePerUnit = freezed,Object? unit = null,Object? minOrder = freezed,Object? description = freezed,Object? biomassaType = freezed,Object? regency = freezed,Object? province = freezed,Object? status = freezed,}) {
+@pragma('vm:prefer-inline') @override $Res call({Object? id = null,Object? name = null,Object? thumbnailUrl = freezed,Object? pricePerUnit = freezed,Object? unit = null,Object? minOrder = freezed,Object? stock = freezed,Object? description = freezed,Object? biomassaType = freezed,Object? regency = freezed,Object? province = freezed,Object? status = freezed,}) {
   return _then(_self.copyWith(
 id: null == id ? _self.id : id // ignore: cast_nullable_to_non_nullable
 as String,name: null == name ? _self.name : name // ignore: cast_nullable_to_non_nullable
@@ -461,6 +472,7 @@ as String,thumbnailUrl: freezed == thumbnailUrl ? _self.thumbnailUrl : thumbnail
 as String?,pricePerUnit: freezed == pricePerUnit ? _self.pricePerUnit : pricePerUnit // ignore: cast_nullable_to_non_nullable
 as dynamic,unit: null == unit ? _self.unit : unit // ignore: cast_nullable_to_non_nullable
 as String,minOrder: freezed == minOrder ? _self.minOrder : minOrder // ignore: cast_nullable_to_non_nullable
+as dynamic,stock: freezed == stock ? _self.stock : stock // ignore: cast_nullable_to_non_nullable
 as dynamic,description: freezed == description ? _self.description : description // ignore: cast_nullable_to_non_nullable
 as String?,biomassaType: freezed == biomassaType ? _self.biomassaType : biomassaType // ignore: cast_nullable_to_non_nullable
 as String?,regency: freezed == regency ? _self.regency : regency // ignore: cast_nullable_to_non_nullable
@@ -551,10 +563,10 @@ return $default(_that);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( String id,  String name,  String? thumbnailUrl,  dynamic pricePerUnit,  String unit,  dynamic minOrder,  String? description,  String? biomassaType,  String? regency,  String? province,  String? status)?  $default,{required TResult orElse(),}) {final _that = this;
+@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( String id,  String name,  String? thumbnailUrl,  dynamic pricePerUnit,  String unit,  dynamic minOrder,  dynamic stock,  String? description,  String? biomassaType,  String? regency,  String? province,  String? status)?  $default,{required TResult orElse(),}) {final _that = this;
 switch (_that) {
 case _NegotiationProductModel() when $default != null:
-return $default(_that.id,_that.name,_that.thumbnailUrl,_that.pricePerUnit,_that.unit,_that.minOrder,_that.description,_that.biomassaType,_that.regency,_that.province,_that.status);case _:
+return $default(_that.id,_that.name,_that.thumbnailUrl,_that.pricePerUnit,_that.unit,_that.minOrder,_that.stock,_that.description,_that.biomassaType,_that.regency,_that.province,_that.status);case _:
   return orElse();
 
 }
@@ -572,10 +584,10 @@ return $default(_that.id,_that.name,_that.thumbnailUrl,_that.pricePerUnit,_that.
 /// }
 /// ```
 
-@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( String id,  String name,  String? thumbnailUrl,  dynamic pricePerUnit,  String unit,  dynamic minOrder,  String? description,  String? biomassaType,  String? regency,  String? province,  String? status)  $default,) {final _that = this;
+@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( String id,  String name,  String? thumbnailUrl,  dynamic pricePerUnit,  String unit,  dynamic minOrder,  dynamic stock,  String? description,  String? biomassaType,  String? regency,  String? province,  String? status)  $default,) {final _that = this;
 switch (_that) {
 case _NegotiationProductModel():
-return $default(_that.id,_that.name,_that.thumbnailUrl,_that.pricePerUnit,_that.unit,_that.minOrder,_that.description,_that.biomassaType,_that.regency,_that.province,_that.status);case _:
+return $default(_that.id,_that.name,_that.thumbnailUrl,_that.pricePerUnit,_that.unit,_that.minOrder,_that.stock,_that.description,_that.biomassaType,_that.regency,_that.province,_that.status);case _:
   throw StateError('Unexpected subclass');
 
 }
@@ -592,10 +604,10 @@ return $default(_that.id,_that.name,_that.thumbnailUrl,_that.pricePerUnit,_that.
 /// }
 /// ```
 
-@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( String id,  String name,  String? thumbnailUrl,  dynamic pricePerUnit,  String unit,  dynamic minOrder,  String? description,  String? biomassaType,  String? regency,  String? province,  String? status)?  $default,) {final _that = this;
+@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( String id,  String name,  String? thumbnailUrl,  dynamic pricePerUnit,  String unit,  dynamic minOrder,  dynamic stock,  String? description,  String? biomassaType,  String? regency,  String? province,  String? status)?  $default,) {final _that = this;
 switch (_that) {
 case _NegotiationProductModel() when $default != null:
-return $default(_that.id,_that.name,_that.thumbnailUrl,_that.pricePerUnit,_that.unit,_that.minOrder,_that.description,_that.biomassaType,_that.regency,_that.province,_that.status);case _:
+return $default(_that.id,_that.name,_that.thumbnailUrl,_that.pricePerUnit,_that.unit,_that.minOrder,_that.stock,_that.description,_that.biomassaType,_that.regency,_that.province,_that.status);case _:
   return null;
 
 }
@@ -607,7 +619,7 @@ return $default(_that.id,_that.name,_that.thumbnailUrl,_that.pricePerUnit,_that.
 @JsonSerializable()
 
 class _NegotiationProductModel extends NegotiationProductModel {
-  const _NegotiationProductModel({required this.id, required this.name, this.thumbnailUrl, required this.pricePerUnit, required this.unit, this.minOrder = 1, this.description, this.biomassaType, this.regency, this.province, this.status}): super._();
+  const _NegotiationProductModel({required this.id, required this.name, this.thumbnailUrl, required this.pricePerUnit, required this.unit, this.minOrder = 1, this.stock = 0, this.description, this.biomassaType, this.regency, this.province, this.status}): super._();
   factory _NegotiationProductModel.fromJson(Map<String, dynamic> json) => _$NegotiationProductModelFromJson(json);
 
 @override final  String id;
@@ -616,6 +628,7 @@ class _NegotiationProductModel extends NegotiationProductModel {
 @override final  dynamic pricePerUnit;
 @override final  String unit;
 @override@JsonKey() final  dynamic minOrder;
+@override@JsonKey() final  dynamic stock;
 @override final  String? description;
 @override final  String? biomassaType;
 @override final  String? regency;
@@ -635,16 +648,16 @@ Map<String, dynamic> toJson() {
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is _NegotiationProductModel&&(identical(other.id, id) || other.id == id)&&(identical(other.name, name) || other.name == name)&&(identical(other.thumbnailUrl, thumbnailUrl) || other.thumbnailUrl == thumbnailUrl)&&const DeepCollectionEquality().equals(other.pricePerUnit, pricePerUnit)&&(identical(other.unit, unit) || other.unit == unit)&&const DeepCollectionEquality().equals(other.minOrder, minOrder)&&(identical(other.description, description) || other.description == description)&&(identical(other.biomassaType, biomassaType) || other.biomassaType == biomassaType)&&(identical(other.regency, regency) || other.regency == regency)&&(identical(other.province, province) || other.province == province)&&(identical(other.status, status) || other.status == status));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is _NegotiationProductModel&&(identical(other.id, id) || other.id == id)&&(identical(other.name, name) || other.name == name)&&(identical(other.thumbnailUrl, thumbnailUrl) || other.thumbnailUrl == thumbnailUrl)&&const DeepCollectionEquality().equals(other.pricePerUnit, pricePerUnit)&&(identical(other.unit, unit) || other.unit == unit)&&const DeepCollectionEquality().equals(other.minOrder, minOrder)&&const DeepCollectionEquality().equals(other.stock, stock)&&(identical(other.description, description) || other.description == description)&&(identical(other.biomassaType, biomassaType) || other.biomassaType == biomassaType)&&(identical(other.regency, regency) || other.regency == regency)&&(identical(other.province, province) || other.province == province)&&(identical(other.status, status) || other.status == status));
 }
 
 @JsonKey(includeFromJson: false, includeToJson: false)
 @override
-int get hashCode => Object.hash(runtimeType,id,name,thumbnailUrl,const DeepCollectionEquality().hash(pricePerUnit),unit,const DeepCollectionEquality().hash(minOrder),description,biomassaType,regency,province,status);
+int get hashCode => Object.hash(runtimeType,id,name,thumbnailUrl,const DeepCollectionEquality().hash(pricePerUnit),unit,const DeepCollectionEquality().hash(minOrder),const DeepCollectionEquality().hash(stock),description,biomassaType,regency,province,status);
 
 @override
 String toString() {
-  return 'NegotiationProductModel(id: $id, name: $name, thumbnailUrl: $thumbnailUrl, pricePerUnit: $pricePerUnit, unit: $unit, minOrder: $minOrder, description: $description, biomassaType: $biomassaType, regency: $regency, province: $province, status: $status)';
+  return 'NegotiationProductModel(id: $id, name: $name, thumbnailUrl: $thumbnailUrl, pricePerUnit: $pricePerUnit, unit: $unit, minOrder: $minOrder, stock: $stock, description: $description, biomassaType: $biomassaType, regency: $regency, province: $province, status: $status)';
 }
 
 
@@ -655,7 +668,7 @@ abstract mixin class _$NegotiationProductModelCopyWith<$Res> implements $Negotia
   factory _$NegotiationProductModelCopyWith(_NegotiationProductModel value, $Res Function(_NegotiationProductModel) _then) = __$NegotiationProductModelCopyWithImpl;
 @override @useResult
 $Res call({
- String id, String name, String? thumbnailUrl, dynamic pricePerUnit, String unit, dynamic minOrder, String? description, String? biomassaType, String? regency, String? province, String? status
+ String id, String name, String? thumbnailUrl, dynamic pricePerUnit, String unit, dynamic minOrder, dynamic stock, String? description, String? biomassaType, String? regency, String? province, String? status
 });
 
 
@@ -672,7 +685,7 @@ class __$NegotiationProductModelCopyWithImpl<$Res>
 
 /// Create a copy of NegotiationProductModel
 /// with the given fields replaced by the non-null parameter values.
-@override @pragma('vm:prefer-inline') $Res call({Object? id = null,Object? name = null,Object? thumbnailUrl = freezed,Object? pricePerUnit = freezed,Object? unit = null,Object? minOrder = freezed,Object? description = freezed,Object? biomassaType = freezed,Object? regency = freezed,Object? province = freezed,Object? status = freezed,}) {
+@override @pragma('vm:prefer-inline') $Res call({Object? id = null,Object? name = null,Object? thumbnailUrl = freezed,Object? pricePerUnit = freezed,Object? unit = null,Object? minOrder = freezed,Object? stock = freezed,Object? description = freezed,Object? biomassaType = freezed,Object? regency = freezed,Object? province = freezed,Object? status = freezed,}) {
   return _then(_NegotiationProductModel(
 id: null == id ? _self.id : id // ignore: cast_nullable_to_non_nullable
 as String,name: null == name ? _self.name : name // ignore: cast_nullable_to_non_nullable
@@ -680,6 +693,7 @@ as String,thumbnailUrl: freezed == thumbnailUrl ? _self.thumbnailUrl : thumbnail
 as String?,pricePerUnit: freezed == pricePerUnit ? _self.pricePerUnit : pricePerUnit // ignore: cast_nullable_to_non_nullable
 as dynamic,unit: null == unit ? _self.unit : unit // ignore: cast_nullable_to_non_nullable
 as String,minOrder: freezed == minOrder ? _self.minOrder : minOrder // ignore: cast_nullable_to_non_nullable
+as dynamic,stock: freezed == stock ? _self.stock : stock // ignore: cast_nullable_to_non_nullable
 as dynamic,description: freezed == description ? _self.description : description // ignore: cast_nullable_to_non_nullable
 as String?,biomassaType: freezed == biomassaType ? _self.biomassaType : biomassaType // ignore: cast_nullable_to_non_nullable
 as String?,regency: freezed == regency ? _self.regency : regency // ignore: cast_nullable_to_non_nullable

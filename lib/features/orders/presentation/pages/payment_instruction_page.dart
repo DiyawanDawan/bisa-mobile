@@ -137,7 +137,8 @@ class _PaymentInstructionPageState extends State<PaymentInstructionPage> {
     }
   }
 
-  bool get _isBatchPayment => widget.batchOrderIds.isNotEmpty;
+  /// Batch = checkout multi-supplier (2+ orderId dengan checkoutBatchId sama).
+  bool get _isBatchPayment => widget.batchOrderIds.length > 1;
 
   List<String> get _orderNumbers {
     final batchNo = _paymentResult['checkoutBatchNumber']?.toString().trim();
@@ -514,7 +515,7 @@ class _PaymentInstructionPageState extends State<PaymentInstructionPage> {
           ],
           CustomButton(
             text: _paymentConfirmed
-                ? (widget.batchOrderIds.isNotEmpty
+                ? (_isBatchPayment
                     ? 'Lihat Pesanan Saya'
                     : 'Kembali ke Detail Pesanan')
                 : 'Kembali',

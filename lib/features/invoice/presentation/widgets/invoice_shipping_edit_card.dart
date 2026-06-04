@@ -40,6 +40,17 @@ class _InvoiceShippingEditCardState extends State<InvoiceShippingEditCard> {
   }
 
   @override
+  void didUpdateWidget(covariant InvoiceShippingEditCard oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.draft == widget.draft) return;
+    _recipientCtrl.text = widget.draft.recipient;
+    _phoneCtrl.text = widget.draft.phone;
+    _addressCtrl.text = widget.draft.address;
+    _regencyCtrl.text = widget.draft.regency;
+    _provinceCtrl.text = widget.draft.province;
+  }
+
+  @override
   void dispose() {
     _recipientCtrl.dispose();
     _phoneCtrl.dispose();
@@ -58,6 +69,10 @@ class _InvoiceShippingEditCardState extends State<InvoiceShippingEditCard> {
         address: _addressCtrl.text,
         regency: _regencyCtrl.text,
         province: _provinceCtrl.text,
+        source: widget.draft.source == 'buyer_profile' ||
+                widget.draft.source == 'buyer_saved_address'
+            ? 'custom'
+            : widget.draft.source,
       ),
     );
   }

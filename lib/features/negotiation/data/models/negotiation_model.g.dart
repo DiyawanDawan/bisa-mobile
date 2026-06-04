@@ -40,6 +40,7 @@ _NegotiationModel _$NegotiationModelFromJson(Map<String, dynamic> json) =>
           )
           .toList(),
       messagesTotal: (json['messagesTotal'] as num?)?.toInt(),
+      economics: json['economics'] as Map<String, dynamic>?,
     );
 
 Map<String, dynamic> _$NegotiationModelToJson(_NegotiationModel instance) =>
@@ -66,6 +67,7 @@ Map<String, dynamic> _$NegotiationModelToJson(_NegotiationModel instance) =>
       'seller': instance.seller,
       'messages': instance.messages,
       'messagesTotal': instance.messagesTotal,
+      'economics': instance.economics,
     };
 
 _NegotiationProductModel _$NegotiationProductModelFromJson(
@@ -77,6 +79,7 @@ _NegotiationProductModel _$NegotiationProductModelFromJson(
   pricePerUnit: json['pricePerUnit'],
   unit: json['unit'] as String,
   minOrder: json['minOrder'] ?? 1,
+  stock: json['stock'] ?? 0,
   description: json['description'] as String?,
   biomassaType: json['biomassaType'] as String?,
   regency: json['regency'] as String?,
@@ -93,6 +96,7 @@ Map<String, dynamic> _$NegotiationProductModelToJson(
   'pricePerUnit': instance.pricePerUnit,
   'unit': instance.unit,
   'minOrder': instance.minOrder,
+  'stock': instance.stock,
   'description': instance.description,
   'biomassaType': instance.biomassaType,
   'regency': instance.regency,

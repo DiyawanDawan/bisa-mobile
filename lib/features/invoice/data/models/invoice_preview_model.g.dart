@@ -50,6 +50,9 @@ _InvoicePreviewProductModel _$InvoicePreviewProductModelFromJson(
   name: json['name'] as String,
   unit: json['unit'] as String,
   thumbnailUrl: json['thumbnailUrl'] as String?,
+  pricePerUnit: json['pricePerUnit'] ?? 0,
+  stock: json['stock'] ?? 0,
+  minOrder: json['minOrder'] ?? 1,
 );
 
 Map<String, dynamic> _$InvoicePreviewProductModelToJson(
@@ -59,6 +62,9 @@ Map<String, dynamic> _$InvoicePreviewProductModelToJson(
   'name': instance.name,
   'unit': instance.unit,
   'thumbnailUrl': instance.thumbnailUrl,
+  'pricePerUnit': instance.pricePerUnit,
+  'stock': instance.stock,
+  'minOrder': instance.minOrder,
 };
 
 _InvoicePreviewBuyerModel _$InvoicePreviewBuyerModelFromJson(

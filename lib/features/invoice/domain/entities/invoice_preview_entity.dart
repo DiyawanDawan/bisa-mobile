@@ -1,4 +1,5 @@
 import 'package:freezed_annotation/freezed_annotation.dart';
+import 'invoice_deal_economics.dart';
 
 part 'invoice_preview_entity.freezed.dart';
 
@@ -22,5 +23,10 @@ abstract class InvoicePreviewEntity with _$InvoicePreviewEntity {
     required double totalAmount,
     String? specifications,
     Map<String, dynamic>? shippingSnapshot,
+    Map<String, dynamic>? sellerShippingSnapshot,
+    int? sellerOriginId,
+    String? sellerOriginLabel,
+    String? sellerOriginResolvedFrom,
+    InvoiceDealEconomics? economics,
   }) = _InvoicePreviewEntity;
 }

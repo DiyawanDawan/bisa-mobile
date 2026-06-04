@@ -14,7 +14,7 @@ T _$identity<T>(T value) => value;
 /// @nodoc
 mixin _$InvoicePreviewEntity {
 
- String get negotiationId; String get productId; String get productName; String get productUnit; String? get productThumbnailUrl; String get buyerId; String get buyerName; String? get buyerCompanyName; double get quantity; double get pricePerUnit; double get subtotal; double get platformFee; double get logisticsFee; double get vatAmount; double get totalAmount; String? get specifications; Map<String, dynamic>? get shippingSnapshot;
+ String get negotiationId; String get productId; String get productName; String get productUnit; String? get productThumbnailUrl; String get buyerId; String get buyerName; String? get buyerCompanyName; double get quantity; double get pricePerUnit; double get subtotal; double get platformFee; double get logisticsFee; double get vatAmount; double get totalAmount; String? get specifications; Map<String, dynamic>? get shippingSnapshot; Map<String, dynamic>? get sellerShippingSnapshot; int? get sellerOriginId; String? get sellerOriginLabel; String? get sellerOriginResolvedFrom; InvoiceDealEconomics? get economics;
 /// Create a copy of InvoicePreviewEntity
 /// with the given fields replaced by the non-null parameter values.
 @JsonKey(includeFromJson: false, includeToJson: false)
@@ -25,16 +25,16 @@ $InvoicePreviewEntityCopyWith<InvoicePreviewEntity> get copyWith => _$InvoicePre
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is InvoicePreviewEntity&&(identical(other.negotiationId, negotiationId) || other.negotiationId == negotiationId)&&(identical(other.productId, productId) || other.productId == productId)&&(identical(other.productName, productName) || other.productName == productName)&&(identical(other.productUnit, productUnit) || other.productUnit == productUnit)&&(identical(other.productThumbnailUrl, productThumbnailUrl) || other.productThumbnailUrl == productThumbnailUrl)&&(identical(other.buyerId, buyerId) || other.buyerId == buyerId)&&(identical(other.buyerName, buyerName) || other.buyerName == buyerName)&&(identical(other.buyerCompanyName, buyerCompanyName) || other.buyerCompanyName == buyerCompanyName)&&(identical(other.quantity, quantity) || other.quantity == quantity)&&(identical(other.pricePerUnit, pricePerUnit) || other.pricePerUnit == pricePerUnit)&&(identical(other.subtotal, subtotal) || other.subtotal == subtotal)&&(identical(other.platformFee, platformFee) || other.platformFee == platformFee)&&(identical(other.logisticsFee, logisticsFee) || other.logisticsFee == logisticsFee)&&(identical(other.vatAmount, vatAmount) || other.vatAmount == vatAmount)&&(identical(other.totalAmount, totalAmount) || other.totalAmount == totalAmount)&&(identical(other.specifications, specifications) || other.specifications == specifications)&&const DeepCollectionEquality().equals(other.shippingSnapshot, shippingSnapshot));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is InvoicePreviewEntity&&(identical(other.negotiationId, negotiationId) || other.negotiationId == negotiationId)&&(identical(other.productId, productId) || other.productId == productId)&&(identical(other.productName, productName) || other.productName == productName)&&(identical(other.productUnit, productUnit) || other.productUnit == productUnit)&&(identical(other.productThumbnailUrl, productThumbnailUrl) || other.productThumbnailUrl == productThumbnailUrl)&&(identical(other.buyerId, buyerId) || other.buyerId == buyerId)&&(identical(other.buyerName, buyerName) || other.buyerName == buyerName)&&(identical(other.buyerCompanyName, buyerCompanyName) || other.buyerCompanyName == buyerCompanyName)&&(identical(other.quantity, quantity) || other.quantity == quantity)&&(identical(other.pricePerUnit, pricePerUnit) || other.pricePerUnit == pricePerUnit)&&(identical(other.subtotal, subtotal) || other.subtotal == subtotal)&&(identical(other.platformFee, platformFee) || other.platformFee == platformFee)&&(identical(other.logisticsFee, logisticsFee) || other.logisticsFee == logisticsFee)&&(identical(other.vatAmount, vatAmount) || other.vatAmount == vatAmount)&&(identical(other.totalAmount, totalAmount) || other.totalAmount == totalAmount)&&(identical(other.specifications, specifications) || other.specifications == specifications)&&const DeepCollectionEquality().equals(other.shippingSnapshot, shippingSnapshot)&&const DeepCollectionEquality().equals(other.sellerShippingSnapshot, sellerShippingSnapshot)&&(identical(other.sellerOriginId, sellerOriginId) || other.sellerOriginId == sellerOriginId)&&(identical(other.sellerOriginLabel, sellerOriginLabel) || other.sellerOriginLabel == sellerOriginLabel)&&(identical(other.sellerOriginResolvedFrom, sellerOriginResolvedFrom) || other.sellerOriginResolvedFrom == sellerOriginResolvedFrom)&&(identical(other.economics, economics) || other.economics == economics));
 }
 
 
 @override
-int get hashCode => Object.hash(runtimeType,negotiationId,productId,productName,productUnit,productThumbnailUrl,buyerId,buyerName,buyerCompanyName,quantity,pricePerUnit,subtotal,platformFee,logisticsFee,vatAmount,totalAmount,specifications,const DeepCollectionEquality().hash(shippingSnapshot));
+int get hashCode => Object.hashAll([runtimeType,negotiationId,productId,productName,productUnit,productThumbnailUrl,buyerId,buyerName,buyerCompanyName,quantity,pricePerUnit,subtotal,platformFee,logisticsFee,vatAmount,totalAmount,specifications,const DeepCollectionEquality().hash(shippingSnapshot),const DeepCollectionEquality().hash(sellerShippingSnapshot),sellerOriginId,sellerOriginLabel,sellerOriginResolvedFrom,economics]);
 
 @override
 String toString() {
-  return 'InvoicePreviewEntity(negotiationId: $negotiationId, productId: $productId, productName: $productName, productUnit: $productUnit, productThumbnailUrl: $productThumbnailUrl, buyerId: $buyerId, buyerName: $buyerName, buyerCompanyName: $buyerCompanyName, quantity: $quantity, pricePerUnit: $pricePerUnit, subtotal: $subtotal, platformFee: $platformFee, logisticsFee: $logisticsFee, vatAmount: $vatAmount, totalAmount: $totalAmount, specifications: $specifications, shippingSnapshot: $shippingSnapshot)';
+  return 'InvoicePreviewEntity(negotiationId: $negotiationId, productId: $productId, productName: $productName, productUnit: $productUnit, productThumbnailUrl: $productThumbnailUrl, buyerId: $buyerId, buyerName: $buyerName, buyerCompanyName: $buyerCompanyName, quantity: $quantity, pricePerUnit: $pricePerUnit, subtotal: $subtotal, platformFee: $platformFee, logisticsFee: $logisticsFee, vatAmount: $vatAmount, totalAmount: $totalAmount, specifications: $specifications, shippingSnapshot: $shippingSnapshot, sellerShippingSnapshot: $sellerShippingSnapshot, sellerOriginId: $sellerOriginId, sellerOriginLabel: $sellerOriginLabel, sellerOriginResolvedFrom: $sellerOriginResolvedFrom, economics: $economics)';
 }
 
 
@@ -45,7 +45,7 @@ abstract mixin class $InvoicePreviewEntityCopyWith<$Res>  {
   factory $InvoicePreviewEntityCopyWith(InvoicePreviewEntity value, $Res Function(InvoicePreviewEntity) _then) = _$InvoicePreviewEntityCopyWithImpl;
 @useResult
 $Res call({
- String negotiationId, String productId, String productName, String productUnit, String? productThumbnailUrl, String buyerId, String buyerName, String? buyerCompanyName, double quantity, double pricePerUnit, double subtotal, double platformFee, double logisticsFee, double vatAmount, double totalAmount, String? specifications, Map<String, dynamic>? shippingSnapshot
+ String negotiationId, String productId, String productName, String productUnit, String? productThumbnailUrl, String buyerId, String buyerName, String? buyerCompanyName, double quantity, double pricePerUnit, double subtotal, double platformFee, double logisticsFee, double vatAmount, double totalAmount, String? specifications, Map<String, dynamic>? shippingSnapshot, Map<String, dynamic>? sellerShippingSnapshot, int? sellerOriginId, String? sellerOriginLabel, String? sellerOriginResolvedFrom, InvoiceDealEconomics? economics
 });
 
 
@@ -62,7 +62,7 @@ class _$InvoicePreviewEntityCopyWithImpl<$Res>
 
 /// Create a copy of InvoicePreviewEntity
 /// with the given fields replaced by the non-null parameter values.
-@pragma('vm:prefer-inline') @override $Res call({Object? negotiationId = null,Object? productId = null,Object? productName = null,Object? productUnit = null,Object? productThumbnailUrl = freezed,Object? buyerId = null,Object? buyerName = null,Object? buyerCompanyName = freezed,Object? quantity = null,Object? pricePerUnit = null,Object? subtotal = null,Object? platformFee = null,Object? logisticsFee = null,Object? vatAmount = null,Object? totalAmount = null,Object? specifications = freezed,Object? shippingSnapshot = freezed,}) {
+@pragma('vm:prefer-inline') @override $Res call({Object? negotiationId = null,Object? productId = null,Object? productName = null,Object? productUnit = null,Object? productThumbnailUrl = freezed,Object? buyerId = null,Object? buyerName = null,Object? buyerCompanyName = freezed,Object? quantity = null,Object? pricePerUnit = null,Object? subtotal = null,Object? platformFee = null,Object? logisticsFee = null,Object? vatAmount = null,Object? totalAmount = null,Object? specifications = freezed,Object? shippingSnapshot = freezed,Object? sellerShippingSnapshot = freezed,Object? sellerOriginId = freezed,Object? sellerOriginLabel = freezed,Object? sellerOriginResolvedFrom = freezed,Object? economics = freezed,}) {
   return _then(_self.copyWith(
 negotiationId: null == negotiationId ? _self.negotiationId : negotiationId // ignore: cast_nullable_to_non_nullable
 as String,productId: null == productId ? _self.productId : productId // ignore: cast_nullable_to_non_nullable
@@ -81,7 +81,12 @@ as double,vatAmount: null == vatAmount ? _self.vatAmount : vatAmount // ignore: 
 as double,totalAmount: null == totalAmount ? _self.totalAmount : totalAmount // ignore: cast_nullable_to_non_nullable
 as double,specifications: freezed == specifications ? _self.specifications : specifications // ignore: cast_nullable_to_non_nullable
 as String?,shippingSnapshot: freezed == shippingSnapshot ? _self.shippingSnapshot : shippingSnapshot // ignore: cast_nullable_to_non_nullable
-as Map<String, dynamic>?,
+as Map<String, dynamic>?,sellerShippingSnapshot: freezed == sellerShippingSnapshot ? _self.sellerShippingSnapshot : sellerShippingSnapshot // ignore: cast_nullable_to_non_nullable
+as Map<String, dynamic>?,sellerOriginId: freezed == sellerOriginId ? _self.sellerOriginId : sellerOriginId // ignore: cast_nullable_to_non_nullable
+as int?,sellerOriginLabel: freezed == sellerOriginLabel ? _self.sellerOriginLabel : sellerOriginLabel // ignore: cast_nullable_to_non_nullable
+as String?,sellerOriginResolvedFrom: freezed == sellerOriginResolvedFrom ? _self.sellerOriginResolvedFrom : sellerOriginResolvedFrom // ignore: cast_nullable_to_non_nullable
+as String?,economics: freezed == economics ? _self.economics : economics // ignore: cast_nullable_to_non_nullable
+as InvoiceDealEconomics?,
   ));
 }
 
@@ -166,10 +171,10 @@ return $default(_that);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( String negotiationId,  String productId,  String productName,  String productUnit,  String? productThumbnailUrl,  String buyerId,  String buyerName,  String? buyerCompanyName,  double quantity,  double pricePerUnit,  double subtotal,  double platformFee,  double logisticsFee,  double vatAmount,  double totalAmount,  String? specifications,  Map<String, dynamic>? shippingSnapshot)?  $default,{required TResult orElse(),}) {final _that = this;
+@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( String negotiationId,  String productId,  String productName,  String productUnit,  String? productThumbnailUrl,  String buyerId,  String buyerName,  String? buyerCompanyName,  double quantity,  double pricePerUnit,  double subtotal,  double platformFee,  double logisticsFee,  double vatAmount,  double totalAmount,  String? specifications,  Map<String, dynamic>? shippingSnapshot,  Map<String, dynamic>? sellerShippingSnapshot,  int? sellerOriginId,  String? sellerOriginLabel,  String? sellerOriginResolvedFrom,  InvoiceDealEconomics? economics)?  $default,{required TResult orElse(),}) {final _that = this;
 switch (_that) {
 case _InvoicePreviewEntity() when $default != null:
-return $default(_that.negotiationId,_that.productId,_that.productName,_that.productUnit,_that.productThumbnailUrl,_that.buyerId,_that.buyerName,_that.buyerCompanyName,_that.quantity,_that.pricePerUnit,_that.subtotal,_that.platformFee,_that.logisticsFee,_that.vatAmount,_that.totalAmount,_that.specifications,_that.shippingSnapshot);case _:
+return $default(_that.negotiationId,_that.productId,_that.productName,_that.productUnit,_that.productThumbnailUrl,_that.buyerId,_that.buyerName,_that.buyerCompanyName,_that.quantity,_that.pricePerUnit,_that.subtotal,_that.platformFee,_that.logisticsFee,_that.vatAmount,_that.totalAmount,_that.specifications,_that.shippingSnapshot,_that.sellerShippingSnapshot,_that.sellerOriginId,_that.sellerOriginLabel,_that.sellerOriginResolvedFrom,_that.economics);case _:
   return orElse();
 
 }
@@ -187,10 +192,10 @@ return $default(_that.negotiationId,_that.productId,_that.productName,_that.prod
 /// }
 /// ```
 
-@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( String negotiationId,  String productId,  String productName,  String productUnit,  String? productThumbnailUrl,  String buyerId,  String buyerName,  String? buyerCompanyName,  double quantity,  double pricePerUnit,  double subtotal,  double platformFee,  double logisticsFee,  double vatAmount,  double totalAmount,  String? specifications,  Map<String, dynamic>? shippingSnapshot)  $default,) {final _that = this;
+@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( String negotiationId,  String productId,  String productName,  String productUnit,  String? productThumbnailUrl,  String buyerId,  String buyerName,  String? buyerCompanyName,  double quantity,  double pricePerUnit,  double subtotal,  double platformFee,  double logisticsFee,  double vatAmount,  double totalAmount,  String? specifications,  Map<String, dynamic>? shippingSnapshot,  Map<String, dynamic>? sellerShippingSnapshot,  int? sellerOriginId,  String? sellerOriginLabel,  String? sellerOriginResolvedFrom,  InvoiceDealEconomics? economics)  $default,) {final _that = this;
 switch (_that) {
 case _InvoicePreviewEntity():
-return $default(_that.negotiationId,_that.productId,_that.productName,_that.productUnit,_that.productThumbnailUrl,_that.buyerId,_that.buyerName,_that.buyerCompanyName,_that.quantity,_that.pricePerUnit,_that.subtotal,_that.platformFee,_that.logisticsFee,_that.vatAmount,_that.totalAmount,_that.specifications,_that.shippingSnapshot);case _:
+return $default(_that.negotiationId,_that.productId,_that.productName,_that.productUnit,_that.productThumbnailUrl,_that.buyerId,_that.buyerName,_that.buyerCompanyName,_that.quantity,_that.pricePerUnit,_that.subtotal,_that.platformFee,_that.logisticsFee,_that.vatAmount,_that.totalAmount,_that.specifications,_that.shippingSnapshot,_that.sellerShippingSnapshot,_that.sellerOriginId,_that.sellerOriginLabel,_that.sellerOriginResolvedFrom,_that.economics);case _:
   throw StateError('Unexpected subclass');
 
 }
@@ -207,10 +212,10 @@ return $default(_that.negotiationId,_that.productId,_that.productName,_that.prod
 /// }
 /// ```
 
-@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( String negotiationId,  String productId,  String productName,  String productUnit,  String? productThumbnailUrl,  String buyerId,  String buyerName,  String? buyerCompanyName,  double quantity,  double pricePerUnit,  double subtotal,  double platformFee,  double logisticsFee,  double vatAmount,  double totalAmount,  String? specifications,  Map<String, dynamic>? shippingSnapshot)?  $default,) {final _that = this;
+@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( String negotiationId,  String productId,  String productName,  String productUnit,  String? productThumbnailUrl,  String buyerId,  String buyerName,  String? buyerCompanyName,  double quantity,  double pricePerUnit,  double subtotal,  double platformFee,  double logisticsFee,  double vatAmount,  double totalAmount,  String? specifications,  Map<String, dynamic>? shippingSnapshot,  Map<String, dynamic>? sellerShippingSnapshot,  int? sellerOriginId,  String? sellerOriginLabel,  String? sellerOriginResolvedFrom,  InvoiceDealEconomics? economics)?  $default,) {final _that = this;
 switch (_that) {
 case _InvoicePreviewEntity() when $default != null:
-return $default(_that.negotiationId,_that.productId,_that.productName,_that.productUnit,_that.productThumbnailUrl,_that.buyerId,_that.buyerName,_that.buyerCompanyName,_that.quantity,_that.pricePerUnit,_that.subtotal,_that.platformFee,_that.logisticsFee,_that.vatAmount,_that.totalAmount,_that.specifications,_that.shippingSnapshot);case _:
+return $default(_that.negotiationId,_that.productId,_that.productName,_that.productUnit,_that.productThumbnailUrl,_that.buyerId,_that.buyerName,_that.buyerCompanyName,_that.quantity,_that.pricePerUnit,_that.subtotal,_that.platformFee,_that.logisticsFee,_that.vatAmount,_that.totalAmount,_that.specifications,_that.shippingSnapshot,_that.sellerShippingSnapshot,_that.sellerOriginId,_that.sellerOriginLabel,_that.sellerOriginResolvedFrom,_that.economics);case _:
   return null;
 
 }
@@ -222,7 +227,7 @@ return $default(_that.negotiationId,_that.productId,_that.productName,_that.prod
 
 
 class _InvoicePreviewEntity implements InvoicePreviewEntity {
-  const _InvoicePreviewEntity({required this.negotiationId, required this.productId, required this.productName, required this.productUnit, this.productThumbnailUrl, required this.buyerId, required this.buyerName, this.buyerCompanyName, required this.quantity, required this.pricePerUnit, required this.subtotal, required this.platformFee, this.logisticsFee = 0, required this.vatAmount, required this.totalAmount, this.specifications, final  Map<String, dynamic>? shippingSnapshot}): _shippingSnapshot = shippingSnapshot;
+  const _InvoicePreviewEntity({required this.negotiationId, required this.productId, required this.productName, required this.productUnit, this.productThumbnailUrl, required this.buyerId, required this.buyerName, this.buyerCompanyName, required this.quantity, required this.pricePerUnit, required this.subtotal, required this.platformFee, this.logisticsFee = 0, required this.vatAmount, required this.totalAmount, this.specifications, final  Map<String, dynamic>? shippingSnapshot, final  Map<String, dynamic>? sellerShippingSnapshot, this.sellerOriginId, this.sellerOriginLabel, this.sellerOriginResolvedFrom, this.economics}): _shippingSnapshot = shippingSnapshot,_sellerShippingSnapshot = sellerShippingSnapshot;
   
 
 @override final  String negotiationId;
@@ -250,6 +255,19 @@ class _InvoicePreviewEntity implements InvoicePreviewEntity {
   return EqualUnmodifiableMapView(value);
 }
 
+ final  Map<String, dynamic>? _sellerShippingSnapshot;
+@override Map<String, dynamic>? get sellerShippingSnapshot {
+  final value = _sellerShippingSnapshot;
+  if (value == null) return null;
+  if (_sellerShippingSnapshot is EqualUnmodifiableMapView) return _sellerShippingSnapshot;
+  // ignore: implicit_dynamic_type
+  return EqualUnmodifiableMapView(value);
+}
+
+@override final  int? sellerOriginId;
+@override final  String? sellerOriginLabel;
+@override final  String? sellerOriginResolvedFrom;
+@override final  InvoiceDealEconomics? economics;
 
 /// Create a copy of InvoicePreviewEntity
 /// with the given fields replaced by the non-null parameter values.
@@ -261,16 +279,16 @@ _$InvoicePreviewEntityCopyWith<_InvoicePreviewEntity> get copyWith => __$Invoice
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is _InvoicePreviewEntity&&(identical(other.negotiationId, negotiationId) || other.negotiationId == negotiationId)&&(identical(other.productId, productId) || other.productId == productId)&&(identical(other.productName, productName) || other.productName == productName)&&(identical(other.productUnit, productUnit) || other.productUnit == productUnit)&&(identical(other.productThumbnailUrl, productThumbnailUrl) || other.productThumbnailUrl == productThumbnailUrl)&&(identical(other.buyerId, buyerId) || other.buyerId == buyerId)&&(identical(other.buyerName, buyerName) || other.buyerName == buyerName)&&(identical(other.buyerCompanyName, buyerCompanyName) || other.buyerCompanyName == buyerCompanyName)&&(identical(other.quantity, quantity) || other.quantity == quantity)&&(identical(other.pricePerUnit, pricePerUnit) || other.pricePerUnit == pricePerUnit)&&(identical(other.subtotal, subtotal) || other.subtotal == subtotal)&&(identical(other.platformFee, platformFee) || other.platformFee == platformFee)&&(identical(other.logisticsFee, logisticsFee) || other.logisticsFee == logisticsFee)&&(identical(other.vatAmount, vatAmount) || other.vatAmount == vatAmount)&&(identical(other.totalAmount, totalAmount) || other.totalAmount == totalAmount)&&(identical(other.specifications, specifications) || other.specifications == specifications)&&const DeepCollectionEquality().equals(other._shippingSnapshot, _shippingSnapshot));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is _InvoicePreviewEntity&&(identical(other.negotiationId, negotiationId) || other.negotiationId == negotiationId)&&(identical(other.productId, productId) || other.productId == productId)&&(identical(other.productName, productName) || other.productName == productName)&&(identical(other.productUnit, productUnit) || other.productUnit == productUnit)&&(identical(other.productThumbnailUrl, productThumbnailUrl) || other.productThumbnailUrl == productThumbnailUrl)&&(identical(other.buyerId, buyerId) || other.buyerId == buyerId)&&(identical(other.buyerName, buyerName) || other.buyerName == buyerName)&&(identical(other.buyerCompanyName, buyerCompanyName) || other.buyerCompanyName == buyerCompanyName)&&(identical(other.quantity, quantity) || other.quantity == quantity)&&(identical(other.pricePerUnit, pricePerUnit) || other.pricePerUnit == pricePerUnit)&&(identical(other.subtotal, subtotal) || other.subtotal == subtotal)&&(identical(other.platformFee, platformFee) || other.platformFee == platformFee)&&(identical(other.logisticsFee, logisticsFee) || other.logisticsFee == logisticsFee)&&(identical(other.vatAmount, vatAmount) || other.vatAmount == vatAmount)&&(identical(other.totalAmount, totalAmount) || other.totalAmount == totalAmount)&&(identical(other.specifications, specifications) || other.specifications == specifications)&&const DeepCollectionEquality().equals(other._shippingSnapshot, _shippingSnapshot)&&const DeepCollectionEquality().equals(other._sellerShippingSnapshot, _sellerShippingSnapshot)&&(identical(other.sellerOriginId, sellerOriginId) || other.sellerOriginId == sellerOriginId)&&(identical(other.sellerOriginLabel, sellerOriginLabel) || other.sellerOriginLabel == sellerOriginLabel)&&(identical(other.sellerOriginResolvedFrom, sellerOriginResolvedFrom) || other.sellerOriginResolvedFrom == sellerOriginResolvedFrom)&&(identical(other.economics, economics) || other.economics == economics));
 }
 
 
 @override
-int get hashCode => Object.hash(runtimeType,negotiationId,productId,productName,productUnit,productThumbnailUrl,buyerId,buyerName,buyerCompanyName,quantity,pricePerUnit,subtotal,platformFee,logisticsFee,vatAmount,totalAmount,specifications,const DeepCollectionEquality().hash(_shippingSnapshot));
+int get hashCode => Object.hashAll([runtimeType,negotiationId,productId,productName,productUnit,productThumbnailUrl,buyerId,buyerName,buyerCompanyName,quantity,pricePerUnit,subtotal,platformFee,logisticsFee,vatAmount,totalAmount,specifications,const DeepCollectionEquality().hash(_shippingSnapshot),const DeepCollectionEquality().hash(_sellerShippingSnapshot),sellerOriginId,sellerOriginLabel,sellerOriginResolvedFrom,economics]);
 
 @override
 String toString() {
-  return 'InvoicePreviewEntity(negotiationId: $negotiationId, productId: $productId, productName: $productName, productUnit: $productUnit, productThumbnailUrl: $productThumbnailUrl, buyerId: $buyerId, buyerName: $buyerName, buyerCompanyName: $buyerCompanyName, quantity: $quantity, pricePerUnit: $pricePerUnit, subtotal: $subtotal, platformFee: $platformFee, logisticsFee: $logisticsFee, vatAmount: $vatAmount, totalAmount: $totalAmount, specifications: $specifications, shippingSnapshot: $shippingSnapshot)';
+  return 'InvoicePreviewEntity(negotiationId: $negotiationId, productId: $productId, productName: $productName, productUnit: $productUnit, productThumbnailUrl: $productThumbnailUrl, buyerId: $buyerId, buyerName: $buyerName, buyerCompanyName: $buyerCompanyName, quantity: $quantity, pricePerUnit: $pricePerUnit, subtotal: $subtotal, platformFee: $platformFee, logisticsFee: $logisticsFee, vatAmount: $vatAmount, totalAmount: $totalAmount, specifications: $specifications, shippingSnapshot: $shippingSnapshot, sellerShippingSnapshot: $sellerShippingSnapshot, sellerOriginId: $sellerOriginId, sellerOriginLabel: $sellerOriginLabel, sellerOriginResolvedFrom: $sellerOriginResolvedFrom, economics: $economics)';
 }
 
 
@@ -281,7 +299,7 @@ abstract mixin class _$InvoicePreviewEntityCopyWith<$Res> implements $InvoicePre
   factory _$InvoicePreviewEntityCopyWith(_InvoicePreviewEntity value, $Res Function(_InvoicePreviewEntity) _then) = __$InvoicePreviewEntityCopyWithImpl;
 @override @useResult
 $Res call({
- String negotiationId, String productId, String productName, String productUnit, String? productThumbnailUrl, String buyerId, String buyerName, String? buyerCompanyName, double quantity, double pricePerUnit, double subtotal, double platformFee, double logisticsFee, double vatAmount, double totalAmount, String? specifications, Map<String, dynamic>? shippingSnapshot
+ String negotiationId, String productId, String productName, String productUnit, String? productThumbnailUrl, String buyerId, String buyerName, String? buyerCompanyName, double quantity, double pricePerUnit, double subtotal, double platformFee, double logisticsFee, double vatAmount, double totalAmount, String? specifications, Map<String, dynamic>? shippingSnapshot, Map<String, dynamic>? sellerShippingSnapshot, int? sellerOriginId, String? sellerOriginLabel, String? sellerOriginResolvedFrom, InvoiceDealEconomics? economics
 });
 
 
@@ -298,7 +316,7 @@ class __$InvoicePreviewEntityCopyWithImpl<$Res>
 
 /// Create a copy of InvoicePreviewEntity
 /// with the given fields replaced by the non-null parameter values.
-@override @pragma('vm:prefer-inline') $Res call({Object? negotiationId = null,Object? productId = null,Object? productName = null,Object? productUnit = null,Object? productThumbnailUrl = freezed,Object? buyerId = null,Object? buyerName = null,Object? buyerCompanyName = freezed,Object? quantity = null,Object? pricePerUnit = null,Object? subtotal = null,Object? platformFee = null,Object? logisticsFee = null,Object? vatAmount = null,Object? totalAmount = null,Object? specifications = freezed,Object? shippingSnapshot = freezed,}) {
+@override @pragma('vm:prefer-inline') $Res call({Object? negotiationId = null,Object? productId = null,Object? productName = null,Object? productUnit = null,Object? productThumbnailUrl = freezed,Object? buyerId = null,Object? buyerName = null,Object? buyerCompanyName = freezed,Object? quantity = null,Object? pricePerUnit = null,Object? subtotal = null,Object? platformFee = null,Object? logisticsFee = null,Object? vatAmount = null,Object? totalAmount = null,Object? specifications = freezed,Object? shippingSnapshot = freezed,Object? sellerShippingSnapshot = freezed,Object? sellerOriginId = freezed,Object? sellerOriginLabel = freezed,Object? sellerOriginResolvedFrom = freezed,Object? economics = freezed,}) {
   return _then(_InvoicePreviewEntity(
 negotiationId: null == negotiationId ? _self.negotiationId : negotiationId // ignore: cast_nullable_to_non_nullable
 as String,productId: null == productId ? _self.productId : productId // ignore: cast_nullable_to_non_nullable
@@ -317,7 +335,12 @@ as double,vatAmount: null == vatAmount ? _self.vatAmount : vatAmount // ignore: 
 as double,totalAmount: null == totalAmount ? _self.totalAmount : totalAmount // ignore: cast_nullable_to_non_nullable
 as double,specifications: freezed == specifications ? _self.specifications : specifications // ignore: cast_nullable_to_non_nullable
 as String?,shippingSnapshot: freezed == shippingSnapshot ? _self._shippingSnapshot : shippingSnapshot // ignore: cast_nullable_to_non_nullable
-as Map<String, dynamic>?,
+as Map<String, dynamic>?,sellerShippingSnapshot: freezed == sellerShippingSnapshot ? _self._sellerShippingSnapshot : sellerShippingSnapshot // ignore: cast_nullable_to_non_nullable
+as Map<String, dynamic>?,sellerOriginId: freezed == sellerOriginId ? _self.sellerOriginId : sellerOriginId // ignore: cast_nullable_to_non_nullable
+as int?,sellerOriginLabel: freezed == sellerOriginLabel ? _self.sellerOriginLabel : sellerOriginLabel // ignore: cast_nullable_to_non_nullable
+as String?,sellerOriginResolvedFrom: freezed == sellerOriginResolvedFrom ? _self.sellerOriginResolvedFrom : sellerOriginResolvedFrom // ignore: cast_nullable_to_non_nullable
+as String?,economics: freezed == economics ? _self.economics : economics // ignore: cast_nullable_to_non_nullable
+as InvoiceDealEconomics?,
   ));
 }
 

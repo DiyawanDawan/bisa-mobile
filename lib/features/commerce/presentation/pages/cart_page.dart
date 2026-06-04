@@ -449,9 +449,9 @@ class _CartPageState extends State<CartPage> {
     );
 
     if (!context.mounted) return;
-    setState(() => _isCheckingOut = false);
 
     if (!result.isSuccess) {
+      setState(() => _isCheckingOut = false);
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text(result.errorMessage ?? 'Gagal membuat pesanan'),
@@ -460,16 +460,6 @@ class _CartPageState extends State<CartPage> {
         ),
       );
       return;
-    }
-
-    await commerceCubit.loadCart();
-
-    if (mounted) {
-      setState(() {
-        for (final it in selectedItems) {
-          _selectedItemIds.remove(it.id);
-        }
-      });
     }
 
     final orders = result.orders;
@@ -481,22 +471,38 @@ class _CartPageState extends State<CartPage> {
         .where((id) => id.isNotEmpty)
         .toList();
 
+    // Checkout + bayar: jangan loadCart / kosongkan UI dulu — overlay tetap sampai pindah halaman.
     if (_isCheckoutFlow && payment != null && orderIds.isNotEmpty) {
-      setState(() => _isCheckingOut = true);
-      final payData = await orderCubit.initializeBatchPayment(
-        orderIds,
-        payment.code,
-      );
+      final Map<String, dynamic>? payData;
+      if (orderIds.length > 1) {
+        payData = await orderCubit.initializeBatchPayment(
+          orderIds,
+          payment.code,
+        );
+      } else {
+        payData = await orderCubit.initializePayment(
+          orderIds.first,
+          payment.code,
+        );
+      }
       if (!context.mounted) return;
-      setState(() => _isCheckingOut = false);
 
       if (payData == null) {
+        setState(() => _isCheckingOut = false);
+        unawaited(commerceCubit.loadCart());
+        if (mounted) {
+          setState(() {
+            for (final it in selectedItems) {
+              _selectedItemIds.remove(it.id);
+            }
+          });
+        }
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text(
               context.read<OrderCubit>().state.maybeWhen(
                     error: (msg) => msg,
-                    orElse: () => 'Gagal inisialisasi pembayaran gabungan',
+                    orElse: () => 'Gagal inisialisasi pembayaran',
                   ),
             ),
             backgroundColor: AppColors.error,
@@ -535,11 +541,23 @@ class _CartPageState extends State<CartPage> {
           'orderNumber': orderLabel,
           'amount': batchTotal,
           'paymentResult': payData,
-          'batchOrderIds': orderIds,
+          if (orderIds.length > 1) 'batchOrderIds': orderIds,
         },
       );
+      unawaited(commerceCubit.loadCart());
       return;
     }
+
+    setState(() => _isCheckingOut = false);
+    await commerceCubit.loadCart();
+    if (mounted) {
+      setState(() {
+        for (final it in selectedItems) {
+          _selectedItemIds.remove(it.id);
+        }
+      });
+    }
+    if (!context.mounted) return;
 
     final count = orders.length;
     ScaffoldMessenger.of(context).showSnackBar(
@@ -1543,10 +1561,15 @@ class _CartPageState extends State<CartPage> {
               }
             : null,
       ),
-      body: BlocConsumer<CommerceCubit, CommerceState>(
+      body: Stack(
+        fit: StackFit.expand,
+        children: [
+          BlocConsumer<CommerceCubit, CommerceState>(
         listenWhen: (prev, curr) {
           if (curr.error != null && curr.error != prev.error) return true;
-          if (_isCheckoutFlow && prev.cart != curr.cart) return true;
+          if (_isCheckoutFlow && !_isCheckingOut && prev.cart != curr.cart) {
+            return true;
+          }
           return false;
         },
         listener: (context, state) {
@@ -1562,7 +1585,7 @@ class _CartPageState extends State<CartPage> {
           } else if (state.error == null) {
             _lastCommerceErrorSnack = null;
           }
-          if (_isCheckoutFlow && state.cart != null) {
+          if (_isCheckoutFlow && state.cart != null && !_isCheckingOut) {
             _scheduleCheckoutPreviewRefresh(state.cart!);
           }
         },
@@ -1573,6 +1596,9 @@ class _CartPageState extends State<CartPage> {
 
           final cart = state.cart;
           if (cart == null || cart.items.isEmpty) {
+            if (_isCheckoutFlow && _isCheckingOut) {
+              return const SizedBox.shrink();
+            }
             return _buildEmpty(context);
           }
 
@@ -1698,6 +1724,55 @@ class _CartPageState extends State<CartPage> {
             ],
           );
         },
+      ),
+          if (_isCheckoutFlow && _isCheckingOut)
+            _buildCheckoutProcessingOverlay(),
+        ],
+      ),
+    );
+  }
+
+  /// Menutupi layar saat order dibuat + VA/QR digenerate — hindari flash "keranjang kosong".
+  Widget _buildCheckoutProcessingOverlay() {
+    return ColoredBox(
+      color: AppColors.background.withValues(alpha: 0.96),
+      child: Center(
+        child: Padding(
+          padding: EdgeInsets.symmetric(horizontal: 32.w),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              SizedBox(
+                width: 40.w,
+                height: 40.w,
+                child: const CircularProgressIndicator(
+                  strokeWidth: 3,
+                  color: AppColors.primary,
+                ),
+              ),
+              SizedBox(height: 20.h),
+              Text(
+                'Menyiapkan pembayaran…',
+                textAlign: TextAlign.center,
+                style: TextStyle(
+                  fontSize: 16.sp,
+                  fontWeight: FontWeight.w700,
+                  color: AppColors.textPrimary,
+                ),
+              ),
+              SizedBox(height: 8.h),
+              Text(
+                'Pesanan sudah dibuat. Mohon tunggu, jangan tutup aplikasi.',
+                textAlign: TextAlign.center,
+                style: TextStyle(
+                  fontSize: 13.sp,
+                  color: AppColors.textSecondary,
+                  height: 1.35,
+                ),
+              ),
+            ],
+          ),
+        ),
       ),
     );
   }

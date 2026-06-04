@@ -48,7 +48,7 @@ class InvoiceBreakdownCard extends StatelessWidget {
           _row('Subtotal Barang', subtotal.toRupiah),
           _row('Biaya Platform', platformFee.toRupiah),
           if (logisticsFee > 0)
-            _row('Biaya Ongkir', logisticsFee.toRupiah),
+            _row('Biaya Ongkir (BISA)', logisticsFee.toRupiah),
           _row('PPN', vatAmount.toRupiah),
           Divider(height: 20.h, color: AppColors.grey200),
           _row('Total Tagihan', totalAmount.toRupiah, isBold: true),

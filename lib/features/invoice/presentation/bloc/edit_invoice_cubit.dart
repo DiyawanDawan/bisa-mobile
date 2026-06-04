@@ -4,6 +4,7 @@ import '../../../orders/domain/entities/order_entity.dart';
 import '../../../orders/domain/repositories/order_repository.dart';
 import '../../domain/entities/invoice_draft.dart';
 import '../../domain/repositories/invoice_repository.dart';
+import '../utils/invoice_issue_readiness.dart';
 
 enum EditInvoiceStatus { initial, loading, loaded, submitting, success, error }
 
@@ -35,6 +36,14 @@ class EditInvoiceState {
   }
 
   bool get canEdit => order?.status == 'PENDING';
+}
+
+extension EditInvoiceStateReadiness on EditInvoiceState {
+  InvoiceIssueReadiness get saveReadiness =>
+      InvoiceIssueReadinessEvaluator.evaluateEditShipping(
+        canEdit: canEdit,
+        shippingBlockers: draft?.shippingFieldBlockers() ?? ['Data belum dimuat'],
+      );
 }
 
 class EditInvoiceCubit extends Cubit<EditInvoiceState> {
@@ -104,11 +113,11 @@ class EditInvoiceCubit extends Cubit<EditInvoiceState> {
       return false;
     }
 
-    final validationError = draft.validate();
-    if (validationError != null) {
+    final readiness = state.saveReadiness;
+    if (!readiness.canIssue) {
       emit(state.copyWith(
-        status: EditInvoiceStatus.error,
-        errorMessage: validationError,
+        status: EditInvoiceStatus.loaded,
+        errorMessage: readiness.summaryMessage,
       ));
       return false;
     }

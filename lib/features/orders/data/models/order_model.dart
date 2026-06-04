@@ -103,6 +103,7 @@ abstract class OrderItemModel with _$OrderItemModel {
         quantity: double.tryParse(quantity.toString()) ?? 0.0,
         pricePerUnit: double.tryParse(pricePerUnit.toString()) ?? 0.0,
         subtotal: double.tryParse(subtotal.toString()) ?? 0.0,
+        productUnit: product.unit,
         thumbnailUrl: resolveMediaField(product.thumbnailUrl),
       );
 }
@@ -111,6 +112,7 @@ abstract class OrderItemModel with _$OrderItemModel {
 abstract class OrderItemProductModel with _$OrderItemProductModel {
   const factory OrderItemProductModel({
     required String name,
+    String? unit,
     String? thumbnailUrl,
   }) = _OrderItemProductModel;
 

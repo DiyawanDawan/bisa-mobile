@@ -20,7 +20,12 @@ class InvoicePdfData {
   final double vatAmount;
   final double totalAmount;
   final String? specifications;
+  /// Alamat tujuan pembeli (+ logistics / sellerOrigin jika dari order).
   final Map<String, dynamic>? shippingSnapshot;
+  /// Alamat asal toko/supplier (preview atau disalin ke snapshot order).
+  final Map<String, dynamic>? sellerShippingSnapshot;
+  final String? sellerOriginLabel;
+  final OrderShippingEntity? orderShipping;
   final DateTime issuedAt;
   final String? qrData;
 
@@ -43,13 +48,39 @@ class InvoicePdfData {
     required this.totalAmount,
     this.specifications,
     this.shippingSnapshot,
+    this.sellerShippingSnapshot,
+    this.sellerOriginLabel,
+    this.orderShipping,
     required this.issuedAt,
     this.qrData,
   });
 
+  static String displayUnit(String? unit) {
+    final trimmed = unit?.trim() ?? '';
+    if (trimmed.isEmpty) return 'unit';
+    return trimmed.toUpperCase();
+  }
+
+  static Map<String, dynamic>? originFromSnapshot(Map<String, dynamic>? snap) {
+    if (snap == null) return null;
+    final origin = snap['sellerOrigin'];
+    if (origin is Map) {
+      return Map<String, dynamic>.from(origin);
+    }
+    return null;
+  }
+
+  static String? originLabelFromSnapshot(Map<String, dynamic>? snap) {
+    final label = snap?['sellerOriginLabel']?.toString().trim();
+    return label != null && label.isNotEmpty ? label : null;
+  }
+
   factory InvoicePdfData.fromPreview(
     InvoicePreviewEntity preview, {
     required String supplierName,
+    Map<String, dynamic>? sellerShippingSnapshot,
+    String? sellerOriginLabel,
+    Map<String, dynamic>? shippingSelection,
   }) {
     return InvoicePdfData(
       invoiceNumber: 'DRAFT-${preview.negotiationId.substring(0, 8).toUpperCase()}',
@@ -58,7 +89,7 @@ class InvoicePdfData {
       buyerName: preview.buyerName,
       buyerCompany: preview.buyerCompanyName,
       productName: preview.productName,
-      productUnit: preview.productUnit,
+      productUnit: displayUnit(preview.productUnit),
       quantity: preview.quantity,
       pricePerUnit: preview.pricePerUnit,
       subtotal: preview.subtotal,
@@ -68,12 +99,21 @@ class InvoicePdfData {
       totalAmount: preview.totalAmount,
       specifications: preview.specifications,
       shippingSnapshot: preview.shippingSnapshot,
+      sellerShippingSnapshot:
+          sellerShippingSnapshot ?? preview.sellerShippingSnapshot,
+      sellerOriginLabel: sellerOriginLabel ?? preview.sellerOriginLabel,
+      orderShipping: shippingSelection != null
+          ? _orderShippingFromSelection(shippingSelection)
+          : null,
       issuedAt: DateTime.now(),
+      qrData:
+          'DRAFT-${preview.negotiationId}:PREVIEW:${DateTime.now().millisecondsSinceEpoch}',
     );
   }
 
   factory InvoicePdfData.fromOrder(OrderEntity order) {
     final product = order.items.isNotEmpty ? order.items.first : null;
+    final snap = order.shippingAddressSnapshot;
     return InvoicePdfData(
       invoiceNumber: order.orderNumber,
       statusLabel: _invoiceStatusLabel(order),
@@ -82,7 +122,7 @@ class InvoicePdfData {
       buyerName: order.buyer.name,
       buyerEmail: order.buyer.email,
       productName: product?.productName ?? 'Produk B2B',
-      productUnit: 'unit',
+      productUnit: displayUnit(product?.productUnit),
       quantity: product?.quantity ?? order.totalQuantity,
       pricePerUnit: product?.pricePerUnit ?? 0,
       subtotal: order.subtotal,
@@ -91,7 +131,11 @@ class InvoicePdfData {
       vatAmount: order.vatAmount,
       totalAmount: order.totalAmount,
       specifications: order.specifications,
-      shippingSnapshot: order.shippingAddressSnapshot,
+      shippingSnapshot: snap,
+      sellerShippingSnapshot: originFromSnapshot(snap),
+      sellerOriginLabel:
+          originLabelFromSnapshot(snap) ?? order.orderShipping?.originLabel,
+      orderShipping: order.orderShipping,
       issuedAt: order.createdAt,
       qrData:
           '${order.orderNumber}:${order.status}:${order.createdAt.millisecondsSinceEpoch}',
@@ -100,6 +144,8 @@ class InvoicePdfData {
 
   factory InvoicePdfData.fromOrderDraft(OrderEntity order, InvoiceDraft draft) {
     final base = InvoicePdfData.fromOrder(order);
+    final orderSnap = order.shippingAddressSnapshot ?? {};
+    final draftSnap = draft.toShippingSnapshot();
     return InvoicePdfData(
       invoiceNumber: base.invoiceNumber,
       statusLabel: base.statusLabel,
@@ -119,9 +165,37 @@ class InvoicePdfData {
       specifications: draft.specifications.trim().isEmpty
           ? null
           : draft.specifications.trim(),
-      shippingSnapshot: draft.toShippingSnapshot(),
+      shippingSnapshot: {
+        ...draftSnap,
+        if (orderSnap['logistics'] != null) 'logistics': orderSnap['logistics'],
+        if (orderSnap['sellerOrigin'] != null)
+          'sellerOrigin': orderSnap['sellerOrigin'],
+        if (orderSnap['sellerOriginLabel'] != null)
+          'sellerOriginLabel': orderSnap['sellerOriginLabel'],
+      },
+      sellerShippingSnapshot: base.sellerShippingSnapshot,
+      sellerOriginLabel: base.sellerOriginLabel,
+      orderShipping: base.orderShipping,
       issuedAt: base.issuedAt,
       qrData: base.qrData,
+    );
+  }
+
+  static OrderShippingEntity? _orderShippingFromSelection(
+    Map<String, dynamic> selection,
+  ) {
+    final courier = selection['courierCode']?.toString();
+    if (courier == null || courier.isEmpty) return null;
+    return OrderShippingEntity(
+      originLabel: selection['originLabel']?.toString(),
+      destinationLabel: selection['destinationLabel']?.toString(),
+      courierCode: courier,
+      courierName: selection['courierName']?.toString(),
+      serviceCode: selection['serviceCode']?.toString(),
+      serviceName: selection['serviceName']?.toString(),
+      serviceDescription: selection['verifiedDescription']?.toString(),
+      shippingCost: double.tryParse(selection['cost']?.toString() ?? ''),
+      etd: selection['etd']?.toString(),
     );
   }
 

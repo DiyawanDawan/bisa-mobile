@@ -218,7 +218,22 @@ class NegotiationStatusDisplay {
       disputeOrderRoute(negotiation) != null;
 
   /// Buka detail sengketa (bukan chat) bila pesanan sedang DISPUTED.
-  static void openFromList(BuildContext context, NegotiationEntity negotiation) {
+  static void openFromList(
+    BuildContext context,
+    NegotiationEntity negotiation, {
+    String? currentUserId,
+  }) {
+    if (currentUserId != null &&
+        !negotiation.isParticipant(currentUserId)) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text(
+            'Negosiasi ini bukan milik akun Anda. Tarik untuk memuat ulang daftar.',
+          ),
+        ),
+      );
+      return;
+    }
     final disputeRoute = disputeOrderRoute(negotiation);
     if (disputeRoute != null) {
       context.push(disputeRoute);

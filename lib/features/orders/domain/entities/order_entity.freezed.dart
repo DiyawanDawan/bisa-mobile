@@ -1032,7 +1032,7 @@ as String,
 /// @nodoc
 mixin _$OrderItemEntity {
 
- String get id; String get productId; String get productName; double get quantity; double get pricePerUnit; double get subtotal; String? get thumbnailUrl;
+ String get id; String get productId; String get productName; double get quantity; double get pricePerUnit; double get subtotal; String? get productUnit; String? get thumbnailUrl;
 /// Create a copy of OrderItemEntity
 /// with the given fields replaced by the non-null parameter values.
 @JsonKey(includeFromJson: false, includeToJson: false)
@@ -1043,16 +1043,16 @@ $OrderItemEntityCopyWith<OrderItemEntity> get copyWith => _$OrderItemEntityCopyW
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is OrderItemEntity&&(identical(other.id, id) || other.id == id)&&(identical(other.productId, productId) || other.productId == productId)&&(identical(other.productName, productName) || other.productName == productName)&&(identical(other.quantity, quantity) || other.quantity == quantity)&&(identical(other.pricePerUnit, pricePerUnit) || other.pricePerUnit == pricePerUnit)&&(identical(other.subtotal, subtotal) || other.subtotal == subtotal)&&(identical(other.thumbnailUrl, thumbnailUrl) || other.thumbnailUrl == thumbnailUrl));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is OrderItemEntity&&(identical(other.id, id) || other.id == id)&&(identical(other.productId, productId) || other.productId == productId)&&(identical(other.productName, productName) || other.productName == productName)&&(identical(other.quantity, quantity) || other.quantity == quantity)&&(identical(other.pricePerUnit, pricePerUnit) || other.pricePerUnit == pricePerUnit)&&(identical(other.subtotal, subtotal) || other.subtotal == subtotal)&&(identical(other.productUnit, productUnit) || other.productUnit == productUnit)&&(identical(other.thumbnailUrl, thumbnailUrl) || other.thumbnailUrl == thumbnailUrl));
 }
 
 
 @override
-int get hashCode => Object.hash(runtimeType,id,productId,productName,quantity,pricePerUnit,subtotal,thumbnailUrl);
+int get hashCode => Object.hash(runtimeType,id,productId,productName,quantity,pricePerUnit,subtotal,productUnit,thumbnailUrl);
 
 @override
 String toString() {
-  return 'OrderItemEntity(id: $id, productId: $productId, productName: $productName, quantity: $quantity, pricePerUnit: $pricePerUnit, subtotal: $subtotal, thumbnailUrl: $thumbnailUrl)';
+  return 'OrderItemEntity(id: $id, productId: $productId, productName: $productName, quantity: $quantity, pricePerUnit: $pricePerUnit, subtotal: $subtotal, productUnit: $productUnit, thumbnailUrl: $thumbnailUrl)';
 }
 
 
@@ -1063,7 +1063,7 @@ abstract mixin class $OrderItemEntityCopyWith<$Res>  {
   factory $OrderItemEntityCopyWith(OrderItemEntity value, $Res Function(OrderItemEntity) _then) = _$OrderItemEntityCopyWithImpl;
 @useResult
 $Res call({
- String id, String productId, String productName, double quantity, double pricePerUnit, double subtotal, String? thumbnailUrl
+ String id, String productId, String productName, double quantity, double pricePerUnit, double subtotal, String? productUnit, String? thumbnailUrl
 });
 
 
@@ -1080,7 +1080,7 @@ class _$OrderItemEntityCopyWithImpl<$Res>
 
 /// Create a copy of OrderItemEntity
 /// with the given fields replaced by the non-null parameter values.
-@pragma('vm:prefer-inline') @override $Res call({Object? id = null,Object? productId = null,Object? productName = null,Object? quantity = null,Object? pricePerUnit = null,Object? subtotal = null,Object? thumbnailUrl = freezed,}) {
+@pragma('vm:prefer-inline') @override $Res call({Object? id = null,Object? productId = null,Object? productName = null,Object? quantity = null,Object? pricePerUnit = null,Object? subtotal = null,Object? productUnit = freezed,Object? thumbnailUrl = freezed,}) {
   return _then(_self.copyWith(
 id: null == id ? _self.id : id // ignore: cast_nullable_to_non_nullable
 as String,productId: null == productId ? _self.productId : productId // ignore: cast_nullable_to_non_nullable
@@ -1088,7 +1088,8 @@ as String,productName: null == productName ? _self.productName : productName // 
 as String,quantity: null == quantity ? _self.quantity : quantity // ignore: cast_nullable_to_non_nullable
 as double,pricePerUnit: null == pricePerUnit ? _self.pricePerUnit : pricePerUnit // ignore: cast_nullable_to_non_nullable
 as double,subtotal: null == subtotal ? _self.subtotal : subtotal // ignore: cast_nullable_to_non_nullable
-as double,thumbnailUrl: freezed == thumbnailUrl ? _self.thumbnailUrl : thumbnailUrl // ignore: cast_nullable_to_non_nullable
+as double,productUnit: freezed == productUnit ? _self.productUnit : productUnit // ignore: cast_nullable_to_non_nullable
+as String?,thumbnailUrl: freezed == thumbnailUrl ? _self.thumbnailUrl : thumbnailUrl // ignore: cast_nullable_to_non_nullable
 as String?,
   ));
 }
@@ -1174,10 +1175,10 @@ return $default(_that);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( String id,  String productId,  String productName,  double quantity,  double pricePerUnit,  double subtotal,  String? thumbnailUrl)?  $default,{required TResult orElse(),}) {final _that = this;
+@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( String id,  String productId,  String productName,  double quantity,  double pricePerUnit,  double subtotal,  String? productUnit,  String? thumbnailUrl)?  $default,{required TResult orElse(),}) {final _that = this;
 switch (_that) {
 case _OrderItemEntity() when $default != null:
-return $default(_that.id,_that.productId,_that.productName,_that.quantity,_that.pricePerUnit,_that.subtotal,_that.thumbnailUrl);case _:
+return $default(_that.id,_that.productId,_that.productName,_that.quantity,_that.pricePerUnit,_that.subtotal,_that.productUnit,_that.thumbnailUrl);case _:
   return orElse();
 
 }
@@ -1195,10 +1196,10 @@ return $default(_that.id,_that.productId,_that.productName,_that.quantity,_that.
 /// }
 /// ```
 
-@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( String id,  String productId,  String productName,  double quantity,  double pricePerUnit,  double subtotal,  String? thumbnailUrl)  $default,) {final _that = this;
+@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( String id,  String productId,  String productName,  double quantity,  double pricePerUnit,  double subtotal,  String? productUnit,  String? thumbnailUrl)  $default,) {final _that = this;
 switch (_that) {
 case _OrderItemEntity():
-return $default(_that.id,_that.productId,_that.productName,_that.quantity,_that.pricePerUnit,_that.subtotal,_that.thumbnailUrl);case _:
+return $default(_that.id,_that.productId,_that.productName,_that.quantity,_that.pricePerUnit,_that.subtotal,_that.productUnit,_that.thumbnailUrl);case _:
   throw StateError('Unexpected subclass');
 
 }
@@ -1215,10 +1216,10 @@ return $default(_that.id,_that.productId,_that.productName,_that.quantity,_that.
 /// }
 /// ```
 
-@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( String id,  String productId,  String productName,  double quantity,  double pricePerUnit,  double subtotal,  String? thumbnailUrl)?  $default,) {final _that = this;
+@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( String id,  String productId,  String productName,  double quantity,  double pricePerUnit,  double subtotal,  String? productUnit,  String? thumbnailUrl)?  $default,) {final _that = this;
 switch (_that) {
 case _OrderItemEntity() when $default != null:
-return $default(_that.id,_that.productId,_that.productName,_that.quantity,_that.pricePerUnit,_that.subtotal,_that.thumbnailUrl);case _:
+return $default(_that.id,_that.productId,_that.productName,_that.quantity,_that.pricePerUnit,_that.subtotal,_that.productUnit,_that.thumbnailUrl);case _:
   return null;
 
 }
@@ -1230,7 +1231,7 @@ return $default(_that.id,_that.productId,_that.productName,_that.quantity,_that.
 
 
 class _OrderItemEntity implements OrderItemEntity {
-  const _OrderItemEntity({required this.id, required this.productId, required this.productName, required this.quantity, required this.pricePerUnit, required this.subtotal, this.thumbnailUrl});
+  const _OrderItemEntity({required this.id, required this.productId, required this.productName, required this.quantity, required this.pricePerUnit, required this.subtotal, this.productUnit, this.thumbnailUrl});
   
 
 @override final  String id;
@@ -1239,6 +1240,7 @@ class _OrderItemEntity implements OrderItemEntity {
 @override final  double quantity;
 @override final  double pricePerUnit;
 @override final  double subtotal;
+@override final  String? productUnit;
 @override final  String? thumbnailUrl;
 
 /// Create a copy of OrderItemEntity
@@ -1251,16 +1253,16 @@ _$OrderItemEntityCopyWith<_OrderItemEntity> get copyWith => __$OrderItemEntityCo
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is _OrderItemEntity&&(identical(other.id, id) || other.id == id)&&(identical(other.productId, productId) || other.productId == productId)&&(identical(other.productName, productName) || other.productName == productName)&&(identical(other.quantity, quantity) || other.quantity == quantity)&&(identical(other.pricePerUnit, pricePerUnit) || other.pricePerUnit == pricePerUnit)&&(identical(other.subtotal, subtotal) || other.subtotal == subtotal)&&(identical(other.thumbnailUrl, thumbnailUrl) || other.thumbnailUrl == thumbnailUrl));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is _OrderItemEntity&&(identical(other.id, id) || other.id == id)&&(identical(other.productId, productId) || other.productId == productId)&&(identical(other.productName, productName) || other.productName == productName)&&(identical(other.quantity, quantity) || other.quantity == quantity)&&(identical(other.pricePerUnit, pricePerUnit) || other.pricePerUnit == pricePerUnit)&&(identical(other.subtotal, subtotal) || other.subtotal == subtotal)&&(identical(other.productUnit, productUnit) || other.productUnit == productUnit)&&(identical(other.thumbnailUrl, thumbnailUrl) || other.thumbnailUrl == thumbnailUrl));
 }
 
 
 @override
-int get hashCode => Object.hash(runtimeType,id,productId,productName,quantity,pricePerUnit,subtotal,thumbnailUrl);
+int get hashCode => Object.hash(runtimeType,id,productId,productName,quantity,pricePerUnit,subtotal,productUnit,thumbnailUrl);
 
 @override
 String toString() {
-  return 'OrderItemEntity(id: $id, productId: $productId, productName: $productName, quantity: $quantity, pricePerUnit: $pricePerUnit, subtotal: $subtotal, thumbnailUrl: $thumbnailUrl)';
+  return 'OrderItemEntity(id: $id, productId: $productId, productName: $productName, quantity: $quantity, pricePerUnit: $pricePerUnit, subtotal: $subtotal, productUnit: $productUnit, thumbnailUrl: $thumbnailUrl)';
 }
 
 
@@ -1271,7 +1273,7 @@ abstract mixin class _$OrderItemEntityCopyWith<$Res> implements $OrderItemEntity
   factory _$OrderItemEntityCopyWith(_OrderItemEntity value, $Res Function(_OrderItemEntity) _then) = __$OrderItemEntityCopyWithImpl;
 @override @useResult
 $Res call({
- String id, String productId, String productName, double quantity, double pricePerUnit, double subtotal, String? thumbnailUrl
+ String id, String productId, String productName, double quantity, double pricePerUnit, double subtotal, String? productUnit, String? thumbnailUrl
 });
 
 
@@ -1288,7 +1290,7 @@ class __$OrderItemEntityCopyWithImpl<$Res>
 
 /// Create a copy of OrderItemEntity
 /// with the given fields replaced by the non-null parameter values.
-@override @pragma('vm:prefer-inline') $Res call({Object? id = null,Object? productId = null,Object? productName = null,Object? quantity = null,Object? pricePerUnit = null,Object? subtotal = null,Object? thumbnailUrl = freezed,}) {
+@override @pragma('vm:prefer-inline') $Res call({Object? id = null,Object? productId = null,Object? productName = null,Object? quantity = null,Object? pricePerUnit = null,Object? subtotal = null,Object? productUnit = freezed,Object? thumbnailUrl = freezed,}) {
   return _then(_OrderItemEntity(
 id: null == id ? _self.id : id // ignore: cast_nullable_to_non_nullable
 as String,productId: null == productId ? _self.productId : productId // ignore: cast_nullable_to_non_nullable
@@ -1296,7 +1298,8 @@ as String,productName: null == productName ? _self.productName : productName // 
 as String,quantity: null == quantity ? _self.quantity : quantity // ignore: cast_nullable_to_non_nullable
 as double,pricePerUnit: null == pricePerUnit ? _self.pricePerUnit : pricePerUnit // ignore: cast_nullable_to_non_nullable
 as double,subtotal: null == subtotal ? _self.subtotal : subtotal // ignore: cast_nullable_to_non_nullable
-as double,thumbnailUrl: freezed == thumbnailUrl ? _self.thumbnailUrl : thumbnailUrl // ignore: cast_nullable_to_non_nullable
+as double,productUnit: freezed == productUnit ? _self.productUnit : productUnit // ignore: cast_nullable_to_non_nullable
+as String?,thumbnailUrl: freezed == thumbnailUrl ? _self.thumbnailUrl : thumbnailUrl // ignore: cast_nullable_to_non_nullable
 as String?,
   ));
 }

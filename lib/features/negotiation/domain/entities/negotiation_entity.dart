@@ -1,4 +1,5 @@
 import 'package:freezed_annotation/freezed_annotation.dart';
+import 'package:mobile_bisa/features/invoice/domain/entities/invoice_deal_economics.dart';
 
 part 'negotiation_entity.freezed.dart';
 
@@ -41,6 +42,7 @@ abstract class NegotiationEntity with _$NegotiationEntity {
     required NegotiationParticipantEntity seller,
     List<NegotiationMessageEntity>? messages,
     int? messagesTotal,
+    InvoiceDealEconomics? economics,
   }) = _NegotiationEntity;
 }
 
@@ -53,6 +55,7 @@ abstract class NegotiationProductEntity with _$NegotiationProductEntity {
     required double pricePerUnit,
     required String unit,
     @Default(1) double minOrder,
+    @Default(0) double stock,
     String? description,
     String? biomassaType,
     String? regency,

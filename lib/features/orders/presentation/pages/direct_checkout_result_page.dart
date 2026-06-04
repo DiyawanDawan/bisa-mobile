@@ -75,10 +75,13 @@ class _DirectCheckoutResultPageState extends State<DirectCheckoutResultPage> {
     }
 
     setState(() => _paying = true);
-    final payData = await context.read<OrderCubit>().initializeBatchPayment(
-          orderIds,
-          channelCode,
-        );
+    final cubit = context.read<OrderCubit>();
+    final Map<String, dynamic>? payData;
+    if (orderIds.length > 1) {
+      payData = await cubit.initializeBatchPayment(orderIds, channelCode);
+    } else {
+      payData = await cubit.initializePayment(orderIds.first, channelCode);
+    }
     if (!mounted) return;
     setState(() => _paying = false);
 
@@ -117,7 +120,7 @@ class _DirectCheckoutResultPageState extends State<DirectCheckoutResultPage> {
         'orderNumber': orderLabel,
         'amount': batchTotal,
         'paymentResult': payData,
-        'batchOrderIds': orderIds,
+        if (orderIds.length > 1) 'batchOrderIds': orderIds,
       },
     );
   }

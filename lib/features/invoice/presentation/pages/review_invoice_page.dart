@@ -6,6 +6,7 @@ import 'package:lucide_icons_flutter/lucide_icons.dart';
 import 'package:mobile_bisa/core/constants/app_colors.dart';
 import 'package:mobile_bisa/core/utils/extensions.dart';
 import 'package:mobile_bisa/features/auth/presentation/bloc/auth_cubit.dart';
+import 'package:mobile_bisa/features/invoice/domain/entities/invoice_pdf_data.dart';
 import 'package:mobile_bisa/features/invoice/presentation/bloc/review_invoice_cubit.dart';
 import 'package:mobile_bisa/features/invoice/presentation/utils/invoice_export_helper.dart';
 import 'package:mobile_bisa/features/invoice/presentation/widgets/invoice_breakdown_card.dart';
@@ -138,7 +139,7 @@ class _ReviewInvoiceBody extends StatelessWidget {
                             _infoRow('Produk', product.productName),
                             _infoRow(
                               'Jumlah',
-                              '${product.quantity.toStringAsFixed(0)} unit',
+                              '${product.quantity.toStringAsFixed(0)} ${InvoicePdfData.displayUnit(product.productUnit)}',
                             ),
                             _infoRow('Harga/Unit', product.pricePerUnit.toRupiah),
                           ]),
@@ -153,7 +154,17 @@ class _ReviewInvoiceBody extends StatelessWidget {
                           totalAmount: order.totalAmount,
                         ),
                         SizedBox(height: 14.h),
-                        InvoiceShippingCard(snapshot: order.shippingAddressSnapshot),
+                        InvoiceShippingCard(
+                          snapshot: order.shippingAddressSnapshot,
+                          originSnapshot: InvoicePdfData.originFromSnapshot(
+                            order.shippingAddressSnapshot,
+                          ),
+                          sellerOriginLabel: InvoicePdfData.originLabelFromSnapshot(
+                                order.shippingAddressSnapshot,
+                              ) ??
+                              order.orderShipping?.originLabel,
+                          orderShipping: order.orderShipping,
+                        ),
                         if (order.specifications != null &&
                             order.specifications!.isNotEmpty) ...[
                           SizedBox(height: 14.h),
@@ -183,60 +194,12 @@ class _ReviewInvoiceBody extends StatelessWidget {
                     ),
                   ),
                 ),
-                Container(
-                  padding: EdgeInsets.fromLTRB(16.w, 12.h, 16.w, 16.h),
-                  decoration: const BoxDecoration(
-                    color: Colors.white,
-                    border: Border(top: BorderSide(color: AppColors.grey200)),
-                  ),
-                  child: Column(
-                    children: [
-                      if (!isSupplier && canPay)
-                        CustomButton(
-                          text: 'Setuju & Lanjut Bayar',
-                          useGradient: true,
-                          height: 50.h,
-                          onPressed: () => context.push('/order/${order.id}'),
-                        )
-                      else if (!isSupplier)
-                        CustomButton(
-                          text: 'Tagihan Sudah Diproses',
-                          height: 50.h,
-                          onPressed: null,
-                        ),
-                      if (!isSupplier && canPay) SizedBox(height: 8.h),
-                      if (isSupplier && canPay) ...[
-                        CustomButton(
-                          text: 'Edit Tagihan',
-                          height: 46.h,
-                          isOutlined: true,
-                          onPressed: () async {
-                            final updated = await context.push<bool>(
-                              '/negotiation/$negotiationId/edit-invoice',
-                            );
-                            if (updated == true && context.mounted) {
-                              context.read<ReviewInvoiceCubit>().load(negotiationId);
-                            }
-                          },
-                        ),
-                        SizedBox(height: 8.h),
-                      ],
-                      CustomButton(
-                        text: 'Download PDF',
-                        height: 46.h,
-                        isOutlined: true,
-                        onPressed: () =>
-                            InvoiceExportHelper.exportOrder(context, order),
-                      ),
-                      SizedBox(height: 8.h),
-                      CustomButton(
-                        text: 'Kembali ke Chat',
-                        height: 46.h,
-                        isOutlined: true,
-                        onPressed: () => context.pop(),
-                      ),
-                    ],
-                  ),
+                _buildActionFooter(
+                  context,
+                  isSupplier: isSupplier,
+                  canPay: canPay,
+                  negotiationId: negotiationId,
+                  order: order,
                 ),
               ],
             );
@@ -463,6 +426,100 @@ class _ReviewInvoiceBody extends StatelessWidget {
             ),
           ),
         ],
+      ),
+    );
+  }
+
+  Widget _buildActionFooter(
+    BuildContext context, {
+    required bool isSupplier,
+    required bool canPay,
+    required String negotiationId,
+    required OrderEntity order,
+  }) {
+    return DecoratedBox(
+      decoration: BoxDecoration(
+        color: Colors.white,
+        border: Border(top: BorderSide(color: AppColors.grey200)),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.06),
+            blurRadius: 16,
+            offset: const Offset(0, -4),
+          ),
+        ],
+      ),
+      child: SafeArea(
+        top: false,
+        minimum: EdgeInsets.only(bottom: 12.h),
+        child: Padding(
+          padding: EdgeInsets.fromLTRB(16.w, 12.h, 16.w, 8.h),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              if (!isSupplier && canPay)
+                CustomButton(
+                  text: 'Setuju & Lanjut Bayar',
+                  useGradient: true,
+                  height: 48.h,
+                  onPressed: () => context.push('/order/${order.id}'),
+                )
+              else if (!isSupplier)
+                CustomButton(
+                  text: 'Tagihan Sudah Diproses',
+                  height: 48.h,
+                  onPressed: null,
+                ),
+              if (!isSupplier && canPay) SizedBox(height: 8.h),
+              if (isSupplier && canPay) ...[
+                CustomButton(
+                  text: 'Edit Tagihan',
+                  height: 44.h,
+                  isOutlined: true,
+                  onPressed: () async {
+                    final updated = await context.push<bool>(
+                      '/negotiation/$negotiationId/edit-invoice',
+                    );
+                    if (updated == true && context.mounted) {
+                      context.read<ReviewInvoiceCubit>().load(negotiationId);
+                    }
+                  },
+                ),
+                SizedBox(height: 8.h),
+              ],
+              CustomButton(
+                text: 'Download PDF',
+                height: 44.h,
+                isOutlined: true,
+                onPressed: () =>
+                    InvoiceExportHelper.exportOrder(context, order),
+              ),
+              SizedBox(height: 4.h),
+              TextButton(
+                onPressed: () => context.pop(),
+                style: TextButton.styleFrom(
+                  foregroundColor: AppColors.textSecondary,
+                  padding: EdgeInsets.symmetric(vertical: 10.h),
+                  minimumSize: Size(double.infinity, 40.h),
+                ),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Icon(Icons.arrow_back_rounded, size: 18.sp),
+                    SizedBox(width: 6.w),
+                    Text(
+                      'Kembali ke Chat',
+                      style: TextStyle(
+                        fontWeight: FontWeight.w700,
+                        fontSize: 13.sp,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+        ),
       ),
     );
   }

@@ -355,7 +355,7 @@ $InvoicePreviewBuyerModelCopyWith<$Res> get buyer {
 /// @nodoc
 mixin _$InvoicePreviewProductModel {
 
- String get id; String get name; String get unit; String? get thumbnailUrl;
+ String get id; String get name; String get unit; String? get thumbnailUrl; dynamic get pricePerUnit; dynamic get stock; dynamic get minOrder;
 /// Create a copy of InvoicePreviewProductModel
 /// with the given fields replaced by the non-null parameter values.
 @JsonKey(includeFromJson: false, includeToJson: false)
@@ -368,16 +368,16 @@ $InvoicePreviewProductModelCopyWith<InvoicePreviewProductModel> get copyWith => 
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is InvoicePreviewProductModel&&(identical(other.id, id) || other.id == id)&&(identical(other.name, name) || other.name == name)&&(identical(other.unit, unit) || other.unit == unit)&&(identical(other.thumbnailUrl, thumbnailUrl) || other.thumbnailUrl == thumbnailUrl));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is InvoicePreviewProductModel&&(identical(other.id, id) || other.id == id)&&(identical(other.name, name) || other.name == name)&&(identical(other.unit, unit) || other.unit == unit)&&(identical(other.thumbnailUrl, thumbnailUrl) || other.thumbnailUrl == thumbnailUrl)&&const DeepCollectionEquality().equals(other.pricePerUnit, pricePerUnit)&&const DeepCollectionEquality().equals(other.stock, stock)&&const DeepCollectionEquality().equals(other.minOrder, minOrder));
 }
 
 @JsonKey(includeFromJson: false, includeToJson: false)
 @override
-int get hashCode => Object.hash(runtimeType,id,name,unit,thumbnailUrl);
+int get hashCode => Object.hash(runtimeType,id,name,unit,thumbnailUrl,const DeepCollectionEquality().hash(pricePerUnit),const DeepCollectionEquality().hash(stock),const DeepCollectionEquality().hash(minOrder));
 
 @override
 String toString() {
-  return 'InvoicePreviewProductModel(id: $id, name: $name, unit: $unit, thumbnailUrl: $thumbnailUrl)';
+  return 'InvoicePreviewProductModel(id: $id, name: $name, unit: $unit, thumbnailUrl: $thumbnailUrl, pricePerUnit: $pricePerUnit, stock: $stock, minOrder: $minOrder)';
 }
 
 
@@ -388,7 +388,7 @@ abstract mixin class $InvoicePreviewProductModelCopyWith<$Res>  {
   factory $InvoicePreviewProductModelCopyWith(InvoicePreviewProductModel value, $Res Function(InvoicePreviewProductModel) _then) = _$InvoicePreviewProductModelCopyWithImpl;
 @useResult
 $Res call({
- String id, String name, String unit, String? thumbnailUrl
+ String id, String name, String unit, String? thumbnailUrl, dynamic pricePerUnit, dynamic stock, dynamic minOrder
 });
 
 
@@ -405,13 +405,16 @@ class _$InvoicePreviewProductModelCopyWithImpl<$Res>
 
 /// Create a copy of InvoicePreviewProductModel
 /// with the given fields replaced by the non-null parameter values.
-@pragma('vm:prefer-inline') @override $Res call({Object? id = null,Object? name = null,Object? unit = null,Object? thumbnailUrl = freezed,}) {
+@pragma('vm:prefer-inline') @override $Res call({Object? id = null,Object? name = null,Object? unit = null,Object? thumbnailUrl = freezed,Object? pricePerUnit = freezed,Object? stock = freezed,Object? minOrder = freezed,}) {
   return _then(_self.copyWith(
 id: null == id ? _self.id : id // ignore: cast_nullable_to_non_nullable
 as String,name: null == name ? _self.name : name // ignore: cast_nullable_to_non_nullable
 as String,unit: null == unit ? _self.unit : unit // ignore: cast_nullable_to_non_nullable
 as String,thumbnailUrl: freezed == thumbnailUrl ? _self.thumbnailUrl : thumbnailUrl // ignore: cast_nullable_to_non_nullable
-as String?,
+as String?,pricePerUnit: freezed == pricePerUnit ? _self.pricePerUnit : pricePerUnit // ignore: cast_nullable_to_non_nullable
+as dynamic,stock: freezed == stock ? _self.stock : stock // ignore: cast_nullable_to_non_nullable
+as dynamic,minOrder: freezed == minOrder ? _self.minOrder : minOrder // ignore: cast_nullable_to_non_nullable
+as dynamic,
   ));
 }
 
@@ -496,10 +499,10 @@ return $default(_that);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( String id,  String name,  String unit,  String? thumbnailUrl)?  $default,{required TResult orElse(),}) {final _that = this;
+@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( String id,  String name,  String unit,  String? thumbnailUrl,  dynamic pricePerUnit,  dynamic stock,  dynamic minOrder)?  $default,{required TResult orElse(),}) {final _that = this;
 switch (_that) {
 case _InvoicePreviewProductModel() when $default != null:
-return $default(_that.id,_that.name,_that.unit,_that.thumbnailUrl);case _:
+return $default(_that.id,_that.name,_that.unit,_that.thumbnailUrl,_that.pricePerUnit,_that.stock,_that.minOrder);case _:
   return orElse();
 
 }
@@ -517,10 +520,10 @@ return $default(_that.id,_that.name,_that.unit,_that.thumbnailUrl);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( String id,  String name,  String unit,  String? thumbnailUrl)  $default,) {final _that = this;
+@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( String id,  String name,  String unit,  String? thumbnailUrl,  dynamic pricePerUnit,  dynamic stock,  dynamic minOrder)  $default,) {final _that = this;
 switch (_that) {
 case _InvoicePreviewProductModel():
-return $default(_that.id,_that.name,_that.unit,_that.thumbnailUrl);case _:
+return $default(_that.id,_that.name,_that.unit,_that.thumbnailUrl,_that.pricePerUnit,_that.stock,_that.minOrder);case _:
   throw StateError('Unexpected subclass');
 
 }
@@ -537,10 +540,10 @@ return $default(_that.id,_that.name,_that.unit,_that.thumbnailUrl);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( String id,  String name,  String unit,  String? thumbnailUrl)?  $default,) {final _that = this;
+@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( String id,  String name,  String unit,  String? thumbnailUrl,  dynamic pricePerUnit,  dynamic stock,  dynamic minOrder)?  $default,) {final _that = this;
 switch (_that) {
 case _InvoicePreviewProductModel() when $default != null:
-return $default(_that.id,_that.name,_that.unit,_that.thumbnailUrl);case _:
+return $default(_that.id,_that.name,_that.unit,_that.thumbnailUrl,_that.pricePerUnit,_that.stock,_that.minOrder);case _:
   return null;
 
 }
@@ -552,13 +555,16 @@ return $default(_that.id,_that.name,_that.unit,_that.thumbnailUrl);case _:
 @JsonSerializable()
 
 class _InvoicePreviewProductModel implements InvoicePreviewProductModel {
-  const _InvoicePreviewProductModel({required this.id, required this.name, required this.unit, this.thumbnailUrl});
+  const _InvoicePreviewProductModel({required this.id, required this.name, required this.unit, this.thumbnailUrl, this.pricePerUnit = 0, this.stock = 0, this.minOrder = 1});
   factory _InvoicePreviewProductModel.fromJson(Map<String, dynamic> json) => _$InvoicePreviewProductModelFromJson(json);
 
 @override final  String id;
 @override final  String name;
 @override final  String unit;
 @override final  String? thumbnailUrl;
+@override@JsonKey() final  dynamic pricePerUnit;
+@override@JsonKey() final  dynamic stock;
+@override@JsonKey() final  dynamic minOrder;
 
 /// Create a copy of InvoicePreviewProductModel
 /// with the given fields replaced by the non-null parameter values.
@@ -573,16 +579,16 @@ Map<String, dynamic> toJson() {
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is _InvoicePreviewProductModel&&(identical(other.id, id) || other.id == id)&&(identical(other.name, name) || other.name == name)&&(identical(other.unit, unit) || other.unit == unit)&&(identical(other.thumbnailUrl, thumbnailUrl) || other.thumbnailUrl == thumbnailUrl));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is _InvoicePreviewProductModel&&(identical(other.id, id) || other.id == id)&&(identical(other.name, name) || other.name == name)&&(identical(other.unit, unit) || other.unit == unit)&&(identical(other.thumbnailUrl, thumbnailUrl) || other.thumbnailUrl == thumbnailUrl)&&const DeepCollectionEquality().equals(other.pricePerUnit, pricePerUnit)&&const DeepCollectionEquality().equals(other.stock, stock)&&const DeepCollectionEquality().equals(other.minOrder, minOrder));
 }
 
 @JsonKey(includeFromJson: false, includeToJson: false)
 @override
-int get hashCode => Object.hash(runtimeType,id,name,unit,thumbnailUrl);
+int get hashCode => Object.hash(runtimeType,id,name,unit,thumbnailUrl,const DeepCollectionEquality().hash(pricePerUnit),const DeepCollectionEquality().hash(stock),const DeepCollectionEquality().hash(minOrder));
 
 @override
 String toString() {
-  return 'InvoicePreviewProductModel(id: $id, name: $name, unit: $unit, thumbnailUrl: $thumbnailUrl)';
+  return 'InvoicePreviewProductModel(id: $id, name: $name, unit: $unit, thumbnailUrl: $thumbnailUrl, pricePerUnit: $pricePerUnit, stock: $stock, minOrder: $minOrder)';
 }
 
 
@@ -593,7 +599,7 @@ abstract mixin class _$InvoicePreviewProductModelCopyWith<$Res> implements $Invo
   factory _$InvoicePreviewProductModelCopyWith(_InvoicePreviewProductModel value, $Res Function(_InvoicePreviewProductModel) _then) = __$InvoicePreviewProductModelCopyWithImpl;
 @override @useResult
 $Res call({
- String id, String name, String unit, String? thumbnailUrl
+ String id, String name, String unit, String? thumbnailUrl, dynamic pricePerUnit, dynamic stock, dynamic minOrder
 });
 
 
@@ -610,13 +616,16 @@ class __$InvoicePreviewProductModelCopyWithImpl<$Res>
 
 /// Create a copy of InvoicePreviewProductModel
 /// with the given fields replaced by the non-null parameter values.
-@override @pragma('vm:prefer-inline') $Res call({Object? id = null,Object? name = null,Object? unit = null,Object? thumbnailUrl = freezed,}) {
+@override @pragma('vm:prefer-inline') $Res call({Object? id = null,Object? name = null,Object? unit = null,Object? thumbnailUrl = freezed,Object? pricePerUnit = freezed,Object? stock = freezed,Object? minOrder = freezed,}) {
   return _then(_InvoicePreviewProductModel(
 id: null == id ? _self.id : id // ignore: cast_nullable_to_non_nullable
 as String,name: null == name ? _self.name : name // ignore: cast_nullable_to_non_nullable
 as String,unit: null == unit ? _self.unit : unit // ignore: cast_nullable_to_non_nullable
 as String,thumbnailUrl: freezed == thumbnailUrl ? _self.thumbnailUrl : thumbnailUrl // ignore: cast_nullable_to_non_nullable
-as String?,
+as String?,pricePerUnit: freezed == pricePerUnit ? _self.pricePerUnit : pricePerUnit // ignore: cast_nullable_to_non_nullable
+as dynamic,stock: freezed == stock ? _self.stock : stock // ignore: cast_nullable_to_non_nullable
+as dynamic,minOrder: freezed == minOrder ? _self.minOrder : minOrder // ignore: cast_nullable_to_non_nullable
+as dynamic,
   ));
 }
 

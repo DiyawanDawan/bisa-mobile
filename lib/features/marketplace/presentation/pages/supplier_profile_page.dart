@@ -457,12 +457,16 @@ class _SupplierProfilePageState extends State<SupplierProfilePage> {
                             size: 13.sp,
                           ),
                           SizedBox(width: 4.w),
-                          Text(
-                            'Supplier Terverifikasi',
-                            style: TextStyle(
-                              fontSize: 11.sp,
-                              color: AppColors.info,
-                              fontWeight: FontWeight.w700,
+                          Flexible(
+                            child: Text(
+                              'Supplier Terverifikasi',
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                              style: TextStyle(
+                                fontSize: 11.sp,
+                                color: AppColors.info,
+                                fontWeight: FontWeight.w700,
+                              ),
                             ),
                           ),
                         ],
@@ -496,7 +500,9 @@ class _SupplierProfilePageState extends State<SupplierProfilePage> {
               FollowButton(userId: widget.supplierId, compact: true),
             ],
           ),
-          SizedBox(height: 16.h),
+          SizedBox(height: 12.h),
+          UserFollowStatsRow(userId: widget.supplierId),
+          SizedBox(height: 12.h),
           Row(
             children: [
               Expanded(

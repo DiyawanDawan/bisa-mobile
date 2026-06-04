@@ -350,7 +350,10 @@ class _ForumDetailPageState extends State<ForumDetailPage> {
           decoration: BoxDecoration(
             shape: BoxShape.circle,
             gradient: LinearGradient(
-              colors: [AppColors.primary, AppColors.primary.withOpacity(0.1)],
+              colors: [
+                AppColors.primary,
+                AppColors.primary.withValues(alpha: 0.1),
+              ],
               begin: Alignment.topLeft,
               end: Alignment.bottomRight,
             ),
@@ -371,12 +374,16 @@ class _ForumDetailPageState extends State<ForumDetailPage> {
             children: [
               Row(
                 children: [
-                  Text(
-                    post.user.fullName,
-                    style: TextStyle(
-                      fontSize: 16.sp,
-                      fontWeight: FontWeight.w900,
-                      color: AppColors.textPrimary,
+                  Flexible(
+                    child: Text(
+                      post.user.fullName,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: TextStyle(
+                        fontSize: 16.sp,
+                        fontWeight: FontWeight.w900,
+                        color: AppColors.textPrimary,
+                      ),
                     ),
                   ),
                   if (post.user.isVerified == true) _buildVerifiedBadge(),
@@ -391,20 +398,16 @@ class _ForumDetailPageState extends State<ForumDetailPage> {
                     color: AppColors.textHint,
                   ),
                   SizedBox(width: 6.w),
-                  Text(
-                    _formatForumDateTime(post.createdAt),
-                    style: TextStyle(
-                      color: AppColors.textHint,
-                      fontSize: 12.sp,
-                      fontWeight: FontWeight.w600,
-                    ),
-                  ),
-                  Text(
-                    ' · ${timeago.format(post.createdAt, locale: 'id')}',
-                    style: TextStyle(
-                      color: AppColors.textHint.withValues(alpha: 0.85),
-                      fontSize: 11.sp,
-                      fontWeight: FontWeight.w500,
+                  Flexible(
+                    child: Text(
+                      '${_formatForumDateTime(post.createdAt)} · ${timeago.format(post.createdAt, locale: 'id')}',
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: TextStyle(
+                        color: AppColors.textHint,
+                        fontSize: 11.sp,
+                        fontWeight: FontWeight.w500,
+                      ),
                     ),
                   ),
                 ],

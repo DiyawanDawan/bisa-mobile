@@ -270,9 +270,9 @@ class _NegotiationRoomPageState extends State<NegotiationRoomPage> {
             return Column(
               children: [
                 if (_isInquiryMode(n))
-                  _buildInquiryHUD(n, isSupplier)
+                  _buildInquiryHUD(n, isSupplier, currentUser?.id)
                 else
-                  _buildNegotiationHUD(n, isSupplier),
+                  _buildNegotiationHUD(n, isSupplier, currentUser?.id),
                 Expanded(
                   child: Stack(
                     children: [
@@ -403,9 +403,19 @@ class _NegotiationRoomPageState extends State<NegotiationRoomPage> {
     );
   }
 
-  void _openProductContext(NegotiationEntity n, bool isSupplier) {
-    if (isSupplier) {
-      context.push('/negotiation/${widget.negotiationId}/product');
+  void _openProductContext(NegotiationEntity n, String? userId) {
+    if (userId == null || !n.isParticipant(userId)) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text(
+            'Data negosiasi tidak sesuai akun. Buka ulang dari daftar chat.',
+          ),
+        ),
+      );
+      return;
+    }
+    if (n.isSellerParticipant(userId)) {
+      context.push('/negotiation/${n.id}/product');
     } else {
       context.push('/product/${n.productId}');
     }
@@ -418,7 +428,11 @@ class _NegotiationRoomPageState extends State<NegotiationRoomPage> {
     );
   }
 
-  Widget _buildInquiryHUD(NegotiationEntity n, bool isSupplier) {
+  Widget _buildInquiryHUD(
+    NegotiationEntity n,
+    bool isSupplier, [
+    String? userId,
+  ]) {
     return Container(
       width: double.infinity,
       decoration: const BoxDecoration(
@@ -544,7 +558,13 @@ class _NegotiationRoomPageState extends State<NegotiationRoomPage> {
     );
   }
 
-  Widget _buildNegotiationHUD(NegotiationEntity n, bool isSupplier) {
+  Widget _buildNegotiationHUD(
+    NegotiationEntity n,
+    bool isSupplier,
+    String? userId,
+  ) {
+    final isSellerInRoom =
+        userId != null && n.isSellerParticipant(userId);
     final display = NegotiationStatusDisplay.forRoom(
       n.status,
       isSupplier: isSupplier,
@@ -567,7 +587,7 @@ class _NegotiationRoomPageState extends State<NegotiationRoomPage> {
               children: [
                 // Product Image
                 GestureDetector(
-                  onTap: () => _openProductContext(n, isSupplier),
+                  onTap: () => _openProductContext(n, userId),
                   child: ClipRRect(
                     borderRadius: BorderRadius.circular(12.r),
                     child:
@@ -613,7 +633,7 @@ class _NegotiationRoomPageState extends State<NegotiationRoomPage> {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       GestureDetector(
-                        onTap: () => _openProductContext(n, isSupplier),
+                        onTap: () => _openProductContext(n, userId),
                         child: Text(
                           n.product.name,
                           style: TextStyle(
@@ -627,9 +647,9 @@ class _NegotiationRoomPageState extends State<NegotiationRoomPage> {
                       ),
                       SizedBox(height: 2.h),
                       GestureDetector(
-                        onTap: () => _openProductContext(n, isSupplier),
+                        onTap: () => _openProductContext(n, userId),
                         child: Text(
-                          isSupplier
+                          isSellerInRoom
                               ? 'Info produk negosiasi →'
                               : 'Lihat detail produk →',
                           style: TextStyle(

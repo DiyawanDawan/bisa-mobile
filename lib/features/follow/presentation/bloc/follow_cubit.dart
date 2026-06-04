@@ -5,7 +5,9 @@ import '../../domain/repositories/follow_repository.dart';
 
 class FollowState extends Equatable {
   final Set<String> followingIds;
+  final bool followingIdsLoaded;
   final FollowStatsEntity? myStats;
+  final Map<String, FollowStatsEntity> statsByUserId;
   final List<FollowUserEntity> followingUsers;
   final List<FollowUserEntity> followerUsers;
   final bool isLoading;
@@ -13,7 +15,9 @@ class FollowState extends Equatable {
 
   const FollowState({
     this.followingIds = const {},
+    this.followingIdsLoaded = false,
     this.myStats,
+    this.statsByUserId = const {},
     this.followingUsers = const [],
     this.followerUsers = const [],
     this.isLoading = false,
@@ -22,28 +26,37 @@ class FollowState extends Equatable {
 
   bool isFollowing(String userId) => followingIds.contains(userId);
 
+  FollowStatsEntity? statsForUser(String userId) => statsByUserId[userId];
+
   FollowState copyWith({
     Set<String>? followingIds,
+    bool? followingIdsLoaded,
     FollowStatsEntity? myStats,
+    Map<String, FollowStatsEntity>? statsByUserId,
     List<FollowUserEntity>? followingUsers,
     List<FollowUserEntity>? followerUsers,
     bool? isLoading,
     String? error,
+    bool clearError = false,
   }) {
     return FollowState(
       followingIds: followingIds ?? this.followingIds,
+      followingIdsLoaded: followingIdsLoaded ?? this.followingIdsLoaded,
       myStats: myStats ?? this.myStats,
+      statsByUserId: statsByUserId ?? this.statsByUserId,
       followingUsers: followingUsers ?? this.followingUsers,
       followerUsers: followerUsers ?? this.followerUsers,
       isLoading: isLoading ?? this.isLoading,
-      error: error,
+      error: clearError ? null : (error ?? this.error),
     );
   }
 
   @override
   List<Object?> get props => [
         followingIds,
+        followingIdsLoaded,
         myStats,
+        statsByUserId,
         followingUsers,
         followerUsers,
         isLoading,
@@ -53,6 +66,7 @@ class FollowState extends Equatable {
 
 class FollowCubit extends Cubit<FollowState> {
   final FollowRepository _repository;
+  final Set<String> _ensureStatusInFlight = {};
 
   FollowCubit(this._repository) : super(const FollowState());
 
@@ -68,7 +82,12 @@ class FollowCubit extends Cubit<FollowState> {
     final result = await _repository.getMyFollowingIds();
     result.fold(
       (_) {},
-      (ids) => emit(state.copyWith(followingIds: ids.toSet())),
+      (ids) => emit(
+        state.copyWith(
+          followingIds: ids.toSet(),
+          followingIdsLoaded: true,
+        ),
+      ),
     );
   }
 
@@ -77,6 +96,19 @@ class FollowCubit extends Cubit<FollowState> {
     result.fold(
       (_) {},
       (stats) => emit(state.copyWith(myStats: stats)),
+    );
+  }
+
+  Future<void> loadFollowStatsForUser(String userId) async {
+    if (state.statsByUserId.containsKey(userId)) return;
+    final result = await _repository.getFollowStats(userId);
+    result.fold(
+      (_) {},
+      (stats) => emit(
+        state.copyWith(
+          statsByUserId: {...state.statsByUserId, userId: stats},
+        ),
+      ),
     );
   }
 
@@ -98,12 +130,13 @@ class FollowCubit extends Cubit<FollowState> {
     );
   }
 
-  Future<bool> toggleFollow(String userId, {String? currentUserId}) async {
+  /// Returns error message on failure, null on success.
+  Future<String?> toggleFollow(String userId, {String? currentUserId}) async {
     final result = await _repository.toggleFollow(userId);
     return result.fold(
       (f) {
         emit(state.copyWith(error: f.message));
-        return state.isFollowing(userId);
+        return f.message;
       },
       (following) {
         final updated = Set<String>.from(state.followingIds);
@@ -112,7 +145,7 @@ class FollowCubit extends Cubit<FollowState> {
         } else {
           updated.remove(userId);
         }
-        emit(state.copyWith(followingIds: updated));
+        emit(state.copyWith(followingIds: updated, clearError: true));
 
         if (currentUserId != null && state.myStats != null) {
           final stats = state.myStats!;
@@ -126,21 +159,44 @@ class FollowCubit extends Cubit<FollowState> {
             ),
           );
         }
-        return following;
+
+        final viewed = state.statsByUserId[userId];
+        if (viewed != null) {
+          final nextFollowers = following
+              ? viewed.followersCount + 1
+              : (viewed.followersCount > 0 ? viewed.followersCount - 1 : 0);
+          emit(
+            state.copyWith(
+              statsByUserId: {
+                ...state.statsByUserId,
+                userId: viewed.copyWith(followersCount: nextFollowers),
+              },
+            ),
+          );
+        }
+        return null;
       },
     );
   }
 
   Future<void> ensureFollowingStatus(String userId) async {
-    if (state.followingIds.isNotEmpty || state.isFollowing(userId)) return;
-    final result = await _repository.checkIsFollowing(userId);
-    result.fold((_) {}, (isFollowing) {
-      if (!isFollowing) return;
-      emit(state.copyWith(followingIds: {...state.followingIds, userId}));
-    });
+    if (state.isFollowing(userId)) return;
+    if (state.followingIdsLoaded) return;
+    if (_ensureStatusInFlight.contains(userId)) return;
+    _ensureStatusInFlight.add(userId);
+    try {
+      final result = await _repository.checkIsFollowing(userId);
+      result.fold((_) {}, (isFollowing) {
+        if (!isFollowing) return;
+        emit(state.copyWith(followingIds: {...state.followingIds, userId}));
+      });
+    } finally {
+      _ensureStatusInFlight.remove(userId);
+    }
   }
 
   void reset() {
+    _ensureStatusInFlight.clear();
     emit(const FollowState());
   }
 }

@@ -6,7 +6,10 @@ import 'package:mobile_bisa/core/constants/app_colors.dart';
 import 'package:mobile_bisa/core/utils/extensions.dart';
 import 'package:mobile_bisa/features/auth/presentation/bloc/auth_cubit.dart';
 import 'package:mobile_bisa/features/negotiation/domain/entities/negotiation_entity.dart';
+import 'package:mobile_bisa/features/negotiation/domain/entities/negotiation_entity_extensions.dart';
 import 'package:mobile_bisa/features/negotiation/presentation/bloc/negotiation_cubit.dart';
+import 'package:mobile_bisa/features/invoice/domain/entities/invoice_deal_economics.dart';
+import 'package:mobile_bisa/features/invoice/presentation/widgets/invoice_deal_economics_card.dart';
 import 'package:mobile_bisa/features/negotiation/presentation/utils/negotiation_status_ui.dart';
 import 'package:mobile_bisa/injection_container.dart';
 import 'package:mobile_bisa/shared/widgets/bisa_app_bar.dart';
@@ -27,15 +30,17 @@ class NegotiationProductPage extends StatelessWidget {
         builder: (context, state) {
           return state.maybeWhen(
             detailLoaded: (negotiation, isTyping, _) {
-              final isSupplier = context.select(
+              final currentUserId = context.select(
                 (AuthCubit c) => c.state.maybeWhen(
-                  authenticated: (user) => user.role == 'SUPPLIER',
-                  orElse: () => false,
+                  authenticated: (user) => user.id,
+                  orElse: () => null,
                 ),
               );
+              final isSellerInRoom = currentUserId != null &&
+                  negotiation.isSellerParticipant(currentUserId);
               return _NegotiationProductBody(
                 negotiation: negotiation,
-                isSupplier: isSupplier,
+                isSupplier: isSellerInRoom,
               );
             },
             loading: () => Scaffold(
@@ -79,6 +84,15 @@ class _NegotiationProductBody extends StatelessWidget {
     final product = negotiation.product;
     final party = isSupplier ? negotiation.buyer : negotiation.seller;
     final partyLabel = isSupplier ? 'Pembeli' : 'Supplier';
+    final economics = negotiation.economics ??
+        InvoiceDealEconomics.compute(
+          catalogPricePerUnit: product.pricePerUnit,
+          negotiatedPricePerUnit: negotiation.pricePerUnit,
+          quantity: negotiation.quantity,
+          platformFee: 0,
+          productStock: product.stock,
+          unit: product.unit,
+        );
 
     return Scaffold(
       backgroundColor: AppColors.background,
@@ -110,11 +124,14 @@ class _NegotiationProductBody extends StatelessWidget {
               ),
             ),
             SizedBox(height: 14.h),
+            InvoiceDealEconomicsCard(economics: economics),
+            SizedBox(height: 14.h),
             _section(
               title: 'Metadata Produk',
               child: Column(
                 children: [
                   _row('Harga Katalog/Unit', product.pricePerUnit.toRupiah),
+                  _row('Stok saat ini', '${product.stock.toStringAsFixed(0)} ${product.unit}'),
                   _row('Min. Order', '${product.minOrder.toStringAsFixed(0)} ${product.unit}'),
                   if (product.biomassaType != null)
                     _row('Jenis Biomassa', product.biomassaType!),

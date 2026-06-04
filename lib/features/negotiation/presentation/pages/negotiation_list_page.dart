@@ -43,6 +43,7 @@ class _NegotiationListPageState extends State<NegotiationListPage>
   String _selectedStatus = 'ALL';
   late final TabController _roomTabController;
   late final NegotiationCubit _negotiationCubit;
+  String? _listOwnerUserId;
 
   NegotiationChatPurpose get _activeRoomType =>
       _roomTabController.index == 0
@@ -71,12 +72,13 @@ class _NegotiationListPageState extends State<NegotiationListPage>
     });
   }
 
-  void _scheduleListLoadIfNeeded() {
-  final needsLoad = _negotiationCubit.state.maybeWhen(
-      loaded: (_) => false,
-      loading: () => false,
-      orElse: () => true,
-    );
+  void _scheduleListLoadIfNeeded(String? currentUserId) {
+    final needsLoad = _negotiationCubit.state.maybeWhen(
+          loaded: (_) => _listOwnerUserId != currentUserId,
+          loading: () => false,
+          orElse: () => true,
+        ) ||
+        (currentUserId != null && _listOwnerUserId != currentUserId);
     if (!needsLoad) return;
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (mounted) _reloadList();
@@ -102,10 +104,34 @@ class _NegotiationListPageState extends State<NegotiationListPage>
         );
     if (user == null) return;
 
+    _listOwnerUserId = user.id;
     if (user.role == 'SUPPLIER') {
       _negotiationCubit.getIncomingOffers(roomType: _activeRoomType);
     } else {
       _negotiationCubit.getMyOffers(roomType: _activeRoomType);
+    }
+  }
+
+  void _openProductContext(
+    BuildContext context,
+    NegotiationEntity n,
+    String? currentUserId,
+  ) {
+    if (currentUserId == null || !n.isParticipant(currentUserId)) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text(
+            'Data negosiasi tidak sesuai akun. Memuat ulang daftar...',
+          ),
+        ),
+      );
+      _reloadList();
+      return;
+    }
+    if (n.isSellerParticipant(currentUserId)) {
+      context.push('/negotiation/${n.id}/product');
+    } else {
+      context.push('/product/${n.productId}');
     }
   }
 
@@ -130,7 +156,27 @@ class _NegotiationListPageState extends State<NegotiationListPage>
 
     return BlocProvider.value(
       value: _negotiationCubit,
-      child: Scaffold(
+      child: BlocListener<AuthCubit, AuthState>(
+        listenWhen: (prev, next) {
+          final prevId = prev.maybeWhen(
+            authenticated: (u) => u.id,
+            orElse: () => null,
+          );
+          final nextId = next.maybeWhen(
+            authenticated: (u) => u.id,
+            orElse: () => null,
+          );
+          return prevId != nextId;
+        },
+        listener: (context, state) {
+          state.maybeWhen(
+            authenticated: (_) => _reloadList(),
+            orElse: () {
+              _listOwnerUserId = null;
+            },
+          );
+        },
+        child: Scaffold(
         backgroundColor: AppColors.background,
         appBar: BisaAppBar(
           backgroundColor: AppColors.surface,
@@ -185,7 +231,7 @@ class _NegotiationListPageState extends State<NegotiationListPage>
               )
             : BlocBuilder<NegotiationCubit, NegotiationState>(
                 builder: (context, state) {
-                  _scheduleListLoadIfNeeded();
+                  _scheduleListLoadIfNeeded(user.id);
 
                   return Column(
                     crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -246,6 +292,7 @@ class _NegotiationListPageState extends State<NegotiationListPage>
                   );
                 },
               ),
+        ),
       ),
     );
   }
@@ -342,12 +389,16 @@ class _NegotiationListPageState extends State<NegotiationListPage>
     required bool isBuyer,
     required dynamic user,
   }) {
+    final userId = user?.id as String?;
     final filteredList = negotiations.where((n) {
+      if (userId != null && !n.isParticipant(userId)) return false;
+
       final matchesRoom =
           _isInquiryTab ? n.isInquiryChat : n.isNegotiationChat;
       if (!matchesRoom) return false;
 
-      final String name = isSupplier
+      final isSellerInRoom = userId != null && n.isSellerParticipant(userId);
+      final String name = isSellerInRoom
           ? n.buyer.name.toLowerCase()
           : (n.seller.companyName?.toLowerCase() ??
                 n.seller.name.toLowerCase());
@@ -363,6 +414,14 @@ class _NegotiationListPageState extends State<NegotiationListPage>
       return matchesSearch && matchesStatus;
     }).toList();
 
+    final roomsOfCurrentTab = negotiations.where((n) {
+      if (userId != null && !n.isParticipant(userId)) return false;
+      return _isInquiryTab ? n.isInquiryChat : n.isNegotiationChat;
+    }).length;
+    final hasRoomsOfCurrentTab = roomsOfCurrentTab > 0;
+    final hasActiveSearch = _searchQuery.isNotEmpty;
+    final hasStatusFilter = !_isInquiryTab && _selectedStatus != 'ALL';
+
     return RefreshIndicator(
       color: AppColors.primary,
       onRefresh: () async => _reloadList(),
@@ -370,12 +429,16 @@ class _NegotiationListPageState extends State<NegotiationListPage>
         physics: const AlwaysScrollableScrollPhysics(),
         child: Column(
           children: [
-            if (negotiations.isEmpty)
-              _buildEmptyState(inquiry: _isInquiryTab)
+            if (negotiations.isEmpty || !hasRoomsOfCurrentTab)
+              _buildEmptyState(
+                inquiry: _isInquiryTab,
+                isSupplier: isSupplier,
+              )
             else if (filteredList.isEmpty)
-              Padding(
-                padding: EdgeInsets.only(top: 100.h),
-                child: Text('data_tidak_ditemukan'.tr()),
+              _buildNoMatchState(
+                inquiry: _isInquiryTab,
+                hasSearch: hasActiveSearch,
+                hasStatusFilter: hasStatusFilter,
               )
             else
               ListView.builder(
@@ -419,8 +482,11 @@ class _NegotiationListPageState extends State<NegotiationListPage>
     bool isSupplier,
     dynamic currentUser,
   ) {
-    final otherParty = isSupplier ? n.buyer : n.seller;
-    final String name = isSupplier
+    final userId = currentUser?.id as String?;
+    final isSellerInRoom =
+        userId != null && n.isSellerParticipant(userId);
+    final otherParty = isSellerInRoom ? n.buyer : n.seller;
+    final String name = isSellerInRoom
         ? n.buyer.name
         : (n.seller.companyName ?? n.seller.name);
 
@@ -434,7 +500,11 @@ class _NegotiationListPageState extends State<NegotiationListPage>
         Material(
           color: AppColors.surface,
           child: InkWell(
-            onTap: () => NegotiationStatusDisplay.openFromList(context, n),
+            onTap: () => NegotiationStatusDisplay.openFromList(
+              context,
+              n,
+              currentUserId: userId,
+            ),
             child: Padding(
               padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 14.h),
               child: Row(
@@ -516,13 +586,11 @@ class _NegotiationListPageState extends State<NegotiationListPage>
                         ),
                         SizedBox(height: 2.h),
                         GestureDetector(
-                          onTap: () {
-                            if (isSupplier) {
-                              context.push('/negotiation/${n.id}/product');
-                            } else {
-                              context.push('/product/${n.productId}');
-                            }
-                          },
+                          onTap: () => _openProductContext(
+                            context,
+                            n,
+                            userId,
+                          ),
                           child: Text(
                             n.product.name,
                             style: TextStyle(
@@ -625,43 +693,151 @@ class _NegotiationListPageState extends State<NegotiationListPage>
     );
   }
 
-  Widget _buildEmptyState({required bool inquiry}) {
+  Widget _buildEmptyIllustration({
+    required IconData icon,
+    required Color iconColor,
+    required Color backgroundColor,
+  }) {
+    return Container(
+      width: 112.r,
+      height: 112.r,
+      decoration: BoxDecoration(
+        color: backgroundColor,
+        shape: BoxShape.circle,
+      ),
+      child: Icon(icon, size: 52.sp, color: iconColor),
+    );
+  }
+
+  Widget _buildEmptyState({
+    required bool inquiry,
+    required bool isSupplier,
+  }) {
+    final title = inquiry ? 'Belum ada pesan' : 'belum_ada_negosiasi'.tr();
+    final subtitle = inquiry
+        ? (isSupplier
+            ? 'Pembeli yang bertanya lewat halaman produk akan muncul di sini.'
+            : 'Mulai chat dari tombol tanya produk di halaman detail barang.')
+        : (isSupplier
+            ? 'penawaran_muncul_di_sini'.tr()
+            : 'penawaran_muncul_di_sini'.tr());
+    final icon = inquiry ? Icons.forum_outlined : Icons.handshake_outlined;
+    final tint = inquiry ? AppColors.info : AppColors.primary;
+
     return Padding(
-      padding: EdgeInsets.symmetric(vertical: 60.h),
+      padding: EdgeInsets.fromLTRB(24.w, 48.h, 24.w, 24.h),
       child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          Container(
-            padding: EdgeInsets.all(28.r),
-            decoration: BoxDecoration(
-              color: AppColors.grey50,
-              shape: BoxShape.circle,
-            ),
-            child: Icon(
-              inquiry
-                  ? Icons.forum_outlined
-                  : Icons.handshake_outlined,
-              size: 56.sp,
-              color: AppColors.grey300,
+          _buildEmptyIllustration(
+            icon: icon,
+            iconColor: tint,
+            backgroundColor: tint.withValues(alpha: 0.1),
+          ),
+          SizedBox(height: 24.h),
+          Text(
+            title,
+            textAlign: TextAlign.center,
+            style: TextStyle(
+              color: AppColors.textPrimary,
+              fontSize: 17.sp,
+              fontWeight: FontWeight.w800,
+              letterSpacing: -0.3,
             ),
           ),
-          SizedBox(height: 20.h),
+          SizedBox(height: 8.h),
           Text(
-            inquiry ? 'Belum ada pesan' : 'belum_ada_negosiasi'.tr(),
+            subtitle,
+            textAlign: TextAlign.center,
+            style: TextStyle(
+              color: AppColors.textSecondary,
+              fontSize: 13.sp,
+              height: 1.45,
+            ),
+          ),
+          if (inquiry && !isSupplier) ...[
+            SizedBox(height: 24.h),
+            CustomButton(
+              text: 'Jelajahi produk',
+              height: 44.h,
+              width: 200.w,
+              onPressed: () => context.go('/?tab=0'),
+            ),
+          ],
+        ],
+      ),
+    );
+  }
+
+  Widget _buildNoMatchState({
+    required bool inquiry,
+    required bool hasSearch,
+    required bool hasStatusFilter,
+  }) {
+    final title = hasSearch
+        ? 'Pencarian tidak cocok'
+        : hasStatusFilter
+            ? 'Tidak ada negosiasi di filter ini'
+            : 'data_tidak_ditemukan'.tr();
+    final subtitle = hasSearch
+        ? (inquiry
+            ? 'Coba kata kunci nama toko atau produk lain.'
+            : 'Coba kata kunci nama pembeli, supplier, atau produk lain.')
+        : hasStatusFilter
+            ? 'Ubah chip status di atas atau pilih Semua.'
+            : 'Perkecil filter atau muat ulang daftar.';
+
+    return Padding(
+      padding: EdgeInsets.fromLTRB(24.w, 48.h, 24.w, 24.h),
+      child: Column(
+        children: [
+          _buildEmptyIllustration(
+            icon: hasSearch ? Icons.search_off_rounded : Icons.filter_list_off_rounded,
+            iconColor: AppColors.textSecondary,
+            backgroundColor: AppColors.grey100,
+          ),
+          SizedBox(height: 24.h),
+          Text(
+            title,
+            textAlign: TextAlign.center,
             style: TextStyle(
               color: AppColors.textPrimary,
               fontSize: 16.sp,
               fontWeight: FontWeight.w800,
             ),
           ),
-          SizedBox(height: 6.h),
-          Text(
-            inquiry
-                ? 'Chat tanya produk dari halaman detail produk akan muncul di sini.'
-                : 'penawaran_muncul_di_sini'.tr(),
-            textAlign: TextAlign.center,
-            style: TextStyle(color: AppColors.textHint, fontSize: 13.sp),
+          SizedBox(height: 8.h),
+          Padding(
+            padding: EdgeInsets.symmetric(horizontal: 8.w),
+            child: Text(
+              subtitle,
+              textAlign: TextAlign.center,
+              style: TextStyle(
+                color: AppColors.textSecondary,
+                fontSize: 13.sp,
+                height: 1.45,
+              ),
+            ),
           ),
+          if (hasSearch || hasStatusFilter) ...[
+            SizedBox(height: 20.h),
+            CustomButton(
+              text: hasSearch ? 'Hapus pencarian' : 'Tampilkan semua',
+              height: 44.h,
+              width: 200.w,
+              isOutlined: true,
+              onPressed: () {
+                setState(() {
+                  if (hasSearch) {
+                    _searchController.clear();
+                    _searchQuery = '';
+                  }
+                  if (hasStatusFilter) {
+                    _selectedStatus = 'ALL';
+                  }
+                });
+              },
+            ),
+          ],
         ],
       ),
     );

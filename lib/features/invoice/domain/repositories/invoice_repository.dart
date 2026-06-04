@@ -6,9 +6,14 @@ abstract class InvoiceRepository {
   Future<Either<Failure, InvoicePreviewEntity>> getInvoicePreview(
     String negotiationId, {
     Map<String, dynamic>? shippingSelection,
+    Map<String, dynamic>? shippingSnapshot,
     double? quantity,
     double? pricePerUnit,
   });
+
+  Future<Either<Failure, Map<String, dynamic>>> getBuyerShippingAddresses(
+    String negotiationId,
+  );
   Future<Either<Failure, void>> issueInvoice(
     String negotiationId, {
     Map<String, dynamic>? shippingSnapshot,

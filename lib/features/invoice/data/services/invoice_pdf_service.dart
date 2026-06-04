@@ -14,6 +14,38 @@ class InvoicePdfGenerator {
   static const PdfColor _primary = PdfColor.fromInt(0xFF135122);
   static const PdfColor _textMuted = PdfColor.fromInt(0xFF64748B);
 
+  /// Selaras dengan splash / branding aplikasi.
+  static const String _brandName = 'BISA';
+  static const String _brandTagline =
+      'Biochart indonesia Sirkular Agritectur';
+  static const String _documentTitle = 'Tagihan B2B Biomassa';
+
+  /// Font bawaan PDF tidak mendukung em dash / emoji — normalisasi teks.
+  static String _pdfSafeText(String? text) {
+    if (text == null) return '';
+    var s = text;
+    s = s.replaceAll('\u2014', '-').replaceAll('\u2013', '-');
+    s = s.replaceAll(RegExp(r'[\u{1F300}-\u{1FAFF}\u{2600}-\u{27BF}]', unicode: true), '');
+    return s.trim();
+  }
+
+  static String _qrPayload(InvoicePdfData data) {
+    return data.qrData ??
+        '${data.invoiceNumber}:VERIFY:${data.issuedAt.millisecondsSinceEpoch}';
+  }
+
+  static const double _pageMarginH = 22;
+  static const double _pageMarginV = 18;
+  static const double _gapS = 4;
+  static const double _gapM = 6;
+  static const double _boxPad = 6;
+
+  static String _truncate(String? text, {int maxLen = 140}) {
+    final s = _pdfSafeText(text);
+    if (s.length <= maxLen) return s;
+    return '${s.substring(0, maxLen)}...';
+  }
+
   static Future<List<int>> generate(InvoicePdfData data) async {
     final doc = pw.Document();
     final logoBytes = await _loadLogoBytes();
@@ -24,31 +56,46 @@ class InvoicePdfGenerator {
       decimalDigits: 0,
     );
 
+    final pageWidth = PdfPageFormat.a4.width - (_pageMarginH * 2);
+
     doc.addPage(
-      pw.MultiPage(
+      pw.Page(
         pageFormat: PdfPageFormat.a4,
-        margin: const pw.EdgeInsets.all(40),
-        build: (context) => [
-          _header(data, dateFmt, logoBytes),
-          pw.SizedBox(height: 20),
-          _partiesSection(data),
-          pw.SizedBox(height: 20),
-          _productSection(data, currencyFmt),
-          pw.SizedBox(height: 16),
-          _breakdownSection(data, currencyFmt),
-          pw.SizedBox(height: 16),
-          _shippingSection(data),
-          if (data.specifications != null && data.specifications!.isNotEmpty) ...[
-            pw.SizedBox(height: 16),
-            _notesSection(data.specifications!),
-          ],
-          if (data.qrData != null) ...[
-            pw.SizedBox(height: 20),
-            _qrSection(data),
-          ],
-          pw.SizedBox(height: 24),
-          _footer(),
-        ],
+        margin: const pw.EdgeInsets.symmetric(
+          horizontal: _pageMarginH,
+          vertical: _pageMarginV,
+        ),
+        build: (context) => pw.FittedBox(
+          fit: pw.BoxFit.scaleDown,
+          alignment: pw.Alignment.topCenter,
+          child: pw.SizedBox(
+            width: pageWidth,
+            child: pw.Column(
+              crossAxisAlignment: pw.CrossAxisAlignment.stretch,
+              mainAxisSize: pw.MainAxisSize.min,
+              children: [
+                _header(data, dateFmt, logoBytes),
+                pw.SizedBox(height: _gapM),
+                _partiesSection(data),
+                pw.SizedBox(height: _gapM),
+                _productSection(data, currencyFmt),
+                pw.SizedBox(height: _gapM),
+                _breakdownSection(data, currencyFmt),
+                pw.SizedBox(height: _gapM),
+                _shippingSection(data),
+                if (data.specifications != null &&
+                    data.specifications!.trim().isNotEmpty) ...[
+                  pw.SizedBox(height: _gapM),
+                  _notesSection(data.specifications!),
+                ],
+                pw.SizedBox(height: _gapM),
+                _qrSection(data),
+                pw.SizedBox(height: _gapS),
+                _footer(),
+              ],
+            ),
+          ),
+        ),
       ),
     );
 
@@ -70,38 +117,49 @@ class InvoicePdfGenerator {
     Uint8List? logoBytes,
   ) {
     return pw.Container(
-      padding: const pw.EdgeInsets.all(16),
+      padding: const pw.EdgeInsets.all(_boxPad + 2),
       decoration: pw.BoxDecoration(
         color: PdfColor.fromInt(0xFFDCFCE7),
-        borderRadius: pw.BorderRadius.circular(8),
+        borderRadius: pw.BorderRadius.circular(6),
       ),
       child: pw.Row(
         mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
         crossAxisAlignment: pw.CrossAxisAlignment.start,
         children: [
-          pw.Column(
+          pw.Row(
             crossAxisAlignment: pw.CrossAxisAlignment.start,
             children: [
               if (logoBytes != null)
                 pw.Image(
                   pw.MemoryImage(logoBytes),
-                  width: 72,
-                  height: 32,
+                  width: 40,
+                  height: 40,
                   fit: pw.BoxFit.contain,
-                )
-              else
-                pw.Text(
-                  'BISA',
-                  style: pw.TextStyle(
-                    fontSize: 22,
-                    fontWeight: pw.FontWeight.bold,
-                    color: _primary,
-                  ),
                 ),
-              pw.SizedBox(height: 6),
-              pw.Text(
-                'Tagihan B2B Biomassa',
-                style: const pw.TextStyle(fontSize: 11, color: _textMuted),
+              pw.SizedBox(width: logoBytes != null ? 8 : 0),
+              pw.Column(
+                crossAxisAlignment: pw.CrossAxisAlignment.start,
+                children: [
+                  pw.Text(
+                    _brandName,
+                    style: pw.TextStyle(
+                      fontSize: 16,
+                      fontWeight: pw.FontWeight.bold,
+                      color: _primary,
+                      letterSpacing: 0.8,
+                    ),
+                  ),
+                  pw.SizedBox(height: 2),
+                  pw.Text(
+                    _brandTagline,
+                    style: const pw.TextStyle(fontSize: 7, color: _textMuted),
+                  ),
+                  pw.SizedBox(height: 3),
+                  pw.Text(
+                    _documentTitle,
+                    style: const pw.TextStyle(fontSize: 8, color: _textMuted),
+                  ),
+                ],
               ),
             ],
           ),
@@ -109,23 +167,23 @@ class InvoicePdfGenerator {
             crossAxisAlignment: pw.CrossAxisAlignment.end,
             children: [
               pw.Text(
-                data.invoiceNumber,
+                _truncate(data.invoiceNumber, maxLen: 36),
                 style: pw.TextStyle(
-                  fontSize: 12,
+                  fontSize: 9,
                   fontWeight: pw.FontWeight.bold,
                 ),
               ),
-              pw.SizedBox(height: 4),
+              pw.SizedBox(height: 2),
               pw.Text(
                 dateFmt.format(data.issuedAt),
-                style: const pw.TextStyle(fontSize: 9, color: _textMuted),
+                style: const pw.TextStyle(fontSize: 7, color: _textMuted),
               ),
               if (data.statusLabel != null) ...[
-                pw.SizedBox(height: 4),
+                pw.SizedBox(height: 2),
                 pw.Text(
                   data.statusLabel!,
                   style: pw.TextStyle(
-                    fontSize: 9,
+                    fontSize: 7,
                     color: _primary,
                     fontWeight: pw.FontWeight.bold,
                   ),
@@ -149,7 +207,7 @@ class InvoicePdfGenerator {
             email: data.supplierEmail,
           ),
         ),
-        pw.SizedBox(width: 16),
+        pw.SizedBox(width: _gapM),
         pw.Expanded(
           child: _partyBox(
             'Pembeli',
@@ -172,38 +230,31 @@ class InvoicePdfGenerator {
     String? company,
   }) {
     return pw.Container(
-      padding: const pw.EdgeInsets.all(12),
+      padding: const pw.EdgeInsets.all(_boxPad),
       decoration: pw.BoxDecoration(
         border: pw.Border.all(color: PdfColors.grey300),
-        borderRadius: pw.BorderRadius.circular(6),
+        borderRadius: pw.BorderRadius.circular(4),
       ),
       child: pw.Column(
         crossAxisAlignment: pw.CrossAxisAlignment.start,
         children: [
-          pw.Text(label, style: const pw.TextStyle(fontSize: 9, color: _textMuted)),
-          pw.SizedBox(height: 4),
-          pw.Text(name, style: pw.TextStyle(fontWeight: pw.FontWeight.bold, fontSize: 11)),
+          pw.Text(label, style: const pw.TextStyle(fontSize: 7, color: _textMuted)),
+          pw.SizedBox(height: 2),
+          pw.Text(
+            _truncate(name, maxLen: 48),
+            style: pw.TextStyle(fontWeight: pw.FontWeight.bold, fontSize: 9),
+          ),
           if (company != null && company.isNotEmpty) ...[
-            pw.SizedBox(height: 2),
-            pw.Text(company, style: const pw.TextStyle(fontSize: 9, color: _textMuted)),
-          ],
-          if (email != null && email.isNotEmpty) ...[
-            pw.SizedBox(height: 4),
-            pw.Row(
-              children: [
-                pw.Text(
-                  'Email: ',
-                  style: const pw.TextStyle(fontSize: 9, color: _textMuted),
-                ),
-                pw.Expanded(
-                  child: pw.Text(
-                    email,
-                    style: const pw.TextStyle(fontSize: 9),
-                  ),
-                ),
-              ],
+            pw.Text(
+              _truncate(company, maxLen: 40),
+              style: const pw.TextStyle(fontSize: 7, color: _textMuted),
             ),
           ],
+          if (email != null && email.isNotEmpty)
+            pw.Text(
+              _truncate(email, maxLen: 42),
+              style: const pw.TextStyle(fontSize: 7),
+            ),
         ],
       ),
     );
@@ -213,8 +264,11 @@ class InvoicePdfGenerator {
     return pw.Column(
       crossAxisAlignment: pw.CrossAxisAlignment.start,
       children: [
-        pw.Text('Detail Produk', style: pw.TextStyle(fontWeight: pw.FontWeight.bold)),
-        pw.SizedBox(height: 8),
+        pw.Text(
+          'Detail Produk',
+          style: pw.TextStyle(fontWeight: pw.FontWeight.bold, fontSize: 9),
+        ),
+        pw.SizedBox(height: _gapS),
         pw.Table(
           border: pw.TableBorder.all(color: PdfColors.grey300),
           columnWidths: {
@@ -229,13 +283,13 @@ class InvoicePdfGenerator {
               children: [
                 _cell('Produk', bold: true),
                 _cell('Qty', bold: true),
-                _cell('Harga/Unit', bold: true),
+                _cell('Harga/${data.productUnit}', bold: true),
                 _cell('Subtotal', bold: true),
               ],
             ),
             pw.TableRow(
               children: [
-                _cell(data.productName),
+                _cell(_pdfSafeText(data.productName)),
                 _cell('${data.quantity.toStringAsFixed(0)} ${data.productUnit}'),
                 _cell(currencyFmt.format(data.pricePerUnit)),
                 _cell(currencyFmt.format(data.subtotal)),
@@ -250,17 +304,17 @@ class InvoicePdfGenerator {
   static pw.Widget _breakdownSection(InvoicePdfData data, NumberFormat currencyFmt) {
     return pw.Container(
       width: double.infinity,
-      padding: const pw.EdgeInsets.all(12),
+      padding: const pw.EdgeInsets.all(_boxPad),
       decoration: pw.BoxDecoration(
         border: pw.Border.all(color: PdfColors.grey300),
-        borderRadius: pw.BorderRadius.circular(6),
+        borderRadius: pw.BorderRadius.circular(4),
       ),
       child: pw.Column(
         children: [
           _breakdownRow('Subtotal Barang', currencyFmt.format(data.subtotal)),
           _breakdownRow('Biaya Platform', currencyFmt.format(data.platformFee)),
           if (data.logisticsFee > 0)
-            _breakdownRow('Biaya Ongkir', currencyFmt.format(data.logisticsFee)),
+            _breakdownRow('Biaya Ongkir (BISA)', currencyFmt.format(data.logisticsFee)),
           _breakdownRow('PPN', currencyFmt.format(data.vatAmount)),
           pw.Divider(color: PdfColors.grey400),
           _breakdownRow(
@@ -281,16 +335,16 @@ class InvoicePdfGenerator {
     PdfColor? valueColor,
   }) {
     final style = pw.TextStyle(
-      fontSize: bold ? 12 : 10,
+      fontSize: bold ? 9 : 8,
       fontWeight: bold ? pw.FontWeight.bold : pw.FontWeight.normal,
       color: valueColor,
     );
     return pw.Padding(
-      padding: const pw.EdgeInsets.symmetric(vertical: 3),
+      padding: const pw.EdgeInsets.symmetric(vertical: 1.5),
       child: pw.Row(
         mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
         children: [
-          pw.Text(label, style: pw.TextStyle(fontSize: 10)),
+          pw.Text(label, style: const pw.TextStyle(fontSize: 8)),
           pw.Text(value, style: style),
         ],
       ),
@@ -298,69 +352,222 @@ class InvoicePdfGenerator {
   }
 
   static pw.Widget _shippingSection(InvoicePdfData data) {
-    final snap = data.shippingSnapshot;
-    if (snap == null || snap.isEmpty) {
+    final destSnap = data.shippingSnapshot;
+    final originSnap = data.sellerShippingSnapshot ??
+        InvoicePdfData.originFromSnapshot(destSnap);
+    final methodLines = _shippingMethodLines(data);
+    final hasDestination = destSnap != null && destSnap.isNotEmpty;
+    final hasOrigin = originSnap != null && originSnap.isNotEmpty;
+
+    if (!hasDestination && !hasOrigin && methodLines.isEmpty) {
       return pw.SizedBox.shrink();
     }
-
-    final lines = <String>[
-      if (snap['recipient'] != null) 'Penerima: ${snap['recipient']}',
-      if (snap['phone'] != null) 'Telepon: ${snap['phone']}',
-      if (snap['address'] != null) 'Alamat: ${snap['address']}',
-      if (snap['regency'] != null || snap['province'] != null)
-        'Wilayah: ${[snap['regency'], snap['province']].whereType<String>().join(', ')}',
-    ];
 
     return pw.Column(
       crossAxisAlignment: pw.CrossAxisAlignment.start,
       children: [
-        pw.Text('Alamat Pengiriman', style: pw.TextStyle(fontWeight: pw.FontWeight.bold)),
-        pw.SizedBox(height: 6),
-        ...lines.map(
-          (line) => pw.Padding(
-            padding: const pw.EdgeInsets.only(bottom: 2),
-            child: pw.Text(line, style: const pw.TextStyle(fontSize: 10)),
-          ),
+        pw.Text(
+          'Pengiriman BISA',
+          style: pw.TextStyle(fontWeight: pw.FontWeight.bold, fontSize: 9),
         ),
+        pw.SizedBox(height: _gapS),
+        pw.Row(
+          crossAxisAlignment: pw.CrossAxisAlignment.start,
+          children: [
+            if (hasOrigin)
+              pw.Expanded(
+                child: _shippingAddressBox(
+                  'Asal - Pengirim',
+                  originSnap,
+                  footer: data.sellerOriginLabel != null &&
+                          data.sellerOriginLabel!.isNotEmpty
+                      ? 'Lokasi ongkir: ${data.sellerOriginLabel}'
+                      : null,
+                ),
+              ),
+            if (hasOrigin && hasDestination) pw.SizedBox(width: _gapS),
+            if (hasDestination)
+              pw.Expanded(
+                child: _shippingAddressBox(
+                  'Tujuan - Penerima',
+                  destSnap,
+                ),
+              ),
+          ],
+        ),
+        if (methodLines.isNotEmpty) ...[
+          pw.SizedBox(height: _gapS),
+          pw.Text(
+            _truncate(methodLines.join(' · '), maxLen: 200),
+            style: const pw.TextStyle(fontSize: 7, color: _textMuted),
+          ),
+        ],
       ],
     );
+  }
+
+  static pw.Widget _shippingAddressBox(
+    String title,
+    Map<String, dynamic> snap, {
+    String? footer,
+  }) {
+    final lines = <String>[
+      if (snap['recipient'] != null && snap['recipient'].toString().isNotEmpty)
+        snap['recipient'].toString(),
+      if (snap['phone'] != null && snap['phone'].toString().isNotEmpty)
+        'Telp: ${snap['phone']}',
+      if (snap['address'] != null && snap['address'].toString().isNotEmpty)
+        snap['address'].toString(),
+      if (snap['regency'] != null ||
+          snap['province'] != null)
+        [snap['regency'], snap['province']]
+            .whereType<String>()
+            .where((s) => s.isNotEmpty)
+            .join(', '),
+    ];
+
+    final body = lines.map(_pdfSafeText).join(' · ');
+    final full = footer != null && footer.isNotEmpty
+        ? '$body · ${_pdfSafeText(footer)}'
+        : body;
+
+    return pw.Container(
+      padding: const pw.EdgeInsets.all(_boxPad),
+      decoration: pw.BoxDecoration(
+        border: pw.Border.all(color: PdfColors.grey300),
+        borderRadius: pw.BorderRadius.circular(4),
+      ),
+      child: pw.Column(
+        crossAxisAlignment: pw.CrossAxisAlignment.start,
+        children: [
+          pw.Text(
+            title,
+            style: pw.TextStyle(
+              fontSize: 8,
+              fontWeight: pw.FontWeight.bold,
+              color: _primary,
+            ),
+          ),
+          pw.SizedBox(height: 2),
+          pw.Text(
+            _truncate(full, maxLen: 160),
+            style: const pw.TextStyle(fontSize: 7),
+          ),
+        ],
+      ),
+    );
+  }
+
+  static List<String> _shippingMethodLines(InvoicePdfData data) {
+    final lines = <String>[];
+    final snap = data.shippingSnapshot;
+    Map<String, dynamic>? logistics;
+    if (snap?['logistics'] is Map) {
+      logistics = Map<String, dynamic>.from(snap!['logistics'] as Map);
+    }
+
+    final os = data.orderShipping;
+    final courier = (logistics?['courierCode'] ?? os?.courierCode)?.toString();
+    final courierName =
+        (logistics?['courierName'] ?? os?.courierName)?.toString();
+    final service = (logistics?['verifiedService'] ??
+            logistics?['serviceName'] ??
+            os?.serviceName)
+        ?.toString();
+    final destination = (logistics?['destinationLabel'] ??
+            os?.destinationLabel)
+        ?.toString();
+    final origin = (data.sellerOriginLabel ?? os?.originLabel)?.toString();
+    final etd = (logistics?['etd'] ?? os?.etd)?.toString();
+
+    if (courier != null && courier.isNotEmpty) {
+      lines.add(
+        'Kurir: ${courierName != null && courierName.isNotEmpty ? '$courierName ($courier)' : courier.toUpperCase()}',
+      );
+    }
+    if (service != null && service.isNotEmpty) {
+      lines.add('Layanan: $service');
+    }
+    if (origin != null && origin.isNotEmpty) {
+      lines.add('Asal ongkir: $origin');
+    }
+    if (destination != null && destination.isNotEmpty) {
+      lines.add('Tujuan ongkir: $destination');
+    }
+    if (etd != null && etd.isNotEmpty) {
+      lines.add('Estimasi: $etd');
+    }
+
+    return lines;
   }
 
   static pw.Widget _notesSection(String notes) {
     return pw.Column(
       crossAxisAlignment: pw.CrossAxisAlignment.start,
       children: [
-        pw.Text('Catatan / Spesifikasi', style: pw.TextStyle(fontWeight: pw.FontWeight.bold)),
-        pw.SizedBox(height: 6),
-        pw.Text(notes, style: const pw.TextStyle(fontSize: 10)),
+        pw.Text(
+          'Catatan',
+          style: pw.TextStyle(fontWeight: pw.FontWeight.bold, fontSize: 8),
+        ),
+        pw.SizedBox(height: 2),
+        pw.Text(
+          _truncate(notes, maxLen: 180),
+          style: const pw.TextStyle(fontSize: 7, color: _textMuted),
+        ),
       ],
     );
   }
 
   static pw.Widget _qrSection(InvoicePdfData data) {
-    return pw.Row(
-      children: [
-        pw.BarcodeWidget(
-          barcode: pw.Barcode.qrCode(),
-          data: data.qrData!,
-          width: 72,
-          height: 72,
-        ),
-        pw.SizedBox(width: 16),
-        pw.Expanded(
-          child: pw.Column(
-            crossAxisAlignment: pw.CrossAxisAlignment.start,
-            children: [
-              pw.Text('Kontrak Digital', style: pw.TextStyle(fontWeight: pw.FontWeight.bold)),
-              pw.SizedBox(height: 4),
-              pw.Text(
-                'Scan QR untuk verifikasi tagihan resmi BISA.',
-                style: const pw.TextStyle(fontSize: 9, color: _textMuted),
-              ),
-            ],
+    final payload = _qrPayload(data);
+    return pw.Container(
+      width: double.infinity,
+      padding: const pw.EdgeInsets.all(_boxPad),
+      decoration: pw.BoxDecoration(
+        border: pw.Border.all(color: PdfColors.grey300),
+        borderRadius: pw.BorderRadius.circular(4),
+        color: PdfColor.fromInt(0xFFF8FAFC),
+      ),
+      child: pw.Row(
+        crossAxisAlignment: pw.CrossAxisAlignment.center,
+        children: [
+          pw.BarcodeWidget(
+            barcode: pw.Barcode.qrCode(),
+            data: payload,
+            width: 56,
+            height: 56,
           ),
-        ),
-      ],
+          pw.SizedBox(width: _gapM),
+          pw.Expanded(
+            child: pw.Column(
+              crossAxisAlignment: pw.CrossAxisAlignment.start,
+              children: [
+                pw.Text(
+                  'Kontrak Digital',
+                  style: pw.TextStyle(
+                    fontWeight: pw.FontWeight.bold,
+                    fontSize: 8,
+                    color: _primary,
+                  ),
+                ),
+                pw.SizedBox(height: 2),
+                pw.Text(
+                  _truncate(data.invoiceNumber, maxLen: 36),
+                  style: pw.TextStyle(
+                    fontSize: 7,
+                    fontWeight: pw.FontWeight.bold,
+                  ),
+                ),
+                pw.SizedBox(height: 2),
+                pw.Text(
+                  'Scan QR untuk verifikasi tagihan resmi BISA.',
+                  style: const pw.TextStyle(fontSize: 6, color: _textMuted),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
     );
   }
 
@@ -368,23 +575,15 @@ class InvoicePdfGenerator {
     return pw.Column(
       crossAxisAlignment: pw.CrossAxisAlignment.start,
       children: [
-        pw.Divider(color: PdfColors.grey400),
-        pw.SizedBox(height: 8),
+        pw.Divider(color: PdfColors.grey400, height: 0.5),
+        pw.SizedBox(height: _gapS),
         pw.Text(
-          'Syarat & Ketentuan Singkat',
-          style: pw.TextStyle(fontWeight: pw.FontWeight.bold, fontSize: 9),
+          'Tagihan resmi BISA · pembayaran escrow · pastikan data sesuai sebelum bayar.',
+          style: const pw.TextStyle(fontSize: 6, color: _textMuted),
         ),
-        pw.SizedBox(height: 4),
         pw.Text(
-          'Tagihan ini diterbitkan melalui platform BISA. Pembayaran dilakukan via escrow '
-          'hingga pesanan selesai. Pastikan detail produk, jumlah, dan alamat pengiriman '
-          'sudah sesuai sebelum melakukan pembayaran.',
-          style: const pw.TextStyle(fontSize: 8, color: _textMuted),
-        ),
-        pw.SizedBox(height: 8),
-        pw.Text(
-          '© BISA — Biomassa Indonesia Sustainable Alliance',
-          style: const pw.TextStyle(fontSize: 8, color: _textMuted),
+          '© BISA - Biomassa Indonesia Sustainable Alliance',
+          style: const pw.TextStyle(fontSize: 6, color: _textMuted),
         ),
       ],
     );
@@ -392,11 +591,11 @@ class InvoicePdfGenerator {
 
   static pw.Widget _cell(String text, {bool bold = false}) {
     return pw.Padding(
-      padding: const pw.EdgeInsets.all(6),
+      padding: const pw.EdgeInsets.all(4),
       child: pw.Text(
-        text,
+        _pdfSafeText(text),
         style: pw.TextStyle(
-          fontSize: 9,
+          fontSize: 8,
           fontWeight: bold ? pw.FontWeight.bold : pw.FontWeight.normal,
         ),
       ),
@@ -422,7 +621,7 @@ class InvoicePdfExporter {
       ShareParams(
         files: [XFile(file.path, mimeType: 'application/pdf', name: 'tagihan-$safeName.pdf')],
         subject: 'Tagihan BISA ${data.invoiceNumber}',
-        text: 'Tagihan BISA — ${data.invoiceNumber}',
+        text: 'Tagihan BISA - ${data.invoiceNumber}',
       ),
     );
   }
