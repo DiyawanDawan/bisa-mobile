@@ -14,6 +14,7 @@ abstract class AuthRepository {
     String? companyName,
     String? avatarPath,
   });
+  Future<Either<Failure, UserEntity>> updateEnableNotifications(bool enabled);
   Future<Either<Failure, UserEntity>> registerBuyer({
     required String fullName,
     required String email,

@@ -104,6 +104,18 @@ class AuthRepositoryImpl implements AuthRepository {
   }
 
   @override
+  Future<Either<Failure, UserEntity>> updateEnableNotifications(bool enabled) async {
+    try {
+      final userModel = await remoteDataSource.updateEnableNotifications(enabled);
+      return Right(userModel.toEntity());
+    } on DioException catch (e) {
+      return Left(_mapDioExceptionToFailure(e));
+    } catch (_) {
+      return const Left(UnexpectedFailure());
+    }
+  }
+
+  @override
   Future<Either<Failure, void>> logout() async {
     try {
       await tokenRepository.clearTokens();

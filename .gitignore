@@ -64,6 +64,9 @@ dart_define.*.json
 # Cursor: skills, rules, hooks (workspace lokal)
 .cursor/
 
+# Dokumentasi arsitektur & user flow (lokal / tidak di-commit)
+/docs/
+
 # Planning & integration audit/task docs (Palning Interasi)
 Palning Interasi/
 Palning%20Interasi/

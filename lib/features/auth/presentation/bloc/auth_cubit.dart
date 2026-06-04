@@ -193,6 +193,20 @@ class AuthCubit extends Cubit<AuthState> {
     );
   }
 
+  Future<bool> updateEnableNotifications(bool enabled) async {
+    final result = await _repository.updateEnableNotifications(enabled);
+    return result.fold(
+      (failure) {
+        emit(AuthState.error(failure.message));
+        return false;
+      },
+      (user) {
+        emit(AuthState.authenticated(user));
+        return true;
+      },
+    );
+  }
+
   Future<void> logout() async {
     await _repository.logout();
     emit(const AuthState.unauthenticated());

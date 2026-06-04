@@ -11,6 +11,7 @@ abstract class AuthRemoteDataSource {
     String? companyName,
     String? avatarPath,
   });
+  Future<UserModel> updateEnableNotifications(bool enabled);
   Future<UserModel> registerBuyer({
     required String fullName,
     required String email,
@@ -95,6 +96,16 @@ class AuthRemoteDataSourceImpl implements AuthRemoteDataSource {
       '/users/me',
       data: formData,
       options: Options(contentType: 'multipart/form-data'),
+    );
+    return UserModel.fromJson(response.data['data']);
+  }
+
+  @override
+  Future<UserModel> updateEnableNotifications(bool enabled) async {
+    final response = await dio.patch(
+      '/users/me',
+      data: {'enableNotifications': enabled},
+      options: Options(contentType: 'application/json'),
     );
     return UserModel.fromJson(response.data['data']);
   }

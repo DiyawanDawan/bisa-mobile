@@ -19,6 +19,8 @@ import 'package:mobile_bisa/shared/widgets/bisa_avatar.dart';
 import 'package:mobile_bisa/shared/widgets/custom_button.dart';
 import 'package:mobile_bisa/shared/widgets/shimmer_loading.dart';
 import 'package:qr_flutter/qr_flutter.dart';
+import '../../../../core/utils/contract_verify_url.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 class ReviewInvoicePage extends StatelessWidget {
   final String negotiationId;
@@ -209,7 +211,7 @@ class _ReviewInvoiceBody extends StatelessWidget {
   }
 
   Widget _qrSection(OrderEntity order) {
-    final qrData = '${order.orderNumber}:PENDING:${order.createdAt.millisecondsSinceEpoch}';
+    final qrData = ContractVerifyUrl.verify(order.orderNumber);
     return Container(
       width: double.infinity,
       padding: EdgeInsets.all(16.w),
@@ -234,6 +236,21 @@ class _ReviewInvoiceBody extends StatelessWidget {
             data: qrData,
             size: 120.w,
             backgroundColor: Colors.white,
+          ),
+          SizedBox(height: 8.h),
+          Text(
+            'Scan untuk verifikasi kontrak resmi',
+            style: TextStyle(fontSize: 11.sp, color: AppColors.textSecondary),
+            textAlign: TextAlign.center,
+          ),
+          TextButton(
+            onPressed: () async {
+              final uri = Uri.parse(qrData);
+              if (await canLaunchUrl(uri)) {
+                await launchUrl(uri, mode: LaunchMode.externalApplication);
+              }
+            },
+            child: const Text('Buka halaman verifikasi'),
           ),
         ],
       ),
@@ -462,7 +479,10 @@ class _ReviewInvoiceBody extends StatelessWidget {
                   text: 'Setuju & Lanjut Bayar',
                   useGradient: true,
                   height: 48.h,
-                  onPressed: () => context.push('/order/${order.id}'),
+                  onPressed: () => context.push(
+                    '/order/${order.id}',
+                    extra: {'autoPay': true},
+                  ),
                 )
               else if (!isSupplier)
                 CustomButton(

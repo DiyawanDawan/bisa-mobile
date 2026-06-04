@@ -31,6 +31,17 @@ class ProfileAllMenuPage extends StatelessWidget {
       body: ListView(
         padding: EdgeInsets.fromLTRB(16.w, 12.h, 16.w, 24.h),
         children: [
+          _MenuGrid(
+            items: [
+              _MenuGridItem(
+                icon: LucideIcons.sparkles,
+                label: 'Fitur Penting',
+                color: AppColors.primary,
+                onTap: () => context.push('/important-features'),
+              ),
+            ],
+          ),
+          SizedBox(height: 14.h),
           if (isAuthenticated) ...[
             _sectionTitle('Akun'),
             _MenuGrid(
@@ -53,6 +64,13 @@ class ProfileAllMenuPage extends StatelessWidget {
                   color: AppColors.info,
                   onTap: () => context.push('/addresses'),
                 ),
+                if (!isSupplier)
+                  _MenuGridItem(
+                    icon: LucideIcons.creditCard,
+                    label: 'Metode Bayar',
+                    color: AppColors.warning,
+                    onTap: () => context.push('/payment-methods'),
+                  ),
                 _MenuGridItem(
                   icon: LucideIcons.lock,
                   label: 'Kata Sandi',

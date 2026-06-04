@@ -17,6 +17,7 @@ abstract class UserEntity with _$UserEntity {
     required DateTime createdAt,
     @Default('FREE') String tier,
     DateTime? subscriptionExpiresAt,
+    @Default(true) bool enableNotifications,
   }) = _UserEntity;
 
   const UserEntity._();

@@ -37,6 +37,7 @@ _UserModel _$UserModelFromJson(Map<String, dynamic> json) => _UserModel(
   subscriptionExpiresAt: json['subscriptionExpiresAt'] == null
       ? null
       : DateTime.parse(json['subscriptionExpiresAt'] as String),
+  enableNotifications: json['enableNotifications'] as bool? ?? true,
 );
 
 Map<String, dynamic> _$UserModelToJson(
@@ -54,4 +55,5 @@ Map<String, dynamic> _$UserModelToJson(
   'createdAt': instance.createdAt.toIso8601String(),
   'tier': instance.tier,
   'subscriptionExpiresAt': instance.subscriptionExpiresAt?.toIso8601String(),
+  'enableNotifications': instance.enableNotifications,
 };

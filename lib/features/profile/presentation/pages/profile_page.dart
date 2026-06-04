@@ -561,6 +561,11 @@ class ProfilePage extends StatelessWidget {
         children: [
           _menuCard([
             _menuItem(
+              LucideIcons.sparkles,
+              'Fitur Penting',
+              () => context.push('/important-features'),
+            ),
+            _menuItem(
               LucideIcons.layoutGrid,
               'Semua Menu',
               () => context.push('/profile/all-menu'),
@@ -585,6 +590,11 @@ class ProfilePage extends StatelessWidget {
                 LucideIcons.mapPin,
                 'Alamat Pengiriman',
                 () => context.push('/addresses'),
+              ),
+              _menuItem(
+                LucideIcons.creditCard,
+                'Metode Pembayaran',
+                () => context.push('/payment-methods'),
               ),
               _menuItem(
                 LucideIcons.lock,

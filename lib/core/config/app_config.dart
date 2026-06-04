@@ -11,4 +11,10 @@ abstract class AppConfig {
     'PUSHER_CLUSTER',
     defaultValue: '',
   );
+
+  /// Base URL halaman publik verifikasi/lacak (admin web). Contoh: http://localhost:3001
+  static const String publicWebUrl = String.fromEnvironment(
+    'PUBLIC_WEB_URL',
+    defaultValue: 'http://localhost:3001',
+  );
 }

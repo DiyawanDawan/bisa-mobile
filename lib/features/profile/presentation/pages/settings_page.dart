@@ -1,5 +1,6 @@
 import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:go_router/go_router.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
@@ -8,9 +9,17 @@ import '../../../../core/utils/app_version.dart';
 import '../../../../shared/widgets/bisa_app_bar.dart';
 import '../../../../shared/widgets/app_version_label.dart';
 import '../../../../shared/widgets/bisa_logo.dart';
+import '../../../auth/presentation/bloc/auth_cubit.dart';
 
-class SettingsPage extends StatelessWidget {
+class SettingsPage extends StatefulWidget {
   const SettingsPage({super.key});
+
+  @override
+  State<SettingsPage> createState() => _SettingsPageState();
+}
+
+class _SettingsPageState extends State<SettingsPage> {
+  bool _notifBusy = false;
 
   @override
   Widget build(BuildContext context) {
@@ -20,92 +29,109 @@ class SettingsPage extends StatelessWidget {
         backgroundColor: AppColors.white,
         title: 'Pengaturan',
       ),
-      body: SingleChildScrollView(
-        padding: EdgeInsets.all(20.w),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            _sectionTitle('Preferensi'),
-            SizedBox(height: 12.h),
-            _settingsCard([
-              _settingsItem(
-                LucideIcons.languages,
-                'Bahasa',
-                'Pilih bahasa aplikasi',
-                () => _showLanguageBottomSheet(context),
-              ),
-              _settingsItem(
-                LucideIcons.bell,
-                'Notifikasi',
-                'Atur pemberitahuan Anda',
-                () {},
-                trailing: Switch.adaptive(
-                  value: true,
-                  activeColor: AppColors.primary,
-                  onChanged: (val) {},
+      body: BlocBuilder<AuthCubit, AuthState>(
+        builder: (context, authState) {
+          final notificationsOn = authState.maybeWhen(
+            authenticated: (user) => user.enableNotifications,
+            orElse: () => true,
+          );
+
+          return SingleChildScrollView(
+            padding: EdgeInsets.all(20.w),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                _sectionTitle('Preferensi'),
+                SizedBox(height: 12.h),
+                _settingsCard([
+                  _settingsItem(
+                    LucideIcons.languages,
+                    'Bahasa',
+                    'Pilih bahasa aplikasi',
+                    () => _showLanguageBottomSheet(context),
+                  ),
+                  _settingsItem(
+                    LucideIcons.bell,
+                    'Notifikasi',
+                    'Atur pemberitahuan push',
+                    null,
+                    trailing: Switch.adaptive(
+                      value: notificationsOn,
+                      activeColor: AppColors.primary,
+                      onChanged: _notifBusy
+                          ? null
+                          : (val) async {
+                              setState(() => _notifBusy = true);
+                              await context
+                                  .read<AuthCubit>()
+                                  .updateEnableNotifications(val);
+                              if (mounted) setState(() => _notifBusy = false);
+                            },
+                    ),
+                  ),
+                ]),
+                SizedBox(height: 16.h),
+                _sectionTitle('Keamanan'),
+                SizedBox(height: 8.h),
+                _settingsCard([
+                  _settingsItem(
+                    LucideIcons.lock,
+                    'Ubah Kata Sandi',
+                    'Perbarui kata sandi Anda',
+                    () => context.push('/change-password'),
+                  ),
+                  _settingsItem(
+                    LucideIcons.shieldCheck,
+                    'Privasi & Keamanan',
+                    'Atur privasi data Anda',
+                    () => context.push('/privacy'),
+                  ),
+                ]),
+                SizedBox(height: 16.h),
+                _sectionTitle('Tentang BISA'),
+                SizedBox(height: 8.h),
+                _settingsCard([
+                  FutureBuilder<String>(
+                    future: AppVersion.fullLabel,
+                    builder: (context, snapshot) => _settingsItem(
+                      LucideIcons.info,
+                      'Versi Aplikasi',
+                      snapshot.data ?? 'Memuat...',
+                      null,
+                    ),
+                  ),
+                  _settingsItem(
+                    LucideIcons.fileText,
+                    'Syarat & Ketentuan',
+                    'Baca aturan main BISA',
+                    () => context.push('/terms'),
+                  ),
+                  _settingsItem(
+                    LucideIcons.shieldAlert,
+                    'Kebijakan Privasi',
+                    'Cara kami melindungi data Anda',
+                    () => context.push('/privacy'),
+                  ),
+                ]),
+                SizedBox(height: 40.h),
+                Center(child: BisaLogo(width: 64.w, height: 28.h)),
+                SizedBox(height: 12.h),
+                const Center(child: AppVersionLabel()),
+                SizedBox(height: 6.h),
+                Center(
+                  child: Text(
+                    'BISA B2B Platform © 2026',
+                    style: TextStyle(
+                      fontSize: 12.sp,
+                      color: AppColors.textHint,
+                      fontWeight: FontWeight.w500,
+                    ),
+                  ),
                 ),
-              ),
-            ]),
-            SizedBox(height: 16.h),
-            _sectionTitle('Keamanan'),
-            SizedBox(height: 8.h),
-            _settingsCard([
-              _settingsItem(
-                LucideIcons.lock,
-                'Ubah Kata Sandi',
-                'Perbarui kata sandi Anda',
-                () => context.push('/change-password'),
-              ),
-              _settingsItem(
-                LucideIcons.shieldCheck,
-                'Privasi & Keamanan',
-                'Atur privasi data Anda',
-                () {},
-              ),
-            ]),
-            SizedBox(height: 16.h),
-            _sectionTitle('Tentang BISA'),
-            SizedBox(height: 8.h),
-            _settingsCard([
-              FutureBuilder<String>(
-                future: AppVersion.fullLabel,
-                builder: (context, snapshot) => _settingsItem(
-                  LucideIcons.info,
-                  'Versi Aplikasi',
-                  snapshot.data ?? 'Memuat...',
-                  null,
-                ),
-              ),
-              _settingsItem(
-                LucideIcons.fileText,
-                'Syarat & Ketentuan',
-                'Baca aturan main BISA',
-                () => context.push('/terms'),
-              ),
-              _settingsItem(
-                LucideIcons.shieldAlert,
-                'Kebijakan Privasi',
-                'Cara kami melindungi data Anda',
-                () => context.push('/privacy'),
-              ),
-            ]),
-            SizedBox(height: 40.h),
-            Center(child: BisaLogo(width: 64.w, height: 28.h)),
-            SizedBox(height: 12.h),
-            const Center(child: AppVersionLabel()),
-            SizedBox(height: 6.h),
-            Center(
-              child: Text(
-                'BISA B2B Platform © 2026',
-                style: TextStyle(
-                  fontSize: 12.sp,
-                  color: AppColors.textHint,
-                  fontWeight: FontWeight.w500,
-                ),
-              ),
+              ],
             ),
-          ],
-        ),
+          );
+        },
       ),
     );
   }
@@ -137,8 +163,8 @@ class SettingsPage extends StatelessWidget {
       ),
       child: Column(
         children: items.asMap().entries.map((entry) {
-          int idx = entry.key;
-          Widget item = entry.value;
+          final idx = entry.key;
+          final item = entry.value;
           return Column(
             children: [
               item,
@@ -168,7 +194,7 @@ class SettingsPage extends StatelessWidget {
       onTap: onTap,
       dense: true,
       visualDensity: VisualDensity.compact,
-      contentPadding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 0),
+      contentPadding: EdgeInsets.symmetric(horizontal: 16.w),
       leading: Container(
         padding: EdgeInsets.all(8.r),
         decoration: BoxDecoration(

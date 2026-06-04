@@ -153,6 +153,12 @@ NotificationAction? notificationAction(NotificationEntity notification) {
     switch (type) {
       case 'ORDER':
       case 'ORDER_STATUS':
+        if (_needsPaymentAction(notification.title, notification.body)) {
+          return NotificationAction(
+            label: 'Bayar Sekarang',
+            route: '/order/$refId?autoPay=1',
+          );
+        }
         return NotificationAction(label: 'Lihat Pesanan', route: '/order/$refId');
       case 'DISPUTE':
       case 'ORDER_DISPUTE':
@@ -171,6 +177,9 @@ NotificationAction? notificationAction(NotificationEntity notification) {
     case 'WALLET':
     case 'PAYMENT':
     case 'PAYMENT_RECEIVED':
+      if (refId != null && refId.isNotEmpty) {
+        return NotificationAction(label: 'Lihat Pesanan', route: '/order/$refId');
+      }
       return const NotificationAction(label: 'Buka Dompet', route: '/wallet');
     case 'IOT_ALERT':
       return const NotificationAction(label: 'Dashboard IoT', route: '/iot-dashboard');
@@ -179,4 +188,12 @@ NotificationAction? notificationAction(NotificationEntity notification) {
     default:
       return null;
   }
+}
+
+bool _needsPaymentAction(String title, String body) {
+  final hay = '$title $body'.toLowerCase();
+  return hay.contains('bayar') ||
+      hay.contains('tagihan') ||
+      hay.contains('pembayaran') ||
+      (hay.contains('menunggu') && hay.contains('bayar'));
 }

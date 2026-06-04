@@ -40,6 +40,9 @@ import '../../features/profile/presentation/pages/address_list_page.dart';
 import '../../features/profile/presentation/pages/payment_methods_page.dart';
 import '../../features/profile/presentation/pages/help_center_page.dart';
 import '../../features/profile/presentation/pages/settings_page.dart';
+import '../../features/profile/presentation/pages/important_features_page.dart';
+import '../../features/public_orders/presentation/pages/public_verify_page.dart';
+import '../../features/public_orders/presentation/pages/public_track_page.dart';
 import '../../features/profile/presentation/pages/change_password_page.dart';
 import '../../features/profile/presentation/pages/legal_page.dart';
 import '../../features/notifications/presentation/pages/notification_page.dart';
@@ -120,7 +123,10 @@ final goRouter = GoRouter(
         location.startsWith('/ai-chat') ||
         location.startsWith('/help-center') ||
         location.startsWith('/terms') ||
-        location.startsWith('/privacy');
+        location.startsWith('/privacy') ||
+        location.startsWith('/verify') ||
+        location.startsWith('/track') ||
+        location.startsWith('/important-features');
 
     if (!hasToken && !isPublic) {
       return '/login';
@@ -273,7 +279,9 @@ final goRouter = GoRouter(
           path: 'order/:id',
           builder: (context, state) {
             final extra = state.extra;
-            final autoPay = extra is Map && extra['autoPay'] == true;
+            final queryAutoPay = state.uri.queryParameters['autoPay'] == '1';
+            final autoPay =
+                queryAutoPay || (extra is Map && extra['autoPay'] == true);
             return OrderDetailPage(
               orderId: state.pathParameters['id']!,
               autoStartPayment: autoPay,
@@ -406,7 +414,35 @@ final goRouter = GoRouter(
         ),
       ],
     ),
+    GoRoute(
+      path: '/verify',
+      builder: (context, state) => const PublicVerifyPage(),
+      routes: [
+        GoRoute(
+          path: ':orderNumber',
+          builder: (context, state) => PublicVerifyPage(
+            orderNumber: state.pathParameters['orderNumber'],
+          ),
+        ),
+      ],
+    ),
+    GoRoute(
+      path: '/track',
+      builder: (context, state) => const PublicTrackPage(),
+      routes: [
+        GoRoute(
+          path: ':orderNumber',
+          builder: (context, state) => PublicTrackPage(
+            orderNumber: state.pathParameters['orderNumber'],
+          ),
+        ),
+      ],
+    ),
     // Auth
+    GoRoute(
+      path: '/important-features',
+      builder: (context, state) => const ImportantFeaturesPage(),
+    ),
     GoRoute(
       path: '/settings',
       builder: (context, state) => const SettingsPage(),

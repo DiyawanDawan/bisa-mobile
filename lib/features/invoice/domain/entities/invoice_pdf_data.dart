@@ -1,6 +1,9 @@
+import '../../../../core/utils/contract_verify_url.dart';
 import '../../../orders/domain/entities/order_entity.dart';
 import '../../domain/entities/invoice_draft.dart';
 import '../../domain/entities/invoice_preview_entity.dart';
+
+String _verifyQrUrl(String orderNumber) => ContractVerifyUrl.verify(orderNumber);
 
 class InvoicePdfData {
   final String invoiceNumber;
@@ -137,8 +140,7 @@ class InvoicePdfData {
           originLabelFromSnapshot(snap) ?? order.orderShipping?.originLabel,
       orderShipping: order.orderShipping,
       issuedAt: order.createdAt,
-      qrData:
-          '${order.orderNumber}:${order.status}:${order.createdAt.millisecondsSinceEpoch}',
+      qrData: _verifyQrUrl(order.orderNumber),
     );
   }
 

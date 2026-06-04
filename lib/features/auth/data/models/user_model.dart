@@ -32,6 +32,7 @@ abstract class UserModel with _$UserModel {
     required DateTime createdAt,
     @Default('FREE') String tier,
     @JsonKey(name: 'subscriptionExpiresAt') DateTime? subscriptionExpiresAt,
+    @JsonKey(name: 'enableNotifications') @Default(true) bool enableNotifications,
   }) = _UserModel;
 
   factory UserModel.fromJson(Map<String, dynamic> json) => _$UserModelFromJson(json);
@@ -51,5 +52,6 @@ abstract class UserModel with _$UserModel {
         createdAt: createdAt,
         tier: tier,
         subscriptionExpiresAt: subscriptionExpiresAt,
+        enableNotifications: enableNotifications,
       );
 }
