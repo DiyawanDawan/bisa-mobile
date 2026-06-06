@@ -5,6 +5,7 @@ import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:go_router/go_router.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
 import 'package:mobile_bisa/core/constants/app_colors.dart';
+import 'package:mobile_bisa/core/utils/safe_area_utils.dart';
 import 'package:mobile_bisa/features/forum/presentation/bloc/forum_cubit.dart';
 import 'package:mobile_bisa/features/forum/presentation/widgets/post_card.dart';
 import 'package:mobile_bisa/features/forum/presentation/pages/add_post_page.dart';
@@ -185,7 +186,12 @@ class _ForumPageState extends State<ForumPage> {
                   color: AppColors.primary,
                   onRefresh: () async => context.read<ForumCubit>().getPosts(),
                   child: ListView(
-                    padding: EdgeInsets.fromLTRB(0, 0, 0, 80.h),
+                    padding: EdgeInsets.only(
+                      bottom: mainShellBottomPadding(
+                        context,
+                        kind: MainShellScrollKind.forum,
+                      ),
+                    ),
                     physics: const BouncingScrollPhysics(),
                     children: [
                       if (_activeTag != null) _buildActiveTagBanner(),
@@ -239,6 +245,7 @@ class _ForumPageState extends State<ForumPage> {
                                       builder: (context) => const AddPostPage(),
                                     ),
                                   ).then((value) {
+                                    if (!context.mounted) return;
                                     if (value == true) {
                                       context.read<ForumCubit>().getPosts();
                                     }

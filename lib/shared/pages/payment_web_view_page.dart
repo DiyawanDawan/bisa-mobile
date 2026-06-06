@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:webview_flutter/webview_flutter.dart';
+import 'package:mobile_bisa/core/config/app_config.dart';
 import 'package:mobile_bisa/core/constants/app_colors.dart';
+import 'package:mobile_bisa/core/utils/payment_status_utils.dart';
 
 /// SEC-MOB-005 + SEC-MOB-014:
 /// Payment WebView dengan domain allowlist. Mencegah:
@@ -36,10 +38,28 @@ class PaymentWebViewPage extends StatefulWidget {
     'bisa.id',
   };
 
+  static Set<String> _runtimeAllowedHosts() {
+    final hosts = Set<String>.from(_allowedHosts);
+    final apiUri = Uri.tryParse(AppConfig.apiUrl);
+    if (apiUri != null && apiUri.host.isNotEmpty) {
+      hosts.add(apiUri.host.toLowerCase());
+    }
+    final publicUri = Uri.tryParse(AppConfig.publicWebUrl);
+    if (publicUri != null && publicUri.host.isNotEmpty) {
+      hosts.add(publicUri.host.toLowerCase());
+    }
+    if (const bool.fromEnvironment('dart.vm.product') == false) {
+      hosts.addAll({'localhost', '127.0.0.1', '10.0.2.2'});
+    }
+    return hosts;
+  }
+
   static bool isAllowedHost(Uri uri) {
-    if (uri.scheme != 'https') return false;
+    if (uri.scheme != 'https' && uri.scheme != 'http') return false;
     final host = uri.host.toLowerCase();
-    return _allowedHosts.any((allowed) => host == allowed || host.endsWith('.$allowed'));
+    return _runtimeAllowedHosts().any(
+      (allowed) => host == allowed || host.endsWith('.$allowed'),
+    );
   }
 
   @override
@@ -79,12 +99,12 @@ class _PaymentWebViewPageState extends State<PaymentWebViewPage> {
             if (PaymentWebViewPage.isAllowedHost(reqUri)) {
               if (request.url.contains('/payment/success') ||
                   request.url.contains('status=PAID')) {
-                context.pop(true);
+                context.pop(PaymentWebViewExit.callbackDetected);
                 return NavigationDecision.prevent;
               }
               if (request.url.contains('/payment/failed') ||
                   request.url.contains('status=FAILED')) {
-                context.pop(false);
+                context.pop(PaymentWebViewExit.failed);
                 return NavigationDecision.prevent;
               }
               return NavigationDecision.navigate;

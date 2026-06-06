@@ -4,6 +4,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
 import 'package:mobile_bisa/core/constants/app_colors.dart';
+import 'package:mobile_bisa/core/utils/safe_area_utils.dart';
 import 'package:mobile_bisa/features/wallet/presentation/bloc/wallet_cubit.dart';
 import 'package:mobile_bisa/features/wallet/domain/entities/payout_account_entity.dart';
 import 'package:mobile_bisa/shared/widgets/bisa_app_bar.dart';
@@ -187,7 +188,7 @@ class PayoutAccountsPage extends StatelessWidget {
               _actionIcon(
                 LucideIcons.pencil,
                 AppColors.info,
-                () => _showAddAccountSheet(context, banks, account: account),
+                () => _openEditAccount(context, banks, account),
               ),
               SizedBox(height: 4.h),
               _actionIcon(
@@ -291,6 +292,20 @@ class PayoutAccountsPage extends StatelessWidget {
     );
   }
 
+  Future<void> _openEditAccount(
+    BuildContext context,
+    List<Map<String, dynamic>> banks,
+    PayoutAccountEntity account,
+  ) async {
+    final detail = await context.read<WalletCubit>().getPayoutAccountDetail(account.id);
+    if (!context.mounted) return;
+    _showAddAccountSheet(
+      context,
+      banks,
+      account: detail ?? account,
+    );
+  }
+
   void _showAddAccountSheet(
     BuildContext context,
     List<Map<String, dynamic>> banks, {
@@ -315,11 +330,8 @@ class PayoutAccountsPage extends StatelessWidget {
         value: walletCubit,
         child: StatefulBuilder(
           builder: (context, setState) {
-            final bottomInset = MediaQuery.paddingOf(sheetContext).bottom;
-            final keyboardInset = MediaQuery.viewInsetsOf(sheetContext).bottom;
-
             return Padding(
-              padding: EdgeInsets.only(bottom: keyboardInset),
+              padding: sheetBottomPadding(sheetContext),
               child: Container(
                 constraints: BoxConstraints(maxHeight: 0.88.sh),
                 decoration: BoxDecoration(
@@ -454,7 +466,7 @@ class PayoutAccountsPage extends StatelessWidget {
                     SafeArea(
                       top: false,
                       child: Padding(
-                        padding: EdgeInsets.fromLTRB(20.w, 8.h, 20.w, 12.h + bottomInset * 0.25),
+                        padding: EdgeInsets.fromLTRB(20.w, 8.h, 20.w, 12.h),
                         child: CustomButton(
                           text: account == null ? 'Simpan Rekening' : 'Simpan Perubahan',
                           height: 50.h,

@@ -5,6 +5,7 @@ import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
 import 'package:mobile_bisa/core/constants/app_colors.dart';
+import 'package:mobile_bisa/core/utils/safe_area_utils.dart';
 import 'package:mobile_bisa/features/forum/domain/entities/forum_entity.dart';
 import 'package:mobile_bisa/features/forum/presentation/bloc/forum_cubit.dart';
 import 'package:mobile_bisa/features/forum/presentation/pages/add_post_page.dart';
@@ -150,14 +151,27 @@ class _MyForumPostsPageState extends State<MyForumPostsPage>
                     return ListView(
                       physics: const AlwaysScrollableScrollPhysics(),
                       children: [
-                        SizedBox(height: 80.h),
+                        SizedBox(
+                          height: mainShellBottomPadding(
+                            context,
+                            kind: MainShellScrollKind.forum,
+                          ),
+                        ),
                         _emptyState(_tabs[_tabController.index]),
                       ],
                     );
                   }
                   return ListView.separated(
                     physics: const AlwaysScrollableScrollPhysics(),
-                    padding: EdgeInsets.fromLTRB(16.w, 14.h, 16.w, 80.h),
+                    padding: EdgeInsets.fromLTRB(
+                      16.w,
+                      14.h,
+                      16.w,
+                      mainShellBottomPadding(
+                        context,
+                        kind: MainShellScrollKind.forum,
+                      ),
+                    ),
                     itemCount: posts.length,
                     separatorBuilder: (_, __) => SizedBox(height: 12.h),
                     itemBuilder: (_, i) => _PostManageCard(
@@ -175,7 +189,12 @@ class _MyForumPostsPageState extends State<MyForumPostsPage>
                 error: (msg) => ListView(
                   physics: const AlwaysScrollableScrollPhysics(),
                   children: [
-                    SizedBox(height: 80.h),
+                    SizedBox(
+                      height: mainShellBottomPadding(
+                        context,
+                        kind: MainShellScrollKind.forum,
+                      ),
+                    ),
                     Center(
                       child: Padding(
                         padding: EdgeInsets.symmetric(horizontal: 24.w),

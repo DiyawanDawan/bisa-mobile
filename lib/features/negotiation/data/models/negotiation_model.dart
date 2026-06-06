@@ -185,6 +185,12 @@ abstract class NegotiationParticipantProfileModel with _$NegotiationParticipantP
       _$NegotiationParticipantProfileModelFromJson(json);
 }
 
+Object? _negotiationSenderRoleFromJson(Map json, String key) {
+  final direct = json['senderRole'];
+  if (direct != null) return direct;
+  return (json['sender'] as Map?)?['role'];
+}
+
 @freezed
 abstract class NegotiationMessageModel with _$NegotiationMessageModel {
   const factory NegotiationMessageModel({
@@ -196,6 +202,7 @@ abstract class NegotiationMessageModel with _$NegotiationMessageModel {
     @Default(false) bool isRead,
     @Default(false) bool isDeleted,
     String? editedAt,
+    @JsonKey(readValue: _negotiationSenderRoleFromJson) String? senderRole,
     required String createdAt,
   }) = _NegotiationMessageModel;
 
@@ -213,6 +220,7 @@ abstract class NegotiationMessageModel with _$NegotiationMessageModel {
         isRead: isRead,
         isDeleted: isDeleted,
         editedAt: editedAt != null ? DateTime.tryParse(editedAt!) : null,
+        senderRole: senderRole,
         createdAt: DateTime.parse(createdAt),
       );
 }

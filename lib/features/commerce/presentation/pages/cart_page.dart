@@ -8,6 +8,7 @@ import 'package:geolocator/geolocator.dart';
 import 'package:go_router/go_router.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
 import '../../../../core/constants/app_colors.dart';
+import '../../../../core/readiness/readiness_gate.dart';
 import '../../../../core/services/location_service.dart';
 import '../../../../core/utils/extensions.dart';
 import '../../../../core/utils/safe_navigator.dart';
@@ -27,6 +28,7 @@ import '../../../../shared/widgets/shimmer_loading.dart';
 import 'package:skeletonizer/skeletonizer.dart';
 import '../../../orders/data/shipping_destination_cache.dart';
 import '../../../orders/presentation/bloc/order_cubit.dart';
+import '../../../orders/presentation/utils/checkout_navigation.dart';
 import '../../../orders/presentation/widgets/payment_method_picker_sheet.dart';
 import '../../data/datasources/commerce_remote_data_source.dart';
 import '../../domain/repositories/commerce_repository.dart';
@@ -372,6 +374,9 @@ class _CartPageState extends State<CartPage> {
       return;
     }
 
+    if (!await ReadinessGate.ensureBuyerReady(context)) return;
+    if (!context.mounted) return;
+
     setState(() => _isCheckingOut = true);
 
     final items = selectedItems
@@ -452,13 +457,20 @@ class _CartPageState extends State<CartPage> {
 
     if (!result.isSuccess) {
       setState(() => _isCheckingOut = false);
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(result.errorMessage ?? 'Gagal membuat pesanan'),
-          backgroundColor: AppColors.error,
-          behavior: SnackBarBehavior.floating,
-        ),
-      );
+      final message = result.errorMessage ?? 'Gagal membuat pesanan';
+      if (message.contains('alamat') ||
+          message.contains('pengiriman') ||
+          message.contains('telepon')) {
+        await ReadinessGate.ensureBuyerReady(context);
+      } else {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(message),
+            backgroundColor: AppColors.error,
+            behavior: SnackBarBehavior.floating,
+          ),
+        );
+      }
       return;
     }
 
@@ -502,17 +514,19 @@ class _CartPageState extends State<CartPage> {
             content: Text(
               context.read<OrderCubit>().state.maybeWhen(
                     error: (msg) => msg,
-                    orElse: () => 'Gagal inisialisasi pembayaran',
+                    orElse: () =>
+                        'Pesanan dibuat tetapi pembayaran gagal diinisialisasi. Silakan bayar dari detail pesanan.',
                   ),
             ),
             backgroundColor: AppColors.error,
             behavior: SnackBarBehavior.floating,
+            duration: const Duration(seconds: 5),
           ),
         );
-        context.push(
-          '/checkout-result',
-          extra: {'orders': orders, 'selectedPaymentCode': payment.code},
-        );
+        final failureRoute = paymentInitFailureRoute(orderIds.firstOrNull);
+        if (failureRoute != null) {
+          context.push(failureRoute);
+        }
         return;
       }
 
@@ -3235,11 +3249,13 @@ class _CartPageState extends State<CartPage> {
                   CustomButton(
                     text: checkoutButtonText,
                     width: 148.w,
-                    height: 48.h,
+                    size: BisaButtonSize.md,
+                    fullWidth: false,
                     useGradient: canCheckout,
                     backgroundColor: canCheckout ? null : AppColors.grey200,
-                    textColor:
-                        canCheckout ? Colors.white : AppColors.textSecondary,
+                    textColor: canCheckout
+                        ? AppColors.textOnPrimary
+                        : AppColors.textSecondary,
                     onPressed: isReadyToPlaceOrder
                         ? () => _onCheckout(context, cart)
                         : canRetryPreview

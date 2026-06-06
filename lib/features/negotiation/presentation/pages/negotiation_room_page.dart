@@ -14,6 +14,7 @@ import 'package:mobile_bisa/features/negotiation/domain/entities/negotiation_ent
 import 'package:mobile_bisa/features/negotiation/domain/entities/negotiation_entity_extensions.dart';
 import 'package:mobile_bisa/features/negotiation/presentation/bloc/negotiation_cubit.dart';
 import 'package:mobile_bisa/features/negotiation/presentation/utils/negotiation_status_ui.dart';
+import 'package:mobile_bisa/features/negotiation/presentation/utils/admin_mediation_message.dart';
 import 'package:mobile_bisa/injection_container.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
 import 'package:mobile_bisa/shared/widgets/bisa_app_bar.dart';
@@ -209,13 +210,6 @@ class _NegotiationRoomPageState extends State<NegotiationRoomPage> {
             state.maybeWhen(
               detailLoaded: (n, typing, _) {
                 _cachedNegotiation = n;
-                final disputeRoute = NegotiationStatusDisplay.disputeOrderRoute(n);
-                if (disputeRoute != null) {
-                  WidgetsBinding.instance.addPostFrameCallback((_) {
-                    if (context.mounted) context.replace(disputeRoute);
-                  });
-                  return;
-                }
                 context.read<NegotiationCubit>().markMessagesAsRead(widget.negotiationId);
                 _scrollToBottom();
               },
@@ -273,6 +267,8 @@ class _NegotiationRoomPageState extends State<NegotiationRoomPage> {
                   _buildInquiryHUD(n, isSupplier, currentUser?.id)
                 else
                   _buildNegotiationHUD(n, isSupplier, currentUser?.id),
+                if (_isDisputeMediationActive(n))
+                  _buildDisputeMediationBanner(context, n),
                 Expanded(
                   child: Stack(
                     children: [
@@ -840,6 +836,60 @@ class _NegotiationRoomPageState extends State<NegotiationRoomPage> {
     NegotiationMessageEntity msg,
     bool isMe,
   ) {
+    if (isAdminMediationMessageContent(msg.content) ||
+        msg.senderRole?.toUpperCase() == 'ADMIN') {
+      final body = stripAdminMediationPrefix(msg.content);
+      return Center(
+        child: Container(
+          margin: EdgeInsets.symmetric(vertical: 12.h, horizontal: 12.w),
+          padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 10.h),
+          decoration: BoxDecoration(
+            color: AppColors.primary.withValues(alpha: 0.08),
+            borderRadius: BorderRadius.circular(16.r),
+            border: Border.all(
+              color: AppColors.primary.withValues(alpha: 0.35),
+              width: 1,
+            ),
+          ),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Icon(
+                    LucideIcons.scale,
+                    size: 14.sp,
+                    color: AppColors.primary,
+                  ),
+                  SizedBox(width: 6.w),
+                  Text(
+                    'Hakim BISA',
+                    style: TextStyle(
+                      fontSize: 11.sp,
+                      fontWeight: FontWeight.w800,
+                      color: AppColors.primary,
+                    ),
+                  ),
+                ],
+              ),
+              SizedBox(height: 6.h),
+              Text(
+                body.isNotEmpty ? body : msg.content,
+                style: TextStyle(
+                  fontSize: 12.sp,
+                  color: AppColors.textPrimary,
+                  fontWeight: FontWeight.w600,
+                  height: 1.35,
+                ),
+                textAlign: TextAlign.center,
+              ),
+            ],
+          ),
+        ),
+      );
+    }
+
     if (msg.isSystemMessage) {
       return Center(
         child: Container(
@@ -1108,9 +1158,78 @@ class _NegotiationRoomPageState extends State<NegotiationRoomPage> {
   }
 
   bool _canSendChat(NegotiationEntity n) {
-    if (NegotiationStatusDisplay.isLinkedOrderDisputed(n)) return false;
     const blocked = {'OFFER_REJECTED', 'COMPLETED', 'EXPIRED', 'CANCELLED'};
     return !blocked.contains(n.status);
+  }
+
+  bool _isDisputeMediationActive(NegotiationEntity n) =>
+      NegotiationStatusDisplay.isLinkedOrderDisputed(n);
+
+  Widget _buildDisputeMediationBanner(
+    BuildContext context,
+    NegotiationEntity n,
+  ) {
+    final orderRoute = NegotiationStatusDisplay.disputeOrderRoute(n);
+    return Container(
+      width: double.infinity,
+      margin: EdgeInsets.fromLTRB(16.w, 8.h, 16.w, 0),
+      padding: EdgeInsets.symmetric(horizontal: 14.w, vertical: 10.h),
+      decoration: BoxDecoration(
+        color: AppColors.warning.withValues(alpha: 0.12),
+        borderRadius: BorderRadius.circular(12.r),
+        border: Border.all(color: AppColors.warning.withValues(alpha: 0.35)),
+      ),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Icon(Icons.gavel_outlined, size: 18.sp, color: AppColors.warning),
+          SizedBox(width: 10.w),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  'Mediasi sengketa aktif',
+                  style: TextStyle(
+                    fontSize: 13.sp,
+                    fontWeight: FontWeight.w800,
+                    color: AppColors.textPrimary,
+                  ),
+                ),
+                SizedBox(height: 4.h),
+                Text(
+                  'Diskusikan masalah di chat ini seperti grup — pembeli, supplier, dan Admin BISA bisa saling balas.',
+                  style: TextStyle(
+                    fontSize: 11.sp,
+                    color: AppColors.textSecondary,
+                    height: 1.35,
+                  ),
+                ),
+              ],
+            ),
+          ),
+          if (orderRoute != null) ...[
+            SizedBox(width: 8.w),
+            TextButton(
+              onPressed: () => context.push(orderRoute),
+              style: TextButton.styleFrom(
+                padding: EdgeInsets.symmetric(horizontal: 8.w),
+                minimumSize: Size.zero,
+                tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+              ),
+              child: Text(
+                'Detail',
+                style: TextStyle(
+                  fontSize: 12.sp,
+                  fontWeight: FontWeight.w700,
+                  color: AppColors.primary,
+                ),
+              ),
+            ),
+          ],
+        ],
+      ),
+    );
   }
 
   Future<void> _sendInvoicePdfToChat(

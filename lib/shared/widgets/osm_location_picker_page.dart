@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:location_picker_flutter_map/location_picker_flutter_map.dart'
     hide LocationService;
 import '../../core/constants/app_colors.dart';
+import '../../core/utils/safe_area_utils.dart';
 import '../../core/services/location_service.dart';
 import '../../core/utils/safe_navigator.dart';
 import 'bisa_app_bar.dart';
@@ -106,21 +107,24 @@ class _OsmLocationPickerPageState extends State<OsmLocationPickerPage> {
         title: 'Cari Alamat di Peta',
         backgroundColor: Colors.white,
       ),
-      floatingActionButton: FloatingActionButton.small(
-        heroTag: 'osm_gps_center',
-        backgroundColor: AppColors.primary,
-        foregroundColor: Colors.white,
-        onPressed: _centeringOnGps ? null : _centerOnCurrentGps,
-        child: _centeringOnGps
-            ? const SizedBox(
-                width: 20,
-                height: 20,
-                child: CircularProgressIndicator(
-                  strokeWidth: 2,
-                  color: Colors.white,
-                ),
-              )
-            : const Icon(Icons.my_location_rounded),
+      floatingActionButton: Padding(
+        padding: EdgeInsets.only(bottom: systemBottomInset(context)),
+        child: FloatingActionButton.small(
+          heroTag: 'osm_gps_center',
+          backgroundColor: AppColors.primary,
+          foregroundColor: Colors.white,
+          onPressed: _centeringOnGps ? null : _centerOnCurrentGps,
+          child: _centeringOnGps
+              ? const SizedBox(
+                  width: 20,
+                  height: 20,
+                  child: CircularProgressIndicator(
+                    strokeWidth: 2,
+                    color: Colors.white,
+                  ),
+                )
+              : const Icon(Icons.my_location_rounded),
+        ),
       ),
       body: Stack(
         children: [
@@ -135,11 +139,10 @@ class _OsmLocationPickerPageState extends State<OsmLocationPickerPage> {
             onPicked: (picked) => safeNavigatorPop(context, picked),
             onError: (e) {
               if (!mounted) return;
-              ScaffoldMessenger.of(context).showSnackBar(
-                SnackBar(
-                  content: Text('Gagal memuat peta: $e'),
-                  backgroundColor: AppColors.error,
-                ),
+              showBisaSnackBarMessage(
+                context,
+                'Gagal memuat peta: $e',
+                isError: true,
               );
             },
             mapConfiguration: const MapConfiguration(

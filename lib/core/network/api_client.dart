@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:dio/dio.dart';
 import 'package:flutter/foundation.dart';
 import 'package:talker_dio_logger/talker_dio_logger.dart';
+import 'auth_session_bridge.dart';
 import 'request_telemetry.dart';
 import 'token_repository.dart';
 
@@ -25,14 +26,21 @@ abstract class ApiConstants {
 /// regress di refactor mendatang.
 class ApiClient {
   final TokenRepository _tokenRepository;
+  final AuthSessionBridge _sessionBridge;
   final String _baseUrl;
   late final Dio _dio;
 
   Completer<String?>? _refreshCompleter;
 
-  ApiClient(this._tokenRepository, this._baseUrl) {
+  ApiClient(
+    this._tokenRepository,
+    this._baseUrl, {
+    AuthSessionBridge? sessionBridge,
+  }) : _sessionBridge = sessionBridge ?? AuthSessionBridge() {
     _init();
   }
+
+  AuthSessionBridge get sessionBridge => _sessionBridge;
 
   Dio get dio => _dio;
 
@@ -136,6 +144,8 @@ class ApiClient {
     try {
       final refreshToken = await _tokenRepository.getRefreshToken();
       if (refreshToken == null) {
+        await _tokenRepository.clearTokens();
+        _sessionBridge.notifySessionExpired();
         completer.complete(null);
         return null;
       }
@@ -164,10 +174,13 @@ class ApiClient {
           return newAccessToken;
         }
       }
+      await _tokenRepository.clearTokens();
+      _sessionBridge.notifySessionExpired();
       completer.complete(null);
       return null;
     } catch (e) {
       await _tokenRepository.clearTokens();
+      _sessionBridge.notifySessionExpired();
       completer.complete(null);
       return null;
     } finally {

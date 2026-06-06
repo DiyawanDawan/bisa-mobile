@@ -1,6 +1,6 @@
-import 'dart:io';
-
 import 'package:dio/dio.dart';
+import 'package:flutter/foundation.dart';
+import 'package:mobile_bisa/core/media/media_upload_queue.dart';
 import 'package:mobile_bisa/features/marketplace/presentation/bloc/marketplace_cubit.dart';
 import '../models/negotiation_model.dart';
 
@@ -9,11 +9,13 @@ abstract class NegotiationRemoteDataSource {
     int page = 1,
     int limit = 20,
     String? roomType,
+    String? status,
   });
   Future<List<NegotiationModel>> getIncomingOffers({
     int page = 1,
     int limit = 20,
     String? roomType,
+    String? status,
   });
   Future<NegotiationModel> getNegotiationDetail(String id);
   Future<String?> findRoomByProductId(
@@ -70,23 +72,63 @@ abstract class NegotiationRemoteDataSource {
 
 class NegotiationRemoteDataSourceImpl implements NegotiationRemoteDataSource {
   final Dio dio;
+  final MediaUploadQueue uploadQueue;
 
-  NegotiationRemoteDataSourceImpl({required this.dio});
+  NegotiationRemoteDataSourceImpl({
+    required this.dio,
+    required this.uploadQueue,
+  });
+
+  List<NegotiationModel> _parseNegotiationList(List data) {
+    final negotiations = <NegotiationModel>[];
+    for (final entry in data) {
+      if (entry is! Map) continue;
+      try {
+        negotiations.add(
+          NegotiationModel.fromJson(Map<String, dynamic>.from(entry)),
+        );
+      } catch (e, st) {
+        if (kDebugMode) {
+          debugPrint('NEGOTIATION LIST: skip invalid row: $e\n$st');
+        }
+      }
+    }
+    return negotiations;
+  }
+
+  List<NegotiationMessageModel> _parseMessageList(List data) {
+    final messages = <NegotiationMessageModel>[];
+    for (final entry in data) {
+      if (entry is! Map) continue;
+      try {
+        messages.add(
+          NegotiationMessageModel.fromJson(Map<String, dynamic>.from(entry)),
+        );
+      } catch (e, st) {
+        if (kDebugMode) {
+          debugPrint('NEGOTIATION MESSAGES: skip invalid row: $e\n$st');
+        }
+      }
+    }
+    return messages;
+  }
 
   @override
   Future<List<NegotiationModel>> getMyOffers({
     int page = 1,
     int limit = 20,
     String? roomType,
+    String? status,
   }) async {
     final response = await dio.get('/negotiations/my-offers', queryParameters: {
       'page': page,
       'limit': limit,
       'productMode': MarketplaceCubit.activeProductMode,
       if (roomType != null) 'roomType': roomType,
+      if (status != null && status.isNotEmpty) 'status': status,
     });
-    final List data = response.data['data'];
-    return data.map((e) => NegotiationModel.fromJson(e)).toList();
+    final List data = response.data['data'] as List? ?? const [];
+    return _parseNegotiationList(data);
   }
 
   @override
@@ -94,21 +136,27 @@ class NegotiationRemoteDataSourceImpl implements NegotiationRemoteDataSource {
     int page = 1,
     int limit = 20,
     String? roomType,
+    String? status,
   }) async {
     final response = await dio.get('/negotiations/incoming', queryParameters: {
       'page': page,
       'limit': limit,
       'productMode': MarketplaceCubit.activeProductMode,
       if (roomType != null) 'roomType': roomType,
+      if (status != null && status.isNotEmpty) 'status': status,
     });
-    final List data = response.data['data'];
-    return data.map((e) => NegotiationModel.fromJson(e)).toList();
+    final List data = response.data['data'] as List? ?? const [];
+    return _parseNegotiationList(data);
   }
 
   @override
   Future<NegotiationModel> getNegotiationDetail(String id) async {
     final response = await dio.get('/negotiations/$id');
-    return NegotiationModel.fromJson(response.data['data']);
+    final raw = response.data['data'];
+    if (raw is! Map) {
+      throw StateError('Response negosiasi tidak berisi data.');
+    }
+    return NegotiationModel.fromJson(Map<String, dynamic>.from(raw));
   }
 
   @override
@@ -222,26 +270,11 @@ class NegotiationRemoteDataSourceImpl implements NegotiationRemoteDataSource {
 
   @override
   Future<String> uploadFile(String filePath, {String? contentType}) async {
-    final fileName = filePath.split(RegExp(r'[/\\]')).last;
-    final bytes = await File(filePath).readAsBytes();
-    final formData = FormData.fromMap({
-      'file': MultipartFile.fromBytes(
-        bytes,
-        filename: fileName,
-        contentType: contentType != null
-            ? DioMediaType.parse(contentType)
-            : null,
-      ),
-    });
-
-    final response = await dio.post(
-      '/system/upload',
-      queryParameters: {'folder': 'negotiations'},
-      data: formData,
-      options: Options(contentType: 'multipart/form-data'),
+    final uploaded = await uploadQueue.uploadFile(
+      localPath: filePath,
+      folder: 'negotiations',
     );
-
-    return response.data['data']['url'];
+    return uploaded.url ?? uploaded.path;
   }
 
   @override
@@ -291,7 +324,7 @@ class NegotiationRemoteDataSourceImpl implements NegotiationRemoteDataSource {
       '/negotiations/$negotiationId/messages',
       queryParameters: {'skip': skip, 'limit': limit},
     );
-    final List data = response.data['data'];
-    return data.map((e) => NegotiationMessageModel.fromJson(e)).toList();
+    final List data = response.data['data'] as List? ?? const [];
+    return _parseMessageList(data);
   }
 }

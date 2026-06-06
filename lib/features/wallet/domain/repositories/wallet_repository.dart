@@ -15,6 +15,7 @@ abstract class WalletRepository {
   Future<Either<Failure, Unit>> requestWithdrawal({required double amount});
   Future<Either<Failure, List<Map<String, dynamic>>>> getSupportedBanks();
   Future<Either<Failure, List<PayoutAccountEntity>>> getPayoutAccounts();
+  Future<Either<Failure, PayoutAccountEntity>> getPayoutAccountDetail(String id);
   Future<Either<Failure, PayoutAccountEntity>> createPayoutAccount(Map<String, dynamic> data);
   Future<Either<Failure, PayoutAccountEntity>> updatePayoutAccount(String id, Map<String, dynamic> data);
   Future<Either<Failure, Unit>> deletePayoutAccount(String id);

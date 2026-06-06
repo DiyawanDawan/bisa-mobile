@@ -1,5 +1,6 @@
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:freezed_annotation/freezed_annotation.dart';
+import '../../../../core/utils/payment_status_utils.dart';
 import '../../domain/entities/order_entity.dart';
 import '../../domain/repositories/order_repository.dart';
 
@@ -11,30 +12,97 @@ class OrderCubit extends Cubit<OrderState> {
 
   OrderCubit(this._repository) : super(const OrderState.initial());
 
-  Future<void> getMyPurchases({String? search}) async {
+  static const _pageSize = 20;
+  int _listPage = 1;
+  bool _hasMoreOrders = true;
+  bool _loadingMore = false;
+
+  bool get hasMoreOrders => _hasMoreOrders;
+  bool get isLoadingMore => _loadingMore;
+
+  Future<void> getMyPurchases({String? search, String? status}) async {
     emit(const OrderState.loading());
+    _listPage = 1;
     final q = search?.trim();
     final result = await _repository.getMyPurchases(
-      limit: q != null && q.isNotEmpty ? 50 : 20,
+      page: 1,
+      limit: _pageSize,
       search: q != null && q.isNotEmpty ? q : null,
+      status: status != null && status != 'ALL' && status != 'REFUNDED'
+          ? status
+          : null,
     );
     result.fold(
       (failure) => emit(OrderState.error(failure.message)),
-      (orders) => emit(OrderState.loaded(orders)),
+      (orders) {
+        _hasMoreOrders = orders.length >= _pageSize;
+        emit(OrderState.loaded(orders));
+      },
     );
   }
 
-  Future<void> getMySales({String? search}) async {
+  Future<void> getMySales({String? search, String? status}) async {
     emit(const OrderState.loading());
+    _listPage = 1;
     final q = search?.trim();
     final result = await _repository.getMySales(
-      limit: q != null && q.isNotEmpty ? 50 : 20,
+      page: 1,
+      limit: _pageSize,
       search: q != null && q.isNotEmpty ? q : null,
+      status: status != null && status != 'ALL' && status != 'REFUNDED'
+          ? status
+          : null,
     );
     result.fold(
       (failure) => emit(OrderState.error(failure.message)),
-      (orders) => emit(OrderState.loaded(orders)),
+      (orders) {
+        _hasMoreOrders = orders.length >= _pageSize;
+        emit(OrderState.loaded(orders));
+      },
     );
+  }
+
+  Future<void> loadMoreOrders({String? search, String? status, required bool isSupplier}) async {
+    if (!_hasMoreOrders || _loadingMore) return;
+    final current = state.maybeWhen(loaded: (orders) => orders, orElse: () => null);
+    if (current == null) return;
+
+    _loadingMore = true;
+    _listPage += 1;
+    final q = search?.trim();
+    final apiStatus = status != null && status != 'ALL' && status != 'REFUNDED' ? status : null;
+    final apiSearch = q != null && q.isNotEmpty ? q : null;
+
+    final result = isSupplier
+        ? await _repository.getMySales(
+            page: _listPage,
+            limit: _pageSize,
+            search: apiSearch,
+            status: apiStatus,
+          )
+        : await _repository.getMyPurchases(
+            page: _listPage,
+            limit: _pageSize,
+            search: apiSearch,
+            status: apiStatus,
+          );
+
+    _loadingMore = false;
+    result.fold(
+      (failure) {
+        _listPage -= 1;
+        emit(OrderState.error(failure.message));
+      },
+      (orders) {
+        _hasMoreOrders = orders.length >= _pageSize;
+        emit(OrderState.loaded([...current, ...orders]));
+      },
+    );
+  }
+
+  /// Poll sampai backend mengonfirmasi pembayaran sukses.
+  Future<bool> pollPaymentStatus(String orderId) {
+    return pollOrderPaymentStatus(_repository, orderId);
   }
 
   Future<OrderEntity?> getOrderDetail(String id, {bool silent = false}) async {
@@ -127,7 +195,7 @@ class OrderCubit extends Cubit<OrderState> {
   Future<Map<String, dynamic>?> getSalesStats() async {
     final result = await _repository.getSalesStats();
     return result.fold(
-      (failure) => null,
+      (failure) => throw failure,
       (stats) => stats,
     );
   }
@@ -237,6 +305,17 @@ class OrderCubit extends Cubit<OrderState> {
   Future<Map<String, dynamic>?> getShippingOrigin() async {
     final result = await _repository.getShippingOrigin();
     return result.fold((_) => null, (data) => data);
+  }
+
+  Future<bool> setShippingOrigin({
+    required int originId,
+    String? originLabel,
+  }) async {
+    final result = await _repository.setShippingOrigin(
+      originId: originId,
+      originLabel: originLabel,
+    );
+    return result.isRight();
   }
 
   Future<ShippingDestinationSearchResult> searchShippingDestinations({

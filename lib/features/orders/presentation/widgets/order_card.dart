@@ -38,7 +38,11 @@ class OrderCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final status = _OrderStatusStyle.from(order.status);
+    final payStatus = order.transaction?.paymentStatus?.toUpperCase() ?? '';
+    final status = payStatus == 'EXPIRED' &&
+            order.status.toUpperCase() == 'PENDING'
+        ? _OrderStatusStyle.expired()
+        : _OrderStatusStyle.from(order.status);
     final firstItem = order.items.isNotEmpty ? order.items.first : null;
     final extraItems = order.items.length > 1 ? order.items.length - 1 : 0;
     final counterparty = isSupplierView ? order.buyer : order.seller;
@@ -388,6 +392,14 @@ class _OrderStatusStyle {
   final String label;
   final Color color;
   final IconData icon;
+
+  factory _OrderStatusStyle.expired() {
+    return const _OrderStatusStyle(
+      label: 'Kedaluwarsa',
+      color: AppColors.error,
+      icon: LucideIcons.circleX,
+    );
+  }
 
   factory _OrderStatusStyle.from(String status) {
     switch (status.toUpperCase()) {

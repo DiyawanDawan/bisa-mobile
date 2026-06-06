@@ -1,6 +1,7 @@
 import 'package:dartz/dartz.dart';
 import 'package:dio/dio.dart';
 import '../../../../core/errors/failures.dart';
+import '../../../../core/readiness/readiness_service.dart';
 import '../../domain/entities/negotiation_entity.dart';
 import '../../domain/enums/negotiation_chat_purpose.dart';
 import '../../domain/repositories/negotiation_repository.dart';
@@ -16,12 +17,14 @@ class NegotiationRepositoryImpl implements NegotiationRepository {
     int page = 1,
     int limit = 20,
     NegotiationChatPurpose? roomType,
+    String? status,
   }) async {
     try {
       final models = await remoteDataSource.getMyOffers(
         page: page,
         limit: limit,
         roomType: roomType?.apiValue,
+        status: status,
       );
       return Right(models.map((e) => e.toEntity()).toList());
     } on DioException catch (e) {
@@ -36,12 +39,14 @@ class NegotiationRepositoryImpl implements NegotiationRepository {
     int page = 1,
     int limit = 20,
     NegotiationChatPurpose? roomType,
+    String? status,
   }) async {
     try {
       final models = await remoteDataSource.getIncomingOffers(
         page: page,
         limit: limit,
         roomType: roomType?.apiValue,
+        status: status,
       );
       return Right(models.map((e) => e.toEntity()).toList());
     } on DioException catch (e) {
@@ -322,19 +327,37 @@ class NegotiationRepositoryImpl implements NegotiationRepository {
         case 401:
           return UnauthorizedFailure(message);
         case 403:
-          return ForbiddenFailure(message);
+          {
+            final msg = message.toString();
+            final lowered = msg.toLowerCase();
+            if (lowered.contains('participant') ||
+                lowered.contains('role') ||
+                lowered.contains('negotiation') ||
+                lowered.contains('forbidden') ||
+                msg == 'Terjadi kesalahan') {
+              return const ForbiddenFailure(
+                'Anda tidak memiliki akses ke ruang negosiasi ini. '
+                'Pastikan Anda login sebagai pembeli atau supplier yang terlibat dalam order.',
+              );
+            }
+            return ForbiddenFailure(msg);
+          }
         case 404:
           return const NotFoundFailure();
         case 422:
-          return ValidationFailure(
-            message: message,
-            errors: (data?['errors'] as Map?)?.map(
-              (k, v) => MapEntry(
-                k.toString(),
-                (v as List).map((e) => e.toString()).toList(),
+          {
+            final readiness = ReadinessService.failureFromResponseData(data, message);
+            if (readiness != null) return readiness;
+            return ValidationFailure(
+              message: message,
+              errors: (data?['errors'] as Map?)?.map(
+                (k, v) => MapEntry(
+                  k.toString(),
+                  (v as List).map((e) => e.toString()).toList(),
+                ),
               ),
-            ),
-          );
+            );
+          }
         default:
           return ServerFailure(message: message, statusCode: statusCode);
       }

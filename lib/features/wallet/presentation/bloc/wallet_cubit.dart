@@ -73,6 +73,11 @@ class WalletCubit extends Cubit<WalletState> {
     );
   }
 
+  Future<PayoutAccountEntity?> getPayoutAccountDetail(String id) async {
+    final result = await _repository.getPayoutAccountDetail(id);
+    return result.fold((_) => null, (account) => account);
+  }
+
   Future<void> createPayoutAccount({
     required String bankId,
     required String accountNumber,

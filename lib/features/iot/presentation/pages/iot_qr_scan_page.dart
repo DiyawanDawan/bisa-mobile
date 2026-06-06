@@ -60,7 +60,7 @@ class _IotQrScanPageState extends State<IotQrScanPage> {
             ),
           ),
           Positioned(
-            bottom: 40.h,
+            bottom: 40.h + MediaQuery.paddingOf(context).bottom,
             left: 24.w,
             right: 24.w,
             child: Container(

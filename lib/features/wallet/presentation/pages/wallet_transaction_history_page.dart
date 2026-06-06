@@ -45,6 +45,7 @@ class _WalletTransactionHistoryPageState
     {'label': 'Menunggu', 'value': 'PENDING'},
     {'label': 'Escrow', 'value': 'ESCROW_HELD'},
     {'label': 'Berhasil', 'value': 'RELEASED'},
+    {'label': 'Refund', 'value': 'REFUNDED'},
     {'label': 'Gagal', 'value': 'FAILED'},
   ];
 

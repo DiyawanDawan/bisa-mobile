@@ -955,7 +955,7 @@ as String?,
 /// @nodoc
 mixin _$NegotiationMessageEntity {
 
- String get id; String get senderId; String get content; String? get attachmentUrl; bool get isSystemMessage; bool get isRead; bool get isDeleted; DateTime? get editedAt; DateTime get createdAt;
+ String get id; String get senderId; String get content; String? get attachmentUrl; bool get isSystemMessage; bool get isRead; bool get isDeleted; DateTime? get editedAt; String? get senderRole; DateTime get createdAt;
 /// Create a copy of NegotiationMessageEntity
 /// with the given fields replaced by the non-null parameter values.
 @JsonKey(includeFromJson: false, includeToJson: false)
@@ -966,16 +966,16 @@ $NegotiationMessageEntityCopyWith<NegotiationMessageEntity> get copyWith => _$Ne
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is NegotiationMessageEntity&&(identical(other.id, id) || other.id == id)&&(identical(other.senderId, senderId) || other.senderId == senderId)&&(identical(other.content, content) || other.content == content)&&(identical(other.attachmentUrl, attachmentUrl) || other.attachmentUrl == attachmentUrl)&&(identical(other.isSystemMessage, isSystemMessage) || other.isSystemMessage == isSystemMessage)&&(identical(other.isRead, isRead) || other.isRead == isRead)&&(identical(other.isDeleted, isDeleted) || other.isDeleted == isDeleted)&&(identical(other.editedAt, editedAt) || other.editedAt == editedAt)&&(identical(other.createdAt, createdAt) || other.createdAt == createdAt));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is NegotiationMessageEntity&&(identical(other.id, id) || other.id == id)&&(identical(other.senderId, senderId) || other.senderId == senderId)&&(identical(other.content, content) || other.content == content)&&(identical(other.attachmentUrl, attachmentUrl) || other.attachmentUrl == attachmentUrl)&&(identical(other.isSystemMessage, isSystemMessage) || other.isSystemMessage == isSystemMessage)&&(identical(other.isRead, isRead) || other.isRead == isRead)&&(identical(other.isDeleted, isDeleted) || other.isDeleted == isDeleted)&&(identical(other.editedAt, editedAt) || other.editedAt == editedAt)&&(identical(other.senderRole, senderRole) || other.senderRole == senderRole)&&(identical(other.createdAt, createdAt) || other.createdAt == createdAt));
 }
 
 
 @override
-int get hashCode => Object.hash(runtimeType,id,senderId,content,attachmentUrl,isSystemMessage,isRead,isDeleted,editedAt,createdAt);
+int get hashCode => Object.hash(runtimeType,id,senderId,content,attachmentUrl,isSystemMessage,isRead,isDeleted,editedAt,senderRole,createdAt);
 
 @override
 String toString() {
-  return 'NegotiationMessageEntity(id: $id, senderId: $senderId, content: $content, attachmentUrl: $attachmentUrl, isSystemMessage: $isSystemMessage, isRead: $isRead, isDeleted: $isDeleted, editedAt: $editedAt, createdAt: $createdAt)';
+  return 'NegotiationMessageEntity(id: $id, senderId: $senderId, content: $content, attachmentUrl: $attachmentUrl, isSystemMessage: $isSystemMessage, isRead: $isRead, isDeleted: $isDeleted, editedAt: $editedAt, senderRole: $senderRole, createdAt: $createdAt)';
 }
 
 
@@ -986,7 +986,7 @@ abstract mixin class $NegotiationMessageEntityCopyWith<$Res>  {
   factory $NegotiationMessageEntityCopyWith(NegotiationMessageEntity value, $Res Function(NegotiationMessageEntity) _then) = _$NegotiationMessageEntityCopyWithImpl;
 @useResult
 $Res call({
- String id, String senderId, String content, String? attachmentUrl, bool isSystemMessage, bool isRead, bool isDeleted, DateTime? editedAt, DateTime createdAt
+ String id, String senderId, String content, String? attachmentUrl, bool isSystemMessage, bool isRead, bool isDeleted, DateTime? editedAt, String? senderRole, DateTime createdAt
 });
 
 
@@ -1003,7 +1003,7 @@ class _$NegotiationMessageEntityCopyWithImpl<$Res>
 
 /// Create a copy of NegotiationMessageEntity
 /// with the given fields replaced by the non-null parameter values.
-@pragma('vm:prefer-inline') @override $Res call({Object? id = null,Object? senderId = null,Object? content = null,Object? attachmentUrl = freezed,Object? isSystemMessage = null,Object? isRead = null,Object? isDeleted = null,Object? editedAt = freezed,Object? createdAt = null,}) {
+@pragma('vm:prefer-inline') @override $Res call({Object? id = null,Object? senderId = null,Object? content = null,Object? attachmentUrl = freezed,Object? isSystemMessage = null,Object? isRead = null,Object? isDeleted = null,Object? editedAt = freezed,Object? senderRole = freezed,Object? createdAt = null,}) {
   return _then(_self.copyWith(
 id: null == id ? _self.id : id // ignore: cast_nullable_to_non_nullable
 as String,senderId: null == senderId ? _self.senderId : senderId // ignore: cast_nullable_to_non_nullable
@@ -1013,7 +1013,8 @@ as String?,isSystemMessage: null == isSystemMessage ? _self.isSystemMessage : is
 as bool,isRead: null == isRead ? _self.isRead : isRead // ignore: cast_nullable_to_non_nullable
 as bool,isDeleted: null == isDeleted ? _self.isDeleted : isDeleted // ignore: cast_nullable_to_non_nullable
 as bool,editedAt: freezed == editedAt ? _self.editedAt : editedAt // ignore: cast_nullable_to_non_nullable
-as DateTime?,createdAt: null == createdAt ? _self.createdAt : createdAt // ignore: cast_nullable_to_non_nullable
+as DateTime?,senderRole: freezed == senderRole ? _self.senderRole : senderRole // ignore: cast_nullable_to_non_nullable
+as String?,createdAt: null == createdAt ? _self.createdAt : createdAt // ignore: cast_nullable_to_non_nullable
 as DateTime,
   ));
 }
@@ -1099,10 +1100,10 @@ return $default(_that);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( String id,  String senderId,  String content,  String? attachmentUrl,  bool isSystemMessage,  bool isRead,  bool isDeleted,  DateTime? editedAt,  DateTime createdAt)?  $default,{required TResult orElse(),}) {final _that = this;
+@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( String id,  String senderId,  String content,  String? attachmentUrl,  bool isSystemMessage,  bool isRead,  bool isDeleted,  DateTime? editedAt,  String? senderRole,  DateTime createdAt)?  $default,{required TResult orElse(),}) {final _that = this;
 switch (_that) {
 case _NegotiationMessageEntity() when $default != null:
-return $default(_that.id,_that.senderId,_that.content,_that.attachmentUrl,_that.isSystemMessage,_that.isRead,_that.isDeleted,_that.editedAt,_that.createdAt);case _:
+return $default(_that.id,_that.senderId,_that.content,_that.attachmentUrl,_that.isSystemMessage,_that.isRead,_that.isDeleted,_that.editedAt,_that.senderRole,_that.createdAt);case _:
   return orElse();
 
 }
@@ -1120,10 +1121,10 @@ return $default(_that.id,_that.senderId,_that.content,_that.attachmentUrl,_that.
 /// }
 /// ```
 
-@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( String id,  String senderId,  String content,  String? attachmentUrl,  bool isSystemMessage,  bool isRead,  bool isDeleted,  DateTime? editedAt,  DateTime createdAt)  $default,) {final _that = this;
+@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( String id,  String senderId,  String content,  String? attachmentUrl,  bool isSystemMessage,  bool isRead,  bool isDeleted,  DateTime? editedAt,  String? senderRole,  DateTime createdAt)  $default,) {final _that = this;
 switch (_that) {
 case _NegotiationMessageEntity():
-return $default(_that.id,_that.senderId,_that.content,_that.attachmentUrl,_that.isSystemMessage,_that.isRead,_that.isDeleted,_that.editedAt,_that.createdAt);case _:
+return $default(_that.id,_that.senderId,_that.content,_that.attachmentUrl,_that.isSystemMessage,_that.isRead,_that.isDeleted,_that.editedAt,_that.senderRole,_that.createdAt);case _:
   throw StateError('Unexpected subclass');
 
 }
@@ -1140,10 +1141,10 @@ return $default(_that.id,_that.senderId,_that.content,_that.attachmentUrl,_that.
 /// }
 /// ```
 
-@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( String id,  String senderId,  String content,  String? attachmentUrl,  bool isSystemMessage,  bool isRead,  bool isDeleted,  DateTime? editedAt,  DateTime createdAt)?  $default,) {final _that = this;
+@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( String id,  String senderId,  String content,  String? attachmentUrl,  bool isSystemMessage,  bool isRead,  bool isDeleted,  DateTime? editedAt,  String? senderRole,  DateTime createdAt)?  $default,) {final _that = this;
 switch (_that) {
 case _NegotiationMessageEntity() when $default != null:
-return $default(_that.id,_that.senderId,_that.content,_that.attachmentUrl,_that.isSystemMessage,_that.isRead,_that.isDeleted,_that.editedAt,_that.createdAt);case _:
+return $default(_that.id,_that.senderId,_that.content,_that.attachmentUrl,_that.isSystemMessage,_that.isRead,_that.isDeleted,_that.editedAt,_that.senderRole,_that.createdAt);case _:
   return null;
 
 }
@@ -1155,7 +1156,7 @@ return $default(_that.id,_that.senderId,_that.content,_that.attachmentUrl,_that.
 
 
 class _NegotiationMessageEntity implements NegotiationMessageEntity {
-  const _NegotiationMessageEntity({required this.id, required this.senderId, required this.content, this.attachmentUrl, required this.isSystemMessage, required this.isRead, this.isDeleted = false, this.editedAt, required this.createdAt});
+  const _NegotiationMessageEntity({required this.id, required this.senderId, required this.content, this.attachmentUrl, required this.isSystemMessage, required this.isRead, this.isDeleted = false, this.editedAt, this.senderRole, required this.createdAt});
   
 
 @override final  String id;
@@ -1166,6 +1167,7 @@ class _NegotiationMessageEntity implements NegotiationMessageEntity {
 @override final  bool isRead;
 @override@JsonKey() final  bool isDeleted;
 @override final  DateTime? editedAt;
+@override final  String? senderRole;
 @override final  DateTime createdAt;
 
 /// Create a copy of NegotiationMessageEntity
@@ -1178,16 +1180,16 @@ _$NegotiationMessageEntityCopyWith<_NegotiationMessageEntity> get copyWith => __
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is _NegotiationMessageEntity&&(identical(other.id, id) || other.id == id)&&(identical(other.senderId, senderId) || other.senderId == senderId)&&(identical(other.content, content) || other.content == content)&&(identical(other.attachmentUrl, attachmentUrl) || other.attachmentUrl == attachmentUrl)&&(identical(other.isSystemMessage, isSystemMessage) || other.isSystemMessage == isSystemMessage)&&(identical(other.isRead, isRead) || other.isRead == isRead)&&(identical(other.isDeleted, isDeleted) || other.isDeleted == isDeleted)&&(identical(other.editedAt, editedAt) || other.editedAt == editedAt)&&(identical(other.createdAt, createdAt) || other.createdAt == createdAt));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is _NegotiationMessageEntity&&(identical(other.id, id) || other.id == id)&&(identical(other.senderId, senderId) || other.senderId == senderId)&&(identical(other.content, content) || other.content == content)&&(identical(other.attachmentUrl, attachmentUrl) || other.attachmentUrl == attachmentUrl)&&(identical(other.isSystemMessage, isSystemMessage) || other.isSystemMessage == isSystemMessage)&&(identical(other.isRead, isRead) || other.isRead == isRead)&&(identical(other.isDeleted, isDeleted) || other.isDeleted == isDeleted)&&(identical(other.editedAt, editedAt) || other.editedAt == editedAt)&&(identical(other.senderRole, senderRole) || other.senderRole == senderRole)&&(identical(other.createdAt, createdAt) || other.createdAt == createdAt));
 }
 
 
 @override
-int get hashCode => Object.hash(runtimeType,id,senderId,content,attachmentUrl,isSystemMessage,isRead,isDeleted,editedAt,createdAt);
+int get hashCode => Object.hash(runtimeType,id,senderId,content,attachmentUrl,isSystemMessage,isRead,isDeleted,editedAt,senderRole,createdAt);
 
 @override
 String toString() {
-  return 'NegotiationMessageEntity(id: $id, senderId: $senderId, content: $content, attachmentUrl: $attachmentUrl, isSystemMessage: $isSystemMessage, isRead: $isRead, isDeleted: $isDeleted, editedAt: $editedAt, createdAt: $createdAt)';
+  return 'NegotiationMessageEntity(id: $id, senderId: $senderId, content: $content, attachmentUrl: $attachmentUrl, isSystemMessage: $isSystemMessage, isRead: $isRead, isDeleted: $isDeleted, editedAt: $editedAt, senderRole: $senderRole, createdAt: $createdAt)';
 }
 
 
@@ -1198,7 +1200,7 @@ abstract mixin class _$NegotiationMessageEntityCopyWith<$Res> implements $Negoti
   factory _$NegotiationMessageEntityCopyWith(_NegotiationMessageEntity value, $Res Function(_NegotiationMessageEntity) _then) = __$NegotiationMessageEntityCopyWithImpl;
 @override @useResult
 $Res call({
- String id, String senderId, String content, String? attachmentUrl, bool isSystemMessage, bool isRead, bool isDeleted, DateTime? editedAt, DateTime createdAt
+ String id, String senderId, String content, String? attachmentUrl, bool isSystemMessage, bool isRead, bool isDeleted, DateTime? editedAt, String? senderRole, DateTime createdAt
 });
 
 
@@ -1215,7 +1217,7 @@ class __$NegotiationMessageEntityCopyWithImpl<$Res>
 
 /// Create a copy of NegotiationMessageEntity
 /// with the given fields replaced by the non-null parameter values.
-@override @pragma('vm:prefer-inline') $Res call({Object? id = null,Object? senderId = null,Object? content = null,Object? attachmentUrl = freezed,Object? isSystemMessage = null,Object? isRead = null,Object? isDeleted = null,Object? editedAt = freezed,Object? createdAt = null,}) {
+@override @pragma('vm:prefer-inline') $Res call({Object? id = null,Object? senderId = null,Object? content = null,Object? attachmentUrl = freezed,Object? isSystemMessage = null,Object? isRead = null,Object? isDeleted = null,Object? editedAt = freezed,Object? senderRole = freezed,Object? createdAt = null,}) {
   return _then(_NegotiationMessageEntity(
 id: null == id ? _self.id : id // ignore: cast_nullable_to_non_nullable
 as String,senderId: null == senderId ? _self.senderId : senderId // ignore: cast_nullable_to_non_nullable
@@ -1225,7 +1227,8 @@ as String?,isSystemMessage: null == isSystemMessage ? _self.isSystemMessage : is
 as bool,isRead: null == isRead ? _self.isRead : isRead // ignore: cast_nullable_to_non_nullable
 as bool,isDeleted: null == isDeleted ? _self.isDeleted : isDeleted // ignore: cast_nullable_to_non_nullable
 as bool,editedAt: freezed == editedAt ? _self.editedAt : editedAt // ignore: cast_nullable_to_non_nullable
-as DateTime?,createdAt: null == createdAt ? _self.createdAt : createdAt // ignore: cast_nullable_to_non_nullable
+as DateTime?,senderRole: freezed == senderRole ? _self.senderRole : senderRole // ignore: cast_nullable_to_non_nullable
+as String?,createdAt: null == createdAt ? _self.createdAt : createdAt // ignore: cast_nullable_to_non_nullable
 as DateTime,
   ));
 }

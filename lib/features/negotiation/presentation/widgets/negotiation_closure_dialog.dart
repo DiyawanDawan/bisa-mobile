@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:mobile_bisa/core/constants/app_colors.dart';
+import 'package:mobile_bisa/core/utils/safe_area_utils.dart';
 import 'package:mobile_bisa/shared/widgets/custom_button.dart';
 import 'package:mobile_bisa/shared/widgets/custom_text_field.dart';
 
@@ -76,10 +77,8 @@ class _NegotiationClosureSheetState extends State<_NegotiationClosureSheet> {
 
   @override
   Widget build(BuildContext context) {
-    final bottomInset = MediaQuery.viewInsetsOf(context).bottom;
-
     return Padding(
-      padding: EdgeInsets.only(bottom: bottomInset),
+      padding: sheetBottomPadding(context),
       child: Container(
         margin: EdgeInsets.fromLTRB(12.w, 0, 12.w, 12.h),
         padding: EdgeInsets.fromLTRB(20.w, 20.h, 20.w, 24.h),

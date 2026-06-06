@@ -22,6 +22,14 @@ void leavePaymentInstruction(
   safeRouterPop(context, false);
 }
 
+/// Rute setelah order dibuat tetapi inisialisasi pembayaran gagal.
+/// Tidak boleh ke `/checkout-result` (itu untuk alur sukses).
+String? paymentInitFailureRoute(String? leadOrderId, {bool autoPay = true}) {
+  if (leadOrderId == null || leadOrderId.isEmpty) return null;
+  final suffix = autoPay ? '?autoPay=1' : '';
+  return '/order/$leadOrderId$suffix';
+}
+
 /// Buka detail checkout multi-supplier jika memungkinkan.
 void openOrderDetailOrBatch(
   BuildContext context, {

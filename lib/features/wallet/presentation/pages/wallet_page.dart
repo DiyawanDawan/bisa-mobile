@@ -4,6 +4,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
 import 'package:mobile_bisa/core/constants/app_colors.dart';
+import 'package:mobile_bisa/core/utils/safe_area_utils.dart';
 import 'package:mobile_bisa/features/wallet/domain/entities/payout_account_entity.dart';
 import 'package:mobile_bisa/features/wallet/domain/entities/wallet_entity.dart';
 import 'package:mobile_bisa/features/wallet/domain/entities/wallet_transaction_entity.dart';
@@ -44,36 +45,26 @@ class _WalletPageState extends State<WalletPage> {
               loaded: (_, __, ___, ____) {
                 final withdrawError = cubit.consumeWithdrawErrorPending();
                 if (withdrawError != null) {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(
-                      content: Text(withdrawError),
-                      backgroundColor: AppColors.error,
-                    ),
+                  showBisaSnackBarMessage(
+                    context,
+                    withdrawError,
+                    isError: true,
                   );
                 } else if (cubit.consumeWithdrawSnackPending()) {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(
-                      content: Text('permintaan_penarikan_dana_berh'.tr()),
-                      backgroundColor: AppColors.success,
-                    ),
+                  showBisaSnackBarMessage(
+                    context,
+                    'permintaan_penarikan_dana_berh'.tr(),
                   );
                 }
               },
               payoutAccountSuccess: () {
-                ScaffoldMessenger.of(context).showSnackBar(
-                  SnackBar(
-                    content: const Text('Rekening berhasil disimpan'),
-                    backgroundColor: AppColors.success,
-                  ),
+                showBisaSnackBarMessage(
+                  context,
+                  'Rekening berhasil disimpan',
                 );
               },
               error: (message) {
-                ScaffoldMessenger.of(context).showSnackBar(
-                  SnackBar(
-                    content: Text(message),
-                    backgroundColor: AppColors.error,
-                  ),
-                );
+                showBisaSnackBarMessage(context, message, isError: true);
               },
               orElse: () {},
             );
@@ -97,7 +88,9 @@ class _WalletPageState extends State<WalletPage> {
                             payoutAccounts,
                           ),
                           _buildTransactionHistory(context, transactions),
-                          SizedBox(height: 40.h),
+                          SizedBox(
+                            height: 40.h + systemBottomInset(context),
+                          ),
                         ],
                       ),
                     ),
@@ -423,11 +416,8 @@ class _WalletPageState extends State<WalletPage> {
         value: walletCubit,
         child: Builder(
           builder: (context) {
-            final bottomInset = MediaQuery.paddingOf(bContext).bottom;
-            final keyboardInset = MediaQuery.viewInsetsOf(bContext).bottom;
-
             return Padding(
-              padding: EdgeInsets.only(bottom: keyboardInset),
+              padding: sheetBottomPadding(bContext),
               child: Container(
                 constraints: BoxConstraints(maxHeight: 0.92.sh),
                 decoration: BoxDecoration(
@@ -552,7 +542,7 @@ class _WalletPageState extends State<WalletPage> {
                     SafeArea(
                       top: false,
                       child: Padding(
-                        padding: EdgeInsets.fromLTRB(20.w, 8.h, 20.w, 12.h + bottomInset * 0.25),
+                        padding: EdgeInsets.fromLTRB(20.w, 8.h, 20.w, 12.h),
                         child: mainAccount == null
                             ? CustomButton(
                                 text: 'Atur Rekening Utama',
@@ -574,19 +564,18 @@ class _WalletPageState extends State<WalletPage> {
                                   final amount =
                                       double.tryParse(amountController.text) ?? 0;
                                   if (amount <= 0) {
-                                    ScaffoldMessenger.of(context).showSnackBar(
-                                      SnackBar(
-                                        content: Text('jumlah_penarikan_tidak_valid'.tr()),
-                                      ),
+                                    showBisaSnackBarMessage(
+                                      context,
+                                      'jumlah_penarikan_tidak_valid'.tr(),
+                                      isError: true,
                                     );
                                     return;
                                   }
                                   if (amount > currentBalance) {
-                                    ScaffoldMessenger.of(context).showSnackBar(
-                                      SnackBar(
-                                        content: Text('saldo_tidak_mencukupi'.tr()),
-                                        backgroundColor: AppColors.error,
-                                      ),
+                                    showBisaSnackBarMessage(
+                                      context,
+                                      'saldo_tidak_mencukupi'.tr(),
+                                      isError: true,
                                     );
                                     return;
                                   }

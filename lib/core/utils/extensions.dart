@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
+import 'safe_area_utils.dart';
 
 // ── String Extensions ─────────────────────────────────────────────────────────
 
@@ -137,15 +138,9 @@ extension ContextExt on BuildContext {
         MaterialPageRoute(builder: (_) => page),
       );
 
-  // SnackBar
+  // SnackBar — margin aman system nav
   void showSnackBar(String message, {bool isError = false}) {
-    ScaffoldMessenger.of(this).showSnackBar(
-      SnackBar(
-        content: Text(message),
-        backgroundColor: isError ? Colors.red : Colors.green,
-        behavior: SnackBarBehavior.floating,
-      ),
-    );
+    showBisaSnackBarMessage(this, message, isError: isError);
   }
 
   // Responsive

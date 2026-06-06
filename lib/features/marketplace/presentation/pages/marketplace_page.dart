@@ -6,6 +6,7 @@ import 'package:lucide_icons_flutter/lucide_icons.dart';
 import 'package:flutter_staggered_grid_view/flutter_staggered_grid_view.dart';
 import 'dart:async';
 import 'package:mobile_bisa/core/constants/app_colors.dart';
+import 'package:mobile_bisa/core/utils/safe_area_utils.dart';
 import 'package:mobile_bisa/injection_container.dart';
 import 'package:mobile_bisa/features/marketplace/presentation/bloc/marketplace_cubit.dart';
 import 'package:mobile_bisa/features/marketplace/presentation/bloc/category_cubit.dart';
@@ -300,7 +301,10 @@ class _MarketplacePageState extends State<MarketplacePage> {
                                 12.w,
                                 0,
                                 12.w,
-                                160.h,
+                                mainShellBottomPadding(
+                                  context,
+                                  kind: MainShellScrollKind.grid,
+                                ),
                               ),
                               sliver: SliverMasonryGrid.count(
                                 crossAxisCount: 2,
@@ -328,7 +332,10 @@ class _MarketplacePageState extends State<MarketplacePage> {
                                   12.w,
                                   0,
                                   12.w,
-                                  160.h,
+                                  mainShellBottomPadding(
+                                  context,
+                                  kind: MainShellScrollKind.grid,
+                                ),
                                 ),
                                 sliver: SliverMasonryGrid.count(
                                   crossAxisCount: 2,

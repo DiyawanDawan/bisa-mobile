@@ -120,6 +120,24 @@ class OrderDisputeSection extends StatelessWidget {
             'Diajukan',
             dateFormat.format(dispute.createdAt),
           ),
+          if (dispute.isMediationActive || dispute.isReadyToResolve) ...[
+            SizedBox(height: 10.h),
+            _labelValue('Fase Mediasi', dispute.mediationPhaseLabel),
+            if (dispute.mediationStartedAt != null) ...[
+              SizedBox(height: 10.h),
+              _labelValue(
+                'Mediasi dimulai',
+                dateFormat.format(dispute.mediationStartedAt!),
+              ),
+            ],
+            if (dispute.readyToResolveAt != null) ...[
+              SizedBox(height: 10.h),
+              _labelValue(
+                'Siap diselesaikan',
+                dateFormat.format(dispute.readyToResolveAt!),
+              ),
+            ],
+          ],
           if (dispute.evidenceUrls.isNotEmpty) ...[
             SizedBox(height: 14.h),
             Text(

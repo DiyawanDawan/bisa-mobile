@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
 import 'package:mobile_bisa/core/constants/app_colors.dart';
+import 'custom_button.dart';
 
 class ProRequiredPlaceholder extends StatelessWidget {
   final String title;
@@ -83,24 +84,10 @@ class ProRequiredPlaceholder extends StatelessWidget {
             ),
           ),
           SizedBox(height: 40.h),
-          SizedBox(
-            width: double.infinity,
-            height: 54.h,
-            child: ElevatedButton(
-              onPressed: onActionPressed ?? () {},
-              style: ElevatedButton.styleFrom(
-                backgroundColor: AppColors.primary,
-                foregroundColor: AppColors.white,
-                elevation: 0,
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(16.r),
-                ),
-              ),
-              child: Text(
-                'Perpanjang Sekarang',
-                style: TextStyle(fontSize: 16.sp, fontWeight: FontWeight.bold),
-              ),
-            ),
+          CustomButton(
+            text: 'Perpanjang Sekarang',
+            useGradient: true,
+            onPressed: onActionPressed,
           ),
           if (onRetryPressed != null) ...[
             SizedBox(height: 16.h),

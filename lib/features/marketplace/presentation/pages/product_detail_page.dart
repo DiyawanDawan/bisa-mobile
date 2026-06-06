@@ -11,6 +11,7 @@ import 'package:mobile_bisa/features/auth/presentation/bloc/auth_cubit.dart';
 import 'package:flutter_staggered_grid_view/flutter_staggered_grid_view.dart';
 
 import '../../../../core/constants/app_colors.dart';
+import '../../../../core/utils/safe_area_utils.dart';
 import '../../../../core/utils/extensions.dart';
 import '../../../../core/utils/product_pricing.dart';
 import '../../../../core/utils/rupiah_input_formatter.dart';
@@ -20,6 +21,7 @@ import '../../../negotiation/presentation/widgets/negotiation_seller_chip.dart';
 import '../../../negotiation/presentation/widgets/negotiation_stock_banner.dart';
 import '../../../negotiation/presentation/utils/negotiation_quantity_rules.dart';
 import '../../../negotiation/presentation/utils/product_seller_chat.dart';
+import '../../../../core/readiness/readiness_gate.dart';
 import '../../../../injection_container.dart';
 import '../bloc/marketplace_cubit.dart';
 import '../../domain/entities/product_entity.dart';
@@ -149,6 +151,8 @@ class _ProductDetailPageState extends State<ProductDetailPage> {
   }
 
   Future<void> _openNegotiationPreview(NegotiationOfferDraft draft) async {
+    if (!await ReadinessGate.ensureBuyerReady(context)) return;
+    if (!mounted) return;
     final edited = await context.push<NegotiationOfferDraft>(
       '/negotiation-offer-preview',
       extra: draft,
@@ -186,10 +190,9 @@ class _ProductDetailPageState extends State<ProductDetailPage> {
       isScrollControlled: true,
       backgroundColor: Colors.transparent,
       builder: (sheetContext) {
-        final bottomInset = MediaQuery.viewInsetsOf(sheetContext).bottom;
         final maxHeight = MediaQuery.sizeOf(sheetContext).height * 0.92;
         return Padding(
-          padding: EdgeInsets.only(bottom: bottomInset),
+          padding: sheetBottomPadding(sheetContext),
           child: ConstrainedBox(
             constraints: BoxConstraints(maxHeight: maxHeight),
             child: Container(
@@ -1474,7 +1477,12 @@ class _ProductDetailPageState extends State<ProductDetailPage> {
         final maxH = MediaQuery.sizeOf(context).height * 0.75;
         return Container(
           constraints: BoxConstraints(maxHeight: maxH),
-          padding: EdgeInsets.fromLTRB(24.w, 12.h, 24.w, 24.h),
+          padding: EdgeInsets.fromLTRB(
+            24.w,
+            12.h,
+            24.w,
+            24.h + systemBottomInset(context),
+          ),
           decoration: BoxDecoration(
             color: AppColors.white,
             borderRadius: BorderRadius.vertical(top: Radius.circular(32.r)),

@@ -38,18 +38,30 @@ class NegotiationCubit extends Cubit<NegotiationState> {
     );
   }
 
-  Future<void> getMyOffers({NegotiationChatPurpose? roomType}) async {
+  Future<void> getMyOffers({
+    NegotiationChatPurpose? roomType,
+    String? status,
+  }) async {
     emit(const NegotiationState.loading());
-    final result = await _repository.getMyOffers(roomType: roomType);
+    final result = await _repository.getMyOffers(
+      roomType: roomType,
+      status: status != null && status != 'ALL' ? status : null,
+    );
     result.fold(
       (failure) => emit(NegotiationState.error(failure.message)),
       (negotiations) => emit(NegotiationState.loaded(negotiations)),
     );
   }
 
-  Future<void> getIncomingOffers({NegotiationChatPurpose? roomType}) async {
+  Future<void> getIncomingOffers({
+    NegotiationChatPurpose? roomType,
+    String? status,
+  }) async {
     emit(const NegotiationState.loading());
-    final result = await _repository.getIncomingOffers(roomType: roomType);
+    final result = await _repository.getIncomingOffers(
+      roomType: roomType,
+      status: status != null && status != 'ALL' ? status : null,
+    );
     result.fold(
       (failure) => emit(NegotiationState.error(failure.message)),
       (negotiations) => emit(NegotiationState.loaded(negotiations)),

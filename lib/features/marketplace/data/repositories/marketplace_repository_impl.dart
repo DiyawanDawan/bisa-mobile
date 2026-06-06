@@ -1,6 +1,7 @@
 import 'package:dartz/dartz.dart';
 import 'package:dio/dio.dart';
 import '../../../../core/errors/failures.dart';
+import '../../../../core/readiness/readiness_service.dart';
 import '../../domain/entities/product_collection_entity.dart';
 import '../../domain/entities/product_engagement_entity.dart';
 import '../../domain/entities/product_entity.dart';
@@ -15,6 +16,34 @@ class MarketplaceRepositoryImpl implements MarketplaceRepository {
   final MarketplaceRemoteDataSource remoteDataSource;
 
   MarketplaceRepositoryImpl({required this.remoteDataSource});
+
+  @override
+  Future<Either<Failure, List<ProductEntity>>> getMyProducts({
+    String? search,
+    String? status,
+    String? categoryId,
+    String? sortBy,
+    String? sortOrder,
+    int page = 1,
+    int limit = 20,
+  }) async {
+    try {
+      final models = await remoteDataSource.getMyProducts(
+        search: search,
+        status: status,
+        categoryId: categoryId,
+        sortBy: sortBy,
+        sortOrder: sortOrder,
+        page: page,
+        limit: limit,
+      );
+      return Right(models.map((e) => e.toEntity()).toList());
+    } on DioException catch (e) {
+      return Left(_mapDioExceptionToFailure(e));
+    } catch (e) {
+      return const Left(UnexpectedFailure());
+    }
+  }
 
   @override
   Future<Either<Failure, List<ProductEntity>>> getProducts({
@@ -270,10 +299,14 @@ class MarketplaceRepositoryImpl implements MarketplaceRepository {
           return const NotFoundFailure();
         case 400:
         case 422:
-          return ValidationFailure(
-            message: message,
-            errors: _extractFieldErrors(data),
-          );
+          {
+            final readiness = ReadinessService.failureFromResponseData(data, message);
+            if (readiness != null) return readiness;
+            return ValidationFailure(
+              message: message,
+              errors: _extractFieldErrors(data),
+            );
+          }
         default:
           return ServerFailure(message: message, statusCode: statusCode);
       }

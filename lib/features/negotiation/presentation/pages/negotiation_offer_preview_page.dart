@@ -6,6 +6,7 @@ import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:go_router/go_router.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
 import '../../../../core/constants/app_colors.dart';
+import '../../../../core/readiness/readiness_gate.dart';
 import '../../../../core/utils/extensions.dart';
 import '../../../../shared/widgets/bisa_app_bar.dart';
 import '../../../../shared/widgets/custom_button.dart';
@@ -518,7 +519,11 @@ class _BottomActions extends StatelessWidget {
                   useGradient: true,
                   isLoading: loading,
                   onPressed: canSend
-                      ? () {
+                      ? () async {
+                          if (!await ReadinessGate.ensureBuyerReady(context)) {
+                            return;
+                          }
+                          if (!context.mounted) return;
                           context.read<NegotiationCubit>().createOffer(
                                 productId: draft.productId,
                                 quantity: draft.quantity,

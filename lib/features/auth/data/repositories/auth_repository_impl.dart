@@ -213,13 +213,13 @@ class AuthRepositoryImpl implements AuthRepository {
   }
 
   @override
-  Future<Either<Failure, void>> verifyResetCode(
+  Future<Either<Failure, String>> verifyResetCode(
     String email,
     String code,
   ) async {
     try {
-      await remoteDataSource.verifyResetCode(email, code);
-      return const Right(null);
+      final token = await remoteDataSource.verifyResetCode(email, code);
+      return Right(token);
     } on DioException catch (e) {
       return Left(_mapDioExceptionToFailure(e));
     } catch (e) {

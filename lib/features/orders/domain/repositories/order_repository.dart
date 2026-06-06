@@ -8,11 +8,13 @@ abstract class OrderRepository {
     int page = 1,
     int limit = 20,
     String? search,
+    String? status,
   });
   Future<Either<Failure, List<OrderEntity>>> getMySales({
     int page = 1,
     int limit = 20,
     String? search,
+    String? status,
   });
   Future<Either<Failure, OrderEntity>> getOrderDetail(String id);
   Future<Either<Failure, CheckoutBatchDetailEntity>> getCheckoutBatchDetail(String anchorOrderId);
@@ -59,6 +61,10 @@ abstract class OrderRepository {
     String? notes,
   });
   Future<Either<Failure, Map<String, dynamic>?>> getShippingOrigin();
+  Future<Either<Failure, void>> setShippingOrigin({
+    required int originId,
+    String? originLabel,
+  });
   Future<Either<Failure, List<Map<String, dynamic>>>> searchShippingDestinations({
     required String search,
     int limit,

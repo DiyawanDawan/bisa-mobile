@@ -6,6 +6,8 @@ import 'package:go_router/go_router.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
 import 'package:mobile_bisa/features/marketplace/domain/entities/product_entity.dart';
 import '../../../../core/constants/app_colors.dart';
+import '../../../../core/readiness/readiness_gate.dart';
+import '../../../../core/utils/safe_area_utils.dart';
 import '../../../../injection_container.dart';
 import '../../../auth/presentation/bloc/auth_cubit.dart';
 import '../bloc/marketplace_cubit.dart';
@@ -38,10 +40,8 @@ class _StoreManagementPageState extends State<StoreManagementPage> {
     });
   }
 
-  void _reloadProducts(BuildContext blocContext, String? userId) {
-    blocContext.read<MarketplaceCubit>().getProducts(
-          userId: userId,
-          categoryId: _selectedCategoryId,
+  void _reloadProducts(BuildContext blocContext) {
+    blocContext.read<MarketplaceCubit>().getMyProducts(
           limit: StoreManagementPage._previewLimit,
         );
   }
@@ -55,9 +55,7 @@ class _StoreManagementPageState extends State<StoreManagementPage> {
 
     return BlocProvider(
       create: (context) => sl<MarketplaceCubit>()
-        ..getProducts(
-          userId: user?.id,
-          categoryId: _selectedCategoryId,
+        ..getMyProducts(
           limit: StoreManagementPage._previewLimit,
         ),
       child: Builder(
@@ -73,16 +71,18 @@ class _StoreManagementPageState extends State<StoreManagementPage> {
                 const NotificationBellButton(),
                 BisaAppBarAction(
                   icon: LucideIcons.plus,
-                  onTap: () => blocContext.push('/add-product'),
+                  onTap: () => ReadinessGate.pushAddProduct(blocContext),
                   iconColor: AppColors.primary,
                 ),
               ],
             ),
             body: RefreshIndicator(
-              onRefresh: () async => _reloadProducts(blocContext, user?.id),
+              onRefresh: () async => _reloadProducts(blocContext),
               child: SingleChildScrollView(
                 physics: const AlwaysScrollableScrollPhysics(),
-                padding: EdgeInsets.only(bottom: 24.h),
+                padding: EdgeInsets.only(
+                  bottom: mainShellScrollBottomPadding(blocContext),
+                ),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
@@ -93,7 +93,7 @@ class _StoreManagementPageState extends State<StoreManagementPage> {
                         selectedCategoryId: _selectedCategoryId,
                         onCategorySelected: (category) {
                           setState(() => _selectedCategoryId = category?.id);
-                          _reloadProducts(blocContext, user?.id);
+                          _reloadProducts(blocContext);
                         },
                       ),
                     ),
@@ -160,7 +160,7 @@ class _StoreManagementPageState extends State<StoreManagementPage> {
                                 Text(message, textAlign: TextAlign.center),
                                 TextButton(
                                   onPressed: () =>
-                                      _reloadProducts(blocContext, user?.id),
+                                      _reloadProducts(blocContext),
                                   child: Text('coba_lagi'.tr()),
                                 ),
                               ],
@@ -222,7 +222,7 @@ class _StoreManagementPageState extends State<StoreManagementPage> {
             ),
             SizedBox(height: 16.h),
             OutlinedButton.icon(
-              onPressed: () => blocContext.push('/add-product'),
+              onPressed: () => ReadinessGate.pushAddProduct(blocContext),
               icon: Icon(LucideIcons.plus, size: 18.sp),
               label: const Text('Tambah Produk'),
             ),
@@ -244,7 +244,7 @@ class _StoreManagementPageState extends State<StoreManagementPage> {
               onTap: () async {
                 await blocContext.push('/product-manage/${preview[i].id}');
                 if (blocContext.mounted) {
-                  _reloadProducts(blocContext, userId);
+                  _reloadProducts(blocContext);
                 }
               },
               onEdit: () => blocContext.push(

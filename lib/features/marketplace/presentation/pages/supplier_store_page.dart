@@ -5,6 +5,7 @@ import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
 import '../../../../core/constants/app_colors.dart';
+import '../../../../core/readiness/readiness_gate.dart';
 import '../../../../core/utils/extensions.dart';
 import '../../../../core/utils/media_url_utils.dart';
 import '../../../../injection_container.dart';
@@ -175,7 +176,7 @@ class _StoreManagementBody extends StatelessWidget {
                           title: 'Tambah Produk',
                           subtitle: 'Publikasikan produk baru ke marketplace',
                           color: AppColors.success,
-                          onTap: () => context.push('/add-product'),
+                          onTap: () => ReadinessGate.pushAddProduct(context),
                         ),
                         SizedBox(height: 8.h),
                         Supplier3DMenuTile(
@@ -545,7 +546,7 @@ class _StoreProductPreview extends StatelessWidget {
         if (isLoading && products.isEmpty)
           const Center(child: ShimmerListPlaceholder(itemCount: 3, itemHeight: 72))
         else if (products.isEmpty)
-          _EmptyProducts(onAdd: () => context.push('/add-product'))
+          _EmptyProducts(onAdd: () => ReadinessGate.pushAddProduct(context))
         else
           Column(
             children: [

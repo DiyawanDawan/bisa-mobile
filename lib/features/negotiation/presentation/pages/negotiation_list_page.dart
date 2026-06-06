@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:mobile_bisa/core/core.dart';
+import 'package:mobile_bisa/core/utils/safe_area_utils.dart';
 import 'package:mobile_bisa/core/utils/media_url_utils.dart';
 import 'package:mobile_bisa/shared/widgets/bisa_media_skeleton.dart';
 import 'package:mobile_bisa/features/marketplace/presentation/widgets/horizontal_product_section.dart';
@@ -105,10 +106,18 @@ class _NegotiationListPageState extends State<NegotiationListPage>
     if (user == null) return;
 
     _listOwnerUserId = user.id;
+    final apiStatus =
+        _selectedStatus != 'ALL' ? _selectedStatus : null;
     if (user.role == 'SUPPLIER') {
-      _negotiationCubit.getIncomingOffers(roomType: _activeRoomType);
+      _negotiationCubit.getIncomingOffers(
+        roomType: _activeRoomType,
+        status: apiStatus,
+      );
     } else {
-      _negotiationCubit.getMyOffers(roomType: _activeRoomType);
+      _negotiationCubit.getMyOffers(
+        roomType: _activeRoomType,
+        status: apiStatus,
+      );
     }
   }
 
@@ -372,6 +381,7 @@ class _NegotiationListPageState extends State<NegotiationListPage>
                         setState(() {
                           _selectedStatus = filter['value']!;
                         });
+                        _reloadList();
                       },
                     ),
                   ),
@@ -469,7 +479,12 @@ class _NegotiationListPageState extends State<NegotiationListPage>
                 productMode: widget.activeProductMode,
               ),
             ],
-            SizedBox(height: 100.h),
+            SizedBox(
+              height: mainShellBottomPadding(
+                context,
+                kind: MainShellScrollKind.orders,
+              ),
+            ),
           ],
         ),
       ),

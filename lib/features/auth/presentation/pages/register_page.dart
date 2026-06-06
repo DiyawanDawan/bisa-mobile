@@ -1,9 +1,12 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:go_router/go_router.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
 import 'package:mobile_bisa/features/gis/domain/entities/region_entity.dart';
+import 'package:mobile_bisa/features/auth/data/datasources/auth_remote_data_source.dart';
 import 'package:mobile_bisa/features/gis/domain/repositories/gis_repository.dart';
 import 'package:mobile_bisa/features/gis/presentation/bloc/gis_cubit.dart';
 import 'package:mobile_bisa/injection_container.dart';
@@ -35,11 +38,57 @@ class _RegisterPageState extends State<RegisterPage> {
   RegionEntity? _selectedRegency;
   bool _isSupplier = false;
   bool _loadingCountry = false;
+  Timer? _emailCheckTimer;
+  bool? _emailAvailable;
+  bool _checkingEmail = false;
+  String? _lastCheckedEmail;
+
+  static final _emailFormat = RegExp(
+    r'^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$',
+  );
 
   @override
   void initState() {
     super.initState();
+    _emailController.addListener(_onEmailChanged);
     _resolveIndonesiaCountry();
+  }
+
+  void _onEmailChanged() {
+    _scheduleEmailCheck(_emailController.text);
+  }
+
+  void _scheduleEmailCheck(String email) {
+    _emailCheckTimer?.cancel();
+    final trimmed = email.trim();
+    if (trimmed.isEmpty || !_emailFormat.hasMatch(trimmed)) {
+      setState(() {
+        _emailAvailable = null;
+        _checkingEmail = false;
+        _lastCheckedEmail = null;
+      });
+      return;
+    }
+
+    setState(() => _checkingEmail = true);
+    _emailCheckTimer = Timer(const Duration(milliseconds: 500), () async {
+      try {
+        final available =
+            await sl<AuthRemoteDataSource>().checkEmailAvailable(trimmed);
+        if (!mounted || _emailController.text.trim() != trimmed) return;
+        setState(() {
+          _emailAvailable = available;
+          _checkingEmail = false;
+          _lastCheckedEmail = trimmed;
+        });
+      } catch (_) {
+        if (!mounted) return;
+        setState(() {
+          _emailAvailable = null;
+          _checkingEmail = false;
+        });
+      }
+    });
   }
 
   /// Backend: GET /api/v1/gis?level=province&parentId={country.uuid}
@@ -74,6 +123,8 @@ class _RegisterPageState extends State<RegisterPage> {
 
   @override
   void dispose() {
+    _emailCheckTimer?.cancel();
+    _emailController.removeListener(_onEmailChanged);
     _fullNameController.dispose();
     _emailController.dispose();
     _passwordController.dispose();
@@ -110,6 +161,21 @@ class _RegisterPageState extends State<RegisterPage> {
 
   void _submit() {
     if (!(_formKey.currentState?.validate() ?? false)) return;
+
+    final email = _emailController.text.trim();
+    if (_emailAvailable == false && email == _lastCheckedEmail) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: const Text(
+            'Email sudah digunakan. Gunakan email lain atau masuk ke akun Anda.',
+          ),
+          backgroundColor: AppColors.error,
+          behavior: SnackBarBehavior.floating,
+          margin: EdgeInsets.all(16.r),
+        ),
+      );
+      return;
+    }
 
     if (_isSupplier) {
       if (_selectedProvince == null || _selectedRegency == null) {
@@ -288,13 +354,39 @@ class _RegisterPageState extends State<RegisterPage> {
                               prefixIcon: Icons.alternate_email_rounded,
                               validator: (v) {
                                 if (v == null || v.isEmpty) return 'Email wajib diisi';
-                                final re = RegExp(
-                                  r'^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$',
-                                );
-                                if (!re.hasMatch(v)) return 'Format email tidak valid';
+                                if (!_emailFormat.hasMatch(v)) {
+                                  return 'Format email tidak valid';
+                                }
+                                if (_emailAvailable == false &&
+                                    v.trim() == _lastCheckedEmail) {
+                                  return 'Email sudah digunakan';
+                                }
                                 return null;
                               },
                             ),
+                            if (_checkingEmail)
+                              Padding(
+                                padding: EdgeInsets.only(top: 6.h),
+                                child: Text(
+                                  'Memeriksa ketersediaan email…',
+                                  style: TextStyle(
+                                    fontSize: 12.sp,
+                                    color: AppColors.textSecondary,
+                                  ),
+                                ),
+                              )
+                            else if (_emailAvailable == true &&
+                                _emailController.text.trim() == _lastCheckedEmail)
+                              Padding(
+                                padding: EdgeInsets.only(top: 6.h),
+                                child: Text(
+                                  'Email tersedia',
+                                  style: TextStyle(
+                                    fontSize: 12.sp,
+                                    color: AppColors.success,
+                                  ),
+                                ),
+                              ),
                             SizedBox(height: 18.h),
                             CustomTextField(
                               label: 'Nomor Telepon',
@@ -435,8 +527,8 @@ class _RegisterPageState extends State<RegisterPage> {
         child: RichText(
           text: TextSpan(
             style: TextStyle(fontSize: 14.sp, color: AppColors.textSecondary),
-            children: [
-              const TextSpan(text: 'Sudah punya akun? '),
+            children: const [
+              TextSpan(text: 'Sudah punya akun? '),
               TextSpan(
                 text: 'Masuk',
                 style: TextStyle(
@@ -629,7 +721,7 @@ class _RegisterPageState extends State<RegisterPage> {
             SizedBox(
               width: 20.r,
               height: 20.r,
-              child: CircularProgressIndicator(
+              child: const CircularProgressIndicator(
                 strokeWidth: 2,
                 color: AppColors.primary,
               ),
@@ -693,7 +785,7 @@ class _RegisterPageState extends State<RegisterPage> {
                     overflow: TextOverflow.ellipsis,
                   ),
                 ),
-                Icon(Icons.keyboard_arrow_down_rounded, color: AppColors.grey400),
+                const Icon(Icons.keyboard_arrow_down_rounded, color: AppColors.grey400),
               ],
             ),
           ),
@@ -742,6 +834,7 @@ class _RegisterPageState extends State<RegisterPage> {
     showModalBottomSheet<RegionEntity>(
       context: context,
       isScrollControlled: true,
+      useSafeArea: true,
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(20.r)),
       ),

@@ -5,6 +5,11 @@ import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:mobile_bisa/core/config/app_config.dart';
 
 import 'core/network/api_client.dart';
+import 'core/media/chunked_media_upload_service.dart';
+import 'core/media/media_upload_progress_controller.dart';
+import 'core/media/media_upload_queue.dart';
+import 'core/media/media_upload_session_store.dart';
+import 'core/network/auth_session_bridge.dart';
 import 'core/network/pusher_service.dart';
 import 'core/network/token_repository.dart';
 import 'features/auth/data/datasources/auth_remote_data_source.dart';
@@ -150,7 +155,10 @@ Future<void> init() async {
 
   //! Features - Auth
   sl.registerLazySingleton<AuthRemoteDataSource>(
-    () => AuthRemoteDataSourceImpl(dio: sl<ApiClient>().dio),
+    () => AuthRemoteDataSourceImpl(
+      dio: sl<ApiClient>().dio,
+      uploadQueue: sl<MediaUploadQueue>(),
+    ),
   );
   sl.registerLazySingleton<AuthRepository>(
     () => AuthRepositoryImpl(
@@ -161,7 +169,10 @@ Future<void> init() async {
 
   //! Features - Marketplace
   sl.registerLazySingleton<MarketplaceRemoteDataSource>(
-    () => MarketplaceRemoteDataSourceImpl(dio: sl<ApiClient>().dio),
+    () => MarketplaceRemoteDataSourceImpl(
+      dio: sl<ApiClient>().dio,
+      uploadQueue: sl<MediaUploadQueue>(),
+    ),
   );
   sl.registerLazySingleton<MarketplaceRepository>(
     () => MarketplaceRepositoryImpl(remoteDataSource: sl()),
@@ -173,7 +184,10 @@ Future<void> init() async {
 
   //! Features - Orders
   sl.registerLazySingleton<OrderRemoteDataSource>(
-    () => OrderRemoteDataSourceImpl(dio: sl<ApiClient>().dio),
+    () => OrderRemoteDataSourceImpl(
+      dio: sl<ApiClient>().dio,
+      uploadQueue: sl<MediaUploadQueue>(),
+    ),
   );
   sl.registerLazySingleton<OrderRepository>(
     () => OrderRepositoryImpl(remoteDataSource: sl()),
@@ -181,7 +195,10 @@ Future<void> init() async {
 
   //! Features - Forum
   sl.registerLazySingleton<ForumRemoteDataSource>(
-    () => ForumRemoteDataSourceImpl(dio: sl<ApiClient>().dio),
+    () => ForumRemoteDataSourceImpl(
+      dio: sl<ApiClient>().dio,
+      uploadQueue: sl<MediaUploadQueue>(),
+    ),
   );
   sl.registerLazySingleton<ForumRepository>(
     () => ForumRepositoryImpl(remoteDataSource: sl()),
@@ -205,7 +222,10 @@ Future<void> init() async {
 
   //! Features - Negotiation
   sl.registerLazySingleton<NegotiationRemoteDataSource>(
-    () => NegotiationRemoteDataSourceImpl(dio: sl<ApiClient>().dio),
+    () => NegotiationRemoteDataSourceImpl(
+      dio: sl<ApiClient>().dio,
+      uploadQueue: sl<MediaUploadQueue>(),
+    ),
   );
   sl.registerLazySingleton<NegotiationRepository>(
     () => NegotiationRepositoryImpl(remoteDataSource: sl()),
@@ -285,6 +305,7 @@ Future<void> init() async {
   final tokenRepository = TokenRepository(secureStorage);
   await tokenRepository.repairStorageIfCorrupted();
   sl.registerLazySingleton<TokenRepository>(() => tokenRepository);
+  sl.registerLazySingleton<AuthSessionBridge>(() => AuthSessionBridge());
 
   // Android Emulator: 10.0.2.2 = host machine's localhost
   // Physical Device: set API_URL via `--dart-define`
@@ -302,8 +323,27 @@ Future<void> init() async {
   }
   sl.registerLazySingleton(
     () => ApiClient(
-      sl(),
+      sl<TokenRepository>(),
       apiUrl,
+      sessionBridge: sl<AuthSessionBridge>(),
+    ),
+  );
+
+  sl.registerLazySingleton(
+    () => MediaUploadSessionStore(sl<SharedPreferences>()),
+  );
+  sl.registerLazySingleton(MediaUploadProgressController.new);
+  sl.registerLazySingleton(
+    () => ChunkedMediaUploadService(
+      apiDio: sl<ApiClient>().dio,
+      tokenRepository: sl<TokenRepository>(),
+      sessionStore: sl<MediaUploadSessionStore>(),
+    ),
+  );
+  sl.registerLazySingleton(
+    () => MediaUploadQueue(
+      uploadService: sl<ChunkedMediaUploadService>(),
+      progress: sl<MediaUploadProgressController>(),
     ),
   );
 

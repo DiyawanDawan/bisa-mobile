@@ -25,6 +25,10 @@ import 'package:mobile_bisa/core/utils/router.dart';
 import 'package:mobile_bisa/injection_container.dart' as di;
 import 'package:mobile_bisa/core/constants/app_colors.dart';
 import 'package:mobile_bisa/core/services/notification_service.dart';
+import 'package:mobile_bisa/core/config/app_config.dart';
+import 'package:mobile_bisa/core/network/auth_session_bridge.dart';
+import 'package:mobile_bisa/core/services/session_manager.dart';
+import 'package:mobile_bisa/shared/pages/config_error_page.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -37,7 +41,21 @@ void main() async {
     ),
   );
   
+  if (!AppConfig.isApiConfigured && !kDebugMode) {
+    runApp(const ConfigErrorPage());
+    return;
+  }
+
   await di.init();
+  di.sl<AuthSessionBridge>().onSessionExpired = () {
+    for (final key in [rootNavigatorKey]) {
+      final ctx = key.currentContext;
+      if (ctx != null && ctx.mounted) {
+        ctx.read<AuthCubit>().sessionExpired();
+        break;
+      }
+    }
+  };
   await EasyLocalization.ensureInitialized();
 
   HydratedBloc.storage = await HydratedStorage.build(
@@ -100,9 +118,7 @@ class MyApp extends StatelessWidget {
             context.read<NotificationCubit>().bootstrap();
           },
           unauthenticated: () {
-            context.read<CommerceCubit>().reset();
-            context.read<FollowCubit>().reset();
-            context.read<NotificationCubit>().reset();
+            SessionManager.resetUserScopedState(context);
           },
           orElse: () {},
         );
@@ -135,15 +151,8 @@ class MyApp extends StatelessWidget {
           localizationsDelegates: context.localizationDelegates,
           supportedLocales: context.supportedLocales,
           locale: context.locale,
-          builder: (context, child) {
-            final mediaQueryData = MediaQuery.of(context);
-            return MediaQuery(
-              data: mediaQueryData.copyWith(
-                textScaler: CustomTextScaler(mediaQueryData.textScaler, 1.08),
-              ),
-              child: child!,
-            );
-          },
+          
+          
         );
       },
       ),

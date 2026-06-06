@@ -7,6 +7,7 @@ import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:go_router/go_router.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
 import '../../../../core/constants/app_colors.dart';
+import '../../../../core/readiness/readiness_gate.dart';
 import '../../../../injection_container.dart';
 import '../../../auth/presentation/bloc/auth_cubit.dart';
 import '../bloc/marketplace_cubit.dart';
@@ -72,8 +73,7 @@ class _SupplierProductListPageState extends State<SupplierProductListPage> {
     bool refresh = true,
   }) {
     final sort = resolveSupplierProductSort(_sortKey);
-    blocContext.read<MarketplaceCubit>().getProducts(
-          userId: userId,
+    blocContext.read<MarketplaceCubit>().getMyProducts(
           search: _searchController.text,
           status: _selectedStatus,
           categoryId: _selectedCategoryId,
@@ -129,7 +129,7 @@ class _SupplierProductListPageState extends State<SupplierProductListPage> {
 
     return BlocProvider(
       create: (context) =>
-          sl<MarketplaceCubit>()..getProducts(userId: user?.id),
+          sl<MarketplaceCubit>()..getMyProducts(),
       child: Builder(
         builder: (blocContext) {
           return Scaffold(
@@ -141,7 +141,7 @@ class _SupplierProductListPageState extends State<SupplierProductListPage> {
                 const NotificationBellButton(),
                 BisaAppBarAction(
                   icon: LucideIcons.plus,
-                  onTap: () => blocContext.push('/add-product'),
+                  onTap: () => ReadinessGate.pushAddProduct(blocContext),
                   iconColor: AppColors.primary,
                 ),
               ],

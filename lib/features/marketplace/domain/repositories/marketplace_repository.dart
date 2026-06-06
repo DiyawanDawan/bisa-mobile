@@ -13,6 +13,15 @@ abstract class MarketplaceRepository {
     String? biomassaType,
     String? search,
   });
+  Future<Either<Failure, List<ProductEntity>>> getMyProducts({
+    String? search,
+    String? status,
+    String? categoryId,
+    String? sortBy,
+    String? sortOrder,
+    int page = 1,
+    int limit = 20,
+  });
   Future<Either<Failure, List<ProductEntity>>> getProducts({
     String? search,
     String? biomassaType,

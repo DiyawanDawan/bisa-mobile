@@ -15,6 +15,7 @@ abstract class WalletRemoteDataSource {
   Future<void> requestWithdrawal({required double amount});
   Future<List<Map<String, dynamic>>> getSupportedBanks();
   Future<List<PayoutAccountModel>> getPayoutAccounts();
+  Future<PayoutAccountModel> getPayoutAccountDetail(String id);
   Future<PayoutAccountModel> createPayoutAccount(Map<String, dynamic> data);
   Future<PayoutAccountModel> updatePayoutAccount(String id, Map<String, dynamic> data);
   Future<void> deletePayoutAccount(String id);
@@ -161,6 +162,12 @@ class WalletRemoteDataSourceImpl implements WalletRemoteDataSource {
     final response = await dio.get('/wallets/payout-accounts');
     final List data = response.data['data'] ?? [];
     return data.map((item) => PayoutAccountModel.fromJson(item)).toList();
+  }
+
+  @override
+  Future<PayoutAccountModel> getPayoutAccountDetail(String id) async {
+    final response = await dio.get('/wallets/payout-accounts/$id');
+    return PayoutAccountModel.fromJson(response.data['data']);
   }
 
   @override

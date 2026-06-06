@@ -319,16 +319,15 @@ class _AuthSheetState extends State<AuthSheet> {
                   ],
                 ),
                 SizedBox(height: 24.h),
-                Container(
-                  height: 54.h,
-                  decoration: BoxDecoration(
-                    color: AppColors.white,
-                    borderRadius: BorderRadius.circular(16.r),
-                    border: Border.all(color: AppColors.grey200),
-                  ),
-                  child: InkWell(
-                    onTap: () => context.read<AuthCubit>().loginWithGoogle(),
-                    borderRadius: BorderRadius.circular(16.r),
+                Opacity(
+                  opacity: 0.65,
+                  child: Container(
+                    height: 54.h,
+                    decoration: BoxDecoration(
+                      color: AppColors.white,
+                      borderRadius: BorderRadius.circular(16.r),
+                      border: Border.all(color: AppColors.grey200),
+                    ),
                     child: Row(
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
@@ -349,6 +348,25 @@ class _AuthSheetState extends State<AuthSheet> {
                             fontWeight: FontWeight.w700,
                             fontSize: 14.sp,
                             color: AppColors.textPrimary,
+                          ),
+                        ),
+                        SizedBox(width: 8.w),
+                        Container(
+                          padding: EdgeInsets.symmetric(
+                            horizontal: 8.w,
+                            vertical: 3.h,
+                          ),
+                          decoration: BoxDecoration(
+                            color: AppColors.grey100,
+                            borderRadius: BorderRadius.circular(20.r),
+                          ),
+                          child: Text(
+                            'Segera hadir',
+                            style: TextStyle(
+                              fontSize: 10.sp,
+                              fontWeight: FontWeight.w700,
+                              color: AppColors.textSecondary,
+                            ),
                           ),
                         ),
                       ],

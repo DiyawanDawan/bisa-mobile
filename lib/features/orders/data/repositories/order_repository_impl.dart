@@ -1,6 +1,7 @@
 import 'package:dartz/dartz.dart';
 import 'package:dio/dio.dart';
 import '../../../../core/errors/failures.dart';
+import '../../../../core/readiness/readiness_service.dart';
 import '../../domain/entities/order_entity.dart';
 import '../../domain/entities/checkout_batch_detail_entity.dart';
 import '../../domain/repositories/order_repository.dart';
@@ -17,12 +18,14 @@ class OrderRepositoryImpl implements OrderRepository {
     int page = 1,
     int limit = 20,
     String? search,
+    String? status,
   }) async {
     try {
       final models = await remoteDataSource.getMyPurchases(
         page: page,
         limit: limit,
         search: search,
+        status: status,
       );
       return Right(models.map((e) => e.toEntity()).toList());
     } on DioException catch (e) {
@@ -37,12 +40,14 @@ class OrderRepositoryImpl implements OrderRepository {
     int page = 1,
     int limit = 20,
     String? search,
+    String? status,
   }) async {
     try {
       final models = await remoteDataSource.getMySales(
         page: page,
         limit: limit,
         search: search,
+        status: status,
       );
       return Right(models.map((e) => e.toEntity()).toList());
     } on DioException catch (e) {
@@ -342,6 +347,24 @@ class OrderRepositoryImpl implements OrderRepository {
   }
 
   @override
+  Future<Either<Failure, void>> setShippingOrigin({
+    required int originId,
+    String? originLabel,
+  }) async {
+    try {
+      await remoteDataSource.setShippingOrigin(
+        originId: originId,
+        originLabel: originLabel,
+      );
+      return const Right(null);
+    } on DioException catch (e) {
+      return Left(_mapDioExceptionToFailure(e));
+    } catch (e) {
+      return const Left(UnexpectedFailure());
+    }
+  }
+
+  @override
   Future<Either<Failure, List<Map<String, dynamic>>>> searchShippingDestinations({
     required String search,
     int limit = 20,
@@ -470,15 +493,19 @@ class OrderRepositoryImpl implements OrderRepository {
         case 404:
           return const NotFoundFailure();
         case 422:
-          return ValidationFailure(
-            message: message,
-            errors: (data?['errors'] as Map?)?.map(
-              (k, v) => MapEntry(
-                k.toString(),
-                (v as List).map((e) => e.toString()).toList(),
+          {
+            final readiness = ReadinessService.failureFromResponseData(data, message);
+            if (readiness != null) return readiness;
+            return ValidationFailure(
+              message: message,
+              errors: (data?['errors'] as Map?)?.map(
+                (k, v) => MapEntry(
+                  k.toString(),
+                  (v as List).map((e) => e.toString()).toList(),
+                ),
               ),
-            ),
-          );
+            );
+          }
         case 400:
           if (message.toLowerCase().contains('daily limit') ||
               message.toLowerCase().contains('limit exceeded')) {

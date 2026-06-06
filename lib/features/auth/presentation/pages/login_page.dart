@@ -333,18 +333,17 @@ class _LoginPageState extends State<LoginPage> {
     return BlocBuilder<AuthCubit, AuthState>(
       builder: (context, state) {
         return CustomButton(
-          text: 'login1'.tr().tr().tr(),
+          text: 'login1'.tr(),
           useGradient: true,
           isLoading: state.maybeWhen(loading: () => true, orElse: () => false),
           onPressed: () async {
             if (_formKey.currentState!.validate()) {
               await _saveCredentials();
-              if (mounted) {
-                context.read<AuthCubit>().login(
-                  _emailController.text.trim(),
-                  _passwordController.text,
-                );
-              }
+              if (!context.mounted) return;
+              context.read<AuthCubit>().login(
+                _emailController.text.trim(),
+                _passwordController.text,
+              );
             }
           },
         );
@@ -433,14 +432,21 @@ class _LoginPageState extends State<LoginPage> {
           ],
         ),
         SizedBox(height: 24.h),
-        Row(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            _socialIcon(
-              label: 'google_1'.tr().tr(),
-              onTap: () => context.read<AuthCubit>().loginWithGoogle(),
-            ),
-          ],
+        BlocBuilder<AuthCubit, AuthState>(
+          builder: (context, state) {
+            final isLoading = state.maybeWhen(loading: () => true, orElse: () => false);
+            return Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                _socialIcon(
+                  label: 'google_1'.tr(),
+                  onTap: isLoading
+                      ? null
+                      : () => context.read<AuthCubit>().loginWithGoogle(),
+                ),
+              ],
+            );
+          },
         ),
       ],
     );
@@ -448,42 +454,65 @@ class _LoginPageState extends State<LoginPage> {
 
   Widget _socialIcon({
     required String label,
-    required VoidCallback onTap,
+    String? comingSoonLabel,
+    VoidCallback? onTap,
   }) {
+    final isDisabled = comingSoonLabel != null;
     return Expanded(
-      child: Container(
-        height: 54.h,
-        decoration: BoxDecoration(
-          color: AppColors.white,
-          borderRadius: BorderRadius.circular(16.r),
-          border: Border.all(color: AppColors.grey200),
-        ),
-        child: InkWell(
-          onTap: onTap,
-          borderRadius: BorderRadius.circular(16.r),
-          child: Row(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              SvgPicture.network(
-                'https://www.vectorlogo.zone/logos/google/google-icon.svg',
-                width: 20.w,
-                height: 20.w,
-                placeholderBuilder: (context) => Icon(
-                  Icons.g_mobiledata_rounded,
-                  size: 24.sp,
-                  color: AppColors.textPrimary,
+      child: Opacity(
+        opacity: isDisabled ? 0.65 : 1,
+        child: Container(
+          height: 54.h,
+          decoration: BoxDecoration(
+            color: AppColors.white,
+            borderRadius: BorderRadius.circular(16.r),
+            border: Border.all(color: AppColors.grey200),
+          ),
+          child: InkWell(
+            onTap: isDisabled ? null : onTap,
+            borderRadius: BorderRadius.circular(16.r),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                SvgPicture.network(
+                  'https://www.vectorlogo.zone/logos/google/google-icon.svg',
+                  width: 20.w,
+                  height: 20.w,
+                  placeholderBuilder: (context) => Icon(
+                    Icons.g_mobiledata_rounded,
+                    size: 24.sp,
+                    color: AppColors.textPrimary,
+                  ),
                 ),
-              ),
-              SizedBox(width: 10.w),
-              Text(
-                label,
-                style: TextStyle(
-                  fontWeight: FontWeight.w700,
-                  fontSize: 14.sp,
-                  color: AppColors.textPrimary,
+                SizedBox(width: 10.w),
+                Text(
+                  label,
+                  style: TextStyle(
+                    fontWeight: FontWeight.w700,
+                    fontSize: 14.sp,
+                    color: AppColors.textPrimary,
+                  ),
                 ),
-              ),
-            ],
+                if (comingSoonLabel != null) ...[
+                  SizedBox(width: 8.w),
+                  Container(
+                    padding: EdgeInsets.symmetric(horizontal: 8.w, vertical: 3.h),
+                    decoration: BoxDecoration(
+                      color: AppColors.grey100,
+                      borderRadius: BorderRadius.circular(20.r),
+                    ),
+                    child: Text(
+                      comingSoonLabel,
+                      style: TextStyle(
+                        fontSize: 10.sp,
+                        fontWeight: FontWeight.w700,
+                        color: AppColors.textSecondary,
+                      ),
+                    ),
+                  ),
+                ],
+              ],
+            ),
           ),
         ),
       ),

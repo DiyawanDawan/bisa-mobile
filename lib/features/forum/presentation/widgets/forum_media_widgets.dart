@@ -1,7 +1,7 @@
 import 'dart:io';
 
-import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
+import 'package:mobile_bisa/core/media/media_upload_queue.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
 import 'package:url_launcher/url_launcher.dart';
@@ -390,28 +390,28 @@ class _ActionChip extends StatelessWidget {
   }
 }
 
-/// Upload local attachments and return remote media items.
+/// Upload local attachments and return remote media items (chunked).
 class ForumMediaUploader {
-  ForumMediaUploader(this._dio);
+  ForumMediaUploader(this._uploadQueue);
 
-  final Dio _dio;
+  final MediaUploadQueue _uploadQueue;
 
-  Future<List<ForumMediaItem>> uploadAll(List<ForumMediaAttachment> files) async {
+  Future<List<ForumMediaItem>> uploadAll(
+    List<ForumMediaAttachment> files, {
+    void Function(int completed, int total)? onBatchProgress,
+  }) async {
+    final paths = files.map((f) => f.localPath).toList();
+    final uploadedList = await _uploadQueue.uploadFiles(
+      localPaths: paths,
+      folder: 'forum',
+    );
     final uploaded = <ForumMediaItem>[];
-    for (final file in files) {
-      final formData = FormData.fromMap({
-        'file': await MultipartFile.fromFile(
-          file.localPath,
-          filename: file.localPath.split(Platform.pathSeparator).last,
-        ),
-      });
-      final response = await _dio.post(
-        '/system/upload',
-        queryParameters: {'folder': 'forum'},
-        data: formData,
+    for (var i = 0; i < uploadedList.length; i++) {
+      final result = uploadedList[i];
+      uploaded.add(
+        ForumMediaItem(url: result.url ?? result.path, type: files[i].type),
       );
-      final url = response.data['data']['url'] as String;
-      uploaded.add(ForumMediaItem(url: url, type: file.type));
+      onBatchProgress?.call(i + 1, files.length);
     }
     return uploaded;
   }

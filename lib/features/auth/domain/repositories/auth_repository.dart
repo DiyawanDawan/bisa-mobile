@@ -32,7 +32,7 @@ abstract class AuthRepository {
   Future<Either<Failure, void>> verifyRegistration(String email, String code);
   Future<Either<Failure, void>> resendOtp(String email, String type);
   Future<Either<Failure, void>> forgotPassword(String email);
-  Future<Either<Failure, void>> verifyResetCode(String email, String code);
+  Future<Either<Failure, String>> verifyResetCode(String email, String code);
   Future<Either<Failure, void>> resetPasswordWithToken(
     String token,
     String newPassword,

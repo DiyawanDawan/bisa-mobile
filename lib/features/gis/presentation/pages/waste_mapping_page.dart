@@ -9,6 +9,7 @@ import 'package:latlong2/latlong.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
 import 'package:mobile_bisa/core/constants/app_colors.dart';
+import 'package:mobile_bisa/core/utils/safe_area_utils.dart';
 import 'package:mobile_bisa/features/gis/domain/entities/waste_point_entity.dart';
 import 'package:mobile_bisa/features/gis/presentation/bloc/gis_cubit.dart';
 import 'package:mobile_bisa/shared/widgets/bisa_app_bar.dart';
@@ -484,7 +485,10 @@ class _WasteMappingPageState extends State<WasteMappingPage> {
         // ── CHOROPLETH LEGEND (bottom-left corner) ──
         if (_showChoropleth)
           Positioned(
-            bottom: _showBottomPanel ? 220.h : 80.h,
+            bottom: gisMapFloatingBottomOffset(
+              context,
+              panelOpen: _showBottomPanel,
+            ),
             left: 12.w,
             child: _buildLegend(),
           ),
@@ -495,19 +499,28 @@ class _WasteMappingPageState extends State<WasteMappingPage> {
             bottom: 0,
             left: 0,
             right: 0,
-            child: _buildDetailPanel(context),
+            child: SafeArea(
+              top: false,
+              child: _buildDetailPanel(context),
+            ),
           )
         else if (_showBottomPanel && _selectedProvince != null)
           Positioned(
             bottom: 0,
             left: 0,
             right: 0,
-            child: _buildProvincePanel(context),
+            child: SafeArea(
+              top: false,
+              child: _buildProvincePanel(context),
+            ),
           ),
 
         // ── FAB Supply Matching (GPS) ──
         Positioned(
-          bottom: _showBottomPanel ? 220.h : 80.h,
+          bottom: gisMapFloatingBottomOffset(
+            context,
+            panelOpen: _showBottomPanel,
+          ),
           right: 12.w,
           child: FloatingActionButton.extended(
             heroTag: 'supply_match',
@@ -951,6 +964,7 @@ class _WasteMappingPageState extends State<WasteMappingPage> {
   ) {
     showModalBottomSheet(
       context: context,
+      useSafeArea: true,
       backgroundColor: Colors.transparent,
       builder: (context) => Container(
         padding: EdgeInsets.all(24.r),
@@ -1236,6 +1250,7 @@ class _WasteMappingPageState extends State<WasteMappingPage> {
 
     showModalBottomSheet(
       context: context,
+      useSafeArea: true,
       backgroundColor: Colors.transparent,
       isScrollControlled: true,
       builder: (context) => Container(

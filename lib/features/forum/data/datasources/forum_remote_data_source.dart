@@ -1,6 +1,5 @@
-import 'dart:io';
-
 import 'package:dio/dio.dart';
+import 'package:mobile_bisa/core/media/media_upload_queue.dart';
 import '../models/forum_model.dart';
 
 abstract class ForumRemoteDataSource {
@@ -55,8 +54,12 @@ abstract class ForumRemoteDataSource {
 
 class ForumRemoteDataSourceImpl implements ForumRemoteDataSource {
   final Dio dio;
+  final MediaUploadQueue uploadQueue;
 
-  ForumRemoteDataSourceImpl({required this.dio});
+  ForumRemoteDataSourceImpl({
+    required this.dio,
+    required this.uploadQueue,
+  });
 
   Map<String, dynamic> _normalizeForumJson(Map<String, dynamic> json) {
     final normalized = Map<String, dynamic>.from(json);
@@ -123,20 +126,25 @@ class ForumRemoteDataSourceImpl implements ForumRemoteDataSource {
         'limit': limit,
       },
     );
-    final List data = response.data['data'];
-    return data.map((e) {
-      final json = Map<String, dynamic>.from(e);
-      json['content'] = json['content'] ?? json['contentPreview'] ?? '';
-      return ForumPostModel.fromJson(json);
-    }).toList();
+    final List data = response.data['data'] as List? ?? const [];
+    return data
+        .whereType<Map>()
+        .map((e) {
+          final json = Map<String, dynamic>.from(e);
+          json['content'] = json['content'] ?? json['contentPreview'] ?? '';
+          return ForumPostModel.fromJson(json);
+        })
+        .toList();
   }
 
   @override
   Future<ForumPostModel> getPostById(String id) async {
     final response = await dio.get('/forum/posts/$id');
-    final json = _normalizeForumJson(
-      Map<String, dynamic>.from(response.data['data']),
-    );
+    final raw = response.data['data'];
+    if (raw is! Map) {
+      throw StateError('Response forum tidak berisi data posting.');
+    }
+    final json = _normalizeForumJson(Map<String, dynamic>.from(raw));
     return ForumPostModel.fromJson(json);
   }
 
@@ -177,12 +185,15 @@ class ForumRemoteDataSourceImpl implements ForumRemoteDataSource {
         'limit': limit,
       },
     );
-    final List data = response.data['data'];
-    return data.map((e) {
-      final json = Map<String, dynamic>.from(e);
-      json['content'] = json['content'] ?? json['contentPreview'] ?? '';
-      return ForumPostModel.fromJson(json);
-    }).toList();
+    final List data = response.data['data'] as List? ?? const [];
+    return data
+        .whereType<Map>()
+        .map((e) {
+          final json = Map<String, dynamic>.from(e);
+          json['content'] = json['content'] ?? json['contentPreview'] ?? '';
+          return ForumPostModel.fromJson(json);
+        })
+        .toList();
   }
 
   @override
@@ -237,21 +248,14 @@ class ForumRemoteDataSourceImpl implements ForumRemoteDataSource {
     List<String> types,
   ) async {
     final results = <Map<String, dynamic>>[];
-    for (var i = 0; i < filePaths.length; i++) {
-      final path = filePaths[i];
-      final formData = FormData.fromMap({
-        'file': await MultipartFile.fromFile(
-          path,
-          filename: path.split(Platform.pathSeparator).last,
-        ),
-      });
-      final response = await dio.post(
-        '/system/upload',
-        queryParameters: {'folder': 'forum'},
-        data: formData,
-      );
+    final uploadedList = await uploadQueue.uploadFiles(
+      localPaths: filePaths,
+      folder: 'forum',
+    );
+    for (var i = 0; i < uploadedList.length; i++) {
+      final uploaded = uploadedList[i];
       results.add({
-        'url': response.data['data']['url'] as String,
+        'url': uploaded.url ?? uploaded.path,
         'type': types[i],
       });
     }
@@ -275,7 +279,10 @@ class ForumRemoteDataSourceImpl implements ForumRemoteDataSource {
     final response = await dio.get('/categories', queryParameters: {
       if (type != null) 'type': type,
     });
-    final List data = response.data['data'];
-    return data.map((e) => ForumCategoryModel.fromJson(e)).toList();
+    final List data = response.data['data'] as List? ?? const [];
+    return data
+        .whereType<Map>()
+        .map((e) => ForumCategoryModel.fromJson(Map<String, dynamic>.from(e)))
+        .toList();
   }
 }

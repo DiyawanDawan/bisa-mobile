@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import '../../../../core/constants/app_colors.dart';
+import '../../../../core/readiness/readiness_gate.dart';
 import '../../../../shared/widgets/custom_button.dart';
 import '../../../../shared/widgets/custom_text_field.dart';
 import '../../../../shared/widgets/bisa_app_bar.dart';
@@ -16,6 +17,9 @@ import '../bloc/category_cubit.dart';
 import '../bloc/category_state.dart';
 import '../widgets/category_search_picker.dart';
 import '../../data/models/category_model.dart';
+import '../../../../core/media/media_upload_progress_banner.dart';
+import '../../../../core/media/media_upload_progress_controller.dart';
+import '../../../../core/media/media_upload_queue.dart';
 import '../../../../injection_container.dart';
 
 class AddEditProductPage extends StatefulWidget {
@@ -147,7 +151,7 @@ class _AddEditProductPageState extends State<AddEditProductPage> {
         .toList(growable: false);
   }
 
-  void _submit() {
+  Future<void> _submit() async {
     if (_formKey.currentState!.validate()) {
       if (_selectedCategoryId == null) {
         ScaffoldMessenger.of(context).showSnackBar(
@@ -171,6 +175,11 @@ class _AddEditProductPageState extends State<AddEditProductPage> {
           ),
         );
         return;
+      }
+
+      if (_selectedStatus == 'ACTIVE') {
+        if (!await ReadinessGate.ensureStoreReady(context)) return;
+        if (!mounted) return;
       }
 
       final payload = ProductImageDraft.buildPayload(drafts);
@@ -243,7 +252,14 @@ class _AddEditProductPageState extends State<AddEditProductPage> {
           centerTitle: true,
         ),
         bottomNavigationBar: _buildSubmitBar(isEdit),
-        body: BlocListener<MarketplaceCubit, MarketplaceState>(
+        body: Column(
+          children: [
+            MediaUploadProgressBanner(
+              controller: sl<MediaUploadProgressController>(),
+              uploadQueue: sl<MediaUploadQueue>(),
+            ),
+            Expanded(
+              child: BlocListener<MarketplaceCubit, MarketplaceState>(
           listener: (context, state) {
             state.maybeWhen(
               loaded: (products, hasReachedMax) {
@@ -258,7 +274,14 @@ class _AddEditProductPageState extends State<AddEditProductPage> {
                 );
                 Navigator.pop(context);
               },
-              error: (message) {
+              error: (message) async {
+                if (!context.mounted) return;
+                if (message.contains('toko') ||
+                    message.contains('pengiriman') ||
+                    message.contains('RajaOngkir')) {
+                  await ReadinessGate.ensureStoreReady(context);
+                  return;
+                }
                 ScaffoldMessenger.of(context).showSnackBar(
                   SnackBar(
                     content: Text(message),
@@ -424,7 +447,10 @@ class _AddEditProductPageState extends State<AddEditProductPage> {
           ),
         ),
       ),
-    );
+    ],
+  ),
+),
+);
   }
 
   Widget _buildSubmitBar(bool isEdit) {

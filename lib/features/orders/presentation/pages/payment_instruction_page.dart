@@ -7,9 +7,12 @@ import 'package:lucide_icons_flutter/lucide_icons.dart';
 import 'package:qr_flutter/qr_flutter.dart';
 import 'package:url_launcher/url_launcher.dart' as url_launcher;
 import 'package:mobile_bisa/core/constants/app_colors.dart';
+import 'package:mobile_bisa/core/utils/payment_status_utils.dart';
+import 'package:mobile_bisa/core/utils/safe_area_utils.dart';
 import 'package:mobile_bisa/features/orders/domain/repositories/order_repository.dart';
 import 'package:mobile_bisa/features/orders/presentation/utils/checkout_navigation.dart';
 import 'package:mobile_bisa/features/orders/presentation/utils/payment_result_utils.dart';
+import 'package:mobile_bisa/features/orders/presentation/widgets/payment_expiry_banner.dart';
 import 'package:mobile_bisa/features/orders/presentation/widgets/payment_method_picker_sheet.dart';
 import 'package:mobile_bisa/injection_container.dart';
 import 'package:mobile_bisa/shared/widgets/bisa_app_bar.dart';
@@ -22,6 +25,8 @@ class PaymentInstructionPage extends StatefulWidget {
   final num amount;
   final Map<String, dynamic> paymentResult;
   final List<String> batchOrderIds;
+  final DateTime? orderCreatedAt;
+  final String? paymentStatus;
 
   const PaymentInstructionPage({
     super.key,
@@ -30,6 +35,8 @@ class PaymentInstructionPage extends StatefulWidget {
     required this.amount,
     required this.paymentResult,
     this.batchOrderIds = const [],
+    this.orderCreatedAt,
+    this.paymentStatus,
   });
 
   @override
@@ -154,16 +161,24 @@ class _PaymentInstructionPageState extends State<PaymentInstructionPage> {
     return [single];
   }
 
+  void _showPaymentSnack(
+    String message, {
+    Color? backgroundColor,
+    Duration duration = const Duration(seconds: 4),
+  }) {
+    if (!mounted) return;
+    showBisaSnackBar(
+      context,
+      content: Text(message),
+      backgroundColor: backgroundColor,
+      duration: duration,
+      extraBottom: paymentInstructionFooterClearance,
+    );
+  }
+
   Future<void> _copyText(String value, {String label = 'Nomor pesanan'}) async {
     await Clipboard.setData(ClipboardData(text: value));
-    if (!mounted) return;
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text('$label disalin'),
-        behavior: SnackBarBehavior.floating,
-        duration: const Duration(seconds: 2),
-      ),
-    );
+    _showPaymentSnack('$label disalin', duration: const Duration(seconds: 2));
   }
 
   Future<void> _regeneratePaymentInstructions() async {
@@ -185,14 +200,7 @@ class _PaymentInstructionPageState extends State<PaymentInstructionPage> {
     result.fold(
       (failure) {
         setState(() => _busy = false);
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(failure.message),
-            backgroundColor: AppColors.error,
-            behavior: SnackBarBehavior.floating,
-            duration: const Duration(seconds: 4),
-          ),
-        );
+        _showPaymentSnack(failure.message, backgroundColor: AppColors.error);
       },
       (data) {
         setState(() {
@@ -200,14 +208,9 @@ class _PaymentInstructionPageState extends State<PaymentInstructionPage> {
           _busy = false;
         });
         if (!paymentInstructionsReady(_paymentResult) && mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(
-              content: Text(
-                'VA/QR masih belum tersedia. Coba ganti metode atau hubungi support.',
-              ),
-              backgroundColor: AppColors.warning,
-              behavior: SnackBarBehavior.floating,
-            ),
+          _showPaymentSnack(
+            'VA/QR masih belum tersedia. Coba ganti metode atau hubungi support.',
+            backgroundColor: AppColors.warning,
           );
         }
       },
@@ -239,26 +242,17 @@ class _PaymentInstructionPageState extends State<PaymentInstructionPage> {
     result.fold(
       (failure) {
         setState(() => _busy = false);
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(failure.message),
-            backgroundColor: AppColors.error,
-            behavior: SnackBarBehavior.floating,
-          ),
-        );
+        _showPaymentSnack(failure.message, backgroundColor: AppColors.error);
       },
       (data) {
         setState(() {
           _paymentResult = Map<String, dynamic>.from(data);
           _busy = false;
         });
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('Metode diubah ke $_channelLabel'),
-            backgroundColor: AppColors.success,
-            behavior: SnackBarBehavior.floating,
-            duration: const Duration(seconds: 2),
-          ),
+        _showPaymentSnack(
+          'Metode diubah ke $_channelLabel',
+          backgroundColor: AppColors.success,
+          duration: const Duration(seconds: 2),
         );
       },
     );
@@ -274,14 +268,7 @@ class _PaymentInstructionPageState extends State<PaymentInstructionPage> {
     result.fold(
       (failure) {
         setState(() => _busy = false);
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(failure.message),
-            backgroundColor: AppColors.error,
-            behavior: SnackBarBehavior.floating,
-            duration: const Duration(seconds: 4),
-          ),
-        );
+        _showPaymentSnack(failure.message, backgroundColor: AppColors.error);
       },
       (_) {
         setState(() {
@@ -292,18 +279,39 @@ class _PaymentInstructionPageState extends State<PaymentInstructionPage> {
         Future<void>.delayed(const Duration(milliseconds: 500), () {
           if (mounted) setState(() => _blockExitTap = false);
         });
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text(
-              'Pembayaran berhasil disimulasikan. Anda tetap di halaman ini.',
-            ),
-            backgroundColor: AppColors.success,
-            behavior: SnackBarBehavior.floating,
-            duration: Duration(seconds: 3),
-          ),
+        _showPaymentSnack(
+          'Pembayaran berhasil disimulasikan. Anda tetap di halaman ini.',
+          backgroundColor: AppColors.success,
+          duration: const Duration(seconds: 3),
         );
       },
     );
+  }
+
+  Future<void> _pollPaymentFromServer() async {
+    final paid = await pollOrderPaymentStatus(
+      sl<OrderRepository>(),
+      widget.orderId,
+    );
+    if (!mounted) return;
+    if (paid) {
+      setState(() {
+        _paymentConfirmed = true;
+        _blockExitTap = true;
+      });
+      Future<void>.delayed(const Duration(milliseconds: 500), () {
+        if (mounted) setState(() => _blockExitTap = false);
+      });
+      _showPaymentSnack(
+        'Pembayaran terkonfirmasi oleh server.',
+        backgroundColor: AppColors.success,
+      );
+    } else {
+      _showPaymentSnack(
+        'Pembayaran belum terkonfirmasi. Periksa lagi beberapa saat.',
+        backgroundColor: AppColors.warning,
+      );
+    }
   }
 
   Future<void> _cancelPayment() async {
@@ -314,13 +322,7 @@ class _PaymentInstructionPageState extends State<PaymentInstructionPage> {
     result.fold(
       (failure) {
         setState(() => _busy = false);
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(failure.message),
-            backgroundColor: AppColors.error,
-            behavior: SnackBarBehavior.floating,
-          ),
-        );
+        _showPaymentSnack(failure.message, backgroundColor: AppColors.error);
       },
       (_) {
         if (mounted) context.pop(false);
@@ -330,13 +332,7 @@ class _PaymentInstructionPageState extends State<PaymentInstructionPage> {
 
   void _showError(String message) {
     if (!mounted) return;
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text(message),
-        backgroundColor: AppColors.error,
-        behavior: SnackBarBehavior.floating,
-      ),
-    );
+    _showPaymentSnack(message, backgroundColor: AppColors.error);
   }
 
   Future<void> _handleLeavePage() async {
@@ -409,6 +405,14 @@ class _PaymentInstructionPageState extends State<PaymentInstructionPage> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
+                  if (!_paymentConfirmed) ...[
+                    PaymentExpiryBanner(
+                      pendingPayment: _paymentResult,
+                      orderCreatedAt: widget.orderCreatedAt,
+                      paymentStatus: widget.paymentStatus,
+                    ),
+                    SizedBox(height: 12.h),
+                  ],
                   if (_paymentConfirmed) ...[
                     _successBanner(),
                     SizedBox(height: 12.h),
@@ -906,13 +910,12 @@ class _PaymentInstructionPageState extends State<PaymentInstructionPage> {
                           : () async {
                               await Clipboard.setData(ClipboardData(text: value));
                               if (ctx.mounted) {
-                                ScaffoldMessenger.of(ctx).showSnackBar(
-                                  SnackBar(
-                                    content: Text('$label disalin'),
-                                    backgroundColor: AppColors.success,
-                                    behavior: SnackBarBehavior.floating,
-                                    duration: const Duration(seconds: 2),
-                                  ),
+                                showBisaSnackBar(
+                                  ctx,
+                                  content: Text('$label disalin'),
+                                  backgroundColor: AppColors.success,
+                                  duration: const Duration(seconds: 2),
+                                  extraBottom: paymentInstructionFooterClearance,
                                 );
                               }
                             },
@@ -1055,10 +1058,15 @@ class _PaymentInstructionPageState extends State<PaymentInstructionPage> {
                           mode: url_launcher.LaunchMode.externalApplication,
                         );
                         if (!ok && context.mounted) {
-                          await context.push(
+                          final webResult = await context.push(
                             '/payment-webview',
                             extra: {'url': url, 'title': 'Pembayaran $_channelCode'},
                           );
+                          if (!context.mounted) return;
+                          final exit = parsePaymentWebViewExit(webResult);
+                          if (exit != PaymentWebViewExit.failed) {
+                            await _pollPaymentFromServer();
+                          }
                         }
                       } catch (_) {
                         _showError('Gagal membuka aplikasi pembayaran.');

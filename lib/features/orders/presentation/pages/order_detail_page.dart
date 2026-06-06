@@ -10,6 +10,8 @@ import 'package:image_picker/image_picker.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
 import 'package:url_launcher/url_launcher.dart' as url_launcher;
 import 'package:mobile_bisa/core/constants/app_colors.dart';
+import 'package:mobile_bisa/core/utils/payment_status_utils.dart';
+import 'package:mobile_bisa/core/utils/safe_area_utils.dart';
 import 'package:mobile_bisa/core/errors/failures.dart';
 import 'package:mobile_bisa/features/invoice/presentation/utils/invoice_export_helper.dart';
 import 'package:mobile_bisa/features/orders/domain/entities/order_entity.dart';
@@ -17,6 +19,7 @@ import 'package:mobile_bisa/features/orders/domain/repositories/order_repository
 import 'package:mobile_bisa/features/orders/presentation/bloc/order_cubit.dart';
 import 'package:mobile_bisa/features/orders/presentation/utils/payment_result_utils.dart';
 import 'package:mobile_bisa/features/orders/presentation/widgets/order_dispute_section.dart';
+import 'package:mobile_bisa/features/orders/presentation/widgets/payment_expiry_banner.dart';
 import 'package:mobile_bisa/features/orders/presentation/widgets/order_tracking_map.dart';
 import 'package:mobile_bisa/features/orders/presentation/widgets/payment_method_picker_sheet.dart';
 import 'package:mobile_bisa/features/marketplace/presentation/pages/write_review_page.dart';
@@ -156,6 +159,8 @@ class _OrderDetailPageState extends State<OrderDetailPage> {
         'amount': data['amount'] ?? _order?.totalAmount ?? 0,
         'paymentResult': data,
         if (_batchOrderIds.length > 1) 'batchOrderIds': _batchOrderIds,
+        if (_order?.createdAt != null) 'orderCreatedAt': _order!.createdAt,
+        'paymentStatus': _order?.transaction?.paymentStatus,
       },
     );
     if (!mounted) return;
@@ -184,25 +189,25 @@ class _OrderDetailPageState extends State<OrderDetailPage> {
             ? paymentMap['paymentData']['redirectUrl']
             : null);
     if (url != null) {
-      await context.push<bool>(
+      final webResult = await context.push(
         '/payment-webview',
         extra: {'url': url, 'title': 'Pembayaran Xendit'},
       );
-      if (mounted) {
+      if (!mounted) return;
+      final exit = parsePaymentWebViewExit(webResult);
+      if (exit != PaymentWebViewExit.failed) {
         await _pollPaymentStatus();
       }
       return;
     }
 
     if (mounted) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text(
-            'Pembayaran diinisialisasi, tapi data tidak lengkap. Muat ulang halaman.',
-          ),
-          backgroundColor: AppColors.warning,
-          behavior: SnackBarBehavior.floating,
+      showBisaSnackBar(
+        context,
+        content: const Text(
+          'Pembayaran diinisialisasi, tapi data tidak lengkap. Muat ulang halaman.',
         ),
+        backgroundColor: AppColors.warning,
       );
     }
   }
@@ -229,24 +234,22 @@ class _OrderDetailPageState extends State<OrderDetailPage> {
                 // backend Xendit return 4xx (channel non-aktif, amount minimum,
                 // dst), atau jaringan putus.
                 if (!context.mounted) return;
-                ScaffoldMessenger.of(context).showSnackBar(
-                  SnackBar(
-                    content: Row(
-                      children: [
-                        const Icon(Icons.error_outline, color: Colors.white),
-                        SizedBox(width: 8.w),
-                        Expanded(
-                          child: Text(
-                            message,
-                            style: TextStyle(fontSize: 13.sp),
-                          ),
+                showBisaSnackBar(
+                  context,
+                  content: Row(
+                    children: [
+                      const Icon(Icons.error_outline, color: Colors.white),
+                      SizedBox(width: 8.w),
+                      Expanded(
+                        child: Text(
+                          message,
+                          style: TextStyle(fontSize: 13.sp),
                         ),
-                      ],
-                    ),
-                    backgroundColor: AppColors.error,
-                    behavior: SnackBarBehavior.floating,
-                    duration: const Duration(seconds: 5),
+                      ),
+                    ],
                   ),
+                  backgroundColor: AppColors.error,
+                  duration: const Duration(seconds: 5),
                 );
                 // Refresh ke detail terakhir agar UI tidak stuck di error state.
                 if (_order != null) {
@@ -393,6 +396,21 @@ class _OrderDetailPageState extends State<OrderDetailPage> {
                   ? () => _showSupplierDisputeResponseDialog(context)
                   : null,
             ),
+            if (o.negotiationId != null && o.negotiationId!.isNotEmpty) ...[
+              SizedBox(height: 12.h),
+              CustomButton(
+                text: 'Buka chat mediasi',
+                useGradient: true,
+                onPressed: () => context.push('/negotiation/${o.negotiationId}'),
+              ),
+            ] else ...[
+              SizedBox(height: 12.h),
+              CustomButton(
+                text: 'Muat chat mediasi',
+                useGradient: true,
+                onPressed: () => _pageOrderCubit?.getOrderDetail(o.id),
+              ),
+            ],
           ],
           SizedBox(height: 12.h),
           _buildParticipantCard(
@@ -723,7 +741,19 @@ class _OrderDetailPageState extends State<OrderDetailPage> {
     final channelName = _resolvedChannelName(o);
     final paidAt = tx?.paidAt;
 
+    final isPaymentExpired =
+        tx?.paymentStatus?.toUpperCase() == 'EXPIRED';
+
     return _buildSection('Status Pembayaran', [
+      if (tx?.paymentStatus?.toUpperCase() == 'PENDING' ||
+          isPaymentExpired) ...[
+        PaymentExpiryBanner(
+          pendingPayment: _pendingPayment ?? o.pendingPayment,
+          orderCreatedAt: o.createdAt,
+          paymentStatus: tx?.paymentStatus,
+        ),
+        SizedBox(height: 10.h),
+      ],
       Container(
         width: double.infinity,
         padding: EdgeInsets.all(12.w),
@@ -737,7 +767,9 @@ class _OrderDetailPageState extends State<OrderDetailPage> {
             Icon(
               tx?.paymentStatus?.toUpperCase() == 'SUCCESS'
                   ? LucideIcons.circleCheck
-                  : LucideIcons.creditCard,
+                  : isPaymentExpired
+                      ? LucideIcons.circleX
+                      : LucideIcons.creditCard,
               size: 20.sp,
               color: paymentColor,
             ),
@@ -1245,23 +1277,13 @@ class _OrderDetailPageState extends State<OrderDetailPage> {
   }
 
   Future<void> _pollPaymentStatus() async {
-    for (var i = 0; i < 10; i++) {
-      if (!mounted) return;
-      final order = await _pageOrderCubit?.getOrderDetail(
-        widget.orderId,
-        silent: true,
-      );
-      if (order != null && mounted) {
-        _applyOrder(order);
-        if (order.status == 'PAID' ||
-            order.status == 'PROCESSING' ||
-            order.status == 'COMPLETED') {
-          return;
-        }
-      }
-      if (i < 9) {
-        await Future.delayed(const Duration(seconds: 3));
-      }
+    final cubit = _pageOrderCubit;
+    if (cubit == null) return;
+    await cubit.pollPaymentStatus(widget.orderId);
+    if (!mounted) return;
+    final order = await cubit.getOrderDetail(widget.orderId, silent: true);
+    if (order != null && mounted) {
+      _applyOrder(order);
     }
   }
 
@@ -1322,24 +1344,22 @@ class _OrderDetailPageState extends State<OrderDetailPage> {
 
       await result.fold(
         (failure) async {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: Row(
-                children: [
-                  const Icon(Icons.error_outline, color: Colors.white),
-                  SizedBox(width: 8.w),
-                  Expanded(
-                    child: Text(
-                      failure.message,
-                      style: TextStyle(fontSize: 13.sp),
-                    ),
+          showBisaSnackBar(
+            context,
+            content: Row(
+              children: [
+                const Icon(Icons.error_outline, color: Colors.white),
+                SizedBox(width: 8.w),
+                Expanded(
+                  child: Text(
+                    failure.message,
+                    style: TextStyle(fontSize: 13.sp),
                   ),
-                ],
-              ),
-              backgroundColor: AppColors.error,
-              behavior: SnackBarBehavior.floating,
-              duration: const Duration(seconds: 5),
+                ),
+              ],
             ),
+            backgroundColor: AppColors.error,
+            duration: const Duration(seconds: 5),
           );
         },
         (data) async {
@@ -1597,11 +1617,9 @@ class _OrderDetailPageState extends State<OrderDetailPage> {
                   onPressed: () async {
                     final vessel = vesselController.text.trim();
                     if (vessel.length < 3) {
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(
-                          content: Text('Nama armada minimal 3 karakter.'),
-                          behavior: SnackBarBehavior.floating,
-                        ),
+                      showBisaSnackBar(
+                        context,
+                        content: const Text('Nama armada minimal 3 karakter.'),
                       );
                       return;
                     }
@@ -2069,12 +2087,12 @@ class _OrderDetailPageState extends State<OrderDetailPage> {
     final awb = shipment?.awbNumber;
     final courier = shipment?.courierCode;
     if (awb == null || awb.isEmpty || courier == null || courier.isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Nomor resi / kurir belum tersedia untuk sinkronisasi.'),
-          backgroundColor: AppColors.warning,
-          behavior: SnackBarBehavior.floating,
+      showBisaSnackBar(
+        context,
+        content: const Text(
+          'Nomor resi / kurir belum tersedia untuk sinkronisasi.',
         ),
+        backgroundColor: AppColors.warning,
       );
       return;
     }
@@ -2088,23 +2106,19 @@ class _OrderDetailPageState extends State<OrderDetailPage> {
       );
       if (!mounted) return;
       if (result == null) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Gagal sinkron tracking dari RajaOngkir.'),
-            backgroundColor: AppColors.error,
-            behavior: SnackBarBehavior.floating,
-          ),
+        showBisaSnackBar(
+          context,
+          content: const Text('Gagal sinkron tracking dari RajaOngkir.'),
+          backgroundColor: AppColors.error,
         );
         return;
       }
       await _reloadOrderDetail(silent: true);
       if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Tracking berhasil disinkronkan.'),
-          backgroundColor: AppColors.success,
-          behavior: SnackBarBehavior.floating,
-        ),
+      showBisaSnackBar(
+        context,
+        content: const Text('Tracking berhasil disinkronkan.'),
+        backgroundColor: AppColors.success,
       );
     } finally {
       if (mounted) {

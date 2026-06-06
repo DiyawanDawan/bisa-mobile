@@ -5,6 +5,8 @@ import 'package:shared_preferences/shared_preferences.dart';
 import '../../../../core/constants/app_assets.dart';
 import '../../../../core/constants/app_colors.dart';
 import '../../../../injection_container.dart';
+import '../../../auth/domain/repositories/auth_repository.dart';
+import '../../../../core/network/token_repository.dart';
 
 class SplashPage extends StatefulWidget {
   const SplashPage({super.key});
@@ -44,9 +46,24 @@ class _SplashPageState extends State<SplashPage> with SingleTickerProviderStateM
 
     if (showOnboarding) {
       context.go('/onboarding');
-    } else {
-      context.go('/');
+      return;
     }
+
+    final hasToken = await sl<TokenRepository>().hasToken();
+    if (!mounted) return;
+    if (hasToken) {
+      final authResult = await sl<AuthRepository>().getCurrentUser();
+      if (!mounted) return;
+      final valid = authResult.fold((_) => false, (_) => true);
+      if (!valid) {
+        await sl<AuthRepository>().logout();
+        if (!mounted) return;
+        context.go('/login');
+        return;
+      }
+    }
+
+    context.go('/');
   }
 
   @override

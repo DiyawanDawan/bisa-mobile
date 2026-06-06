@@ -5,6 +5,7 @@ import 'package:go_router/go_router.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
 import '../../../../core/constants/app_colors.dart';
 import '../../../../core/utils/extensions.dart';
+import '../../../../core/utils/safe_area_utils.dart';
 import '../../../../shared/widgets/bisa_app_bar.dart';
 import '../../../../shared/widgets/custom_button.dart';
 import '../utils/checkout_navigation.dart';
@@ -150,7 +151,12 @@ class _DirectCheckoutResultPageState extends State<DirectCheckoutResultPage> {
           onBackTap: _goBack,
         ),
         body: ListView(
-          padding: EdgeInsets.fromLTRB(20.w, 16.h, 20.w, 24.h),
+          padding: fullScreenScrollPadding(
+            context,
+            horizontal: 20,
+            top: 16,
+            baseBottom: 24,
+          ),
           children: [
             Container(
               padding: EdgeInsets.all(16.w),

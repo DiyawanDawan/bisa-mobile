@@ -147,6 +147,7 @@ _NegotiationMessageModel _$NegotiationMessageModelFromJson(
   isRead: json['isRead'] as bool? ?? false,
   isDeleted: json['isDeleted'] as bool? ?? false,
   editedAt: json['editedAt'] as String?,
+  senderRole: _negotiationSenderRoleFromJson(json, 'senderRole') as String?,
   createdAt: json['createdAt'] as String,
 );
 
@@ -161,5 +162,6 @@ Map<String, dynamic> _$NegotiationMessageModelToJson(
   'isRead': instance.isRead,
   'isDeleted': instance.isDeleted,
   'editedAt': instance.editedAt,
+  'senderRole': instance.senderRole,
   'createdAt': instance.createdAt,
 };

@@ -4,6 +4,7 @@ import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
 import 'package:mobile_bisa/core/constants/app_colors.dart';
 import 'package:mobile_bisa/core/utils/extensions.dart';
+import 'package:mobile_bisa/core/utils/safe_area_utils.dart';
 import 'package:mobile_bisa/features/wallet/domain/entities/wallet_transaction_entity.dart';
 
 String walletTransactionTitle(WalletTransactionEntity tx) {
@@ -62,7 +63,12 @@ void showWalletTransactionDetail(
     isScrollControlled: true,
     backgroundColor: Colors.transparent,
     builder: (bContext) => Container(
-      padding: EdgeInsets.all(20.w),
+      padding: EdgeInsets.fromLTRB(
+        20.w,
+        20.h,
+        20.w,
+        20.h + systemBottomInset(bContext),
+      ),
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.vertical(top: Radius.circular(24.r)),

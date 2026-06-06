@@ -11,6 +11,8 @@ class OrderDisputeEntity {
     this.resolution,
     this.resolutionNote,
     this.resolvedAt,
+    this.mediationStartedAt,
+    this.readyToResolveAt,
     required this.createdAt,
   });
 
@@ -25,6 +27,8 @@ class OrderDisputeEntity {
   final String? resolution;
   final String? resolutionNote;
   final DateTime? resolvedAt;
+  final DateTime? mediationStartedAt;
+  final DateTime? readyToResolveAt;
   final DateTime createdAt;
 
   factory OrderDisputeEntity.fromJson(Map<String, dynamic> json) {
@@ -50,16 +54,36 @@ class OrderDisputeEntity {
       resolution: json['resolution']?.toString(),
       resolutionNote: json['resolutionNote']?.toString(),
       resolvedAt: parseDate(json['resolvedAt']),
+      mediationStartedAt: parseDate(json['mediationStartedAt']),
+      readyToResolveAt: parseDate(json['readyToResolveAt']),
       createdAt: parseDate(json['createdAt']) ?? DateTime.now(),
     );
   }
 
   bool get isActive => status == 'OPEN' || status == 'UNDER_REVIEW';
 
+  bool get isMediationActive =>
+      mediationStartedAt != null && status.toUpperCase() != 'RESOLVED';
+
+  bool get isReadyToResolve => readyToResolveAt != null;
+
   bool get supplierCanRespond =>
       isActive && sellerResponse == null && sellerRespondedAt == null;
 
+  String get mediationPhaseLabel {
+    if (readyToResolveAt != null) {
+      return 'Fase mediasi selesai — menunggu keputusan admin';
+    }
+    if (mediationStartedAt != null) {
+      return 'Mediasi aktif — Admin BISA ikut diskusi';
+    }
+    return 'Menunggu mediasi admin';
+  }
+
   String get statusLabel {
+    if (isActive && (mediationStartedAt != null || readyToResolveAt != null)) {
+      return mediationPhaseLabel;
+    }
     switch (status.toUpperCase()) {
       case 'UNDER_REVIEW':
         return 'Sedang Ditinjau Admin';

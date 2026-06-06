@@ -88,6 +88,18 @@ class WalletRepositoryImpl implements WalletRepository {
   }
 
   @override
+  Future<Either<Failure, PayoutAccountEntity>> getPayoutAccountDetail(String id) async {
+    try {
+      final model = await remoteDataSource.getPayoutAccountDetail(id);
+      return Right(model.toEntity());
+    } on DioException catch (e) {
+      return Left(ServerFailure(message: e.response?.data['message'] ?? 'Gagal mengambil detail rekening'));
+    } catch (e) {
+      return Left(ServerFailure(message: e.toString()));
+    }
+  }
+
+  @override
   Future<Either<Failure, PayoutAccountEntity>> createPayoutAccount(Map<String, dynamic> data) async {
     try {
       final PayoutAccountModel model = await remoteDataSource.createPayoutAccount(data);

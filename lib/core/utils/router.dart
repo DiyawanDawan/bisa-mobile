@@ -28,10 +28,13 @@ import '../../features/ai/presentation/pages/ai_chat_page.dart';
 import '../../features/marketplace/presentation/pages/supplier_product_list_page.dart';
 import '../../features/marketplace/presentation/pages/supplier_store_page.dart';
 import '../../features/follow/presentation/pages/follow_list_page.dart';
-import '../../features/marketplace/presentation/pages/add_edit_product_page.dart';
+import '../../features/orders/presentation/pages/supplier_shipping_origin_page.dart';
 import '../../features/marketplace/presentation/pages/collection_products_page.dart';
+import '../../features/marketplace/presentation/pages/marketplace_page.dart';
 import '../../features/marketplace/presentation/pages/product_management_detail_page.dart';
+import '../../features/marketplace/presentation/pages/add_edit_product_page.dart';
 import '../../features/marketplace/presentation/pages/buyer_products_page.dart';
+import '../../features/marketplace/domain/entities/product_entity.dart';
 import '../../features/profile/presentation/pages/profile_all_menu_page.dart';
 import '../../features/profile/presentation/pages/edit_profile_page.dart';
 import '../../features/marketplace/presentation/pages/product_reviews_page.dart';
@@ -180,13 +183,17 @@ final goRouter = GoRouter(
         GoRoute(
           path: 'collection-products',
           builder: (context, state) {
-            final extra = state.extra as Map<String, dynamic>;
+            final extra = state.extra as Map<String, dynamic>?;
+            final title = extra?['title']?.toString();
+            if (title == null || title.isEmpty) {
+              return const MarketplacePage();
+            }
             return CollectionProductsPage(
-              title: extra['title'] as String,
-              collectionSlug: extra['collectionSlug'] as String?,
-              sortBy: extra['sortBy'] as String?,
-              sortOrder: extra['sortOrder'] as String?,
-              productMode: extra['productMode'] as String?,
+              title: title,
+              collectionSlug: extra?['collectionSlug'] as String?,
+              sortBy: extra?['sortBy'] as String?,
+              sortOrder: extra?['sortOrder'] as String?,
+              productMode: extra?['productMode'] as String?,
             );
           },
         ),
@@ -394,6 +401,10 @@ final goRouter = GoRouter(
           builder: (context, state) => const BuyerProductsPage(),
         ),
         GoRoute(
+          path: 'supplier-shipping-origin',
+          builder: (context, state) => const SupplierShippingOriginPage(),
+        ),
+        GoRoute(
           path: 'add-product',
           builder: (context, state) => const AddEditProductPage(),
         ),
@@ -537,6 +548,8 @@ final goRouter = GoRouter(
                   ?.map((e) => e.toString())
                   .toList() ??
               const [],
+          orderCreatedAt: extra['orderCreatedAt'] as DateTime?,
+          paymentStatus: extra['paymentStatus'] as String?,
         );
       },
     ),

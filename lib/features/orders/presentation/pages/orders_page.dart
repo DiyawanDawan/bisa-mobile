@@ -7,6 +7,7 @@ import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
 import 'package:mobile_bisa/features/marketplace/presentation/widgets/horizontal_product_section.dart';
 import '../../../../core/constants/app_colors.dart';
+import '../../../../core/utils/safe_area_utils.dart';
 import '../bloc/order_cubit.dart';
 import '../widgets/grouped_orders_list.dart';
 import '../../../auth/presentation/bloc/auth_cubit.dart';
@@ -86,10 +87,19 @@ class _OrdersPageState extends State<OrdersPage> {
     if (user == null) return;
     final q = search?.trim();
     final apiSearch = q != null && q.isNotEmpty ? q : null;
+    final apiStatus = _selectedStatus != 'ALL' && _selectedStatus != 'REFUNDED'
+        ? _selectedStatus
+        : null;
     if (user.role == 'SUPPLIER') {
-      context.read<OrderCubit>().getMySales(search: apiSearch);
+      context.read<OrderCubit>().getMySales(
+            search: apiSearch,
+            status: apiStatus,
+          );
     } else {
-      context.read<OrderCubit>().getMyPurchases(search: apiSearch);
+      context.read<OrderCubit>().getMyPurchases(
+            search: apiSearch,
+            status: apiStatus,
+          );
     }
   }
 
@@ -146,7 +156,7 @@ class _OrdersPageState extends State<OrdersPage> {
       backgroundColor: Colors.transparent,
       builder: (context) {
         return Padding(
-          padding: EdgeInsets.only(bottom: 72.h),
+          padding: sheetBottomPadding(context),
           child: StatefulBuilder(
             builder: (context, setModalState) => Container(
             padding: EdgeInsets.fromLTRB(
@@ -249,6 +259,7 @@ class _OrdersPageState extends State<OrdersPage> {
       onTap: () {
         setModalState(() => _selectedStatus = value);
         setState(() => _selectedStatus = value);
+        _fetchOrders();
       },
     );
   }
@@ -466,12 +477,34 @@ class _OrdersPageState extends State<OrdersPage> {
                                 _buildOrdersSummary(filteredOrders.length),
                               if (filteredOrders.isEmpty)
                                 _buildEmptyState()
-                              else
+                              else ...[
                                 GroupedOrdersList(
                                   orders: filteredOrders,
                                   isSupplierView: isSupplier,
                                 ),
-                              if (user?.role == 'BUYER') ...[
+                                if (context.read<OrderCubit>().hasMoreOrders) ...[
+                                  SizedBox(height: 16.h),
+                                  Padding(
+                                    padding: EdgeInsets.symmetric(horizontal: 16.w),
+                                    child: CustomButton(
+                                      text: 'Muat lebih',
+                                      useGradient: false,
+                                      isLoading:
+                                          context.read<OrderCubit>().isLoadingMore,
+                                      onPressed: () {
+                                        context.read<OrderCubit>().loadMoreOrders(
+                                              search: _searchQuery.trim().isEmpty
+                                                  ? null
+                                                  : _searchQuery,
+                                              status: _selectedStatus,
+                                              isSupplier: isSupplier,
+                                            );
+                                      },
+                                    ),
+                                  ),
+                                ],
+                              ],
+                              if (user.role == 'BUYER') ...[
                                 SizedBox(height: 32.h),
                                 const Divider(),
                                 SizedBox(height: 24.h),
@@ -484,7 +517,12 @@ class _OrdersPageState extends State<OrdersPage> {
                                   productMode: widget.activeProductMode,
                                 ),
                               ],
-                              SizedBox(height: 100.h),
+                              SizedBox(
+                                height: mainShellBottomPadding(
+                                  context,
+                                  kind: MainShellScrollKind.orders,
+                                ),
+                              ),
                             ],
                           ),
                         ),
@@ -522,7 +560,12 @@ class _OrdersPageState extends State<OrdersPage> {
               padding: EdgeInsets.fromLTRB(16.w, 12.h, 16.w, 0),
               child: const ShimmerOrderListPlaceholder(itemCount: 4),
             ),
-            SizedBox(height: 100.h),
+            SizedBox(
+              height: mainShellBottomPadding(
+                context,
+                kind: MainShellScrollKind.orders,
+              ),
+            ),
           ],
         ),
       ),
@@ -629,8 +672,10 @@ class _OrdersPageState extends State<OrdersPage> {
                       child: BisaFilterChip(
                         label: status['label']!,
                         isSelected: isSelected,
-                        onTap: () =>
-                            setState(() => _selectedStatus = status['value']!),
+                        onTap: () {
+                          setState(() => _selectedStatus = status['value']!);
+                          _fetchOrders();
+                        },
                       ),
                     ),
                   );
@@ -673,7 +718,7 @@ class _OrdersPageState extends State<OrdersPage> {
     // Filter by status
     if (_selectedStatus != 'ALL') {
       filtered = filtered
-          .where((o) => _matchesStatusFilter(o.status, _selectedStatus))
+          .where((o) => _matchesOrderFilter(o, _selectedStatus))
           .toList();
     }
 
@@ -725,6 +770,18 @@ class _OrdersPageState extends State<OrdersPage> {
       );
     };
   }
+
+  bool _matchesOrderFilter(OrderEntity order, String filterValue) {
+    if (filterValue == 'REFUNDED') {
+      final txStatus = order.transaction?.status.toUpperCase() ?? '';
+      final payStatus = _orderPaymentStatus(order)?.toUpperCase() ?? '';
+      return txStatus == 'REFUNDED' || payStatus == 'REFUNDED';
+    }
+    return _matchesStatusFilter(order.status, filterValue);
+  }
+
+  String? _orderPaymentStatus(OrderEntity order) =>
+      order.transaction?.paymentStatus;
 
   bool _matchesStatusFilter(String orderStatus, String filterValue) {
     final status = orderStatus.toUpperCase();

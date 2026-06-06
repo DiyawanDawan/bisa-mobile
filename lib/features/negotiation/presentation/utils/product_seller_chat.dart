@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 import '../../../../core/constants/app_colors.dart';
+import '../../../../core/readiness/readiness_gate.dart';
 import '../../../../injection_container.dart';
 import '../../../auth/presentation/bloc/auth_cubit.dart';
 import '../../../home/presentation/pages/main_screen.dart';
@@ -48,6 +49,8 @@ class ProductSellerChat {
       );
       return;
     }
+
+    if (!await ReadinessGate.ensureBuyerReady(context)) return;
 
     await _openInquiryRoom(context, product);
   }
@@ -99,6 +102,7 @@ class ProductSellerChat {
         (failure) async => _showError(context, failure.message),
         (roomId) async {
           if (roomId != null && roomId.isNotEmpty) {
+            if (!context.mounted) return;
             context.push('/negotiation/$roomId?mode=inquiry');
             return;
           }
@@ -123,8 +127,12 @@ class ProductSellerChat {
                 );
                 if (!context.mounted) return;
                 retry.fold(
-                  (_) => _showError(context, failure.message),
+                  (_) {
+                    if (!context.mounted) return;
+                    _showError(context, failure.message);
+                  },
                   (id) {
+                    if (!context.mounted) return;
                     if (id != null && id.isNotEmpty) {
                       context.push('/negotiation/$id?mode=inquiry');
                     } else {
@@ -134,9 +142,11 @@ class ProductSellerChat {
                 );
                 return;
               }
+              if (!context.mounted) return;
               _showError(context, failure.message);
             },
             (negotiation) {
+              if (!context.mounted) return;
               context.push('/negotiation/${negotiation.id}?mode=inquiry');
             },
           );

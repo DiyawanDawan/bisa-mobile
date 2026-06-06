@@ -5,6 +5,7 @@ import 'package:go_router/go_router.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
 import 'package:timeago/timeago.dart' as timeago;
 import '../../../../core/constants/app_colors.dart';
+import '../../../../core/utils/safe_area_utils.dart';
 import '../../../../core/utils/extensions.dart';
 import '../../../../core/utils/media_url_utils.dart';
 import '../../../../shared/widgets/bisa_avatar.dart';
@@ -173,9 +174,7 @@ class OrderBatchCard extends StatelessWidget {
       builder: (ctx) {
         final maxH = MediaQuery.sizeOf(ctx).height * 0.75;
         return Padding(
-          padding: EdgeInsets.only(
-            bottom: MediaQuery.viewInsetsOf(ctx).bottom,
-          ),
+          padding: sheetBottomPadding(ctx),
           child: ConstrainedBox(
             constraints: BoxConstraints(maxHeight: maxH),
             child: Container(

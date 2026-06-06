@@ -1,4 +1,5 @@
 import 'package:dio/dio.dart';
+import 'package:mobile_bisa/core/media/media_upload_queue.dart';
 import '../models/user_model.dart';
 
 abstract class AuthRemoteDataSource {
@@ -26,10 +27,11 @@ abstract class AuthRemoteDataSource {
     String? province,
     String? regency,
   });
+  Future<bool> checkEmailAvailable(String email);
   Future<void> verifyRegistration(String email, String code);
   Future<void> resendOtp(String email, String type);
   Future<void> forgotPassword(String email);
-  Future<void> verifyResetCode(String email, String code);
+  Future<String> verifyResetCode(String email, String code);
   Future<void> resetPasswordWithToken(String token, String newPassword);
   Future<void> changePassword(String password);
   Future<void> submitVerification({
@@ -48,8 +50,12 @@ abstract class AuthRemoteDataSource {
 
 class AuthRemoteDataSourceImpl implements AuthRemoteDataSource {
   final Dio dio;
+  final MediaUploadQueue uploadQueue;
 
-  AuthRemoteDataSourceImpl({required this.dio});
+  AuthRemoteDataSourceImpl({
+    required this.dio,
+    required this.uploadQueue,
+  });
 
   @override
   Future<Map<String, dynamic>> login(String email, String password) async {
@@ -63,7 +69,7 @@ class AuthRemoteDataSourceImpl implements AuthRemoteDataSource {
   @override
   Future<Map<String, dynamic>> loginWithGoogle(String idToken) async {
     final response = await dio.post('/auth/google', data: {
-      'idToken': idToken,
+      'token': idToken,
     });
     return response.data['data'];
   }
@@ -147,6 +153,16 @@ class AuthRemoteDataSourceImpl implements AuthRemoteDataSource {
   }
 
   @override
+  Future<bool> checkEmailAvailable(String email) async {
+    final response = await dio.get(
+      '/auth/check-email',
+      queryParameters: {'email': email},
+    );
+    final data = response.data['data'] as Map<String, dynamic>;
+    return data['available'] == true;
+  }
+
+  @override
   Future<void> verifyRegistration(String email, String code) async {
     await dio.post('/auth/verify-registration', data: {
       'email': email,
@@ -168,11 +184,16 @@ class AuthRemoteDataSourceImpl implements AuthRemoteDataSource {
   }
 
   @override
-  Future<void> verifyResetCode(String email, String code) async {
-    await dio.post('/auth/verify-reset-code', data: {
+  Future<String> verifyResetCode(String email, String code) async {
+    final response = await dio.post('/auth/verify-reset-code', data: {
       'email': email,
       'code': code,
     });
+    final data = response.data['data'];
+    if (data is Map && data['resetToken'] != null) {
+      return data['resetToken'].toString();
+    }
+    throw const FormatException('resetToken tidak ditemukan dalam response');
   }
 
   @override
@@ -194,22 +215,27 @@ class AuthRemoteDataSourceImpl implements AuthRemoteDataSource {
     String? selfiePath,
     String? siupPath,
   }) async {
-    final formData = FormData();
-    
-    if (ktpPath != null) {
-      formData.files.add(MapEntry('ktp', await MultipartFile.fromFile(ktpPath, filename: ktpPath.split('/').last)));
-    }
-    if (nibPath != null) {
-      formData.files.add(MapEntry('nib', await MultipartFile.fromFile(nibPath, filename: nibPath.split('/').last)));
-    }
-    if (selfiePath != null) {
-      formData.files.add(MapEntry('selfie', await MultipartFile.fromFile(selfiePath, filename: selfiePath.split('/').last)));
-    }
-    if (siupPath != null) {
-      formData.files.add(MapEntry('siup', await MultipartFile.fromFile(siupPath, filename: siupPath.split('/').last)));
+    final body = <String, dynamic>{};
+
+    Future<void> addDoc(String? localPath, String field) async {
+      if (localPath == null) return;
+      final uploaded = await uploadQueue.uploadFile(
+        localPath: localPath,
+        folder: 'verification',
+      );
+      body[field] = uploaded.path;
     }
 
-    await dio.post('/users/me/verify', data: formData);
+    await addDoc(ktpPath, 'ktpUrl');
+    await addDoc(nibPath, 'nibUrl');
+    await addDoc(selfiePath, 'selfieUrl');
+    await addDoc(siupPath, 'siupUrl');
+
+    await dio.post(
+      '/users/me/verify',
+      data: body,
+      options: Options(contentType: 'application/json'),
+    );
   }
 
   @override

@@ -85,6 +85,7 @@ abstract class NegotiationMessageEntity with _$NegotiationMessageEntity {
     required bool isRead,
     @Default(false) bool isDeleted,
     DateTime? editedAt,
+    String? senderRole,
     required DateTime createdAt,
   }) = _NegotiationMessageEntity;
 }

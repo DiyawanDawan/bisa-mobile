@@ -1,4 +1,7 @@
+import 'dart:convert';
+
 import 'package:dio/dio.dart';
+import 'package:mobile_bisa/core/media/media_upload_queue.dart';
 import '../models/product_stats_model.dart';
 import '../models/product_collection_model.dart';
 import '../models/product_model.dart';
@@ -6,6 +9,15 @@ import '../models/supplier_model.dart';
 import '../models/category_model.dart';
 
 abstract class MarketplaceRemoteDataSource {
+  Future<List<ProductModel>> getMyProducts({
+    String? search,
+    String? status,
+    String? categoryId,
+    String? sortBy,
+    String? sortOrder,
+    int page = 1,
+    int limit = 20,
+  });
   Future<List<ProductModel>> getProducts({
     String? search,
     String? biomassaType,
@@ -60,8 +72,38 @@ abstract class MarketplaceRemoteDataSource {
 
 class MarketplaceRemoteDataSourceImpl implements MarketplaceRemoteDataSource {
   final Dio dio;
+  final MediaUploadQueue uploadQueue;
 
-  MarketplaceRemoteDataSourceImpl({required this.dio});
+  MarketplaceRemoteDataSourceImpl({
+    required this.dio,
+    required this.uploadQueue,
+  });
+
+  @override
+  Future<List<ProductModel>> getMyProducts({
+    String? search,
+    String? status,
+    String? categoryId,
+    String? sortBy,
+    String? sortOrder,
+    int page = 1,
+    int limit = 20,
+  }) async {
+    final response = await dio.get(
+      '/products/me',
+      queryParameters: {
+        if (search != null && search.isNotEmpty) 'search': search,
+        if (status != null && status.isNotEmpty) 'status': status,
+        if (categoryId != null && categoryId.isNotEmpty) 'categoryId': categoryId,
+        if (sortBy != null && sortBy.isNotEmpty) 'sortBy': sortBy,
+        if (sortOrder != null && sortOrder.isNotEmpty) 'sortOrder': sortOrder,
+        'page': page,
+        'limit': limit,
+      },
+    );
+    final List data = response.data['data'];
+    return data.map((e) => ProductModel.fromJson(e)).toList();
+  }
 
   @override
   Future<List<ProductModel>> getProducts({
@@ -119,20 +161,26 @@ class MarketplaceRemoteDataSourceImpl implements MarketplaceRemoteDataSource {
     return ProductModel.fromJson(response.data['data']);
   }
 
+  Future<List<String>> _uploadProductImages(List<String> imagePaths) async {
+    final uploaded = await uploadQueue.uploadFiles(
+      localPaths: imagePaths,
+      folder: 'products',
+    );
+    return uploaded.map((item) => item.path).toList();
+  }
+
   @override
   Future<ProductModel> createProduct(
     Map<String, dynamic> data,
     List<String> imagePaths,
   ) async {
-    final formData = FormData.fromMap(data);
-    for (var path in imagePaths) {
-      formData.files.add(
-        MapEntry(
-          'images',
-          await MultipartFile.fromFile(path, filename: path.split('/').last),
-        ),
-      );
-    }
+    final uploadedPaths =
+        imagePaths.isNotEmpty ? await _uploadProductImages(imagePaths) : <String>[];
+
+    final formData = FormData.fromMap({
+      ...data,
+      if (uploadedPaths.isNotEmpty) 'imageUrls': jsonEncode(uploadedPaths),
+    });
 
     final response = await dio.post(
       '/products',
@@ -155,15 +203,13 @@ class MarketplaceRemoteDataSourceImpl implements MarketplaceRemoteDataSource {
     Map<String, dynamic> data,
     List<String> imagePaths,
   ) async {
-    final formData = FormData.fromMap(data);
-    for (var path in imagePaths) {
-      formData.files.add(
-        MapEntry(
-          'images',
-          await MultipartFile.fromFile(path, filename: path.split('/').last),
-        ),
-      );
-    }
+    final uploadedPaths =
+        imagePaths.isNotEmpty ? await _uploadProductImages(imagePaths) : <String>[];
+
+    final formData = FormData.fromMap({
+      ...data,
+      if (uploadedPaths.isNotEmpty) 'imageUrls': jsonEncode(uploadedPaths),
+    });
 
     final response = await dio.patch(
       '/products/$id',

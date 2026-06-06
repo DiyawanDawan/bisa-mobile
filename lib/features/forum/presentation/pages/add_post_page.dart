@@ -5,6 +5,9 @@ import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
 import '../../../../core/constants/app_colors.dart';
+import '../../../../core/media/media_upload_progress_banner.dart';
+import '../../../../core/media/media_upload_progress_controller.dart';
+import '../../../../core/media/media_upload_queue.dart';
 import '../../../../injection_container.dart';
 import '../../../../shared/widgets/bisa_app_bar.dart';
 import '../../../../shared/widgets/custom_button.dart';
@@ -212,6 +215,10 @@ class _AddPostPageState extends State<AddPostPage> {
             );
             return Column(
               children: [
+                MediaUploadProgressBanner(
+                  controller: sl<MediaUploadProgressController>(),
+                  uploadQueue: sl<MediaUploadQueue>(),
+                ),
                 Expanded(
                   child: SingleChildScrollView(
                     physics: const BouncingScrollPhysics(),

@@ -112,6 +112,59 @@ class MarketplaceCubit extends Cubit<MarketplaceState> {
     );
   }
 
+  Future<void> getMyProducts({
+    String? search,
+    String? status,
+    String? categoryId,
+    String? sortBy,
+    String? sortOrder,
+    int? limit,
+    bool refresh = true,
+  }) async {
+    if (refresh) {
+      _currentPage = 1;
+      _hasReachedMax = false;
+      _emitSafe(const MarketplaceState.loading());
+    } else {
+      if (_hasReachedMax) return;
+    }
+
+    final result = await _repository.getMyProducts(
+      search: search,
+      status: status,
+      categoryId: categoryId,
+      sortBy: sortBy,
+      sortOrder: sortOrder,
+      page: _currentPage,
+      limit: limit ?? _limit,
+    );
+
+    if (isClosed) return;
+    result.fold(
+      (failure) => _emitSafe(MarketplaceState.error(failure.message)),
+      (newProducts) {
+        if (isClosed) return;
+        if (newProducts.isEmpty) _hasReachedMax = true;
+
+        final currentProducts = state.maybeWhen(
+          loaded: (products, _) => products,
+          orElse: () => <ProductEntity>[],
+        );
+        final allProducts =
+            refresh ? newProducts : [...currentProducts, ...newProducts];
+        final currentLimit = limit ?? _limit;
+        if (newProducts.length < currentLimit) {
+          _hasReachedMax = true;
+        } else {
+          _currentPage++;
+        }
+        _emitSafe(
+          MarketplaceState.loaded(allProducts, hasReachedMax: _hasReachedMax),
+        );
+      },
+    );
+  }
+
   Future<void> getProductById(String id) async {
     _emitSafe(const MarketplaceState.loading());
     final result = await _repository.getProductById(id);

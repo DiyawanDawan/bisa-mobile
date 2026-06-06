@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
 import '../../../../core/constants/app_colors.dart';
+import '../../../../core/utils/safe_area_utils.dart';
 import '../../data/models/category_model.dart';
 
 /// Searchable category picker — used after product mode / biomassa type is chosen.
@@ -196,10 +197,8 @@ class _CategorySearchSheetState extends State<_CategorySearchSheet> {
 
   @override
   Widget build(BuildContext context) {
-    final bottomInset = MediaQuery.viewInsetsOf(context).bottom;
-
     return Padding(
-      padding: EdgeInsets.only(bottom: bottomInset),
+      padding: sheetBottomPadding(context),
       child: Container(
         constraints: BoxConstraints(maxHeight: 0.75.sh),
         decoration: BoxDecoration(

@@ -5,6 +5,7 @@ import 'package:lucide_icons_flutter/lucide_icons.dart';
 import 'package:fl_chart/fl_chart.dart';
 import 'package:go_router/go_router.dart';
 import '../../../../core/constants/app_colors.dart';
+import '../../../../core/errors/failures.dart';
 import '../../../../core/utils/extensions.dart';
 import '../../../../injection_container.dart';
 import '../../../../shared/widgets/bisa_app_bar.dart';
@@ -42,6 +43,24 @@ class _SalesAnalyticsPageState extends State<SalesAnalyticsPage> {
       if (mounted) {
         setState(() {
           _stats = stats;
+          _isLoading = false;
+        });
+      }
+    } on ForbiddenFailure catch (e) {
+      if (mounted) {
+        setState(() {
+          _errorMessage = e.message.isNotEmpty
+              ? e.message
+              : 'Analitik penjualan khusus langganan PRO. Upgrade untuk akses penuh.';
+          _isLoading = false;
+        });
+      }
+    } on Failure catch (e) {
+      if (mounted) {
+        setState(() {
+          _errorMessage = e.message.isNotEmpty
+              ? e.message
+              : 'gagal_memuat_data_analitik'.tr();
           _isLoading = false;
         });
       }

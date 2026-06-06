@@ -66,3 +66,18 @@ class CacheFailure extends Failure {
 class UnexpectedFailure extends Failure {
   const UnexpectedFailure([super.message = 'Terjadi kesalahan tak terduga']);
 }
+
+/// Profil toko / pembeli belum lengkap (422 + code readiness)
+class ReadinessFailure extends Failure {
+  final String code;
+  final List<String> missing;
+
+  const ReadinessFailure({
+    required this.code,
+    required String message,
+    this.missing = const [],
+  }) : super(message);
+
+  @override
+  List<Object> get props => [message, code, missing];
+}

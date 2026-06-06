@@ -4,6 +4,7 @@ import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:go_router/go_router.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
 import '../../../../core/constants/app_colors.dart';
+import '../../../../core/readiness/readiness_gate.dart';
 import '../../../auth/presentation/bloc/auth_cubit.dart';
 import '../../../auth/domain/entities/user_entity.dart';
 import '../../../home/presentation/pages/main_screen.dart';
@@ -115,7 +116,7 @@ class SupplierQuickActions extends StatelessWidget {
         icon: LucideIcons.plus,
         label: 'Tambah Produk',
         color: AppColors.success,
-        onTap: () => context.push('/add-product'),
+        onTap: () => ReadinessGate.pushAddProduct(context),
       ),
       _QuickActionData(
         icon: LucideIcons.package,
@@ -164,6 +165,12 @@ class SupplierQuickActions extends StatelessWidget {
         label: 'Monitoring IoT',
         color: AppColors.info,
         onTap: () => context.push('/iot-dashboard'),
+      ),
+      _QuickActionData(
+        icon: LucideIcons.truck,
+        label: 'Asal Pengiriman',
+        color: AppColors.ocean,
+        onTap: () => context.push('/supplier-shipping-origin'),
       ),
       _QuickActionData(
         icon: LucideIcons.shieldCheck,

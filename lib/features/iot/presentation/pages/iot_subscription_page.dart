@@ -6,6 +6,8 @@ import 'package:go_router/go_router.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
 import 'package:mobile_bisa/core/constants/app_colors.dart';
 import 'package:mobile_bisa/core/network/api_client.dart';
+import 'package:mobile_bisa/core/utils/payment_status_utils.dart';
+import 'package:mobile_bisa/core/utils/safe_area_utils.dart';
 import 'package:mobile_bisa/core/utils/pro_subscription.dart';
 import 'package:mobile_bisa/features/auth/domain/entities/user_entity.dart';
 import 'package:mobile_bisa/features/auth/presentation/bloc/auth_cubit.dart';
@@ -70,6 +72,22 @@ class _IotSubscriptionPageState extends State<IotSubscriptionPage> {
     if (user.tier != 'PRO') return false;
     if (user.subscriptionExpiresAt == null) return true;
     return user.subscriptionExpiresAt!.isBefore(DateTime.now());
+  }
+
+  Future<bool> _pollProSubscriptionStatus() async {
+    for (var i = 0; i < 10; i++) {
+      await context.read<AuthCubit>().checkAuth();
+      if (!mounted) return false;
+      final user = context.read<AuthCubit>().state.maybeWhen(
+            authenticated: (u) => u,
+            orElse: () => null,
+          );
+      if (user != null && isProActive(user)) return true;
+      if (i < 9) {
+        await Future.delayed(const Duration(seconds: 3));
+      }
+    }
+    return false;
   }
 
   IconData _channelIcon(String? group) {
@@ -138,26 +156,50 @@ class _IotSubscriptionPageState extends State<IotSubscriptionPage> {
               url ??= data['paymentUrl'] ?? data['invoiceUrl'];
 
               if (url != null) {
-                final result = await context.push<bool>(
+                final result = await context.push(
                   '/payment-webview',
                   extra: {
                     'url': url,
                     'title': isRenewal ? 'Perpanjang Langganan PRO' : 'Pembayaran Langganan PRO',
                   },
                 );
-                if (result == true && mounted) {
+                if (!mounted) return;
+                final exit = parsePaymentWebViewExit(result);
+                if (exit == PaymentWebViewExit.failed) {
                   ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(
-                      content: Text(
-                        isRenewal
-                            ? 'Pembayaran sukses! Masa aktif PRO Anda diperpanjang.'
-                            : 'Pembayaran sukses! Akun Anda telah diupgrade ke PRO.',
-                      ),
-                      backgroundColor: Colors.green,
+                    const SnackBar(
+                      content: Text('Pembayaran gagal atau dibatalkan.'),
+                      backgroundColor: Colors.red,
                     ),
                   );
-                  context.read<AuthCubit>().checkAuth();
-                  context.pop(true);
+                  return;
+                }
+                if (exit == PaymentWebViewExit.callbackDetected ||
+                    exit == PaymentWebViewExit.dismissed) {
+                  final upgraded = await _pollProSubscriptionStatus();
+                  if (!mounted) return;
+                  if (upgraded) {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(
+                        content: Text(
+                          isRenewal
+                              ? 'Pembayaran sukses! Masa aktif PRO Anda diperpanjang.'
+                              : 'Pembayaran sukses! Akun Anda telah diupgrade ke PRO.',
+                        ),
+                        backgroundColor: Colors.green,
+                      ),
+                    );
+                    context.pop(true);
+                  } else {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(
+                        content: Text(
+                          'Pembayaran belum terkonfirmasi. Coba refresh profil beberapa saat lagi.',
+                        ),
+                        backgroundColor: Colors.orange,
+                      ),
+                    );
+                  }
                 }
               } else {
                 ScaffoldMessenger.of(context).showSnackBar(
@@ -201,7 +243,12 @@ class _IotSubscriptionPageState extends State<IotSubscriptionPage> {
             body: Stack(
               children: [
                 SingleChildScrollView(
-                  padding: EdgeInsets.all(20.w),
+                  padding: fullScreenScrollPadding(
+                    context,
+                    horizontal: 20,
+                    top: 20,
+                    baseBottom: 20,
+                  ),
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [

@@ -217,7 +217,7 @@ class NegotiationStatusDisplay {
   static bool isLinkedOrderDisputed(NegotiationEntity negotiation) =>
       disputeOrderRoute(negotiation) != null;
 
-  /// Buka detail sengketa (bukan chat) bila pesanan sedang DISPUTED.
+  /// Buka ruang negosiasi; saat sengketa tetap ke chat mediasi (bukan hanya detail order).
   static void openFromList(
     BuildContext context,
     NegotiationEntity negotiation, {
@@ -232,11 +232,6 @@ class NegotiationStatusDisplay {
           ),
         ),
       );
-      return;
-    }
-    final disputeRoute = disputeOrderRoute(negotiation);
-    if (disputeRoute != null) {
-      context.push(disputeRoute);
       return;
     }
     if (negotiation.isInquiryChat) {

@@ -1,4 +1,5 @@
 import 'package:flutter_bloc/flutter_bloc.dart';
+import '../../../../core/config/app_config.dart';
 import 'package:freezed_annotation/freezed_annotation.dart';
 import 'package:google_sign_in/google_sign_in.dart';
 import '../../domain/entities/user_entity.dart';
@@ -33,7 +34,7 @@ class AuthCubit extends Cubit<AuthState> {
       emit(const AuthState.loading());
       final GoogleSignIn googleSignIn = GoogleSignIn(
         scopes: ['email', 'profile'],
-        serverClientId: '94564351976-o1k5d6sd9pna74e7angarlr8qrvln2pv.apps.googleusercontent.com',
+        serverClientId: AppConfig.googleServerClientId,
       );
       final GoogleSignInAccount? googleUser = await googleSignIn.signIn();
       
@@ -144,10 +145,7 @@ class AuthCubit extends Cubit<AuthState> {
     final result = await _repository.verifyResetCode(email, code);
     result.fold(
       (failure) => emit(AuthState.error(failure.message)),
-      (data) {
-        final token = (data as Map)['resetToken']?.toString() ?? '';
-        emit(AuthState.resetTokenReceived(token));
-      },
+      (token) => emit(AuthState.resetTokenReceived(token)),
     );
   }
 
@@ -209,6 +207,10 @@ class AuthCubit extends Cubit<AuthState> {
 
   Future<void> logout() async {
     await _repository.logout();
+    emit(const AuthState.unauthenticated());
+  }
+
+  void sessionExpired() {
     emit(const AuthState.unauthenticated());
   }
 

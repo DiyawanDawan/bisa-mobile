@@ -1,13 +1,22 @@
-import 'dart:io';
-
 import 'package:dio/dio.dart';
+import 'package:mobile_bisa/core/media/media_upload_queue.dart';
 import 'package:flutter/foundation.dart';
 import 'package:mobile_bisa/features/marketplace/presentation/bloc/marketplace_cubit.dart';
 import '../models/order_model.dart';
 
 abstract class OrderRemoteDataSource {
-  Future<List<OrderModel>> getMyPurchases({int page = 1, int limit = 20, String? search});
-  Future<List<OrderModel>> getMySales({int page = 1, int limit = 20, String? search});
+  Future<List<OrderModel>> getMyPurchases({
+    int page = 1,
+    int limit = 20,
+    String? search,
+    String? status,
+  });
+  Future<List<OrderModel>> getMySales({
+    int page = 1,
+    int limit = 20,
+    String? search,
+    String? status,
+  });
   Future<OrderModel> getOrderDetail(String id);
   Future<Map<String, dynamic>> getCheckoutBatchDetail(String anchorOrderId);
   Future<Map<String, dynamic>> initializePayment(
@@ -54,6 +63,10 @@ abstract class OrderRemoteDataSource {
     String? notes,
   });
   Future<Map<String, dynamic>?> getShippingOrigin();
+  Future<void> setShippingOrigin({
+    required int originId,
+    String? originLabel,
+  });
   Future<List<Map<String, dynamic>>> searchShippingDestinations({
     required String search,
     int limit,
@@ -83,20 +96,26 @@ abstract class OrderRemoteDataSource {
 
 class OrderRemoteDataSourceImpl implements OrderRemoteDataSource {
   final Dio dio;
+  final MediaUploadQueue uploadQueue;
 
-  OrderRemoteDataSourceImpl({required this.dio});
+  OrderRemoteDataSourceImpl({
+    required this.dio,
+    required this.uploadQueue,
+  });
 
   @override
   Future<List<OrderModel>> getMyPurchases({
     int page = 1,
     int limit = 20,
     String? search,
+    String? status,
   }) async {
     final response = await dio.get('/orders/my-purchases', queryParameters: {
       'page': page,
       'limit': limit,
       'productMode': MarketplaceCubit.activeProductMode,
       if (search != null && search.trim().isNotEmpty) 'search': search.trim(),
+      if (status != null && status.isNotEmpty) 'status': status,
     });
     final List data = response.data['data'] as List? ?? const [];
     return _parseOrderList(data);
@@ -107,12 +126,14 @@ class OrderRemoteDataSourceImpl implements OrderRemoteDataSource {
     int page = 1,
     int limit = 20,
     String? search,
+    String? status,
   }) async {
     final response = await dio.get('/orders/my-sales', queryParameters: {
       'page': page,
       'limit': limit,
       'productMode': MarketplaceCubit.activeProductMode,
       if (search != null && search.trim().isNotEmpty) 'search': search.trim(),
+      if (status != null && status.isNotEmpty) 'status': status,
     });
     final List data = response.data['data'] as List? ?? const [];
     return _parseOrderList(data);
@@ -123,7 +144,22 @@ class OrderRemoteDataSourceImpl implements OrderRemoteDataSource {
     for (final entry in data) {
       if (entry is! Map) continue;
       try {
-        orders.add(OrderModel.fromJson(Map<String, dynamic>.from(entry)));
+        final normalized = Map<String, dynamic>.from(entry);
+        final rootPaymentStatus = normalized['paymentStatus']?.toString();
+        if (rootPaymentStatus != null && rootPaymentStatus.isNotEmpty) {
+          final txRaw = normalized['transaction'];
+          if (txRaw is Map) {
+            final tx = Map<String, dynamic>.from(txRaw);
+            tx['paymentStatus'] ??= rootPaymentStatus;
+            normalized['transaction'] = tx;
+          } else {
+            normalized['transaction'] = {
+              'status': normalized['status'] ?? 'PENDING',
+              'paymentStatus': rootPaymentStatus,
+            };
+          }
+        }
+        orders.add(OrderModel.fromJson(normalized));
       } catch (e, st) {
         if (kDebugMode) {
           debugPrint('ORDER LIST: skip invalid row: $e\n$st');
@@ -221,18 +257,11 @@ class OrderRemoteDataSourceImpl implements OrderRemoteDataSource {
 
   @override
   Future<String> uploadDisputeEvidence(String filePath) async {
-    final formData = FormData.fromMap({
-      'file': await MultipartFile.fromFile(
-        filePath,
-        filename: filePath.split(Platform.pathSeparator).last,
-      ),
-    });
-    final response = await dio.post(
-      '/system/upload',
-      queryParameters: {'folder': 'disputes'},
-      data: formData,
+    final uploaded = await uploadQueue.uploadFile(
+      localPath: filePath,
+      folder: 'disputes',
     );
-    return response.data['data']['url'] as String;
+    return uploaded.url ?? uploaded.path;
   }
 
   @override
@@ -320,6 +349,18 @@ class OrderRemoteDataSourceImpl implements OrderRemoteDataSource {
     final data = response.data['data'];
     if (data == null) return null;
     return Map<String, dynamic>.from(data as Map);
+  }
+
+  @override
+  Future<void> setShippingOrigin({
+    required int originId,
+    String? originLabel,
+  }) async {
+    await dio.put('/shipping/origin', data: {
+      'originId': originId,
+      if (originLabel != null && originLabel.isNotEmpty)
+        'originLabel': originLabel,
+    });
   }
 
   @override

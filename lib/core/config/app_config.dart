@@ -17,4 +17,13 @@ abstract class AppConfig {
     'PUBLIC_WEB_URL',
     defaultValue: 'http://localhost:3001',
   );
+
+  /// Google OAuth server client ID (--dart-define=GOOGLE_SERVER_CLIENT_ID=...)
+  static const String googleServerClientId = String.fromEnvironment(
+    'GOOGLE_SERVER_CLIENT_ID',
+    defaultValue:
+        '94564351976-o1k5d6sd9pna74e7angarlr8qrvln2pv.apps.googleusercontent.com',
+  );
+
+  static bool get isApiConfigured => apiUrl.trim().isNotEmpty;
 }

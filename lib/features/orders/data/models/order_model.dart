@@ -65,7 +65,7 @@ abstract class OrderModel with _$OrderModel {
         vatAmount: double.tryParse(vatAmount.toString()) ?? 0.0,
         specifications: specifications,
         shippingAddressSnapshot: shippingAddressSnapshot,
-        createdAt: DateTime.parse(createdAt),
+        createdAt: DateTime.tryParse(createdAt) ?? DateTime.now(),
         items: items.map((e) => e.toEntity()).toList(),
         buyer: buyer.toEntity(),
         seller: seller.toEntity(),
@@ -166,7 +166,7 @@ abstract class OrderTransactionModel with _$OrderTransactionModel {
         status: status,
         paymentStatus: paymentStatus,
         paymentUrl: paymentUrl,
-        paidAt: paidAt != null ? DateTime.parse(paidAt!) : null,
+        paidAt: paidAt != null ? DateTime.tryParse(paidAt!) : null,
         paymentChannelCode: paymentChannel?['code']?.toString(),
         paymentChannelName: paymentChannel?['name']?.toString(),
       );
@@ -204,7 +204,7 @@ abstract class OrderShipmentModel with _$OrderShipmentModel {
         lastTrackedAt: lastTrackedAt != null ? DateTime.tryParse(lastTrackedAt!) : null,
         currentLat: currentLat != null ? double.tryParse(currentLat.toString()) : null,
         currentLng: currentLng != null ? double.tryParse(currentLng.toString()) : null,
-        updatedAt: updatedAt != null ? DateTime.parse(updatedAt!) : null,
+        updatedAt: updatedAt != null ? DateTime.tryParse(updatedAt!) : null,
       );
 }
 

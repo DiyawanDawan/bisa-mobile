@@ -3,6 +3,7 @@ import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
 import 'package:mobile_bisa/core/constants/app_colors.dart';
 import 'package:mobile_bisa/core/network/api_client.dart';
+import 'package:mobile_bisa/core/utils/safe_area_utils.dart';
 import 'package:mobile_bisa/injection_container.dart';
 
 /// Hasil pemilihan channel dari bottom sheet (belum inisialisasi pembayaran).
@@ -145,9 +146,8 @@ class _PaymentMethodPickerSheetState extends State<PaymentMethodPickerSheet> {
 
   @override
   Widget build(BuildContext context) {
-    final bottomInset = MediaQuery.viewInsetsOf(context).bottom;
     return Padding(
-      padding: EdgeInsets.only(bottom: bottomInset),
+      padding: sheetBottomPadding(context),
       child: DraggableScrollableSheet(
         initialChildSize: 0.7,
         minChildSize: 0.5,
@@ -301,7 +301,12 @@ class _PaymentMethodPickerSheetState extends State<PaymentMethodPickerSheet> {
 
     return ListView(
       controller: controller,
-      padding: EdgeInsets.fromLTRB(20.w, 12.h, 20.w, 12.h),
+      padding: EdgeInsets.fromLTRB(
+        20.w,
+        12.h,
+        20.w,
+        12.h + systemBottomInset(context),
+      ),
       children: [
         for (final g in groupKeys) ...[
           Padding(

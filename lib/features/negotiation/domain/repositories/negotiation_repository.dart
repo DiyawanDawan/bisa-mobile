@@ -8,11 +8,13 @@ abstract class NegotiationRepository {
     int page = 1,
     int limit = 20,
     NegotiationChatPurpose? roomType,
+    String? status,
   });
   Future<Either<Failure, List<NegotiationEntity>>> getIncomingOffers({
     int page = 1,
     int limit = 20,
     NegotiationChatPurpose? roomType,
+    String? status,
   });
   Future<Either<Failure, NegotiationEntity>> getNegotiationDetail(String id);
   /// ID ruang chat aktif untuk produk, atau `null` jika belum ada.

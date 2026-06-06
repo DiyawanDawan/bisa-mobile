@@ -3,6 +3,7 @@ import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
 import '../../../core/constants/app_colors.dart';
 import 'auth_sheet.dart';
+import 'custom_button.dart';
 
 class GuestPlaceholder extends StatelessWidget {
   final String title;
@@ -59,27 +60,10 @@ class GuestPlaceholder extends StatelessWidget {
               textAlign: TextAlign.center,
             ),
             SizedBox(height: 40.h),
-            SizedBox(
-              width: double.infinity,
-              height: 56.h,
-              child: ElevatedButton(
-                onPressed: () => AuthSheet.show(context),
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: AppColors.primary,
-                  foregroundColor: Colors.white,
-                  elevation: 0,
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(16.r),
-                  ),
-                ),
-                child: Text(
-                  'Masuk Sekarang',
-                  style: TextStyle(
-                    fontSize: 16.sp,
-                    fontWeight: FontWeight.w800,
-                  ),
-                ),
-              ),
+            CustomButton(
+              text: 'Masuk Sekarang',
+              useGradient: true,
+              onPressed: () => AuthSheet.show(context),
             ),
             SizedBox(height: 16.h),
             TextButton(

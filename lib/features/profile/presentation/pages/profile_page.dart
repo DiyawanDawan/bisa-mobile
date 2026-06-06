@@ -12,7 +12,9 @@ import 'package:mobile_bisa/features/marketplace/presentation/bloc/marketplace_c
 import 'package:mobile_bisa/features/marketplace/presentation/widgets/store_banner_section.dart';
 import 'package:mobile_bisa/features/marketplace/presentation/bloc/store_banner_cubit.dart';
 import 'package:mobile_bisa/shared/widgets/auth_sheet.dart';
+import 'package:mobile_bisa/shared/widgets/custom_button.dart';
 import '../../../../core/constants/app_colors.dart';
+import '../../../../core/utils/safe_area_utils.dart';
 import '../../../../core/utils/media_url_utils.dart';
 import '../../../auth/presentation/bloc/auth_cubit.dart';
 import '../../../../shared/widgets/bisa_app_bar.dart';
@@ -90,7 +92,9 @@ class ProfilePage extends StatelessWidget {
                           error: (message) => Center(child: Text(message)),
                           loaded: (user) => SingleChildScrollView(
                             physics: const BouncingScrollPhysics(),
-                            padding: EdgeInsets.only(bottom: 96.h),
+                            padding: EdgeInsets.only(
+                              bottom: mainShellBottomPadding(context),
+                            ),
                             child: Column(
                               children: [
                                 _buildProfileHeader(user),
@@ -140,7 +144,9 @@ class ProfilePage extends StatelessWidget {
                     )
                   : SingleChildScrollView(
                       physics: const BouncingScrollPhysics(),
-                      padding: EdgeInsets.only(bottom: 96.h),
+                      padding: EdgeInsets.only(
+                        bottom: mainShellBottomPadding(context),
+                      ),
                       child: Column(
                         children: [
                           _buildGuestHeader(context),
@@ -210,21 +216,11 @@ class ProfilePage extends StatelessWidget {
           SizedBox(height: 16.h),
           SizedBox(
             width: 160.w,
-            child: ElevatedButton(
+            child: CustomButton(
+              text: 'Masuk / Daftar',
+              size: BisaButtonSize.md,
+              fullWidth: true,
               onPressed: () => AuthSheet.show(context),
-              style: ElevatedButton.styleFrom(
-                backgroundColor: AppColors.primary,
-                foregroundColor: Colors.white,
-                elevation: 0,
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(12.r),
-                ),
-                padding: EdgeInsets.symmetric(vertical: 10.h),
-              ),
-              child: Text(
-                'Masuk / Daftar',
-                style: TextStyle(fontSize: 14.sp, fontWeight: FontWeight.w800),
-              ),
             ),
           ),
         ],
@@ -897,6 +893,7 @@ class ProfilePage extends StatelessWidget {
   void _showLanguageBottomSheet(BuildContext context) {
     showModalBottomSheet(
       context: context,
+      useSafeArea: true,
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(24.r)),
       ),
