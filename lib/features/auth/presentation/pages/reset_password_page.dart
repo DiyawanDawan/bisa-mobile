@@ -4,6 +4,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:go_router/go_router.dart';
 import '../../../../core/constants/app_colors.dart';
+import '../../../../core/utils/app_feedback.dart';
 import '../../../../shared/widgets/custom_button.dart';
 import '../../../../shared/widgets/custom_text_field.dart';
 import '../../../../shared/widgets/bisa_app_bar.dart';
@@ -35,31 +36,17 @@ class _ResetPasswordPageState extends State<ResetPasswordPage> {
     return Scaffold(
       backgroundColor: AppColors.background,
       appBar: const BisaAppBar(
-        backgroundColor: Colors.transparent,
+        backgroundColor: AppColors.transparent,
         showShadow: false,
       ),
       body: BlocListener<AuthCubit, AuthState>(
         listener: (context, state) {
           state.maybeWhen(
             success: (message) {
-              ScaffoldMessenger.of(context).showSnackBar(
-                SnackBar(
-                  content: Text(message), 
-                  backgroundColor: AppColors.success,
-                  behavior: SnackBarBehavior.floating,
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                ),
-              );
+              showSuccessSnackBar(context, message);
               context.go('/login');
             },
-            error: (message) => ScaffoldMessenger.of(context).showSnackBar(
-              SnackBar(
-                content: Text(message), 
-                backgroundColor: AppColors.error,
-                behavior: SnackBarBehavior.floating,
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-              ),
-            ),
+            error: (message) => showErrorSnackBar(context, message),
             orElse: () {},
           );
         },
@@ -86,7 +73,7 @@ class _ResetPasswordPageState extends State<ResetPasswordPage> {
                   ),
                   SizedBox(height: 24.h),
                   Text(
-                    'Atur Ulang Kata Sandi',
+                    'auth.reset_password_title'.tr(),
                     style: TextStyle(
                       fontSize: 28.sp, 
                       fontWeight: FontWeight.w800, 
@@ -96,7 +83,7 @@ class _ResetPasswordPageState extends State<ResetPasswordPage> {
                   ),
                   SizedBox(height: 12.h),
                   Text(
-                    'Demi keamanan akun Anda, silakan buat kata sandi baru yang kuat dan unik.',
+                    'auth.reset_password_subtitle'.tr(),
                     style: TextStyle(
                       fontSize: 16.sp, 
                       color: AppColors.textSecondary,
@@ -105,26 +92,26 @@ class _ResetPasswordPageState extends State<ResetPasswordPage> {
                   ),
                   SizedBox(height: 40.h),
                   CustomTextField(
-                    label: 'katasandibaru'.tr().tr(),
-                    hint: 'masukkankatasandibaru'.tr().tr(),
+                    label: 'kata_sandi_baru'.tr(),
+                    hint: 'masukkan_kata_sandi_baru'.tr(),
                     controller: _passwordController,
                     isPassword: true,
                     prefixIcon: Icons.lock_outline_rounded,
                     validator: (value) {
-                      if (value == null || value.isEmpty) return 'Kata sandi wajib diisi';
-                      if (value.length < 6) return 'Minimal 6 karakter';
+                      if (value == null || value.isEmpty) return 'password_required'.tr();
+                      if (value.length < 6) return 'password_min'.tr();
                       return null;
                     },
                   ),
                   SizedBox(height: 20.h),
                   CustomTextField(
-                    label: 'konfirmasikatasandi'.tr().tr(),
-                    hint: 'ulangikatasandibaru'.tr().tr(),
+                    label: 'konfirmasi_kata_sandi'.tr(),
+                    hint: 'ulangi_kata_sandi_baru'.tr(),
                     controller: _confirmPasswordController,
                     isPassword: true,
                     prefixIcon: Icons.shield_outlined,
                     validator: (value) {
-                      if (value != _passwordController.text) return 'Kata sandi tidak cocok';
+                      if (value != _passwordController.text) return 'auth.password_mismatch'.tr();
                       return null;
                     },
                   ),
@@ -132,7 +119,7 @@ class _ResetPasswordPageState extends State<ResetPasswordPage> {
                   BlocBuilder<AuthCubit, AuthState>(
                     builder: (context, state) {
                       return CustomButton(
-                        text: 'simpankatasandi'.tr().tr(),
+                        text: 'simpan_kata_sandi'.tr(),
                         useGradient: true,
                         isLoading: state.maybeWhen(loading: () => true, orElse: () => false),
                         onPressed: () {

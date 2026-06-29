@@ -321,7 +321,7 @@ class NegotiationRepositoryImpl implements NegotiationRepository {
       final statusCode = e.response?.statusCode;
       final rawData = e.response?.data;
       final data = rawData is Map<String, dynamic> ? rawData : null;
-      final message = data?['meta']?['message'] ?? data?['message'] ?? 'Terjadi kesalahan';
+      final message = data?['meta']?['message'] ?? data?['message'] ?? 'errors.generic';
 
       switch (statusCode) {
         case 401:
@@ -334,11 +334,8 @@ class NegotiationRepositoryImpl implements NegotiationRepository {
                 lowered.contains('role') ||
                 lowered.contains('negotiation') ||
                 lowered.contains('forbidden') ||
-                msg == 'Terjadi kesalahan') {
-              return const ForbiddenFailure(
-                'Anda tidak memiliki akses ke ruang negosiasi ini. '
-                'Pastikan Anda login sebagai pembeli atau supplier yang terlibat dalam order.',
-              );
+                msg == 'errors.generic') {
+              return const ForbiddenFailure('errors.negotiation_forbidden');
             }
             return ForbiddenFailure(msg);
           }

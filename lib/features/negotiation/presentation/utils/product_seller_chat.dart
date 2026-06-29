@@ -1,7 +1,11 @@
+import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
+import 'package:mobile_bisa/core/i18n/failure_messages.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
+import '../../../../core/constants/app_layout.dart';
 import '../../../../core/constants/app_colors.dart';
+import '../../../../core/utils/app_feedback.dart';
 import '../../../../core/readiness/readiness_gate.dart';
 import '../../../../injection_container.dart';
 import '../../../auth/presentation/bloc/auth_cubit.dart';
@@ -30,23 +34,13 @@ class ProductSellerChat {
     }
 
     if (user.id == product.seller.id) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Buka tab Chat untuk membalas pembeli.'),
-          behavior: SnackBarBehavior.floating,
-        ),
-      );
+      showWarningSnackBar(context, 'negotiation.seller_chat_use_tab');
       MainShellScope.maybeOf(context)?.selectTab(1);
       return;
     }
 
     if (user.role != 'BUYER') {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Hanya pembeli yang dapat memulai chat ke penjual.'),
-          behavior: SnackBarBehavior.floating,
-        ),
-      );
+      showWarningSnackBar(context, 'negotiation.seller_chat_buyer_only');
       return;
     }
 
@@ -67,18 +61,18 @@ class ProductSellerChat {
       context: context,
       barrierDismissible: false,
       useRootNavigator: true,
-      builder: (ctx) => const PopScope(
+      builder: (ctx) => PopScope(
         canPop: false,
         child: Center(
           child: Card(
             child: Padding(
-              padding: EdgeInsets.all(24),
+              padding: const EdgeInsets.all(24),
               child: Column(
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  CircularProgressIndicator(color: AppColors.primary),
-                  SizedBox(height: 12),
-                  Text('Membuka chat...'),
+                  const CircularProgressIndicator(color: AppColors.primary),
+                  const SizedBox(height: 12),
+                  Text('negotiation.opening_chat'.tr()),
                 ],
               ),
             ),
@@ -99,7 +93,7 @@ class ProductSellerChat {
       if (!context.mounted) return;
 
       await roomResult.fold(
-        (failure) async => _showError(context, failure.message),
+        (failure) async => _showError(context, failure.message.localizedFailure),
         (roomId) async {
           if (roomId != null && roomId.isNotEmpty) {
             if (!context.mounted) return;
@@ -129,21 +123,21 @@ class ProductSellerChat {
                 retry.fold(
                   (_) {
                     if (!context.mounted) return;
-                    _showError(context, failure.message);
+                    _showError(context, failure.message.localizedFailure);
                   },
                   (id) {
                     if (!context.mounted) return;
                     if (id != null && id.isNotEmpty) {
                       context.push('/negotiation/$id?mode=inquiry');
                     } else {
-                      _showError(context, failure.message);
+                      _showError(context, failure.message.localizedFailure);
                     }
                   },
                 );
                 return;
               }
               if (!context.mounted) return;
-              _showError(context, failure.message);
+              _showError(context, failure.message.localizedFailure);
             },
             (negotiation) {
               if (!context.mounted) return;
@@ -166,12 +160,6 @@ class ProductSellerChat {
   }
 
   static void _showError(BuildContext context, String message) {
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text(message),
-        backgroundColor: AppColors.error,
-        behavior: SnackBarBehavior.floating,
-      ),
-    );
+    showErrorSnackBar(context, message);
   }
 }

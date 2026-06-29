@@ -1,7 +1,10 @@
+import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
+import '../../../../core/constants/app_layout.dart';
 import '../../../../core/constants/app_colors.dart';
+import '../marketplace_i18n.dart';
 
 class FilterBottomSheet extends StatefulWidget {
   final String initialSortBy;
@@ -43,7 +46,7 @@ class FilterBottomSheet extends StatefulWidget {
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
-      backgroundColor: Colors.transparent,
+      backgroundColor: AppColors.transparent,
       builder: (context) => FilterBottomSheet(
         initialSortBy: sortBy,
         initialCategory: category,
@@ -94,8 +97,8 @@ class _FilterBottomSheetState extends State<FilterBottomSheet> {
     return Container(
       padding: EdgeInsets.fromLTRB(24.w, 12.h, 24.w, 24.h + bottomPadding),
       decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.vertical(top: Radius.circular(32.r)),
+        color: AppColors.surface,
+        borderRadius: BorderRadius.vertical(top: Radius.circular(AppSpacing.xxlPx.r)),
       ),
       child: Column(
         mainAxisSize: MainAxisSize.min,
@@ -107,16 +110,16 @@ class _FilterBottomSheetState extends State<FilterBottomSheet> {
               height: 6.h,
               decoration: BoxDecoration(
                 color: AppColors.grey300,
-                borderRadius: BorderRadius.circular(10.r),
+                borderRadius: BorderRadius.circular(AppRadius.md),
               ),
             ),
           ),
-          SizedBox(height: 24.h),
+          SizedBox(height: AppSpacing.xl),
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
               Text(
-                'Filter Pencarian',
+                'marketplace.filter_title'.tr(),
                 style: TextStyle(
                   fontSize: 20.sp,
                   fontWeight: FontWeight.w800,
@@ -129,70 +132,72 @@ class _FilterBottomSheetState extends State<FilterBottomSheet> {
               ),
             ],
           ),
-          SizedBox(height: 12.h),
+          SizedBox(height: AppSpacing.md12),
           Flexible(
             child: SingleChildScrollView(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
-                    'Urutkan Berdasarkan',
+                    'marketplace.sort_by'.tr(),
                     style: TextStyle(
                       fontSize: 16.sp,
                       fontWeight: FontWeight.w700,
                       color: AppColors.textPrimary,
                     ),
                   ),
-                  SizedBox(height: 16.h),
+                  SizedBox(height: AppSpacing.md),
                   Row(
                     children: [
                       _buildFilterChip(
-                        'Terbaru',
+                        'marketplace.sort_newest'.tr(),
                         _tempSortBy == 'createdAt',
                         () => setState(() => _tempSortBy = 'createdAt'),
                       ),
-                      SizedBox(width: 12.w),
+                      SizedBox(width: AppSpacing.md12),
                       _buildFilterChip(
-                        'Harga Terendah',
+                        'marketplace.sort_price_low'.tr(),
                         _tempSortBy == 'priceAsc',
                         () => setState(() => _tempSortBy = 'priceAsc'),
                       ),
                     ],
                   ),
-                  SizedBox(height: 12.h),
+                  SizedBox(height: AppSpacing.md12),
                   Row(
                     children: [
                       _buildFilterChip(
-                        'Harga Tertinggi',
+                        'marketplace.sort_price_high'.tr(),
                         _tempSortBy == 'priceDesc',
                         () => setState(() => _tempSortBy = 'priceDesc'),
                       ),
-                      SizedBox(width: 12.w),
+                      SizedBox(width: AppSpacing.md12),
                       _buildFilterChip(
-                        'Terlaris',
+                        'marketplace.sort_bestseller'.tr(),
                         _tempSortBy == 'sold',
                         () => setState(() => _tempSortBy = 'sold'),
                       ),
                     ],
                   ),
-                  SizedBox(height: 32.h),
+                  SizedBox(height: AppSpacing.xxl),
                   Text(
-                    'Tipe Produk',
+                    'marketplace.product_type'.tr(),
                     style: TextStyle(
                       fontSize: 16.sp,
                       fontWeight: FontWeight.w700,
                       color: AppColors.textPrimary,
                     ),
                   ),
-                  SizedBox(height: 16.h),
+                  SizedBox(height: AppSpacing.md),
                   Wrap(
-                    spacing: 12.w,
-                    runSpacing: 12.h,
+                    spacing: AppSpacing.md12,
+                    runSpacing: AppSpacing.md12,
                     children: [
                       _buildFilterChip(
-                        'Semua',
-                        _tempCategory == 'Semua',
-                        () => setState(() => _tempCategory = 'Semua'),
+                        'marketplace.category_all'.tr(),
+                        _tempCategory == kMarketplaceFilterAllCategory,
+                        () => setState(
+                          () => _tempCategory = kMarketplaceFilterAllCategory,
+                        ),
                       ),
                       ...widget.categories.map(
                         (category) => _buildFilterChip(
@@ -203,16 +208,16 @@ class _FilterBottomSheetState extends State<FilterBottomSheet> {
                       ),
                     ],
                   ),
-                  SizedBox(height: 32.h),
+                  SizedBox(height: AppSpacing.xxl),
                   Text(
-                    'Rating Minimum',
+                    'marketplace.min_rating'.tr(),
                     style: TextStyle(
                       fontSize: 16.sp,
                       fontWeight: FontWeight.w700,
                       color: AppColors.textPrimary,
                     ),
                   ),
-                  SizedBox(height: 12.h),
+                  SizedBox(height: AppSpacing.md12),
                   SliderTheme(
                     data: SliderTheme.of(context).copyWith(
                       activeTrackColor: AppColors.primary,
@@ -221,7 +226,7 @@ class _FilterBottomSheetState extends State<FilterBottomSheet> {
                       overlayColor: AppColors.primary.withOpacity(0.1),
                       valueIndicatorColor: AppColors.primary,
                       valueIndicatorTextStyle: const TextStyle(
-                        color: Colors.white,
+                        color: AppColors.surface,
                       ),
                     ),
                     child: Slider(
@@ -229,29 +234,33 @@ class _FilterBottomSheetState extends State<FilterBottomSheet> {
                       min: 0,
                       max: 5,
                       divisions: 5,
-                      label: _tempMinRating?.toStringAsFixed(1) ?? 'Semua',
+                      label: _tempMinRating?.toStringAsFixed(1) ??
+                          'marketplace.category_all'.tr(),
                       onChanged: (val) {
                         setState(() => _tempMinRating = val == 0 ? null : val);
                       },
                     ),
                   ),
-                  SizedBox(height: 32.h),
+                  SizedBox(height: AppSpacing.xxl),
                   Text(
-                    'Rentang Harga',
+                    'marketplace.price_range'.tr(),
                     style: TextStyle(
                       fontSize: 16.sp,
                       fontWeight: FontWeight.w700,
                       color: AppColors.textPrimary,
                     ),
                   ),
-                  SizedBox(height: 16.h),
+                  SizedBox(height: AppSpacing.md),
                   Row(
                     children: [
                       Expanded(
-                        child: _buildPriceInput('Min', _minPriceController),
+                        child: _buildPriceInput(
+                          'marketplace.price_min'.tr(),
+                          _minPriceController,
+                        ),
                       ),
                       Padding(
-                        padding: EdgeInsets.symmetric(horizontal: 16.w),
+                        padding: EdgeInsets.symmetric(horizontal: AppSpacing.md),
                         child: Text(
                           '-',
                           style: TextStyle(
@@ -261,7 +270,10 @@ class _FilterBottomSheetState extends State<FilterBottomSheet> {
                         ),
                       ),
                       Expanded(
-                        child: _buildPriceInput('Max', _maxPriceController),
+                        child: _buildPriceInput(
+                          'marketplace.price_max'.tr(),
+                          _maxPriceController,
+                        ),
                       ),
                     ],
                   ),
@@ -269,7 +281,7 @@ class _FilterBottomSheetState extends State<FilterBottomSheet> {
               ),
             ),
           ),
-          SizedBox(height: 24.h),
+          SizedBox(height: AppSpacing.xl),
           SizedBox(
             width: double.infinity,
             height: 48.h,
@@ -277,7 +289,7 @@ class _FilterBottomSheetState extends State<FilterBottomSheet> {
               style: ElevatedButton.styleFrom(
                 backgroundColor: AppColors.primary,
                 shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(16.r),
+                  borderRadius: BorderRadius.circular(AppRadius.xl),
                 ),
               ),
               onPressed: () {
@@ -291,11 +303,11 @@ class _FilterBottomSheetState extends State<FilterBottomSheet> {
                 Navigator.pop(context);
               },
               child: Text(
-                'Terapkan Filter',
+                'marketplace.apply_filter'.tr(),
                 style: TextStyle(
                   fontSize: 16.sp,
                   fontWeight: FontWeight.bold,
-                  color: Colors.white,
+                  color: AppColors.surface,
                 ),
               ),
             ),
@@ -307,18 +319,18 @@ class _FilterBottomSheetState extends State<FilterBottomSheet> {
 
   Widget _buildFilterChip(String label, bool isSelected, VoidCallback onTap) {
     return Material(
-      color: Colors.transparent,
+      color: AppColors.transparent,
       child: InkWell(
         onTap: onTap,
-        borderRadius: BorderRadius.circular(20.r),
+        borderRadius: BorderRadius.circular(AppRadius.pill),
         child: Container(
-          padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 10.h),
+          padding: EdgeInsets.symmetric(horizontal: AppSpacing.md, vertical: AppSpacing.sm10),
           decoration: BoxDecoration(
-            color: isSelected ? AppColors.primaryLight : Colors.white,
+            color: isSelected ? AppColors.primaryLight : AppColors.white,
             border: Border.all(
               color: isSelected ? AppColors.primary : AppColors.grey200,
             ),
-            borderRadius: BorderRadius.circular(20.r),
+            borderRadius: BorderRadius.circular(AppRadius.pill),
           ),
           child: Text(
             label,
@@ -340,7 +352,7 @@ class _FilterBottomSheetState extends State<FilterBottomSheet> {
       height: 48.h,
       decoration: BoxDecoration(
         color: AppColors.grey50,
-        borderRadius: BorderRadius.circular(12.r),
+        borderRadius: BorderRadius.circular(AppRadius.lg),
         border: Border.all(color: AppColors.grey200),
       ),
       child: TextField(
@@ -357,8 +369,8 @@ class _FilterBottomSheetState extends State<FilterBottomSheet> {
           ),
           border: InputBorder.none,
           contentPadding: EdgeInsets.symmetric(
-            horizontal: 16.w,
-            vertical: 12.h,
+            horizontal: AppSpacing.md,
+                    vertical: AppSpacing.md12,
           ),
         ),
       ),

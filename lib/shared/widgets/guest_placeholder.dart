@@ -1,3 +1,4 @@
+import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
@@ -28,7 +29,7 @@ class GuestPlaceholder extends StatelessWidget {
             Container(
               padding: EdgeInsets.all(24.r),
               decoration: BoxDecoration(
-                color: AppColors.primary.withOpacity(0.08),
+                color: AppColors.primary.withValues(alpha: 0.08),
                 shape: BoxShape.circle,
               ),
               child: Icon(
@@ -61,7 +62,7 @@ class GuestPlaceholder extends StatelessWidget {
             ),
             SizedBox(height: 40.h),
             CustomButton(
-              text: 'Masuk Sekarang',
+              text: 'shared.guest_login_now'.tr(),
               useGradient: true,
               onPressed: () => AuthSheet.show(context),
             ),
@@ -69,7 +70,7 @@ class GuestPlaceholder extends StatelessWidget {
             TextButton(
               onPressed: () => AuthSheet.show(context),
               child: Text(
-                'Belum punya akun? Daftar gratis',
+                'shared.guest_register_prompt'.tr(),
                 style: TextStyle(
                   fontSize: 14.sp,
                   color: AppColors.primary,

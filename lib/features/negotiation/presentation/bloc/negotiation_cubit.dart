@@ -152,9 +152,15 @@ class NegotiationCubit extends Cubit<NegotiationState> {
   }
 
   Future<void> clearChatMessages(String negotiationId) async {
+    final previous = state;
     final result = await _repository.clearChatMessages(negotiationId);
     result.fold(
-      (failure) => emit(NegotiationState.error(failure.message)),
+      (failure) {
+        emit(NegotiationState.error(failure.message));
+        if (previous is _DetailLoaded) {
+          emit(previous);
+        }
+      },
       (_) => getDetail(negotiationId, showLoading: false),
     );
   }
@@ -282,7 +288,7 @@ class NegotiationCubit extends Cubit<NegotiationState> {
     result.fold((failure) => emit(NegotiationState.error(failure.message)), (
       _,
     ) {
-      emit(const NegotiationState.success('Tagihan berhasil diterbitkan'));
+      emit(const NegotiationState.success('invoice.issue_success'));
       getDetail(negotiationId, showLoading: false);
     });
   }

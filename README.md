@@ -1,48 +1,120 @@
 # mobile_bisa
 
-A new Flutter project.
+Aplikasi mobile BISA (Flutter).
 
-## Getting Started
+## Demo Account
 
-This project is a starting point for a Flutter application.
+| Role | Email | Password |
+|------|-------|----------|
+| Buyer | h.wijaya@surabayaindustrial.com | password123 |
+| Supplier | siti.aminah@agritech.com | password123 |
 
-A few resources to get you started if this is your first Flutter project:
+## Prasyarat
 
-## AGent 
-https://github.com/google/adk-samples/tree/main/python/agents
-https://github.com/estherirawati/antigravity
-Demo Account:
-Email: h.wijaya@surabayaindustrial.com (Buyer)
-Email: siti.aminah@agritech.com (Supplier)
-Password: password123
+1. **Backend** harus jalan di port `3000`:
+   ```powershell
+   cd "d:\HACKATON\Apps\Backend"
+   npm run dev
+   ```
+2. Pastikan database sudah di-seed (ada produk, kategori, forum, dll.).
 
-## Run without long --dart-define flags
+## Menjalankan aplikasi (penting)
 
-Use config file `dart_define.dev.json` so you do not need to type all flags repeatedly.
+Aplikasi **wajib** di-run dengan `API_URL`. Tanpa ini, layar terbuka tapi **data kosong**.
 
-### Bash / Git Bash
+### Opsi 1 — Tombol Run di Cursor/VS Code (disarankan)
 
-```bash
-./run-dev.sh
-```
+1. Buka folder `mobile_bisa`
+2. Tab **Run and Debug** (Ctrl+Shift+D)
+3. Pilih salah satu:
+   - **BISA — Android Emulator** → pakai `10.0.2.2` (default untuk emulator)
+   - **BISA — Windows / Chrome (localhost)** → untuk `flutter run -d windows` atau Chrome
+   - **BISA — HP Fisik (WiFi)** → HP dan PC harus satu jaringan WiFi
 
-### PowerShell
+Jangan klik Run langsung tanpa memilih config di atas.
+
+### Opsi 2 — HP fisik via USB (disarankan, tanpa firewall)
 
 ```powershell
-.\run-dev.ps1
+cd "d:\HACKATON\Apps\Mobile Apps\mobile_bisa"
+
+# 1) Backend jalan di laptop
+# 2) HP colok USB, USB debugging aktif
+.\setup-phone-dev.ps1    # sekali per sesi USB
+.\run-dev.ps1 -Target device
 ```
 
-### Manual equivalent
+App memakai `127.0.0.1:3000` di HP (di-forward ke laptop lewat `adb reverse`).
+
+### Opsi 3 — HP fisik via WiFi saja
+
+Butuh buka firewall dulu (**Run as Administrator**):
+
+```powershell
+.\open-firewall.ps1
+```
+
+Lalu update IP di `dart_define.device-wifi.json` dan run dengan:
+
+```powershell
+flutter run --dart-define-from-file=dart_define.device-wifi.json --dart-define=USE_LAN_HOST=true
+```
+
+### Opsi 4 — PowerShell lainnya
+
+```powershell
+.\run-dev.ps1 -Target emulator   # Android Emulator
+.\run-dev.ps1 -Target localhost    # Windows / Chrome
+```
+
+### Opsi 3 — Manual
 
 ```bash
-flutter run --dart-define-from-file=dart_define.dev.json
+flutter run --dart-define-from-file=dart_define.emulator.json
 ```
 
-- [Lab: Write your first Flutter app](https://docs.flutter.dev/get-started/codelab)
-- [Cookbook: Useful Flutter samples](https://docs.flutter.dev/cookbook)
+## File konfigurasi
 
-For help getting started with Flutter development, view the
-[online documentation](https://docs.flutter.dev/), which offers tutorials,
-samples, guidance on mobile development, and a full API reference.
-# bisa-mobile
+| File | Kapan dipakai |
+|------|----------------|
+| `dart_define.emulator.json` | Android Emulator (`10.0.2.2`) |
+| `dart_define.dev.json` | Windows / Chrome / iOS Simulator (`localhost`) |
+| `dart_define.device.json` | HP fisik — **ganti IP** ke IP komputer Anda |
 
+Cek IP komputer: `ipconfig` → IPv4 Address (contoh: `192.168.38.239`).
+
+## Bilingual (EN + ID)
+
+Aplikasi mendukung **Bahasa Indonesia** dan **English** via `easy_localization`.
+
+- Ganti bahasa: **Profil → Ganti Bahasa** atau **Pengaturan → Bahasa**
+- Pilihan bahasa tersimpan otomatis (`saveLocale: true`)
+- File terjemahan: `assets/translations/id-ID.json`, `en-US.json`
+
+### Menambah / cek terjemahan
+
+```bash
+# Validasi parity key ID/EN
+dart run tool_validate_i18n.dart
+
+# Gagal jika masih ada placeholder EN
+dart run tool_validate_i18n.dart --fail-on-placeholder
+```
+
+Konvensi key: lihat [`assets/translations/README.md`](assets/translations/README.md).
+
+## Troubleshooting
+
+| Gejala | Penyebab | Solusi |
+|--------|----------|--------|
+| Data kosong, tidak ada error jelas | Run tanpa `--dart-define` | Pakai launch config atau `run-dev.ps1` |
+| Connection refused / timeout | Backend belum jalan | `npm run dev` di folder Backend |
+| Emulator tidak connect ke API | Salah host | Pakai `10.0.2.2`, bukan `localhost` |
+| HP fisik tidak connect | IP salah / beda WiFi | Update `dart_define.device.json` |
+
+Di console debug, cari log `[BISA] API_URL kosong` — itu tanda config belum terpasang.
+
+## Referensi
+
+- [Flutter docs](https://docs.flutter.dev/)
+- Agent samples: https://github.com/google/adk-samples/tree/main/python/agents

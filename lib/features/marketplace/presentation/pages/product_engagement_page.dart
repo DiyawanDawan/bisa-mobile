@@ -1,9 +1,12 @@
+import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:go_router/go_router.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
+import '../../../../core/constants/app_layout.dart';
 import '../../../../core/constants/app_colors.dart';
-import '../../../../core/utils/extensions.dart';
+import '../../../../core/i18n/failure_messages.dart';
+import '../../../../core/utils/money_format.dart';
 import '../../../../injection_container.dart';
 import '../../../../shared/widgets/bisa_app_bar.dart';
 import '../../../../shared/widgets/custom_button.dart';
@@ -63,16 +66,16 @@ class _ProductEngagementPageState extends State<ProductEngagementPage>
     return Scaffold(
       backgroundColor: AppColors.background,
       appBar: BisaAppBar(
-        title: 'Minat Produk',
-        backgroundColor: Colors.white,
+        title: 'marketplace.action_product_engagement'.tr(),
+        backgroundColor: AppColors.surface,
         bottom: TabBar(
           controller: _tabController,
           labelColor: AppColors.primary,
           unselectedLabelColor: AppColors.textSecondary,
           indicatorColor: AppColors.primary,
-          tabs: const [
-            Tab(text: 'Disukai'),
-            Tab(text: 'Di Keranjang'),
+          tabs: [
+            Tab(text: 'marketplace.engagement_tab_liked'.tr()),
+            Tab(text: 'marketplace.engagement_tab_cart'.tr()),
           ],
         ),
       ),
@@ -86,21 +89,21 @@ class _ProductEngagementPageState extends State<ProductEngagementPage>
         itemCount: 5,
         itemHeight: 88.h,
         scrollable: true,
-        padding: EdgeInsets.all(16.w),
+        padding: EdgeInsets.all(AppSpacing.md),
       );
     }
     if (_error != null) {
       return Center(
         child: Padding(
-          padding: EdgeInsets.all(24.w),
+          padding: EdgeInsets.all(AppSpacing.xl),
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
               Icon(LucideIcons.circleAlert, size: 48.sp, color: AppColors.error),
-              SizedBox(height: 12.h),
-              Text(_error!, textAlign: TextAlign.center),
-              SizedBox(height: 16.h),
-              CustomButton(text: 'Coba Lagi', onPressed: _load),
+              SizedBox(height: AppSpacing.md12),
+              Text(_error!.localizedFailure, textAlign: TextAlign.center),
+              SizedBox(height: AppSpacing.md),
+              CustomButton(text: 'coba_lagi'.tr(), onPressed: _load),
             ],
           ),
         ),
@@ -119,17 +122,21 @@ class _ProductEngagementPageState extends State<ProductEngagementPage>
               children: [
                 _buildList(
                   data.topLiked,
-                  emptyTitle: 'Belum ada produk disukai',
-                  emptySubtitle: 'Produk yang di-like pembeli akan muncul di sini',
-                  metricLabel: 'disukai',
+                  isLikedTab: true,
+                  emptyTitle: 'marketplace.engagement_empty_liked_title'.tr(),
+                  emptySubtitle:
+                      'marketplace.engagement_empty_liked_subtitle'.tr(),
+                  metricLabel: 'marketplace.engagement_metric_liked'.tr(),
                   metricIcon: LucideIcons.heart,
                   metricColor: AppColors.error,
                 ),
                 _buildList(
                   data.topInCart,
-                  emptyTitle: 'Belum ada produk di keranjang',
-                  emptySubtitle: 'Produk yang ditambahkan ke keranjang pembeli akan muncul di sini',
-                  metricLabel: 'di keranjang',
+                  isLikedTab: false,
+                  emptyTitle: 'marketplace.engagement_empty_cart_title'.tr(),
+                  emptySubtitle:
+                      'marketplace.engagement_empty_cart_subtitle'.tr(),
+                  metricLabel: 'marketplace.engagement_metric_cart'.tr(),
                   metricIcon: LucideIcons.shoppingCart,
                   metricColor: AppColors.primary,
                 ),
@@ -144,18 +151,18 @@ class _ProductEngagementPageState extends State<ProductEngagementPage>
   Widget _buildSummary(ProductEngagementSummary summary) {
     return Container(
       width: double.infinity,
-      margin: EdgeInsets.fromLTRB(16.w, 12.h, 16.w, 8.h),
-      padding: EdgeInsets.all(14.w),
+      margin: EdgeInsets.fromLTRB(AppSpacing.md, AppSpacing.md12, AppSpacing.md, AppSpacing.sm),
+      padding: EdgeInsets.all(AppSpacing.section),
       decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(14.r),
+        color: AppColors.surface,
+        borderRadius: BorderRadius.circular(AppRadius.tile),
         border: Border.all(color: AppColors.grey100),
       ),
       child: Row(
         children: [
           Expanded(
             child: _summaryTile(
-              'Total Suka',
+              'marketplace.engagement_summary_likes'.tr(),
               '${summary.totalLikes}',
               LucideIcons.heart,
               AppColors.error,
@@ -164,7 +171,7 @@ class _ProductEngagementPageState extends State<ProductEngagementPage>
           Container(width: 1, height: 36.h, color: AppColors.grey100),
           Expanded(
             child: _summaryTile(
-              'Di Keranjang',
+              'marketplace.engagement_summary_cart'.tr(),
               '${summary.totalInCart}',
               LucideIcons.shoppingCart,
               AppColors.primary,
@@ -198,6 +205,7 @@ class _ProductEngagementPageState extends State<ProductEngagementPage>
 
   Widget _buildList(
     List<ProductEngagementItem> items, {
+    required bool isLikedTab,
     required String emptyTitle,
     required String emptySubtitle,
     required String metricLabel,
@@ -210,7 +218,7 @@ class _ProductEngagementPageState extends State<ProductEngagementPage>
         children: [
           SizedBox(height: 48.h),
           Icon(LucideIcons.chartBar, size: 48.sp, color: AppColors.grey300),
-          SizedBox(height: 12.h),
+          SizedBox(height: AppSpacing.md12),
           Text(
             emptyTitle,
             textAlign: TextAlign.center,
@@ -222,7 +230,7 @@ class _ProductEngagementPageState extends State<ProductEngagementPage>
           ),
           SizedBox(height: 6.h),
           Padding(
-            padding: EdgeInsets.symmetric(horizontal: 32.w),
+            padding: EdgeInsets.symmetric(horizontal: AppSpacing.xxl),
             child: Text(
               emptySubtitle,
               textAlign: TextAlign.center,
@@ -237,10 +245,10 @@ class _ProductEngagementPageState extends State<ProductEngagementPage>
       physics: const AlwaysScrollableScrollPhysics(),
       padding: EdgeInsets.fromLTRB(16.w, 4.h, 16.w, 24.h),
       itemCount: items.length,
-      separatorBuilder: (_, __) => SizedBox(height: 8.h),
+      separatorBuilder: (_, __) => SizedBox(height: AppSpacing.sm),
       itemBuilder: (context, index) {
         final item = items[index];
-        final count = metricLabel == 'disukai' ? item.likeCount : item.cartCount;
+        final count = isLikedTab ? item.likeCount : item.cartCount;
         return _EngagementTile(
           item: item,
           count: count,
@@ -274,21 +282,21 @@ class _EngagementTile extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Material(
-      color: Colors.white,
-      borderRadius: BorderRadius.circular(14.r),
+      color: AppColors.surface,
+      borderRadius: BorderRadius.circular(AppRadius.tile),
       child: InkWell(
         onTap: onTap,
-        borderRadius: BorderRadius.circular(14.r),
+        borderRadius: BorderRadius.circular(AppRadius.tile),
         child: Container(
-          padding: EdgeInsets.all(12.w),
+          padding: EdgeInsets.all(AppSpacing.md12),
           decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(14.r),
+            borderRadius: BorderRadius.circular(AppRadius.tile),
             border: Border.all(color: AppColors.grey100),
           ),
           child: Row(
             children: [
               ClipRRect(
-                borderRadius: BorderRadius.circular(10.r),
+                borderRadius: BorderRadius.circular(AppRadius.md),
                 child: item.thumbnailUrl != null && item.thumbnailUrl!.isNotEmpty
                     ? BisaNetworkImage(
                         imageUrl: item.thumbnailUrl!,
@@ -303,13 +311,13 @@ class _EngagementTile extends StatelessWidget {
                         child: Icon(LucideIcons.package, color: AppColors.grey400),
                       ),
               ),
-              SizedBox(width: 12.w),
+              SizedBox(width: AppSpacing.md12),
               Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      item.name,
+                      localizeFailureMessage(item.name),
                       maxLines: 2,
                       overflow: TextOverflow.ellipsis,
                       style: TextStyle(
@@ -320,7 +328,7 @@ class _EngagementTile extends StatelessWidget {
                     ),
                     SizedBox(height: 4.h),
                     Text(
-                      item.pricePerUnit.toRupiah,
+                      formatMoneyDisplay(item.pricePerUnit),
                       style: TextStyle(
                         fontSize: 12.sp,
                         fontWeight: FontWeight.w800,
@@ -329,7 +337,9 @@ class _EngagementTile extends StatelessWidget {
                     ),
                     SizedBox(height: 2.h),
                     Text(
-                      'Terjual ${item.totalSold}',
+                      'marketplace.engagement_sold'.tr(namedArgs: {
+                        'count': '${item.totalSold}',
+                      }),
                       style: TextStyle(fontSize: 10.sp, color: AppColors.textHint),
                     ),
                   ],

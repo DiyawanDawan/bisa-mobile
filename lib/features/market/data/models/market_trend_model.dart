@@ -1,5 +1,6 @@
 import 'dart:convert';
 import 'package:freezed_annotation/freezed_annotation.dart';
+import 'market_supply_demand_model.dart';
 
 part 'market_trend_model.freezed.dart';
 part 'market_trend_model.g.dart';
@@ -15,6 +16,9 @@ abstract class MarketTrendModel with _$MarketTrendModel {
     required List<MarketDataPointModel> historyData,
     List<MarketDataPointModel>? projectedData,
     String? insight,
+    @Default([]) List<String> dataSources,
+    String? forecastModel,
+    MarketSupplyDemandModel? supplyDemand,
   }) = _MarketTrendModel;
 
   factory MarketTrendModel.fromJson(Map<String, dynamic> json) {
@@ -40,6 +44,22 @@ abstract class MarketTrendModel with _$MarketTrendModel {
       }
     }
 
+    final analytics = json['analytics'];
+    var dataSources = <String>[];
+    String? forecastModel;
+    MarketSupplyDemandModel? supplyDemand;
+    if (analytics is Map) {
+      final ds = analytics['dataSources'];
+      if (ds is List) {
+        dataSources = ds.map((e) => e.toString()).toList();
+      }
+      forecastModel = analytics['forecastModel']?.toString();
+      final sd = analytics['supplyDemand'];
+      if (sd is Map) {
+        supplyDemand = MarketSupplyDemandModel.fromJson(Map<String, dynamic>.from(sd));
+      }
+    }
+
     return MarketTrendModel(
       id: json['id']?.toString() ?? '',
       label: json['label']?.toString() ?? '',
@@ -49,6 +69,9 @@ abstract class MarketTrendModel with _$MarketTrendModel {
       historyData: history,
       projectedData: json['projectedData'] != null ? (json['projectedData'] as List).map((e) => MarketDataPointModel.fromJson(e)).toList() : null,
       insight: json['insight']?.toString(),
+      dataSources: dataSources,
+      forecastModel: forecastModel,
+      supplyDemand: supplyDemand,
     );
   }
 }

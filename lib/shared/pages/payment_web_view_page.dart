@@ -1,8 +1,10 @@
+import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:webview_flutter/webview_flutter.dart';
 import 'package:mobile_bisa/core/config/app_config.dart';
 import 'package:mobile_bisa/core/constants/app_colors.dart';
+import 'package:mobile_bisa/core/i18n/failure_messages.dart';
 import 'package:mobile_bisa/core/utils/payment_status_utils.dart';
 
 /// SEC-MOB-005 + SEC-MOB-014:
@@ -21,7 +23,7 @@ class PaymentWebViewPage extends StatefulWidget {
   const PaymentWebViewPage({
     super.key,
     required this.url,
-    this.title = 'Pembayaran',
+    this.title = 'orders.payment_fallback',
   });
 
   /// Host yang boleh di-load di WebView pembayaran.
@@ -40,7 +42,7 @@ class PaymentWebViewPage extends StatefulWidget {
 
   static Set<String> _runtimeAllowedHosts() {
     final hosts = Set<String>.from(_allowedHosts);
-    final apiUri = Uri.tryParse(AppConfig.apiUrl);
+    final apiUri = Uri.tryParse(AppConfig.effectiveApiUrl);
     if (apiUri != null && apiUri.host.isNotEmpty) {
       hosts.add(apiUri.host.toLowerCase());
     }
@@ -76,9 +78,7 @@ class _PaymentWebViewPageState extends State<PaymentWebViewPage> {
     super.initState();
     final initialUri = Uri.tryParse(widget.url);
     if (initialUri == null || !PaymentWebViewPage.isAllowedHost(initialUri)) {
-      _initError =
-          'URL pembayaran tidak valid atau domain tidak diizinkan. '
-          'Silakan hubungi support BISA.';
+      _initError = 'orders.payment_invalid_url'.tr();
       _isLoading = false;
       // Build berlanjut menampilkan error screen.
       _controller = WebViewController();
@@ -123,8 +123,8 @@ class _PaymentWebViewPageState extends State<PaymentWebViewPage> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text(widget.title),
-        backgroundColor: Colors.white,
+        title: Text(localizeFailureMessage(widget.title)),
+        backgroundColor: AppColors.surface,
         foregroundColor: AppColors.textPrimary,
         elevation: 0,
       ),

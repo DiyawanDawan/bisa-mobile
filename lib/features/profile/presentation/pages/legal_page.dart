@@ -1,3 +1,4 @@
+import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
@@ -59,7 +60,7 @@ class _LegalPageState extends State<LegalPage> {
     } catch (e) {
       if (!mounted) return;
       setState(() {
-        _error = 'Gagal memuat dokumen. Periksa koneksi Anda.';
+        _error = 'legal.load_error'.tr();
         _isLoading = false;
       });
     }
@@ -72,7 +73,7 @@ class _LegalPageState extends State<LegalPage> {
     return Scaffold(
       backgroundColor: AppColors.background,
       appBar: BisaAppBar(
-        backgroundColor: AppColors.white,
+        backgroundColor: AppColors.surface,
         title: displayTitle,
       ),
       body: _buildBody(displayTitle),
@@ -115,7 +116,7 @@ class _LegalPageState extends State<LegalPage> {
               ),
               SizedBox(height: 20.h),
               CustomButton(
-                text: 'Coba Lagi',
+                text: 'coba_lagi'.tr(),
                 width: 160.w,
                 onPressed: _fetchPolicy,
               ),
@@ -131,7 +132,7 @@ class _LegalPageState extends State<LegalPage> {
         width: double.infinity,
         padding: EdgeInsets.all(20.w),
         decoration: BoxDecoration(
-          color: AppColors.white,
+          color: AppColors.surface,
           borderRadius: BorderRadius.circular(20.r),
           boxShadow: AppColors.softShadow,
         ),
@@ -146,7 +147,7 @@ class _LegalPageState extends State<LegalPage> {
                   borderRadius: BorderRadius.circular(8.r),
                 ),
                 child: Text(
-                  'Versi $_version',
+                  'legal.version'.tr(namedArgs: {'version': _version!}),
                   style: TextStyle(
                     fontSize: 11.sp,
                     fontWeight: FontWeight.w700,

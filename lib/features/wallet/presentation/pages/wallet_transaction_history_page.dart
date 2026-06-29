@@ -1,5 +1,6 @@
 import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
+import 'package:mobile_bisa/core/i18n/failure_messages.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:mobile_bisa/core/constants/app_colors.dart';
 import 'package:mobile_bisa/features/wallet/domain/entities/wallet_transaction_entity.dart';
@@ -33,21 +34,45 @@ class _WalletTransactionHistoryPageState
   String _typeFilter = 'ALL';
   String _statusFilter = 'ALL';
 
-  static const _typeFilters = [
-    {'label': 'Semua', 'value': 'ALL'},
-    {'label': 'Penjualan', 'value': 'SALES'},
-    {'label': 'Penarikan', 'value': 'PAYOUT'},
-    {'label': 'Langganan', 'value': 'SUBSCRIPTION'},
+  static const _typeFilterValues = ['ALL', 'SALES', 'PAYOUT', 'SUBSCRIPTION'];
+  static const _statusFilterValues = [
+    'ALL',
+    'PENDING',
+    'ESCROW_HELD',
+    'RELEASED',
+    'REFUNDED',
+    'FAILED',
   ];
 
-  static const _statusFilters = [
-    {'label': 'Semua Status', 'value': 'ALL'},
-    {'label': 'Menunggu', 'value': 'PENDING'},
-    {'label': 'Escrow', 'value': 'ESCROW_HELD'},
-    {'label': 'Berhasil', 'value': 'RELEASED'},
-    {'label': 'Refund', 'value': 'REFUNDED'},
-    {'label': 'Gagal', 'value': 'FAILED'},
-  ];
+  String _typeFilterLabel(String value) {
+    switch (value) {
+      case 'SALES':
+        return 'wallet.filter_sales'.tr();
+      case 'PAYOUT':
+        return 'wallet.filter_payout'.tr();
+      case 'SUBSCRIPTION':
+        return 'wallet.filter_subscription'.tr();
+      default:
+        return 'wallet.filter_all'.tr();
+    }
+  }
+
+  String _statusFilterLabel(String value) {
+    switch (value) {
+      case 'PENDING':
+        return 'wallet.filter_pending'.tr();
+      case 'ESCROW_HELD':
+        return 'wallet.filter_escrow'.tr();
+      case 'RELEASED':
+        return 'wallet.filter_released'.tr();
+      case 'REFUNDED':
+        return 'wallet.filter_refunded'.tr();
+      case 'FAILED':
+        return 'wallet.filter_failed'.tr();
+      default:
+        return 'wallet.filter_all_status'.tr();
+    }
+  }
 
   @override
   void initState() {
@@ -109,9 +134,9 @@ class _WalletTransactionHistoryPageState
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: AppColors.background,
-      appBar: const BisaAppBar(
-        title: 'Riwayat Transaksi',
-        backgroundColor: Colors.white,
+      appBar: BisaAppBar(
+        title: 'wallet.history_page_title'.tr(),
+        backgroundColor: AppColors.surface,
       ),
       body: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -125,13 +150,13 @@ class _WalletTransactionHistoryPageState
 
   Widget _buildFilterSection() {
     return Container(
-      color: Colors.white,
+      color: AppColors.surface,
       padding: EdgeInsets.fromLTRB(16.w, 10.h, 16.w, 12.h),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
-            'Jenis',
+            'wallet.filter_type_label'.tr(),
             style: TextStyle(
               fontSize: 11.sp,
               fontWeight: FontWeight.w700,
@@ -142,13 +167,13 @@ class _WalletTransactionHistoryPageState
           SingleChildScrollView(
             scrollDirection: Axis.horizontal,
             child: Row(
-              children: _typeFilters.map((f) {
+              children: _typeFilterValues.map((value) {
                 return Padding(
                   padding: EdgeInsets.only(right: 8.w),
                   child: BisaFilterChip(
-                    label: f['label']!,
-                    isSelected: _typeFilter == f['value'],
-                    onTap: () => _applyFilter(type: f['value']),
+                    label: _typeFilterLabel(value),
+                    isSelected: _typeFilter == value,
+                    onTap: () => _applyFilter(type: value),
                   ),
                 );
               }).toList(),
@@ -156,7 +181,7 @@ class _WalletTransactionHistoryPageState
           ),
           SizedBox(height: 10.h),
           Text(
-            'Status',
+            'wallet.filter_status_label'.tr(),
             style: TextStyle(
               fontSize: 11.sp,
               fontWeight: FontWeight.w700,
@@ -167,13 +192,13 @@ class _WalletTransactionHistoryPageState
           SingleChildScrollView(
             scrollDirection: Axis.horizontal,
             child: Row(
-              children: _statusFilters.map((f) {
+              children: _statusFilterValues.map((value) {
                 return Padding(
                   padding: EdgeInsets.only(right: 8.w),
                   child: BisaFilterChip(
-                    label: f['label']!,
-                    isSelected: _statusFilter == f['value'],
-                    onTap: () => _applyFilter(status: f['value']),
+                    label: _statusFilterLabel(value),
+                    isSelected: _statusFilter == value,
+                    onTap: () => _applyFilter(status: value),
                   ),
                 );
               }).toList(),
@@ -201,7 +226,7 @@ class _WalletTransactionHistoryPageState
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              Text(_errorMessage!, textAlign: TextAlign.center),
+              Text(_errorMessage!.localizedFailure, textAlign: TextAlign.center),
               SizedBox(height: 16.h),
               CustomButton(
                 text: 'coba_lagi'.tr(),
@@ -245,7 +270,7 @@ class _WalletTransactionHistoryPageState
                       )
                     : TextButton(
                         onPressed: () => _loadTransactions(reset: false),
-                        child: const Text('Muat lebih banyak'),
+                        child: Text('wallet.load_more'.tr()),
                       ),
               ),
             );
@@ -253,7 +278,7 @@ class _WalletTransactionHistoryPageState
 
           return Container(
             decoration: BoxDecoration(
-              color: Colors.white,
+              color: AppColors.surface,
               borderRadius: BorderRadius.circular(12.r),
             ),
             child: WalletTransactionTile(tx: _transactions[index]),

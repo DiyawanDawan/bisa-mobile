@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:skeletonizer/skeletonizer.dart';
 
+import '../../../../core/constants/app_layout.dart';
 import '../../../../core/constants/app_colors.dart';
 import '../../../../shared/widgets/shimmer_loading.dart';
 
@@ -12,53 +13,64 @@ class OrderCardSkeleton extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      margin: EdgeInsets.only(bottom: 12.h),
+      margin: EdgeInsets.only(bottom: AppSpacing.sm10),
       decoration: BoxDecoration(
-        color: AppColors.white,
-        borderRadius: BorderRadius.circular(16.r),
+        color: AppColors.surface,
+        borderRadius: BorderRadius.circular(AppRadius.lg),
         border: Border.all(color: AppColors.grey100),
         boxShadow: AppColors.softShadow,
       ),
       child: Padding(
-        padding: EdgeInsets.all(14.w),
+        padding: EdgeInsets.symmetric(
+          horizontal: AppSpacing.sm10,
+          vertical: AppSpacing.sm10,
+        ),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Row(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Expanded(
-                  child: Bone.multiText(lines: 2),
-                ),
-                SizedBox(width: 8.w),
+                Expanded(child: Bone.multiText(lines: 2, fontSize: 10.sp)),
+                SizedBox(width: AppSpacing.sm),
                 Bone(
-                  width: 72.w,
-                  height: 24.h,
-                  borderRadius: BorderRadius.circular(20.r),
+                  width: 64.w,
+                  height: 20.h,
+                  borderRadius: BorderRadius.circular(AppRadius.pill),
                 ),
               ],
             ),
-            SizedBox(height: 12.h),
+            SizedBox(height: AppSpacing.sm10),
             Row(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Bone(
-                  width: 72.w,
-                  height: 72.w,
-                  borderRadius: BorderRadius.circular(12.r),
+                  width: 60.w,
+                  height: 60.w,
+                  borderRadius: BorderRadius.circular(AppRadius.md),
                 ),
-                SizedBox(width: 12.w),
-                Expanded(
-                  child: Bone.multiText(lines: 3),
-                ),
+                SizedBox(width: AppSpacing.sm10),
+                Expanded(child: Bone.multiText(lines: 2, fontSize: 11.sp)),
+                SizedBox(width: AppSpacing.xs6),
+                Bone(width: 56.w, height: 28.h),
               ],
             ),
-            SizedBox(height: 12.h),
+            SizedBox(height: AppSpacing.sm10),
             Row(
               children: [
-                Bone.circle(size: 28.r),
-                SizedBox(width: 8.w),
-                Expanded(child: Bone(width: double.infinity, height: 12.h)),
+                Expanded(
+                  child: Bone(
+                    height: 34.h,
+                    borderRadius: BorderRadius.circular(AppRadius.button),
+                  ),
+                ),
+                SizedBox(width: AppSpacing.sm),
+                Expanded(
+                  child: Bone(
+                    height: 34.h,
+                    borderRadius: BorderRadius.circular(AppRadius.button),
+                  ),
+                ),
               ],
             ),
           ],

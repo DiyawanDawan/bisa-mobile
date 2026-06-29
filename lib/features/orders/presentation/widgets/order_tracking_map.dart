@@ -3,6 +3,7 @@ import 'package:flutter_map/flutter_map.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:latlong2/latlong.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
+import '../../../../core/constants/app_layout.dart';
 import '../../../../core/constants/app_colors.dart';
 
 class OrderTrackingMap extends StatelessWidget {
@@ -20,7 +21,7 @@ class OrderTrackingMap extends StatelessWidget {
     final point = LatLng(lat, lng);
 
     return ClipRRect(
-      borderRadius: BorderRadius.circular(16.r),
+      borderRadius: BorderRadius.circular(AppRadius.xl),
       child: SizedBox(
         height: 160.h,
         child: FlutterMap(

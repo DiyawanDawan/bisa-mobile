@@ -131,6 +131,7 @@ class AuthRepositoryImpl implements AuthRepository {
     required String email,
     required String password,
     String? phone,
+    String? referralCode,
   }) async {
     try {
       final userModel = await remoteDataSource.registerBuyer(
@@ -138,6 +139,7 @@ class AuthRepositoryImpl implements AuthRepository {
         email: email,
         password: password,
         phone: phone,
+        referralCode: referralCode,
       );
       return Right(userModel.toEntity());
     } on DioException catch (e) {
@@ -155,6 +157,7 @@ class AuthRepositoryImpl implements AuthRepository {
     String? phone,
     String? province,
     String? regency,
+    String? referralCode,
   }) async {
     try {
       final userModel = await remoteDataSource.registerSupplier(
@@ -164,6 +167,7 @@ class AuthRepositoryImpl implements AuthRepository {
         phone: phone,
         province: province,
         regency: regency,
+        referralCode: referralCode,
       );
       return Right(userModel.toEntity());
     } on DioException catch (e) {
@@ -260,6 +264,7 @@ class AuthRepositoryImpl implements AuthRepository {
     String? nibPath,
     String? selfiePath,
     String? siupPath,
+    void Function(String status)? onUploadStatus,
   }) async {
     try {
       await remoteDataSource.submitVerification(
@@ -267,12 +272,16 @@ class AuthRepositoryImpl implements AuthRepository {
         nibPath: nibPath,
         selfiePath: selfiePath,
         siupPath: siupPath,
+        onUploadStatus: onUploadStatus,
       );
       return const Right(null);
     } on DioException catch (e) {
       return Left(_mapDioExceptionToFailure(e));
     } catch (e) {
-      return const Left(UnexpectedFailure());
+      final message = e is Exception
+          ? e.toString().replaceFirst('Exception: ', '')
+          : 'errors.verification_upload';
+      return Left(UnexpectedFailure(message));
     }
   }
 
@@ -298,14 +307,14 @@ class AuthRepositoryImpl implements AuthRepository {
       final json = await remoteDataSource.createAddress(data);
       if (json.isEmpty) {
         return const Left(
-          ServerFailure(message: 'Respons server alamat kosong'),
+          ServerFailure(message: 'errors.address_empty_response'),
         );
       }
       return Right(AddressModel.fromJson(json).toEntity());
     } on DioException catch (e) {
       return Left(_mapDioExceptionToFailure(e));
     } catch (e) {
-      return Left(ServerFailure(message: 'Gagal memproses data alamat: $e'));
+      return const Left(ServerFailure(message: 'errors.address_process'));
     }
   }
 
@@ -318,14 +327,14 @@ class AuthRepositoryImpl implements AuthRepository {
       final json = await remoteDataSource.updateAddress(id, data);
       if (json.isEmpty) {
         return const Left(
-          ServerFailure(message: 'Respons server alamat kosong'),
+          ServerFailure(message: 'errors.address_empty_response'),
         );
       }
       return Right(AddressModel.fromJson(json).toEntity());
     } on DioException catch (e) {
       return Left(_mapDioExceptionToFailure(e));
     } catch (e) {
-      return Left(ServerFailure(message: 'Gagal memproses data alamat: $e'));
+      return const Left(ServerFailure(message: 'errors.address_process'));
     }
   }
 
@@ -375,7 +384,7 @@ class AuthRepositoryImpl implements AuthRepository {
       final rawData = e.response?.data;
       final data = rawData is Map<String, dynamic> ? rawData : null;
       final message =
-          data?['meta']?['message'] ?? data?['message'] ?? 'Terjadi kesalahan';
+          data?['meta']?['message'] ?? data?['message'] ?? 'errors.generic';
 
       switch (statusCode) {
         case 401:

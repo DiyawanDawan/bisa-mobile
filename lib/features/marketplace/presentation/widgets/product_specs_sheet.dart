@@ -1,6 +1,8 @@
+import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
+import '../../../../core/constants/app_layout.dart';
 import '../../../../core/constants/app_colors.dart';
 import '../../domain/entities/product_entity.dart';
 import '../utils/product_specs_mapper.dart';
@@ -53,8 +55,8 @@ class _ProductSpecsExpandableSectionState
   bool _presetsExpanded = true;
 
   String get _title => widget.productMode == 'ORGANIC_PRODUCE'
-      ? 'Spesifikasi Hasil Tani'
-      : 'Spesifikasi Teknis';
+      ? 'marketplace.specs_organic'.tr()
+      : 'marketplace.specs_technical'.tr();
 
   List<String> get _presets => ProductSpecsMapper.presetLabels(widget.productMode);
 
@@ -107,19 +109,19 @@ class _ProductSpecsExpandableSectionState
         .toList();
 
     return Material(
-      color: AppColors.white,
-      borderRadius: BorderRadius.circular(12.r),
+      color: AppColors.surface,
+      borderRadius: BorderRadius.circular(AppRadius.lg),
       clipBehavior: Clip.antiAlias,
       child: Column(
         children: [
           InkWell(
             onTap: () => setState(() => _sectionExpanded = !_sectionExpanded),
             child: Container(
-              padding: EdgeInsets.symmetric(horizontal: 12.w, vertical: 12.h),
+              padding: EdgeInsets.symmetric(horizontal: AppSpacing.md12, vertical: AppSpacing.md12),
               decoration: BoxDecoration(
                 borderRadius: BorderRadius.vertical(
-                  top: Radius.circular(12.r),
-                  bottom: Radius.circular(_sectionExpanded ? 0 : 12.r),
+                  top: Radius.circular(AppRadius.lg),
+                  bottom: Radius.circular(_sectionExpanded ? 0 : AppRadius.lg),
                 ),
                 border: Border.all(color: AppColors.grey100),
               ),
@@ -130,7 +132,7 @@ class _ProductSpecsExpandableSectionState
                     size: 16.sp,
                     color: AppColors.primary,
                   ),
-                  SizedBox(width: 8.w),
+                  SizedBox(width: AppSpacing.sm),
                   Expanded(
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
@@ -146,7 +148,7 @@ class _ProductSpecsExpandableSectionState
                         Text(
                           filledCount > 0
                               ? '$filledCount spesifikasi terisi'
-                              : 'Opsional — tap untuk preset cepat',
+                              : 'marketplace.specs_optional_hint'.tr(),
                           style: TextStyle(
                             fontSize: 10.sp,
                             color: AppColors.textHint,
@@ -158,10 +160,10 @@ class _ProductSpecsExpandableSectionState
                   if (filledCount > 0)
                     Container(
                       margin: EdgeInsets.only(right: 6.w),
-                      padding: EdgeInsets.symmetric(horizontal: 8.w, vertical: 2.h),
+                      padding: EdgeInsets.symmetric(horizontal: AppSpacing.sm, vertical: 2.h),
                       decoration: BoxDecoration(
                         color: AppColors.primaryLight,
-                        borderRadius: BorderRadius.circular(8.r),
+                        borderRadius: BorderRadius.circular(AppRadius.button),
                       ),
                       child: Text(
                         '$filledCount',
@@ -186,7 +188,7 @@ class _ProductSpecsExpandableSectionState
           if (_sectionExpanded) ...[
             Divider(height: 1, color: AppColors.grey100),
             Padding(
-              padding: EdgeInsets.fromLTRB(12.w, 10.h, 12.w, 0),
+              padding: EdgeInsets.fromLTRB(AppSpacing.md12, AppSpacing.sm10, AppSpacing.md12, 0),
               child: _PresetsCollapsibleHeader(
                 expanded: _presetsExpanded,
                 onToggle: () =>
@@ -195,7 +197,7 @@ class _ProductSpecsExpandableSectionState
             ),
             if (_presetsExpanded)
               Padding(
-                padding: EdgeInsets.fromLTRB(12.w, 8.h, 12.w, 4.h),
+                padding: EdgeInsets.fromLTRB(AppSpacing.md12, AppSpacing.sm, AppSpacing.md12, AppSpacing.xs),
                 child: ProductSpecsPresetChips(
                   presets: _presets,
                   isSelected: _hasPreset,
@@ -204,9 +206,9 @@ class _ProductSpecsExpandableSectionState
               ),
             if (draftRows.isNotEmpty) ...[
               Padding(
-                padding: EdgeInsets.fromLTRB(12.w, 8.h, 12.w, 0),
+                padding: EdgeInsets.fromLTRB(AppSpacing.md12, AppSpacing.sm, AppSpacing.md12, 0),
                 child: Text(
-                  'Isi nilai spesifikasi',
+                  'marketplace.specs_fill_values'.tr(),
                   style: TextStyle(
                     fontSize: 11.sp,
                     fontWeight: FontWeight.w700,
@@ -215,12 +217,12 @@ class _ProductSpecsExpandableSectionState
                 ),
               ),
               Padding(
-                padding: EdgeInsets.fromLTRB(12.w, 6.h, 12.w, 8.h),
+                padding: EdgeInsets.fromLTRB(AppSpacing.md12, AppSpacing.xs6, AppSpacing.md12, AppSpacing.sm),
                 child: Column(
                   children: [
                     for (int i = 0, shown = 0; i < widget.specs.entries.length; i++)
                       if (widget.specs.entries[i].label.trim().isNotEmpty) ...[
-                        if (shown++ > 0) SizedBox(height: 8.h),
+                        if (shown++ > 0) SizedBox(height: AppSpacing.sm),
                         _InlineSpecValueRow(
                           key: ValueKey('spec-$i-${widget.specs.entries[i].label}'),
                           label: widget.specs.entries[i].label,
@@ -234,12 +236,12 @@ class _ProductSpecsExpandableSectionState
               ),
             ],
             Padding(
-              padding: EdgeInsets.fromLTRB(12.w, 0, 12.w, 12.h),
+              padding: EdgeInsets.fromLTRB(AppSpacing.md12, 0, AppSpacing.md12, AppSpacing.md12),
               child: TextButton.icon(
                 onPressed: widget.onOpenFullEditor,
                 icon: Icon(LucideIcons.slidersHorizontal, size: 16.sp),
                 label: Text(
-                  'Kelola spesifikasi lengkap',
+                  'marketplace.specs_manage_full'.tr(),
                   style: TextStyle(
                     fontSize: 12.sp,
                     fontWeight: FontWeight.w700,
@@ -271,7 +273,7 @@ class _PresetsCollapsibleHeader extends StatelessWidget {
   Widget build(BuildContext context) {
     return InkWell(
       onTap: onToggle,
-      borderRadius: BorderRadius.circular(8.r),
+      borderRadius: BorderRadius.circular(AppRadius.button),
       child: Padding(
         padding: EdgeInsets.symmetric(vertical: 4.h),
         child: Row(
@@ -284,7 +286,7 @@ class _PresetsCollapsibleHeader extends StatelessWidget {
             SizedBox(width: 6.w),
             Expanded(
               child: Text(
-                'Preset cepat',
+                'marketplace.specs_presets_title'.tr(),
                 style: TextStyle(
                   fontSize: 12.sp,
                   fontWeight: FontWeight.w700,
@@ -293,7 +295,9 @@ class _PresetsCollapsibleHeader extends StatelessWidget {
               ),
             ),
             Text(
-              expanded ? 'Sembunyikan' : 'Tampilkan',
+              expanded
+                  ? 'marketplace.specs_hide'.tr()
+                  : 'marketplace.specs_show'.tr(),
               style: TextStyle(
                 fontSize: 10.sp,
                 fontWeight: FontWeight.w600,
@@ -328,15 +332,15 @@ class ProductSpecsPresetChips extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Wrap(
-      spacing: 8.w,
-      runSpacing: 8.h,
+      spacing: AppSpacing.sm,
+      runSpacing: AppSpacing.sm,
       children: presets
           .map(
             (label) {
               final selected = isSelected(label);
               return FilterChip(
                 label: Text(
-                  label,
+                  ProductSpecsMapper.displayLabel(label),
                   style: TextStyle(
                     fontSize: 11.sp,
                     fontWeight: FontWeight.w600,
@@ -408,10 +412,10 @@ class _InlineSpecValueRowState extends State<_InlineSpecValueRow> {
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding: EdgeInsets.all(8.r),
+      padding: EdgeInsets.all(AppSpacing.sm),
       decoration: BoxDecoration(
         color: AppColors.grey50,
-        borderRadius: BorderRadius.circular(8.r),
+        borderRadius: BorderRadius.circular(AppRadius.button),
         border: Border.all(color: AppColors.grey100),
       ),
       child: Row(
@@ -422,7 +426,7 @@ class _InlineSpecValueRowState extends State<_InlineSpecValueRow> {
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
                 Text(
-                  widget.label,
+                  ProductSpecsMapper.displayLabel(widget.label),
                   style: TextStyle(
                     fontSize: 11.sp,
                     fontWeight: FontWeight.w700,
@@ -434,20 +438,20 @@ class _InlineSpecValueRowState extends State<_InlineSpecValueRow> {
                   controller: _controller,
                   onChanged: widget.onChanged,
                   decoration: InputDecoration(
-                    hintText: 'Isi nilai...',
+                    hintText: 'marketplace.specs_value_input_hint'.tr(),
                     isDense: true,
                     filled: true,
-                    fillColor: AppColors.white,
+                    fillColor: AppColors.surface,
                     contentPadding: EdgeInsets.symmetric(
-                      horizontal: 10.w,
-                      vertical: 10.h,
+                      horizontal: AppSpacing.sm10,
+                      vertical: AppSpacing.sm10,
                     ),
                     border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(8.r),
+                      borderRadius: BorderRadius.circular(AppRadius.button),
                       borderSide: BorderSide(color: AppColors.grey200),
                     ),
                     enabledBorder: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(8.r),
+                      borderRadius: BorderRadius.circular(AppRadius.button),
                       borderSide: BorderSide(color: AppColors.grey200),
                     ),
                   ),
@@ -485,19 +489,19 @@ class ProductSpecsSummaryCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final entries = specs.entriesForMode(productMode);
     final title = productMode == 'ORGANIC_PRODUCE'
-        ? 'Spesifikasi Hasil Tani'
-        : 'Spesifikasi Teknis';
+      ? 'marketplace.specs_organic'.tr()
+      : 'marketplace.specs_technical'.tr();
 
     return Material(
-      color: AppColors.white,
-      borderRadius: BorderRadius.circular(12.r),
+      color: AppColors.surface,
+      borderRadius: BorderRadius.circular(AppRadius.lg),
       clipBehavior: Clip.antiAlias,
       child: InkWell(
         onTap: onTap,
         child: Container(
-          padding: EdgeInsets.all(12.r),
+          padding: EdgeInsets.all(AppSpacing.md12),
           decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(12.r),
+            borderRadius: BorderRadius.circular(AppRadius.lg),
             border: Border.all(color: AppColors.grey100),
           ),
           child: Column(
@@ -510,7 +514,7 @@ class ProductSpecsSummaryCard extends StatelessWidget {
                     size: 16.sp,
                     color: AppColors.primary,
                   ),
-                  SizedBox(width: 8.w),
+                  SizedBox(width: AppSpacing.sm),
                   Expanded(
                     child: Text(
                       title,
@@ -531,14 +535,14 @@ class ProductSpecsSummaryCard extends StatelessWidget {
               if (entries.isEmpty) ...[
                 SizedBox(height: 6.h),
                 Text(
-                  'Tap untuk tambah spesifikasi (key-value)',
+                  'marketplace.specs_tap_add'.tr(),
                   style: TextStyle(
                     fontSize: 11.sp,
                     color: AppColors.textHint,
                   ),
                 ),
               ] else ...[
-                SizedBox(height: 8.h),
+                SizedBox(height: AppSpacing.sm),
                 ...entries.take(4).map(_kvRow),
                 if (entries.length > 4)
                   Padding(
@@ -605,7 +609,7 @@ Future<ProductSpecsData?> showProductSpecsSheet(
     context: context,
     isScrollControlled: true,
     useSafeArea: true,
-    backgroundColor: Colors.transparent,
+    backgroundColor: AppColors.transparent,
     builder: (ctx) => _ProductSpecsSheet(
       productMode: productMode,
       initial: initial,
@@ -719,8 +723,9 @@ class _ProductSpecsSheetState extends State<_ProductSpecsSheet> {
     final keyboardBottom = MediaQuery.viewInsetsOf(context).bottom;
     final maxH = MediaQuery.sizeOf(context).height * 0.88;
     final isOrganic = widget.productMode == 'ORGANIC_PRODUCE';
-    final title =
-        isOrganic ? 'Spesifikasi Hasil Tani' : 'Spesifikasi Teknis';
+    final title = isOrganic
+        ? 'marketplace.specs_organic'.tr()
+        : 'marketplace.specs_technical'.tr();
     final presets = ProductSpecsMapper.presetLabels(widget.productMode);
 
     return Padding(
@@ -729,12 +734,12 @@ class _ProductSpecsSheetState extends State<_ProductSpecsSheet> {
         constraints: BoxConstraints(maxHeight: maxH),
         decoration: BoxDecoration(
           color: AppColors.surface,
-          borderRadius: BorderRadius.vertical(top: Radius.circular(20.r)),
+          borderRadius: BorderRadius.vertical(top: Radius.circular(AppRadius.pill)),
         ),
         child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              SizedBox(height: 10.h),
+              SizedBox(height: AppSpacing.sm10),
               Container(
                 width: 36.w,
                 height: 4.h,
@@ -744,7 +749,7 @@ class _ProductSpecsSheetState extends State<_ProductSpecsSheet> {
                 ),
               ),
               Padding(
-                padding: EdgeInsets.fromLTRB(16.w, 12.h, 16.w, 0),
+                padding: EdgeInsets.fromLTRB(AppSpacing.md, AppSpacing.md12, AppSpacing.md, 0),
                 child: Row(
                   children: [
                     Expanded(
@@ -767,9 +772,9 @@ class _ProductSpecsSheetState extends State<_ProductSpecsSheet> {
                 ),
               ),
               Padding(
-                padding: EdgeInsets.fromLTRB(16.w, 6.h, 16.w, 0),
+                padding: EdgeInsets.fromLTRB(AppSpacing.md, AppSpacing.xs6, AppSpacing.md, 0),
                 child: Text(
-                  'Tambah baris key-value sebanyak yang dibutuhkan.',
+                  'marketplace.specs_add_rows_hint'.tr(),
                   style: TextStyle(
                     fontSize: 11.sp,
                     color: AppColors.textSecondary,
@@ -777,7 +782,7 @@ class _ProductSpecsSheetState extends State<_ProductSpecsSheet> {
                 ),
               ),
               Padding(
-                padding: EdgeInsets.fromLTRB(16.w, 10.h, 16.w, 0),
+                padding: EdgeInsets.fromLTRB(AppSpacing.md, AppSpacing.sm10, AppSpacing.md, 0),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
@@ -787,7 +792,7 @@ class _ProductSpecsSheetState extends State<_ProductSpecsSheet> {
                           setState(() => _presetsExpanded = !_presetsExpanded),
                     ),
                     if (_presetsExpanded) ...[
-                      SizedBox(height: 8.h),
+                      SizedBox(height: AppSpacing.sm),
                       ProductSpecsPresetChips(
                         presets: presets,
                         isSelected: _hasPreset,
@@ -799,21 +804,21 @@ class _ProductSpecsSheetState extends State<_ProductSpecsSheet> {
               ),
               Flexible(
                 child: SingleChildScrollView(
-                  padding: EdgeInsets.fromLTRB(16.w, 12.h, 16.w, 8.h),
+                  padding: EdgeInsets.fromLTRB(AppSpacing.md, AppSpacing.md12, AppSpacing.md, AppSpacing.sm),
                   keyboardDismissBehavior:
                       ScrollViewKeyboardDismissBehavior.onDrag,
                   child: Column(
                     children: [
                       for (int i = 0; i < _rows.length; i++) ...[
-                        if (i > 0) SizedBox(height: 10.h),
+                        if (i > 0) SizedBox(height: AppSpacing.sm10),
                         _buildEditableRow(i),
                       ],
-                      SizedBox(height: 12.h),
+                      SizedBox(height: AppSpacing.md12),
                       OutlinedButton.icon(
                         onPressed: () => _addRow(),
                         icon: Icon(LucideIcons.plus, size: 18.sp),
                         label: Text(
-                          'Tambah Spesifikasi',
+                          'marketplace.specs_add_row'.tr(),
                           style: TextStyle(
                             fontSize: 13.sp,
                             fontWeight: FontWeight.w600,
@@ -832,9 +837,9 @@ class _ProductSpecsSheetState extends State<_ProductSpecsSheet> {
               SafeArea(
                 top: false,
                 child: Padding(
-                  padding: EdgeInsets.fromLTRB(16.w, 8.h, 16.w, 12.h),
+                  padding: EdgeInsets.fromLTRB(AppSpacing.md, AppSpacing.sm, AppSpacing.md, AppSpacing.md12),
                   child: CustomButton(
-                    text: 'Simpan Spesifikasi',
+                    text: 'marketplace.specs_save'.tr(),
                     onPressed: () => Navigator.pop(context, _buildResult()),
                   ),
                 ),
@@ -848,10 +853,10 @@ class _ProductSpecsSheetState extends State<_ProductSpecsSheet> {
   Widget _buildEditableRow(int index) {
     final row = _rows[index];
     return Container(
-      padding: EdgeInsets.all(8.r),
+      padding: EdgeInsets.all(AppSpacing.sm),
       decoration: BoxDecoration(
         color: AppColors.grey50,
-        borderRadius: BorderRadius.circular(10.r),
+        borderRadius: BorderRadius.circular(AppRadius.md),
         border: Border.all(color: AppColors.grey100),
       ),
       child: Column(
@@ -861,7 +866,9 @@ class _ProductSpecsSheetState extends State<_ProductSpecsSheet> {
             children: [
               Expanded(
                 child: Text(
-                  'Baris ${index + 1}',
+                  'marketplace.specs_row_label'.tr(namedArgs: {
+                    'index': '${index + 1}',
+                  }),
                   style: TextStyle(
                     fontSize: 10.sp,
                     fontWeight: FontWeight.w700,
@@ -880,15 +887,15 @@ class _ProductSpecsSheetState extends State<_ProductSpecsSheet> {
           ),
           SizedBox(height: 6.h),
           CustomTextField(
-            label: 'Label / Nama',
+            label: 'marketplace.specs_label_field'.tr(),
             controller: row.labelCtrl,
-            hint: 'Contoh: Kadar Air',
+            hint: 'marketplace.specs_label_hint'.tr(),
           ),
-          SizedBox(height: 8.h),
+          SizedBox(height: AppSpacing.sm),
           CustomTextField(
-            label: 'Nilai',
+            label: 'marketplace.specs_value_field'.tr(),
             controller: row.valueCtrl,
-            hint: 'Contoh: 12%',
+            hint: 'marketplace.specs_value_hint'.tr(),
           ),
         ],
       ),
@@ -916,7 +923,7 @@ class ProductSpecsKeyValueList extends StatelessWidget {
     return Container(
       decoration: BoxDecoration(
         color: AppColors.grey50,
-        borderRadius: BorderRadius.circular(10.r),
+        borderRadius: BorderRadius.circular(AppRadius.md),
       ),
       child: Column(
         children: [
@@ -924,8 +931,8 @@ class ProductSpecsKeyValueList extends StatelessWidget {
             if (i > 0) Divider(height: 1, color: AppColors.grey100),
             Padding(
               padding: EdgeInsets.symmetric(
-                horizontal: 12.w,
-                vertical: dense ? 8.h : 10.h,
+                horizontal: AppSpacing.md12,
+                vertical: dense ? AppSpacing.sm : AppSpacing.sm10,
               ),
               child: Row(
                 crossAxisAlignment: CrossAxisAlignment.start,

@@ -1,8 +1,10 @@
+import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
 import 'package:mobile_scanner/mobile_scanner.dart';
 import '../../../../shared/widgets/bisa_app_bar.dart';
+import '../../../../core/constants/app_layout.dart';
 import '../../../../core/constants/app_colors.dart';
 
 class IotQrScanPage extends StatefulWidget {
@@ -34,14 +36,14 @@ class _IotQrScanPageState extends State<IotQrScanPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.black,
+      backgroundColor: AppColors.black,
       appBar: BisaAppBar(
-        title: 'Scan Device ID',
-        backgroundColor: Colors.black,
+        title: 'iot.scan_device_title'.tr(),
+        backgroundColor: AppColors.black,
         showShadow: false,
-        iconColor: Colors.white,
-        titleColor: Colors.white,
-        backButtonBackgroundColor: Colors.white.withValues(alpha: 0.15),
+        iconColor: AppColors.white,
+        titleColor: AppColors.white,
+        backButtonBackgroundColor: AppColors.white.withValues(alpha: 0.15),
       ),
       body: Stack(
         children: [
@@ -55,7 +57,7 @@ class _IotQrScanPageState extends State<IotQrScanPage> {
               height: 220.w,
               decoration: BoxDecoration(
                 border: Border.all(color: AppColors.primary, width: 2),
-                borderRadius: BorderRadius.circular(16.r),
+                borderRadius: BorderRadius.circular(AppRadius.xl),
               ),
             ),
           ),
@@ -64,19 +66,19 @@ class _IotQrScanPageState extends State<IotQrScanPage> {
             left: 24.w,
             right: 24.w,
             child: Container(
-              padding: EdgeInsets.all(14.w),
+              padding: EdgeInsets.all(AppSpacing.section),
               decoration: BoxDecoration(
-                color: Colors.black.withValues(alpha: 0.7),
-                borderRadius: BorderRadius.circular(12.r),
+                color: AppColors.black.withValues(alpha: 0.7),
+                borderRadius: BorderRadius.circular(AppRadius.lg),
               ),
               child: Row(
                 children: [
-                  Icon(LucideIcons.qrCode, color: Colors.white, size: 20.sp),
-                  SizedBox(width: 10.w),
+                  Icon(LucideIcons.qrCode, color: AppColors.textOnPrimary, size: 20.sp),
+                  SizedBox(width: AppSpacing.sm10),
                   Expanded(
                     child: Text(
-                      'Arahkan kamera ke QR code pada perangkat IoT',
-                      style: TextStyle(color: Colors.white, fontSize: 12.sp),
+                      'iot.scan_qr_hint'.tr(),
+                      style: TextStyle(color: AppColors.textOnPrimary, fontSize: 12.sp),
                     ),
                   ),
                 ],

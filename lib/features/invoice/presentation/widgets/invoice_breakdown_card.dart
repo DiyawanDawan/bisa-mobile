@@ -1,7 +1,8 @@
+import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:mobile_bisa/core/constants/app_colors.dart';
-import 'package:mobile_bisa/core/utils/extensions.dart';
+import 'package:mobile_bisa/core/utils/money_format.dart';
 
 class InvoiceBreakdownCard extends StatelessWidget {
   final double subtotal;
@@ -27,7 +28,7 @@ class InvoiceBreakdownCard extends StatelessWidget {
       width: double.infinity,
       padding: EdgeInsets.all(16.w),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: AppColors.surface,
         borderRadius: BorderRadius.circular(14.r),
         border: Border.all(color: AppColors.grey200),
       ),
@@ -45,13 +46,13 @@ class InvoiceBreakdownCard extends StatelessWidget {
             ),
             SizedBox(height: 12.h),
           ],
-          _row('Subtotal Barang', subtotal.toRupiah),
-          _row('Biaya Platform', platformFee.toRupiah),
+          _row('invoice.breakdown_subtotal'.tr(), formatMoneyIdr(subtotal)),
+          _row('invoice.breakdown_platform'.tr(), formatMoneyIdr(platformFee)),
           if (logisticsFee > 0)
-            _row('Biaya Ongkir (BISA)', logisticsFee.toRupiah),
-          _row('PPN', vatAmount.toRupiah),
+            _row('invoice.breakdown_logistics'.tr(), formatMoneyIdr(logisticsFee)),
+          _row('invoice.breakdown_vat'.tr(), formatMoneyIdr(vatAmount)),
           Divider(height: 20.h, color: AppColors.grey200),
-          _row('Total Tagihan', totalAmount.toRupiah, isBold: true),
+          _row('invoice.breakdown_total'.tr(), formatMoneyIdr(totalAmount), isBold: true),
         ],
       ),
     );

@@ -3,8 +3,9 @@ import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:go_router/go_router.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
+import '../../../../core/constants/app_layout.dart';
 import '../../../../core/constants/app_colors.dart';
-import '../../../../core/utils/extensions.dart';
+import '../../../../core/utils/money_format.dart';
 import '../../../../core/utils/media_url_utils.dart';
 import '../../../../shared/widgets/bisa_network_image.dart';
 import '../../../../shared/widgets/seller_identity_row.dart';
@@ -29,7 +30,7 @@ class SupplierProductTile extends StatelessWidget {
     if (company != null && company.isNotEmpty) return company;
     final name = product.seller.name.trim();
     if (name.isNotEmpty) return name;
-    return 'Toko';
+    return 'marketplace.store_default_name'.tr();
   }
 
   void _openSupplierStore(BuildContext context) {
@@ -52,12 +53,12 @@ class SupplierProductTile extends StatelessWidget {
 
     return InkWell(
       onTap: onTap,
-      borderRadius: BorderRadius.circular(12.r),
+      borderRadius: BorderRadius.circular(AppRadius.lg),
       child: Container(
-        padding: EdgeInsets.all(8.w),
+        padding: EdgeInsets.all(AppSpacing.sm),
         decoration: BoxDecoration(
           color: AppColors.surface,
-          borderRadius: BorderRadius.circular(12.r),
+          borderRadius: BorderRadius.circular(AppRadius.lg),
           border: Border.all(color: AppColors.grey100),
           boxShadow: [
             BoxShadow(
@@ -73,7 +74,7 @@ class SupplierProductTile extends StatelessWidget {
             Stack(
               children: [
                 ClipRRect(
-                  borderRadius: BorderRadius.circular(10.r),
+                  borderRadius: BorderRadius.circular(AppRadius.md),
                   child: hasResolvableMediaUrl(product.thumbnailUrl)
                       ? BisaNetworkImage(
                           imageUrl: product.thumbnailUrl,
@@ -109,7 +110,7 @@ class SupplierProductTile extends StatelessWidget {
                   ),
               ],
             ),
-            SizedBox(width: 10.w),
+            SizedBox(width: AppSpacing.sm10),
             Expanded(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -130,7 +131,7 @@ class SupplierProductTile extends StatelessWidget {
                           overflow: TextOverflow.ellipsis,
                         ),
                       ),
-                      SizedBox(width: 8.w),
+                      SizedBox(width: AppSpacing.sm),
                       _StatusBadge(status: product.status),
                     ],
                   ),
@@ -140,7 +141,7 @@ class SupplierProductTile extends StatelessWidget {
                     children: [
                       Flexible(
                         child: Text(
-                          product.pricePerUnit.toRupiah,
+                          formatMoneyDisplay(product.pricePerUnit),
                           style: TextStyle(
                             fontSize: 14.sp,
                             fontWeight: FontWeight.w800,
@@ -154,7 +155,7 @@ class SupplierProductTile extends StatelessWidget {
                         SizedBox(width: 6.w),
                         Flexible(
                           child: Text(
-                            product.originalPrice!.toRupiah,
+                            formatMoneyDisplay(product.originalPrice!),
                             style: TextStyle(
                               fontSize: 10.sp,
                               color: AppColors.grey400,
@@ -184,12 +185,17 @@ class SupplierProductTile extends StatelessWidget {
                     children: [
                       _metaChip(
                         LucideIcons.package,
-                        'Stok ${_trimNum(product.stock)} ${product.unit}',
+                        'marketplace.stock_chip'.tr(namedArgs: {
+                          'stock': _trimNum(product.stock),
+                          'unit': product.unit,
+                        }),
                         AppColors.info,
                       ),
                       _metaChip(
                         LucideIcons.shoppingBag,
-                        'Terjual ${product.totalSold}',
+                        'marketplace.sold_count'.tr(namedArgs: {
+                          'count': '${product.totalSold}',
+                        }),
                         AppColors.success,
                       ),
                       if (product.isCertified)
@@ -262,10 +268,10 @@ class SupplierProductTile extends StatelessWidget {
   Widget _compactAction(IconData icon, Color color, VoidCallback onTap) {
     return Material(
       color: color.withValues(alpha: 0.08),
-      borderRadius: BorderRadius.circular(8.r),
+      borderRadius: BorderRadius.circular(AppRadius.button),
       child: InkWell(
         onTap: onTap,
-        borderRadius: BorderRadius.circular(8.r),
+        borderRadius: BorderRadius.circular(AppRadius.button),
         child: Padding(
           padding: EdgeInsets.all(6.r),
           child: Icon(icon, size: 15.sp, color: color),
@@ -293,19 +299,19 @@ class _StatusBadge extends StatelessWidget {
     switch (status.toUpperCase()) {
       case 'ACTIVE':
         color = AppColors.success;
-        label = 'Aktif';
+        label = 'marketplace.status_active'.tr();
         break;
       case 'DRAFT':
         color = AppColors.warning;
-        label = 'Draft';
+        label = 'marketplace.status_draft'.tr();
         break;
       case 'OUT_OF_STOCK':
         color = AppColors.error;
-        label = 'Stok Habis';
+        label = 'marketplace.status_out_of_stock'.tr();
         break;
       case 'INACTIVE':
         color = AppColors.grey500;
-        label = 'Non-aktif';
+        label = 'marketplace.status_inactive'.tr();
         break;
       default:
         color = AppColors.grey500;
@@ -313,7 +319,7 @@ class _StatusBadge extends StatelessWidget {
     }
 
     return Container(
-      padding: EdgeInsets.symmetric(horizontal: 8.w, vertical: 4.h),
+      padding: EdgeInsets.symmetric(horizontal: AppSpacing.sm, vertical: AppSpacing.xs),
       decoration: BoxDecoration(
         color: color.withValues(alpha: 0.1),
         borderRadius: BorderRadius.circular(6.r),
@@ -339,8 +345,12 @@ Future<void> showSupplierDeleteProductDialog({
   return showDialog<void>(
     context: context,
     builder: (dialogContext) => AlertDialog(
-      title: Text('hapus_produk'.tr()),
-      content: Text('Apakah Anda yakin ingin menghapus "${product.name}"?'),
+      title: Text('marketplace.delete_product'.tr()),
+      content: Text(
+        'marketplace.delete_product_confirm'.tr(
+          namedArgs: {'name': product.name},
+        ),
+      ),
       actions: [
         TextButton(
           onPressed: () => Navigator.pop(dialogContext),

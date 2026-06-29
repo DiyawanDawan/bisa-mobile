@@ -39,6 +39,43 @@ class ChunkedMediaUploadService {
     CancelToken? cancelToken,
     String? resumeSessionId,
   }) async {
+    try {
+      return await _uploadFileInternal(
+        localPath: localPath,
+        folder: folder,
+        onProgress: onProgress,
+        cancelToken: cancelToken,
+        resumeSessionId: resumeSessionId,
+      );
+    } catch (e) {
+      if (!_isStaleMultipartError(e)) rethrow;
+      await sessionStore?.clear(localPath);
+      return _uploadFileInternal(
+        localPath: localPath,
+        folder: folder,
+        onProgress: onProgress,
+        cancelToken: cancelToken,
+        resumeSessionId: null,
+      );
+    }
+  }
+
+  bool _isStaleMultipartError(Object e) {
+    final msg = e.toString().toLowerCase();
+    return msg.contains('multipart upload does not exist') ||
+        msg.contains('specified multipart upload') ||
+        msg.contains('sesi upload kedaluwarsa') ||
+        msg.contains('sesi upload sudah selesai') ||
+        msg.contains('sesi upload dibatalkan');
+  }
+
+  Future<UploadedMedia> _uploadFileInternal({
+    required String localPath,
+    required String folder,
+    void Function(double progress)? onProgress,
+    CancelToken? cancelToken,
+    String? resumeSessionId,
+  }) async {
     final prepared = await compressImageIfNeeded(localPath);
     final file = File(prepared);
     if (!await file.exists()) {
@@ -54,13 +91,33 @@ class ChunkedMediaUploadService {
     late final int totalParts;
     late final String uploadMode;
 
+    var resumed = false;
     if (resumeSessionId != null) {
-      final status = await _getSession(resumeSessionId, cancelToken);
-      sessionId = status['sessionId'] as String;
-      partSize = status['partSize'] as int;
-      totalParts = status['totalParts'] as int;
-      uploadMode = status['uploadMode'] as String? ?? 'proxy';
-    } else {
+      try {
+        final status = await _getSession(resumeSessionId, cancelToken);
+        final sessionStatus = status['status'] as String?;
+        if (sessionStatus == 'COMPLETED' && status['finalPath'] != null) {
+          await sessionStore?.clear(localPath);
+          return UploadedMedia(
+            path: status['finalPath'] as String,
+            url: status['url'] as String?,
+          );
+        }
+        if (sessionStatus == 'EXPIRED' || sessionStatus == 'ABORTED') {
+          await sessionStore?.clear(localPath);
+        } else {
+          sessionId = status['sessionId'] as String;
+          partSize = status['partSize'] as int;
+          totalParts = status['totalParts'] as int;
+          uploadMode = status['uploadMode'] as String? ?? 'proxy';
+          resumed = true;
+        }
+      } catch (_) {
+        await sessionStore?.clear(localPath);
+      }
+    }
+
+    if (!resumed) {
       final init = await _initUpload(
         folder: folder,
         fileName: fileName,
@@ -74,7 +131,7 @@ class ChunkedMediaUploadService {
       uploadMode = init['uploadMode'] as String? ?? 'proxy';
       await sessionStore?.save(
         PendingUploadSession(
-          localPath: prepared,
+          localPath: localPath,
           sessionId: sessionId,
           folder: folder,
           updatedAtMs: DateTime.now().millisecondsSinceEpoch,
@@ -83,7 +140,7 @@ class ChunkedMediaUploadService {
     }
 
     final completedParts = <Map<String, dynamic>>[];
-    if (resumeSessionId != null) {
+    if (resumed) {
       final status = await _getSession(sessionId, cancelToken);
       final existing = status['completedParts'];
       if (existing is List) {
@@ -142,7 +199,7 @@ class ChunkedMediaUploadService {
       cancelToken: cancelToken,
     );
 
-    await sessionStore?.clear(prepared);
+    await sessionStore?.clear(localPath);
 
     return UploadedMedia(
       path: complete['path'] as String,

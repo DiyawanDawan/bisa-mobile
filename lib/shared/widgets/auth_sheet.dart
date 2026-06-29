@@ -7,7 +7,10 @@ import 'package:lucide_icons_flutter/lucide_icons.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
+import '../../core/constants/app_layout.dart';
 import '../../core/constants/app_colors.dart';
+import '../../core/constants/app_text_styles.dart';
+import '../../core/utils/app_feedback.dart';
 import '../../core/utils/router.dart';
 import '../../features/auth/presentation/bloc/auth_cubit.dart';
 import 'custom_button.dart';
@@ -21,7 +24,7 @@ class AuthSheet extends StatefulWidget {
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
-      backgroundColor: Colors.transparent,
+      backgroundColor: AppColors.transparent,
       builder: (context) => Padding(
         padding: EdgeInsets.only(
           bottom: MediaQuery.of(context).viewInsets.bottom,
@@ -107,14 +110,7 @@ class _AuthSheetState extends State<AuthSheet> {
           authenticated: (_) {
             Navigator.pop(context); // Close sheet on success
           },
-          error: (message) => ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: Text(message),
-              backgroundColor: AppColors.error,
-              behavior: SnackBarBehavior.floating,
-              margin: EdgeInsets.all(16.r),
-            ),
-          ),
+          error: (message) => showErrorSnackBar(context, message),
           orElse: () {},
         );
       },
@@ -122,17 +118,19 @@ class _AuthSheetState extends State<AuthSheet> {
         top: false,
         child: Container(
         padding: EdgeInsets.fromLTRB(
-          24.w,
-          16.h,
-          24.w,
-          24.h,
+          AppSpacing.xl,
+          AppSpacing.md,
+          AppSpacing.xl,
+          AppSpacing.xl,
         ),
         decoration: BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.vertical(top: Radius.circular(32.r)),
+          color: AppColors.surface,
+          borderRadius: BorderRadius.vertical(
+            top: Radius.circular(AppSpacing.xxlPx.r),
+          ),
           boxShadow: [
             BoxShadow(
-              color: Colors.black.withOpacity(0.1),
+              color: AppColors.black.withValues(alpha: 0.1),
               blurRadius: 20,
               offset: const Offset(0, -5),
             ),
@@ -151,7 +149,7 @@ class _AuthSheetState extends State<AuthSheet> {
                     height: 6.h,
                     decoration: BoxDecoration(
                       color: AppColors.grey300,
-                      borderRadius: BorderRadius.circular(10.r),
+                      borderRadius: BorderRadius.circular(AppRadius.md),
                     ),
                   ),
                 ),
@@ -174,40 +172,31 @@ class _AuthSheetState extends State<AuthSheet> {
                 ),
                 SizedBox(height: 4.h),
                 Text(
-                  'Masuk ke BISA',
-                  style: TextStyle(
-                    fontSize: 24.sp,
-                    fontWeight: FontWeight.w900,
-                    color: AppColors.textPrimary,
-                    letterSpacing: -0.5,
-                  ),
+                  'shared.auth_sheet_title'.tr(),
+                  style: AppTextStyles.sheetTitle(),
                 ),
-                SizedBox(height: 8.h),
+                SizedBox(height: AppSpacing.sm),
                 Text(
-                  'Silakan masuk untuk melanjutkan transaksi.',
-                  style: TextStyle(
-                    fontSize: 14.sp,
-                    color: AppColors.textSecondary,
-                    fontWeight: FontWeight.w500,
-                  ),
+                  'shared.auth_sheet_subtitle'.tr(),
+                  style: AppTextStyles.body(color: AppColors.textSecondary),
                 ),
-                SizedBox(height: 32.h),
+                SizedBox(height: AppSpacing.xxl),
                 CustomTextField(
-                  label: 'email_1'.tr().tr(),
-                  hint: 'emailhint_1'.tr().tr().tr(),
+                  label: 'email'.tr(),
+                  hint: 'email_hint'.tr(),
                   controller: _emailController,
                   keyboardType: TextInputType.emailAddress,
                   prefixIcon: LucideIcons.mail,
                 ),
-                SizedBox(height: 20.h),
+                SizedBox(height: AppSpacing.lg),
                 CustomTextField(
-                  label: 'password1'.tr().tr().tr(),
-                  hint: 'passwordhint_1'.tr().tr().tr(),
+                  label: 'password'.tr(),
+                  hint: 'password_hint'.tr(),
                   controller: _passwordController,
                   isPassword: true,
                   prefixIcon: LucideIcons.lock,
                 ),
-                SizedBox(height: 12.h),
+                SizedBox(height: AppSpacing.md12),
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
@@ -229,11 +218,10 @@ class _AuthSheetState extends State<AuthSheet> {
                             ),
                           ),
                         ),
-                        SizedBox(width: 8.w),
+                        SizedBox(width: AppSpacing.sm),
                         Text(
-                          'Ingat Saya',
-                          style: TextStyle(
-                            fontSize: 13.sp,
+                          'auth.remember_me'.tr(),
+                          style: AppTextStyles.bodySm(
                             fontWeight: FontWeight.w600,
                             color: AppColors.textSecondary,
                           ),
@@ -248,19 +236,16 @@ class _AuthSheetState extends State<AuthSheet> {
                       ),
                       child: Text(
                         'forgot_password'.tr(),
-                        style: TextStyle(
-                          fontWeight: FontWeight.w700,
-                          fontSize: 13.sp,
-                        ),
+                        style: AppTextStyles.bodySm(fontWeight: FontWeight.w700),
                       ),
                     ),
                   ],
                 ),
-                SizedBox(height: 24.h),
+                SizedBox(height: AppSpacing.xl),
                 BlocBuilder<AuthCubit, AuthState>(
                   builder: (context, state) {
                     return CustomButton(
-                      text: 'login1'.tr().tr().tr(),
+                      text: 'login'.tr(),
                       useGradient: true,
                       isLoading: state.maybeWhen(
                         loading: () => true,
@@ -281,36 +266,35 @@ class _AuthSheetState extends State<AuthSheet> {
                   },
                 ),
                 if (kDebugMode) ...[
-                  SizedBox(height: 12.h),
+                  SizedBox(height: AppSpacing.md12),
                   Row(
                     children: [
                       Expanded(
                         child: _demoFillChip(
-                          label: 'Demo Buyer',
+                          label: 'auth.demo_buyer'.tr(),
                           onTap: () => _fillDemoCredentials(buyer: true),
                         ),
                       ),
-                      SizedBox(width: 8.w),
+                      SizedBox(width: AppSpacing.sm),
                       Expanded(
                         child: _demoFillChip(
-                          label: 'Demo Supplier',
+                          label: 'auth.demo_supplier'.tr(),
                           onTap: () => _fillDemoCredentials(buyer: false),
                         ),
                       ),
                     ],
                   ),
                 ],
-                SizedBox(height: 24.h),
+                SizedBox(height: AppSpacing.xl),
                 Row(
                   children: [
                     const Expanded(child: Divider(color: AppColors.grey200)),
                     Padding(
-                      padding: EdgeInsets.symmetric(horizontal: 16.w),
+                      padding: EdgeInsets.symmetric(horizontal: AppSpacing.md),
                       child: Text(
                         'or_continue_with'.tr(),
-                        style: TextStyle(
+                        style: AppTextStyles.bodySecondary(
                           color: AppColors.textHint,
-                          fontSize: 12.sp,
                           fontWeight: FontWeight.w700,
                         ),
                       ),
@@ -318,82 +302,81 @@ class _AuthSheetState extends State<AuthSheet> {
                     const Expanded(child: Divider(color: AppColors.grey200)),
                   ],
                 ),
-                SizedBox(height: 24.h),
-                Opacity(
-                  opacity: 0.65,
-                  child: Container(
-                    height: 54.h,
-                    decoration: BoxDecoration(
-                      color: AppColors.white,
-                      borderRadius: BorderRadius.circular(16.r),
-                      border: Border.all(color: AppColors.grey200),
-                    ),
-                    child: Row(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        SvgPicture.network(
-                          'https://www.vectorlogo.zone/logos/google/google-icon.svg',
-                          width: 20.w,
-                          height: 20.w,
-                          placeholderBuilder: (context) => Icon(
-                            Icons.g_mobiledata_rounded,
-                            size: 24.sp,
-                            color: AppColors.textPrimary,
-                          ),
-                        ),
-                        SizedBox(width: 10.w),
-                        Text(
-                          'Google',
-                          style: TextStyle(
-                            fontWeight: FontWeight.w700,
-                            fontSize: 14.sp,
-                            color: AppColors.textPrimary,
-                          ),
-                        ),
-                        SizedBox(width: 8.w),
-                        Container(
-                          padding: EdgeInsets.symmetric(
-                            horizontal: 8.w,
-                            vertical: 3.h,
-                          ),
+                SizedBox(height: AppSpacing.xl),
+                BlocBuilder<AuthCubit, AuthState>(
+                  builder: (context, state) {
+                    final isLoading = state.maybeWhen(
+                      loading: () => true,
+                      orElse: () => false,
+                    );
+                    return Material(
+                      color: AppColors.transparent,
+                      child: InkWell(
+                        onTap: isLoading
+                            ? null
+                            : () => context.read<AuthCubit>().loginWithGoogle(),
+                        borderRadius: BorderRadius.circular(AppRadius.xl),
+                        child: Ink(
+                          height: AppSpacing.buttonHeightLg,
                           decoration: BoxDecoration(
-                            color: AppColors.grey100,
-                            borderRadius: BorderRadius.circular(20.r),
+                            color: AppColors.surface,
+                            borderRadius: BorderRadius.circular(AppRadius.xl),
+                            border: Border.all(color: AppColors.grey200),
                           ),
-                          child: Text(
-                            'Segera hadir',
-                            style: TextStyle(
-                              fontSize: 10.sp,
-                              fontWeight: FontWeight.w700,
-                              color: AppColors.textSecondary,
-                            ),
+                          child: Row(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              if (isLoading)
+                                SizedBox(
+                                  width: 22.w,
+                                  height: 22.w,
+                                  child: const CircularProgressIndicator(
+                                    strokeWidth: 2,
+                                    color: AppColors.primary,
+                                  ),
+                                )
+                              else
+                                SvgPicture.network(
+                                  'https://www.vectorlogo.zone/logos/google/google-icon.svg',
+                                  width: 20.w,
+                                  height: 20.w,
+                                  placeholderBuilder: (context) => Icon(
+                                    Icons.g_mobiledata_rounded,
+                                    size: 24.sp,
+                                    color: AppColors.textPrimary,
+                                  ),
+                                ),
+                              SizedBox(width: AppSpacing.sm10),
+                              Text(
+                                'shared.google_sign_in'.tr(),
+                                style: AppTextStyles.body(
+                                  fontWeight: FontWeight.w700,
+                                  color: AppColors.textPrimary,
+                                ),
+                              ),
+                            ],
                           ),
                         ),
-                      ],
-                    ),
-                  ),
+                      ),
+                    );
+                  },
                 ),
-                SizedBox(height: 24.h),
+                SizedBox(height: AppSpacing.xl),
                 Center(
                   child: Row(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
                       Text(
                         'no_account'.tr(),
-                        style: TextStyle(
-                          color: AppColors.textSecondary,
-                          fontSize: 14.sp,
-                          fontWeight: FontWeight.w500,
-                        ),
+                        style: AppTextStyles.body(color: AppColors.textSecondary),
                       ),
                       GestureDetector(
                         onTap: () => _closeSheetAndGo('/register'),
                         child: Text(
                           'register_now'.tr(),
-                          style: TextStyle(
+                          style: AppTextStyles.body(
                             color: AppColors.primary,
                             fontWeight: FontWeight.w800,
-                            fontSize: 14.sp,
                           ),
                         ),
                       ),
@@ -412,19 +395,18 @@ class _AuthSheetState extends State<AuthSheet> {
   Widget _demoFillChip({required String label, required VoidCallback onTap}) {
     return InkWell(
       onTap: onTap,
-      borderRadius: BorderRadius.circular(10.r),
+      borderRadius: BorderRadius.circular(AppRadius.md),
       child: Container(
         height: 36.h,
         alignment: Alignment.center,
         decoration: BoxDecoration(
-          color: AppColors.primary.withOpacity(0.08),
-          border: Border.all(color: AppColors.primary.withOpacity(0.2)),
-          borderRadius: BorderRadius.circular(10.r),
+          color: AppColors.primary.withValues(alpha: 0.08),
+          border: Border.all(color: AppColors.primary.withValues(alpha: 0.2)),
+          borderRadius: BorderRadius.circular(AppRadius.md),
         ),
         child: Text(
           label,
-          style: TextStyle(
-            fontSize: 12.sp,
+          style: AppTextStyles.bodySecondary(
             fontWeight: FontWeight.w700,
             color: AppColors.primary,
           ),

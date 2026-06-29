@@ -1,8 +1,11 @@
+import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
+import '../../../../core/constants/app_layout.dart';
 import '../../../../core/constants/app_colors.dart';
 import '../../../../core/utils/safe_area_utils.dart';
+import '../marketplace_i18n.dart';
 import '../../data/models/category_model.dart';
 
 /// Searchable category picker — used after product mode / biomassa type is chosen.
@@ -11,17 +14,20 @@ Future<CategoryModel?> showCategorySearchPicker({
   required List<CategoryModel> categories,
   CategoryModel? selected,
   required String title,
-  String searchHint = 'Cari kategori...',
+  String searchHint = '',
 }) {
+  final hint = searchHint.isEmpty
+      ? 'marketplace.search_category_hint'.tr()
+      : searchHint;
   return showModalBottomSheet<CategoryModel>(
     context: context,
     isScrollControlled: true,
-    backgroundColor: Colors.transparent,
+    backgroundColor: AppColors.transparent,
     builder: (ctx) => _CategorySearchSheet(
       categories: categories,
       selected: selected,
       title: title,
-      searchHint: searchHint,
+      searchHint: hint,
     ),
   );
 }
@@ -35,10 +41,10 @@ class CategoryPickerField extends StatelessWidget {
     required this.categories,
     required this.selectedId,
     required this.onSelected,
-    this.disabledHint = 'Pilih jenis biomassa terlebih dahulu',
-    this.emptyHint = 'Tidak ada kategori',
-    this.pickerTitle = 'Pilih Kategori',
-    this.searchHint = 'Cari kategori...',
+    this.disabledHint = '',
+    this.emptyHint = '',
+    this.pickerTitle = '',
+    this.searchHint = '',
   });
 
   final String label;
@@ -64,13 +70,25 @@ class CategoryPickerField extends StatelessWidget {
       }
     }
 
+    final disabledHintText = disabledHint.isEmpty
+        ? 'marketplace.pick_biomassa_first'.tr()
+        : disabledHint;
+    final emptyHintText =
+        emptyHint.isEmpty ? 'marketplace.no_category'.tr() : emptyHint;
+    final pickerTitleText = pickerTitle.isEmpty
+        ? 'marketplace.pick_category_title'.tr()
+        : pickerTitle;
+    final searchHintText = searchHint.isEmpty
+        ? 'marketplace.search_category_hint'.tr()
+        : searchHint;
+
     final hint = !enabled
-        ? disabledHint
+        ? disabledHintText
         : isLoading
-            ? 'Memuat kategori...'
+            ? 'marketplace.loading_categories'.tr()
             : categories.isEmpty
-                ? emptyHint
-                : 'Pilih kategori';
+                ? emptyHintText
+                : 'marketplace.pick_category'.tr();
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -83,10 +101,10 @@ class CategoryPickerField extends StatelessWidget {
             color: AppColors.textPrimary,
           ),
         ),
-        SizedBox(height: 8.h),
+        SizedBox(height: AppSpacing.sm),
         Material(
           color: enabled ? AppColors.white : AppColors.grey50,
-          borderRadius: BorderRadius.circular(8.r),
+          borderRadius: BorderRadius.circular(AppRadius.button),
           child: InkWell(
             onTap: enabled && !isLoading && categories.isNotEmpty
                 ? () async {
@@ -94,13 +112,13 @@ class CategoryPickerField extends StatelessWidget {
                       context: context,
                       categories: categories,
                       selected: selected,
-                      title: pickerTitle,
-                      searchHint: searchHint,
+                      title: pickerTitleText,
+                      searchHint: searchHintText,
                     );
                     if (picked != null) onSelected(picked);
                   }
                 : null,
-            borderRadius: BorderRadius.circular(8.r),
+            borderRadius: BorderRadius.circular(AppRadius.button),
             child: Container(
               width: double.infinity,
               padding: EdgeInsets.symmetric(horizontal: 12.w, vertical: 14.h),
@@ -108,7 +126,7 @@ class CategoryPickerField extends StatelessWidget {
                 border: Border.all(
                   color: enabled ? AppColors.grey300 : AppColors.grey200,
                 ),
-                borderRadius: BorderRadius.circular(8.r),
+                borderRadius: BorderRadius.circular(AppRadius.button),
               ),
               child: Row(
                 children: [
@@ -117,7 +135,7 @@ class CategoryPickerField extends StatelessWidget {
                     size: 18.sp,
                     color: enabled ? AppColors.primary : AppColors.grey300,
                   ),
-                  SizedBox(width: 10.w),
+                  SizedBox(width: AppSpacing.sm10),
                   Expanded(
                     child: Text(
                       selected?.name ?? hint,
@@ -202,13 +220,13 @@ class _CategorySearchSheetState extends State<_CategorySearchSheet> {
       child: Container(
         constraints: BoxConstraints(maxHeight: 0.75.sh),
         decoration: BoxDecoration(
-          color: AppColors.white,
-          borderRadius: BorderRadius.vertical(top: Radius.circular(20.r)),
+          color: AppColors.surface,
+          borderRadius: BorderRadius.vertical(top: Radius.circular(AppRadius.pill)),
         ),
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            SizedBox(height: 10.h),
+            SizedBox(height: AppSpacing.sm10),
             Container(
               width: 40.w,
               height: 4.h,
@@ -239,7 +257,7 @@ class _CategorySearchSheetState extends State<_CategorySearchSheet> {
               ),
             ),
             Padding(
-              padding: EdgeInsets.symmetric(horizontal: 20.w),
+              padding: EdgeInsets.symmetric(horizontal: AppSpacing.lg),
               child: TextField(
                 controller: _searchController,
                 autofocus: true,
@@ -249,20 +267,20 @@ class _CategorySearchSheetState extends State<_CategorySearchSheet> {
                   filled: true,
                   fillColor: AppColors.grey50,
                   border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(12.r),
+                    borderRadius: BorderRadius.circular(AppRadius.lg),
                     borderSide: BorderSide.none,
                   ),
-                  contentPadding: EdgeInsets.symmetric(vertical: 12.h),
+                  contentPadding: EdgeInsets.symmetric(vertical: AppSpacing.md12),
                 ),
               ),
             ),
-            SizedBox(height: 8.h),
+            SizedBox(height: AppSpacing.sm),
             Flexible(
               child: _filtered.isEmpty
                   ? Padding(
-                      padding: EdgeInsets.all(32.w),
+                      padding: EdgeInsets.all(AppSpacing.xxl),
                       child: Text(
-                        'Kategori tidak ditemukan',
+                        'marketplace.category_not_found'.tr(),
                         style: TextStyle(
                           color: AppColors.textSecondary,
                           fontSize: 14.sp,
@@ -323,17 +341,7 @@ class _CategorySearchSheetState extends State<_CategorySearchSheet> {
 }
 
 /// Human-readable labels for biomassa type enum values.
-const Map<String, String> kBiomassaTypeLabels = {
-  'BIOCHAR': 'Biochar',
-  'SEKAM_PADI': 'Sekam Padi',
-  'TONGKOL_JAGUNG': 'Tongkol Jagung',
-  'TEMPURUNG_KELAPA': 'Tempurung Kelapa',
-  'WOOD_CHIP': 'Wood Chip',
-  'OTHER': 'Lainnya',
-};
-
-String biomassaTypeLabel(String value) =>
-    kBiomassaTypeLabels[value] ?? value.replaceAll('_', ' ');
+String biomassaTypeLabel(String value) => marketplaceBiomassaTypeLabel(value);
 
 const List<String> kBiomassaTypeValues = [
   'BIOCHAR',

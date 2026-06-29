@@ -1,8 +1,11 @@
+import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
+import '../../../../core/i18n/failure_messages.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:flutter_staggered_grid_view/flutter_staggered_grid_view.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
+import 'package:mobile_bisa/core/constants/app_layout.dart';
 import 'package:mobile_bisa/core/constants/app_colors.dart';
 import 'package:mobile_bisa/features/marketplace/presentation/bloc/marketplace_cubit.dart';
 import 'package:mobile_bisa/features/marketplace/presentation/widgets/product_card.dart';
@@ -80,7 +83,7 @@ class _CollectionProductsPageState extends State<CollectionProductsPage> {
         backgroundColor: AppColors.background,
         appBar: BisaAppBar(
           title: widget.title,
-          backgroundColor: Colors.white,
+          backgroundColor: AppColors.surface,
         ),
         body: RefreshIndicator(
           color: AppColors.primary,
@@ -93,7 +96,7 @@ class _CollectionProductsPageState extends State<CollectionProductsPage> {
                   physics: const AlwaysScrollableScrollPhysics(),
                   child: const ShimmerProductGridPlaceholder(itemCount: 6),
                 ),
-                error: (message) => Center(child: Text(message)),
+                error: (message) => Center(child: Text(message.localizedFailure)),
                 loaded: (products, hasReachedMax) {
                   if (products.isEmpty) {
                     return Center(
@@ -105,9 +108,9 @@ class _CollectionProductsPageState extends State<CollectionProductsPage> {
                             size: 64.sp,
                             color: AppColors.grey200,
                           ),
-                          SizedBox(height: 20.h),
+                          SizedBox(height: AppSpacing.lg),
                           Text(
-                            'Produk tidak ditemukan',
+                            'marketplace.no_products_found'.tr(),
                             style: TextStyle(
                               color: AppColors.textSecondary,
                               fontSize: 16.sp,
@@ -121,10 +124,10 @@ class _CollectionProductsPageState extends State<CollectionProductsPage> {
                   return MasonryGridView.count(
                     controller: _scrollController,
                     physics: const BouncingScrollPhysics(),
-                    padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 16.h),
+                    padding: EdgeInsets.symmetric(horizontal: AppSpacing.md, vertical: AppSpacing.md),
                     crossAxisCount: 2,
-                    mainAxisSpacing: 16.h,
-                    crossAxisSpacing: 12.w,
+                    mainAxisSpacing: AppSpacing.md,
+                    crossAxisSpacing: AppSpacing.md12,
                     itemCount: products.length + (hasReachedMax ? 0 : 1),
                     itemBuilder: (context, index) {
                       if (index >= products.length) {

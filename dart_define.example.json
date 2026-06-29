@@ -2,5 +2,6 @@
   "API_URL": "http://localhost:3000/api/v1",
   "MEDIA_BASE_URL": "http://localhost:3000",
   "PUSHER_KEY": "your-pusher-key",
-  "PUSHER_CLUSTER": "ap1"
+  "PUSHER_CLUSTER": "ap1",
+  "_comment": "Salin ke dart_define.dev.json (localhost), dart_define.emulator.json (10.0.2.2), atau dart_define.device.json (IP LAN)"
 }

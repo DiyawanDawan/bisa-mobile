@@ -1,6 +1,8 @@
+import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
+import '../../../../core/constants/app_layout.dart';
 import '../../../../core/constants/app_colors.dart';
 import '../../../../core/utils/product_pricing.dart';
 import '../utils/negotiation_quantity_rules.dart';
@@ -26,6 +28,8 @@ class NegotiationStockBanner extends StatelessWidget {
     final qtyOverStock =
         requestedQty != null && !outOfStock && requestedQty! > stock;
     final lowStock = !outOfStock && stock <= minOrder * 2;
+    final stockLabel = NegotiationQuantityRules.formatStock(stock, unit);
+    final minOrderLabel = ProductPricingInfo.formatQty(minOrder);
 
     Color bg;
     Color border;
@@ -37,40 +41,46 @@ class NegotiationStockBanner extends StatelessWidget {
       bg = AppColors.error.withValues(alpha: 0.08);
       border = AppColors.error.withValues(alpha: 0.25);
       iconColor = AppColors.error;
-      title = 'Stok habis';
-      detail = 'Produk tidak tersedia untuk penawaran jumlah baru.';
+      title = 'negotiation.stock_out_title'.tr();
+      detail = 'negotiation.stock_out_detail'.tr();
     } else if (qtyOverStock) {
       bg = AppColors.error.withValues(alpha: 0.08);
       border = AppColors.error.withValues(alpha: 0.25);
       iconColor = AppColors.error;
-      title = 'Jumlah melebihi stok';
-      detail =
-          'Anda meminta ${ProductPricingInfo.formatQty(requestedQty!)} $unit, '
-          'stok tersedia ${NegotiationQuantityRules.formatStock(stock, unit)}.';
+      title = 'negotiation.stock_over_title'.tr();
+      detail = 'negotiation.stock_over_detail'.tr(namedArgs: {
+        'requested': ProductPricingInfo.formatQty(requestedQty!),
+        'unit': unit,
+        'stock': stockLabel,
+      });
     } else if (lowStock) {
       bg = AppColors.warning.withValues(alpha: 0.1);
       border = AppColors.warning.withValues(alpha: 0.3);
       iconColor = AppColors.warning;
-      title = 'Stok terbatas';
-      detail =
-          'Tersedia ${NegotiationQuantityRules.formatStock(stock, unit)} · '
-          'min. order ${ProductPricingInfo.formatQty(minOrder)} $unit';
+      title = 'negotiation.stock_low_title'.tr();
+      detail = 'negotiation.stock_low_detail'.tr(namedArgs: {
+        'stock': stockLabel,
+        'minOrder': minOrderLabel,
+        'unit': unit,
+      });
     } else {
       bg = AppColors.success.withValues(alpha: 0.08);
       border = AppColors.success.withValues(alpha: 0.2);
       iconColor = AppColors.success;
-      title = 'Stok tersedia';
-      detail =
-          '${NegotiationQuantityRules.formatStock(stock, unit)} · '
-          'min. order ${ProductPricingInfo.formatQty(minOrder)} $unit';
+      title = 'negotiation.stock_ok_title'.tr();
+      detail = 'negotiation.stock_ok_detail'.tr(namedArgs: {
+        'stock': stockLabel,
+        'minOrder': minOrderLabel,
+        'unit': unit,
+      });
     }
 
     return Container(
       width: double.infinity,
-      padding: EdgeInsets.symmetric(horizontal: 12.w, vertical: 10.h),
+      padding: EdgeInsets.symmetric(horizontal: AppSpacing.md12, vertical: AppSpacing.sm10),
       decoration: BoxDecoration(
         color: bg,
-        borderRadius: BorderRadius.circular(12.r),
+        borderRadius: BorderRadius.circular(AppRadius.lg),
         border: Border.all(color: border),
       ),
       child: Row(
@@ -83,7 +93,7 @@ class NegotiationStockBanner extends StatelessWidget {
             size: 18.sp,
             color: iconColor,
           ),
-          SizedBox(width: 10.w),
+          SizedBox(width: AppSpacing.sm10),
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,

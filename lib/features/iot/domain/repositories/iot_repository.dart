@@ -24,4 +24,17 @@ abstract class IotRepository {
   Future<Either<Failure, void>> updateDevice(String deviceId, Map<String, dynamic> data);
   Future<Either<Failure, void>> deleteDevice(String deviceId);
   Future<Either<Failure, Map<String, dynamic>>> subscribePro(String channelCode, String method);
+  Future<Either<Failure, Map<String, dynamic>?>> getPyrolysisSession(String deviceId);
+  Future<Either<Failure, Map<String, dynamic>>> startPyrolysisSession(
+    String deviceId, {
+    required String biomassaType,
+    required double beratInput,
+  });
+  Future<Either<Failure, void>> stopPyrolysisSession(String deviceId);
+  Future<Either<Failure, Map<String, dynamic>>> analyzeRealtime(
+    String deviceId, {
+    String? biomassaType,
+    double? beratInput,
+    int? waktuPembakaranMin,
+  });
 }

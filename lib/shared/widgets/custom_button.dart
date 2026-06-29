@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import '../../core/constants/app_colors.dart';
+import '../../core/constants/app_layout.dart';
+import '../../core/constants/app_text_styles.dart';
 
 enum BisaButtonSize { sm, md, lg }
 
@@ -49,8 +51,8 @@ class CustomButton extends StatelessWidget {
   BisaButtonSize get _size {
     if (size != null) return size!;
     if (height != null) {
-      if (height! <= 42.h) return BisaButtonSize.sm;
-      if (height! <= 50.h) return BisaButtonSize.md;
+      if (height! <= AppSpacing.buttonHeightSm + 2.h) return BisaButtonSize.sm;
+      if (height! <= AppSpacing.buttonHeight + 2.h) return BisaButtonSize.md;
       return BisaButtonSize.lg;
     }
     return BisaButtonSize.lg;
@@ -60,11 +62,11 @@ class CustomButton extends StatelessWidget {
     if (height != null) return height!;
     switch (_size) {
       case BisaButtonSize.sm:
-        return 40.h;
+        return AppSpacing.buttonHeightSm;
       case BisaButtonSize.md:
-        return 48.h;
+        return AppSpacing.buttonHeight;
       case BisaButtonSize.lg:
-        return 56.h;
+        return AppSpacing.buttonHeightLg;
     }
   }
 
@@ -82,14 +84,14 @@ class CustomButton extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final effectiveWidth = fullWidth ? (width ?? double.infinity) : width;
-    final radius = BorderRadius.circular(16.r);
+    final radius = BorderRadius.circular(AppRadius.xl);
 
     if (_variant == BisaButtonVariant.ghost) {
       return TextButton.icon(
         onPressed: isLoading ? null : onPressed,
         style: TextButton.styleFrom(
           foregroundColor: textColor ?? AppColors.primary,
-          padding: EdgeInsets.symmetric(horizontal: 8.w, vertical: 4.h),
+          padding: EdgeInsets.symmetric(horizontal: AppSpacing.sm, vertical: AppSpacing.xs),
         ),
         icon: icon != null && !iconTrailing
             ? Icon(icon, size: _fontSize + 2)
@@ -147,8 +149,8 @@ class CustomButton extends StatelessWidget {
       child: ElevatedButton.icon(
         onPressed: isLoading ? null : onPressed,
         style: ElevatedButton.styleFrom(
-          backgroundColor: Colors.transparent,
-          shadowColor: Colors.transparent,
+          backgroundColor: AppColors.transparent,
+          shadowColor: AppColors.transparent,
           foregroundColor: textColor ?? AppColors.textOnPrimary,
           shape: RoundedRectangleBorder(borderRadius: radius),
           splashFactory: InkRipple.splashFactory,
@@ -167,8 +169,8 @@ class CustomButton extends StatelessWidget {
   Widget _buildChild({Color? color}) {
     if (isLoading) {
       return SizedBox(
-        height: 24.h,
-        width: 24.h,
+        height: AppSpacing.xlPx.h,
+        width: AppSpacing.xlPx.h,
         child: CircularProgressIndicator(
           strokeWidth: 2.5,
           valueColor: AlwaysStoppedAnimation<Color>(
@@ -183,10 +185,8 @@ class CustomButton extends StatelessWidget {
 
     final label = Text(
       text,
-      style: TextStyle(
+      style: AppTextStyles.button(
         fontSize: _fontSize,
-        fontWeight: FontWeight.w700,
-        letterSpacing: 0.5,
         color: color,
       ),
     );
@@ -198,7 +198,7 @@ class CustomButton extends StatelessWidget {
       mainAxisAlignment: MainAxisAlignment.center,
       children: [
         Flexible(child: label),
-        SizedBox(width: 6.w),
+        SizedBox(width: AppSpacing.xs6),
         Icon(icon, size: _fontSize + 2, color: color),
       ],
     );

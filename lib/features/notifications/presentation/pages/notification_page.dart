@@ -4,8 +4,9 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:go_router/go_router.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
-import 'package:timeago/timeago.dart' as timeago;
+import 'package:mobile_bisa/core/i18n/locale_formatters.dart';
 import '../../../../core/constants/app_colors.dart';
+import '../../../../core/utils/app_feedback.dart';
 import '../../domain/entities/notification_entity.dart';
 import '../bloc/notification_cubit.dart';
 import '../bloc/notification_state.dart';
@@ -35,7 +36,7 @@ class _NotificationPageState extends State<NotificationPage> {
       backgroundColor: AppColors.background,
       appBar: BisaAppBar(
         backgroundColor: AppColors.surface,
-        title: 'Notifikasi',
+        title: 'notifications.page_title'.tr(),
         actions: [
           BlocBuilder<NotificationCubit, NotificationState>(
             builder: (context, state) {
@@ -96,13 +97,7 @@ class _NotificationPageState extends State<NotificationPage> {
                     ),
                     onDismissed: (_) {
                       context.read<NotificationCubit>().deleteNotification(n.id);
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        SnackBar(
-                          content: Text('notification_deleted'.tr()),
-                          backgroundColor: AppColors.success,
-                          behavior: SnackBarBehavior.floating,
-                        ),
-                      );
+                      showSuccessSnackBar(context, 'notification_deleted');
                     },
                     child: _buildNotificationItem(context, n),
                   );
@@ -141,7 +136,7 @@ class _NotificationPageState extends State<NotificationPage> {
         ),
       ),
       child: Material(
-        color: Colors.transparent,
+        color: AppColors.transparent,
         child: InkWell(
           onTap: () => _openNotification(context, n),
           borderRadius: BorderRadius.circular(20.r),
@@ -185,7 +180,7 @@ class _NotificationPageState extends State<NotificationPage> {
                             ),
                           ),
                           Text(
-                            timeago.format(n.createdAt, locale: 'id_short'),
+                            context.formatTimeAgo(n.createdAt, short: true),
                             style: TextStyle(
                               fontSize: 10.sp,
                               color: AppColors.textHint,
@@ -232,7 +227,7 @@ class _NotificationPageState extends State<NotificationPage> {
           Container(
             padding: EdgeInsets.all(24.r),
             decoration: BoxDecoration(
-                        color: Colors.white,
+                        color: AppColors.surface,
               shape: BoxShape.circle,
               boxShadow: AppColors.softShadow,
             ),
@@ -244,7 +239,7 @@ class _NotificationPageState extends State<NotificationPage> {
           ),
           SizedBox(height: 24.h),
           Text(
-            'Belum ada notifikasi',
+            'notifications.empty_title'.tr(),
             style: TextStyle(
               color: AppColors.textSecondary,
               fontSize: 16.sp,
@@ -253,7 +248,7 @@ class _NotificationPageState extends State<NotificationPage> {
           ),
           SizedBox(height: 8.h),
           Text(
-            'Kami akan memberi tahu Anda jika ada kabar terbaru.',
+            'notifications.empty_subtitle'.tr(),
             style: TextStyle(color: AppColors.textHint, fontSize: 13.sp),
           ),
         ],

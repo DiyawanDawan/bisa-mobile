@@ -4,6 +4,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:go_router/go_router.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
+import 'package:mobile_bisa/core/constants/app_layout.dart';
 import 'package:mobile_bisa/core/constants/app_colors.dart';
 import 'package:mobile_bisa/core/utils/safe_area_utils.dart';
 import 'package:mobile_bisa/features/forum/presentation/bloc/forum_cubit.dart';
@@ -32,6 +33,30 @@ class ForumPage extends StatefulWidget {
 
 class _ForumPageState extends State<ForumPage> {
   String _selectedCategory = 'Semua';
+
+  static const _categoryValues = [
+    'Semua',
+    'Hama',
+    'Pupuk',
+    'Harga Pasar',
+    'Tips & Trik',
+    'Teknologi',
+  ];
+
+  static const _categoryKeys = [
+    'forum.cat_all',
+    'forum.cat_pests',
+    'forum.cat_fertilizer',
+    'forum.cat_market_price',
+    'forum.cat_tips',
+    'forum.cat_technology',
+  ];
+
+  String _categoryLabel(String category) {
+    final i = _categoryValues.indexOf(category);
+    if (i >= 0) return _categoryKeys[i].tr();
+    return category;
+  }
   bool _isSearching = false;
   final TextEditingController _searchController = TextEditingController();
   String? _activeTag;
@@ -58,15 +83,6 @@ class _ForumPageState extends State<ForumPage> {
     context.read<ForumCubit>().getPosts(clearTag: true);
   }
 
-  final List<String> _categories = [
-    'Semua',
-    'Hama',
-    'Pupuk',
-    'Harga Pasar',
-    'Tips & Trik',
-    'Teknologi',
-  ];
-
   @override
   Widget build(BuildContext context) {
     return BlocListener<AuthCubit, AuthState>(
@@ -83,13 +99,13 @@ class _ForumPageState extends State<ForumPage> {
         appBar: BisaAppBar(
           showBackButton: false,
           centerTitle: false,
-          title: _isSearching ? null : 'Komunitas BISA',
+          title: _isSearching ? null : 'forum.title'.tr(),
           titleWidget: _isSearching
               ? TextField(
                   controller: _searchController,
                   autofocus: true,
                   decoration: InputDecoration(
-                    hintText: 'Cari diskusi...',
+                    hintText: 'forum.search_hint'.tr(),
                     hintStyle: TextStyle(
                       color: AppColors.textHint,
                       fontSize: 14.sp,
@@ -131,6 +147,11 @@ class _ForumPageState extends State<ForumPage> {
               },
             ),
             BisaAppBarAction(
+              icon: LucideIcons.users,
+              onTap: () => context.push('/forum-groups'),
+              backgroundColor: AppColors.grey50,
+            ),
+            BisaAppBarAction(
               icon: _isSearching ? LucideIcons.x : LucideIcons.search,
               onTap: () {
                 setState(() {
@@ -153,7 +174,7 @@ class _ForumPageState extends State<ForumPage> {
               initial: () => const SizedBox.shrink(),
               loading: () => SingleChildScrollView(
                 physics: const AlwaysScrollableScrollPhysics(),
-                padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 12.h),
+                padding: EdgeInsets.symmetric(horizontal: AppSpacing.md, vertical: AppSpacing.md12),
                 child: const ShimmerListPlaceholder(itemCount: 5, itemHeight: 120),
               ),
               success: () => const SizedBox.shrink(),
@@ -166,7 +187,7 @@ class _ForumPageState extends State<ForumPage> {
                       size: 48.sp,
                       color: AppColors.error,
                     ),
-                    SizedBox(height: 16.h),
+                    SizedBox(height: AppSpacing.md),
                     Text(
                       message,
                       style: TextStyle(color: AppColors.textSecondary),
@@ -197,14 +218,14 @@ class _ForumPageState extends State<ForumPage> {
                       if (_activeTag != null) _buildActiveTagBanner(),
                       // Create Post Header
                       Container(
-                        margin: EdgeInsets.all(20.r),
-                        padding: EdgeInsets.all(16.r),
+                        margin: EdgeInsets.all(AppSpacing.lg),
+                        padding: EdgeInsets.all(AppSpacing.md),
                         decoration: BoxDecoration(
-                          color: Colors.white,
-                          borderRadius: BorderRadius.circular(16.r),
+                          color: AppColors.surface,
+                          borderRadius: BorderRadius.circular(AppRadius.xl),
                           boxShadow: [
                             BoxShadow(
-                              color: Colors.black.withOpacity(0.03),
+                              color: AppColors.black.withOpacity(0.03),
                               blurRadius: 10,
                               offset: const Offset(0, 4),
                             ),
@@ -220,11 +241,11 @@ class _ForumPageState extends State<ForumPage> {
                                 );
                                 return BisaAvatar(
                                   imageUrl: avatar,
-                                  radius: 20.r,
+                                  radius: AppRadius.pill,
                                 );
                               },
                             ),
-                            SizedBox(width: 12.w),
+                            SizedBox(width: AppSpacing.md12),
                             Expanded(
                               child: GestureDetector(
                                 onTap: () {
@@ -253,15 +274,15 @@ class _ForumPageState extends State<ForumPage> {
                                 },
                                 child: Container(
                                   padding: EdgeInsets.symmetric(
-                                    horizontal: 16.w,
-                                    vertical: 10.h,
+                                    horizontal: AppSpacing.md,
+                    vertical: AppSpacing.sm10,
                                   ),
                                   decoration: BoxDecoration(
                                     color: AppColors.grey50,
-                                    borderRadius: BorderRadius.circular(24.r),
+                                    borderRadius: BorderRadius.circular(AppSpacing.xlPx.r),
                                   ),
                                   child: Text(
-                                    'Bagikan pengalaman atau tanya sesuatu...',
+                                    'forum.compose_hint'.tr(),
                                     style: TextStyle(
                                       color: AppColors.textHint,
                                       fontSize: 12.sp,
@@ -271,7 +292,7 @@ class _ForumPageState extends State<ForumPage> {
                                 ),
                               ),
                             ),
-                            SizedBox(width: 12.w),
+                            SizedBox(width: AppSpacing.md12),
                             Icon(
                               LucideIcons.image,
                               color: AppColors.grey400,
@@ -281,21 +302,21 @@ class _ForumPageState extends State<ForumPage> {
                         ),
                       ),
                       Padding(
-                        padding: EdgeInsets.only(bottom: 20.h),
+                        padding: EdgeInsets.only(bottom: AppSpacing.lg),
                         child: SizedBox(
                           height: 36.h,
                           child: ListView.builder(
                             scrollDirection: Axis.horizontal,
-                            padding: EdgeInsets.symmetric(horizontal: 20.w),
-                            itemCount: _categories.length,
+                            padding: EdgeInsets.symmetric(horizontal: AppSpacing.lg),
+                            itemCount: _categoryValues.length,
                             itemBuilder: (context, index) {
-                              final category = _categories[index];
+                              final category = _categoryValues[index];
                               final isSelected = _selectedCategory == category;
                               return Padding(
-                                padding: EdgeInsets.only(right: 8.w),
+                                padding: EdgeInsets.only(right: AppSpacing.sm),
                                 child: Center(
                                   child: BisaFilterChip(
-                                    label: category,
+                                    label: _categoryLabel(category),
                                     isSelected: isSelected,
                                     onTap: () {
                                       setState(() {
@@ -321,11 +342,11 @@ class _ForumPageState extends State<ForumPage> {
                                 size: 64.sp,
                                 color: AppColors.grey200,
                               ),
-                              SizedBox(height: 16.h),
+                              SizedBox(height: AppSpacing.md),
                               Text(
                                 _selectedCategory == 'Semua'
                                     ? 'belum_ada_diskusi'.tr()
-                                    : 'Belum ada diskusi untuk kategori ini',
+                                    : 'forum.empty_category'.tr(),
                                 style: TextStyle(
                                   color: AppColors.textSecondary,
                                   fontSize: 14.sp,
@@ -338,7 +359,7 @@ class _ForumPageState extends State<ForumPage> {
                         ...filteredPosts
                             .map(
                               (post) => Padding(
-                                padding: EdgeInsets.symmetric(horizontal: 20.w),
+                                padding: EdgeInsets.symmetric(horizontal: AppSpacing.lg),
                                 child: PostCard(
                                   post: post,
                                   onTap: () => Navigator.push(
@@ -393,7 +414,10 @@ class _ForumPageState extends State<ForumPage> {
                                   ),
                                   onShare: () {
                                     Share.share(
-                                      'Baca diskusi menarik di BISA Community: ${post.title}\n\n${post.contentPreview ?? post.content}',
+                                      'forum.share_list'.tr(namedArgs: {
+                                        'title': post.title,
+                                        'content': post.contentPreview ?? post.content,
+                                      }),
                                       subject: post.title,
                                     );
                                   },
@@ -418,10 +442,10 @@ class _ForumPageState extends State<ForumPage> {
   Widget _buildActiveTagBanner() {
     return Container(
       margin: EdgeInsets.fromLTRB(20.w, 16.h, 20.w, 0),
-      padding: EdgeInsets.symmetric(horizontal: 14.w, vertical: 10.h),
+      padding: EdgeInsets.symmetric(horizontal: AppSpacing.section, vertical: AppSpacing.sm10),
       decoration: BoxDecoration(
         color: AppColors.primary.withValues(alpha: 0.1),
-        borderRadius: BorderRadius.circular(12.r),
+        borderRadius: BorderRadius.circular(AppRadius.lg),
         border: Border.all(
           color: AppColors.primary.withValues(alpha: 0.3),
         ),
@@ -438,7 +462,7 @@ class _ForumPageState extends State<ForumPage> {
                   color: AppColors.textPrimary,
                 ),
                 children: [
-                  const TextSpan(text: 'Menampilkan diskusi dengan tag '),
+                  TextSpan(text: 'forum.tag_filter_prefix'.tr()),
                   TextSpan(
                     text: _activeTag,
                     style: TextStyle(
@@ -452,7 +476,7 @@ class _ForumPageState extends State<ForumPage> {
           ),
           InkWell(
             onTap: _clearTagFilter,
-            borderRadius: BorderRadius.circular(20.r),
+            borderRadius: BorderRadius.circular(AppRadius.pill),
             child: Padding(
               padding: EdgeInsets.all(4.w),
               child: Icon(LucideIcons.x, size: 16.sp, color: AppColors.primary),

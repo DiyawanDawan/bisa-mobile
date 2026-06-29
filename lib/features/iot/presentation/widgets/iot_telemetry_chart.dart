@@ -1,7 +1,9 @@
+import 'package:easy_localization/easy_localization.dart';
 import 'package:fl_chart/fl_chart.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
+import '../../../../core/constants/app_layout.dart';
 import '../../../../core/constants/app_colors.dart';
 import '../../domain/entities/iot_dashboard_entity.dart';
 
@@ -37,21 +39,21 @@ class IotTelemetryChart extends StatelessWidget {
     if (temperatureSeries.isEmpty) {
       return Container(
         height: 220.h,
-        padding: EdgeInsets.all(20.w),
+        padding: EdgeInsets.all(AppSpacing.lg),
         decoration: _boxDecoration,
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
             Icon(LucideIcons.chartLine, size: 40.sp, color: AppColors.grey300),
-            SizedBox(height: 10.h),
+            SizedBox(height: AppSpacing.sm10),
             Text(
-              'Belum ada data sensor pada rentang ini',
+              'iot.chart_empty_title'.tr(),
               textAlign: TextAlign.center,
               style: TextStyle(fontSize: 12.sp, color: AppColors.textSecondary),
             ),
             SizedBox(height: 4.h),
             Text(
-              'Pastikan monitoring aktif dan perangkat online',
+              'iot.chart_empty_subtitle'.tr(),
               textAlign: TextAlign.center,
               style: TextStyle(fontSize: 10.sp, color: AppColors.textHint),
             ),
@@ -104,20 +106,20 @@ class IotTelemetryChart extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
-            'Grafik Telemetri',
+            'iot.chart_title'.tr(),
             style: TextStyle(fontSize: 13.sp, fontWeight: FontWeight.w800),
           ),
           SizedBox(height: 4.h),
           Row(
             children: [
-              _legend('Suhu', AppColors.error),
+              _legend('iot.metric_temperature'.tr(), AppColors.error),
               if (humiditySeries.isNotEmpty) ...[
-                SizedBox(width: 12.w),
-                _legend('Kelembaban', AppColors.ocean),
+                SizedBox(width: AppSpacing.md12),
+                _legend('iot.metric_humidity'.tr(), AppColors.ocean),
               ],
             ],
           ),
-          SizedBox(height: 8.h),
+          SizedBox(height: AppSpacing.sm),
           Expanded(
             child: LineChart(
               LineChartData(
@@ -201,8 +203,8 @@ class IotTelemetryChart extends StatelessWidget {
   }
 
   BoxDecoration get _boxDecoration => BoxDecoration(
-        color: AppColors.white,
-        borderRadius: BorderRadius.circular(16.r),
+        color: AppColors.surface,
+        borderRadius: BorderRadius.circular(AppRadius.xl),
         border: Border.all(color: AppColors.grey100),
       );
 
@@ -227,7 +229,7 @@ class IotTelemetryChart extends StatelessWidget {
     return Row(
       mainAxisSize: MainAxisSize.min,
       children: [
-        Container(width: 10.w, height: 3.h, color: color),
+        Container(width: AppSpacing.sm10, height: 3.h, color: color),
         SizedBox(width: 4.w),
         Text(label, style: TextStyle(fontSize: 10.sp, color: AppColors.textSecondary)),
       ],

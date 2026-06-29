@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
+import 'package:mobile_bisa/core/constants/app_layout.dart';
 import 'package:mobile_bisa/core/constants/app_colors.dart';
 import 'package:mobile_bisa/features/iot/data/models/iot_device_model.dart';
 import 'package:mobile_bisa/features/iot/domain/entities/iot_dashboard_entity.dart';
@@ -30,22 +31,21 @@ class _IotDashboardPageState extends State<IotDashboardPage> {
   Widget build(BuildContext context) {
     return ProGate(
       icon: LucideIcons.cpu,
-      title: 'Smart Monitoring IoT',
-      lockedMessage:
-          'Monitoring IoT Smart Farm khusus langganan PRO. Upgrade untuk pantau sensor gudang secara real-time.',
+      title: 'iot.dashboard_title'.tr(),
+      lockedMessage: 'iot.pro_locked_message',
       child: BlocProvider(
         create: (context) => sl<IotCubit>()..getDevices(),
         child: Scaffold(
           backgroundColor: AppColors.background,
-          appBar: const BisaAppBar(
-            title: 'Smart Monitoring IoT',
+          appBar: BisaAppBar(
+            title: 'iot.dashboard_title'.tr(),
             backgroundColor: AppColors.surface,
           ),
           body: BlocBuilder<IotCubit, IotState>(
             builder: (context, state) {
               return state.maybeWhen(
                 loading: () => Padding(
-                  padding: EdgeInsets.all(20.w),
+                  padding: EdgeInsets.all(AppSpacing.md),
                   child: const ShimmerListPlaceholder(),
                 ),
                 error: (message) => _buildErrorState(context, message),
@@ -54,40 +54,52 @@ class _IotDashboardPageState extends State<IotDashboardPage> {
                   onRefresh: () async => context.read<IotCubit>().getDevices(),
                   child: SingleChildScrollView(
                     physics: const AlwaysScrollableScrollPhysics(),
-                    padding: EdgeInsets.all(20.w),
+                    padding: EdgeInsets.symmetric(
+                      horizontal: AppSpacing.md,
+                      vertical: AppSpacing.sm10,
+                    ),
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         _buildInfoBanner(),
-                        SizedBox(height: 16.h),
+                        SizedBox(height: AppSpacing.sm),
                         _buildSummaryCard(devices, fleet, statusSummary),
-                        SizedBox(height: 24.h),
+                        SizedBox(height: AppSpacing.sm10),
                         Row(
-                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
                           children: [
-                            Text(
-                              'Perangkat Anda',
-                              style: TextStyle(
-                                fontSize: 16.sp,
-                                fontWeight: FontWeight.bold,
-                                color: AppColors.textPrimary,
+                            Expanded(
+                              child: Text(
+                                'iot.devices_section_title'.tr(),
+                                style: TextStyle(
+                                  fontSize: 14.sp,
+                                  fontWeight: FontWeight.w800,
+                                  color: AppColors.textPrimary,
+                                ),
                               ),
                             ),
                             TextButton.icon(
+                              style: TextButton.styleFrom(
+                                padding: EdgeInsets.symmetric(horizontal: 6.w),
+                                minimumSize: Size.zero,
+                                tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                              ),
                               onPressed: () => _showAddDeviceDialog(context),
                               icon: Icon(
                                 LucideIcons.plus,
-                                size: 16.sp,
+                                size: 14.sp,
                                 color: AppColors.primary,
                               ),
                               label: Text(
                                 'tambah'.tr(),
-                                style: TextStyle(color: AppColors.primary),
+                                style: TextStyle(
+                                  color: AppColors.primary,
+                                  fontSize: 12.sp,
+                                ),
                               ),
                             ),
                           ],
                         ),
-                        SizedBox(height: 12.h),
+                        SizedBox(height: AppSpacing.sm),
                         if (devices.isEmpty)
                           _buildEmptyState()
                         else
@@ -95,7 +107,7 @@ class _IotDashboardPageState extends State<IotDashboardPage> {
                             shrinkWrap: true,
                             physics: const NeverScrollableScrollPhysics(),
                             itemCount: devices.length,
-                            separatorBuilder: (_, __) => SizedBox(height: 12.h),
+                            separatorBuilder: (_, __) => SizedBox(height: AppSpacing.sm),
                             itemBuilder: (context, index) => _buildDeviceCard(
                               context,
                               devices[index],
@@ -118,25 +130,24 @@ class _IotDashboardPageState extends State<IotDashboardPage> {
 
   Widget _buildInfoBanner() {
     return Container(
-      padding: EdgeInsets.all(14.w),
+      padding: EdgeInsets.symmetric(horizontal: 10.w, vertical: 8.h),
       decoration: BoxDecoration(
-        color: AppColors.warning.withOpacity(0.08),
-        borderRadius: BorderRadius.circular(14.r),
-        border: Border.all(color: AppColors.warning.withOpacity(0.25)),
+        color: AppColors.warning.withValues(alpha: 0.08),
+        borderRadius: BorderRadius.circular(10.r),
+        border: Border.all(color: AppColors.warning.withValues(alpha: 0.25)),
       ),
       child: Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
+        crossAxisAlignment: CrossAxisAlignment.center,
         children: [
-          Icon(LucideIcons.shieldAlert, color: AppColors.warning, size: 20.sp),
-          SizedBox(width: 10.w),
+          Icon(LucideIcons.shieldAlert, color: AppColors.warning, size: 16.sp),
+          SizedBox(width: 8.w),
           Expanded(
             child: Text(
-              'Nonaktifkan monitoring jika produksi sudah berhenti. '
-              'Perangkat yang tetap aktif dapat memicu peringatan bahaya.',
+              'iot.safety_banner'.tr(),
               style: TextStyle(
-                fontSize: 12.sp,
+                fontSize: 11.sp,
                 color: AppColors.textSecondary,
-                height: 1.4,
+                height: 1.3,
               ),
             ),
           ),
@@ -164,10 +175,10 @@ class _IotDashboardPageState extends State<IotDashboardPage> {
         devices.where((d) => !d.isMonitoringEnabled).length;
 
     return Container(
-      padding: EdgeInsets.all(20.r),
+      padding: EdgeInsets.symmetric(horizontal: 10.w, vertical: 12.h),
       decoration: BoxDecoration(
         gradient: AppColors.primaryGradient,
-        borderRadius: BorderRadius.circular(20.r),
+        borderRadius: BorderRadius.circular(14.r),
         boxShadow: AppColors.mediumShadow,
       ),
       child: Row(
@@ -176,18 +187,22 @@ class _IotDashboardPageState extends State<IotDashboardPage> {
           _buildSummaryItem(
             LucideIcons.cpu,
             total.toString(),
-            'Total',
+            'iot.summary_total'.tr(),
           ),
-          _buildSummaryItem(LucideIcons.signal, online.toString(), 'Online'),
+          _buildSummaryItem(
+            LucideIcons.signal,
+            online.toString(),
+            'iot.summary_online'.tr(),
+          ),
           _buildSummaryItem(
             LucideIcons.triangleAlert,
             alerts.toString(),
-            'Peringatan',
+            'iot.summary_alerts'.tr(),
           ),
           _buildSummaryItem(
             LucideIcons.powerOff,
             disabled.toString(),
-            'Nonaktif',
+            'iot.summary_disabled'.tr(),
           ),
         ],
       ),
@@ -196,22 +211,23 @@ class _IotDashboardPageState extends State<IotDashboardPage> {
 
   Widget _buildSummaryItem(IconData icon, String value, String label) {
     return Column(
+      mainAxisSize: MainAxisSize.min,
       children: [
-        Icon(icon, color: AppColors.white, size: 22.sp),
-        SizedBox(height: 6.h),
+        Icon(icon, color: AppColors.textOnPrimary, size: 18.sp),
+        SizedBox(height: 2.h),
         Text(
           value,
           style: TextStyle(
-            color: AppColors.white,
-            fontSize: 18.sp,
-            fontWeight: FontWeight.bold,
+            color: AppColors.surface,
+            fontSize: 16.sp,
+            fontWeight: FontWeight.w800,
           ),
         ),
         Text(
           label,
           style: TextStyle(
-            color: AppColors.white.withOpacity(0.85),
-            fontSize: 10.sp,
+            color: AppColors.textOnPrimary.withValues(alpha: 0.85),
+            fontSize: 9.sp,
           ),
         ),
       ],
@@ -231,12 +247,12 @@ class _IotDashboardPageState extends State<IotDashboardPage> {
     final isDisabled = !device.isMonitoringEnabled;
 
     return Opacity(
-      opacity: isDisabled ? 0.72 : 1,
+      opacity: isDisabled ? 0.75 : 1,
       child: Material(
         color: AppColors.surface,
-        borderRadius: BorderRadius.circular(16.r),
+        borderRadius: BorderRadius.circular(12.r),
         child: InkWell(
-          borderRadius: BorderRadius.circular(16.r),
+          borderRadius: BorderRadius.circular(12.r),
           onTap: () async {
             final refreshed = await context.push<bool>(
               '/iot-device/${device.id}',
@@ -247,13 +263,12 @@ class _IotDashboardPageState extends State<IotDashboardPage> {
             }
           },
           child: Container(
-            padding: EdgeInsets.all(16.r),
+            padding: EdgeInsets.all(10.w),
             decoration: BoxDecoration(
-              borderRadius: BorderRadius.circular(16.r),
+              borderRadius: BorderRadius.circular(12.r),
               border: Border.all(
                 color: isDisabled ? AppColors.grey200 : AppColors.grey100,
               ),
-              boxShadow: isDisabled ? null : AppColors.softShadow,
             ),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -261,18 +276,18 @@ class _IotDashboardPageState extends State<IotDashboardPage> {
                 Row(
                   children: [
                     Container(
-                      padding: EdgeInsets.all(10.r),
+                      padding: EdgeInsets.all(6.w),
                       decoration: BoxDecoration(
-                        color: statusMeta.color.withOpacity(0.1),
+                        color: statusMeta.color.withValues(alpha: 0.1),
                         shape: BoxShape.circle,
                       ),
                       child: Icon(
                         statusMeta.icon,
                         color: statusMeta.color,
-                        size: 20.sp,
+                        size: 16.sp,
                       ),
                     ),
-                    SizedBox(width: 12.w),
+                    SizedBox(width: 8.w),
                     Expanded(
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
@@ -282,18 +297,20 @@ class _IotDashboardPageState extends State<IotDashboardPage> {
                             maxLines: 1,
                             overflow: TextOverflow.ellipsis,
                             style: TextStyle(
-                              fontWeight: FontWeight.bold,
-                              fontSize: 14.sp,
+                              fontWeight: FontWeight.w800,
+                              fontSize: 13.sp,
                               color: AppColors.textPrimary,
                             ),
                           ),
                           Text(
-                            'ID: ${device.deviceId}',
+                            'iot.device_id_prefix'.tr(
+                              namedArgs: {'deviceId': device.deviceId},
+                            ),
                             maxLines: 1,
                             overflow: TextOverflow.ellipsis,
                             style: TextStyle(
                               color: AppColors.textSecondary,
-                              fontSize: 11.sp,
+                              fontSize: 10.sp,
                             ),
                           ),
                         ],
@@ -301,9 +318,10 @@ class _IotDashboardPageState extends State<IotDashboardPage> {
                     ),
                     _buildStatusChip(statusMeta),
                     PopupMenuButton<String>(
+                      padding: EdgeInsets.zero,
                       icon: Icon(
                         LucideIcons.ellipsisVertical,
-                        size: 18.sp,
+                        size: 16.sp,
                         color: AppColors.grey500,
                       ),
                       onSelected: (value) {
@@ -321,7 +339,7 @@ class _IotDashboardPageState extends State<IotDashboardPage> {
                                 size: 16.sp,
                                 color: AppColors.error,
                               ),
-                              SizedBox(width: 8.w),
+                              SizedBox(width: AppSpacing.sm),
                               Text(
                                 'hapus'.tr(),
                                 style: TextStyle(color: AppColors.error),
@@ -333,98 +351,90 @@ class _IotDashboardPageState extends State<IotDashboardPage> {
                     ),
                   ],
                 ),
-                SizedBox(height: 14.h),
-                Container(
-                  padding: EdgeInsets.symmetric(horizontal: 12.w, vertical: 10.h),
-                  decoration: BoxDecoration(
-                    color: AppColors.grey50,
-                    borderRadius: BorderRadius.circular(12.r),
-                  ),
-                  child: Row(
-                    children: [
-                      Expanded(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(
-                              'Monitoring',
-                              style: TextStyle(
-                                fontSize: 12.sp,
-                                fontWeight: FontWeight.w600,
-                                color: AppColors.textPrimary,
-                              ),
-                            ),
-                            Text(
-                              device.isMonitoringEnabled
-                                  ? 'Aktif — menerima data & peringatan'
-                                  : 'Nonaktif — tidak ada peringatan',
-                              style: TextStyle(
-                                fontSize: 11.sp,
-                                color: AppColors.textSecondary,
-                              ),
-                            ),
-                          ],
+                SizedBox(height: 8.h),
+                Row(
+                  children: [
+                    Expanded(
+                      child: Text(
+                        device.isMonitoringEnabled
+                            ? 'iot.monitoring_active_desc'.tr()
+                            : 'iot.monitoring_inactive_desc'.tr(),
+                        style: TextStyle(
+                          fontSize: 10.sp,
+                          color: AppColors.textSecondary,
                         ),
                       ),
-                      Switch.adaptive(
-                        value: device.isMonitoringEnabled,
-                        activeColor: AppColors.primary,
-                        onChanged: (enabled) {
-                          if (!enabled) {
-                            _confirmDisableMonitoring(context, device);
-                          } else {
-                            context
-                                .read<IotCubit>()
-                                .setMonitoringEnabled(device.id, true);
-                          }
-                        },
-                      ),
-                    ],
-                  ),
+                    ),
+                    Switch.adaptive(
+                      value: device.isMonitoringEnabled,
+                      materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                      onChanged: (enabled) {
+                        if (!enabled) {
+                          _confirmDisableMonitoring(context, device);
+                        } else {
+                          context
+                              .read<IotCubit>()
+                              .setMonitoringEnabled(device.id, true);
+                        }
+                      },
+                    ),
+                  ],
                 ),
                 if (device.isMonitoringEnabled) ...[
-                  SizedBox(height: 14.h),
-                  const Divider(height: 1, color: AppColors.grey100),
-                  SizedBox(height: 14.h),
-                  if (fleetDevice != null && fleetDevice.sparkline.length >= 2)
+                  SizedBox(height: 8.h),
+                  if (fleetDevice != null && fleetDevice.sparkline.length >= 2) ...[
                     Row(
                       children: [
                         Text(
-                          'Trend 24j',
+                          'iot.trend_24h'.tr(),
                           style: TextStyle(
-                            fontSize: 11.sp,
+                            fontSize: 10.sp,
                             color: AppColors.textSecondary,
                             fontWeight: FontWeight.w600,
                           ),
                         ),
-                        SizedBox(width: 12.w),
-                        IotSparkline(
-                          points: fleetDevice.sparkline,
-                          color: statusMeta.color,
+                        SizedBox(width: 8.w),
+                        Expanded(
+                          child: IotSparkline(
+                            points: fleetDevice.sparkline,
+                            color: statusMeta.color,
+                          ),
                         ),
                       ],
                     ),
-                  if (fleetDevice != null && fleetDevice.sparkline.length >= 2)
-                    SizedBox(height: 12.h),
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceAround,
-                    children: [
-                      _buildSensorValue(
-                        LucideIcons.thermometer,
-                        '${device.lastTemp?.toStringAsFixed(1) ?? "--"}°C',
-                        'Suhu',
-                      ),
-                      _buildSensorValue(
-                        LucideIcons.droplets,
-                        '${device.lastHum?.toStringAsFixed(0) ?? "--"}%',
-                        'Kelembaban',
-                      ),
-                      _buildSensorValue(
-                        LucideIcons.wind,
-                        '${device.lastCo2?.toStringAsFixed(0) ?? "--"} ppm',
-                        'CO2',
-                      ),
-                    ],
+                    SizedBox(height: 6.h),
+                  ],
+                  Container(
+                    padding: EdgeInsets.symmetric(vertical: 8.h, horizontal: 4.w),
+                    decoration: BoxDecoration(
+                      color: AppColors.grey50,
+                      borderRadius: BorderRadius.circular(8.r),
+                    ),
+                    child: Row(
+                      children: [
+                        Expanded(
+                          child: _buildSensorValue(
+                            LucideIcons.thermometer,
+                            '${device.lastTemp?.toStringAsFixed(1) ?? "--"}°C',
+                            'iot.metric_temperature'.tr(),
+                          ),
+                        ),
+                        Expanded(
+                          child: _buildSensorValue(
+                            LucideIcons.droplets,
+                            '${device.lastHum?.toStringAsFixed(0) ?? "--"}%',
+                            'iot.metric_humidity'.tr(),
+                          ),
+                        ),
+                        Expanded(
+                          child: _buildSensorValue(
+                            LucideIcons.wind,
+                            '${device.lastCo2?.toStringAsFixed(0) ?? "--"}',
+                            'iot.metric_co2'.tr(),
+                          ),
+                        ),
+                      ],
+                    ),
                   ),
                 ],
               ],
@@ -437,17 +447,18 @@ class _IotDashboardPageState extends State<IotDashboardPage> {
 
   Widget _buildStatusChip(_LiveStatusMeta meta) {
     return Container(
-      padding: EdgeInsets.symmetric(horizontal: 8.w, vertical: 4.h),
+      margin: EdgeInsets.only(right: 2.w),
+      padding: EdgeInsets.symmetric(horizontal: 6.w, vertical: 2.h),
       decoration: BoxDecoration(
-        color: meta.color.withOpacity(0.1),
-        borderRadius: BorderRadius.circular(8.r),
+        color: meta.color.withValues(alpha: 0.1),
+        borderRadius: BorderRadius.circular(6.r),
       ),
       child: Text(
         meta.label,
         style: TextStyle(
           color: meta.color,
-          fontSize: 10.sp,
-          fontWeight: FontWeight.bold,
+          fontSize: 9.sp,
+          fontWeight: FontWeight.w700,
         ),
       ),
     );
@@ -455,57 +466,70 @@ class _IotDashboardPageState extends State<IotDashboardPage> {
 
   _LiveStatusMeta _liveStatusMetaFromStatus(String status, bool monitoringEnabled) {
     if (!monitoringEnabled) {
-      return _LiveStatusMeta('Nonaktif', AppColors.grey500, LucideIcons.powerOff);
+      return _LiveStatusMeta(
+        'iot.status_disabled'.tr(),
+        AppColors.grey500,
+        LucideIcons.powerOff,
+      );
     }
     switch (status) {
       case 'ONLINE':
-        return _LiveStatusMeta('Online', AppColors.success, LucideIcons.signal);
+        return _LiveStatusMeta(
+          'iot.status_online'.tr(),
+          AppColors.success,
+          LucideIcons.signal,
+        );
       case 'ALERT':
         return _LiveStatusMeta(
-          'Peringatan',
+          'iot.status_alert'.tr(),
           AppColors.error,
           LucideIcons.triangleAlert,
         );
       default:
-        return _LiveStatusMeta('Offline', AppColors.warning, LucideIcons.wifiOff);
+        return _LiveStatusMeta(
+          'iot.status_offline'.tr(),
+          AppColors.warning,
+          LucideIcons.wifiOff,
+        );
     }
   }
 
   Widget _buildSensorValue(IconData icon, String value, String label) {
     return Column(
+      mainAxisSize: MainAxisSize.min,
       children: [
-        Icon(icon, color: AppColors.primary, size: 18.sp),
-        SizedBox(height: 4.h),
+        Icon(icon, color: AppColors.primary, size: 14.sp),
+        SizedBox(height: 2.h),
         Text(
           value,
           style: TextStyle(
-            fontWeight: FontWeight.bold,
-            fontSize: 14.sp,
+            fontWeight: FontWeight.w800,
+            fontSize: 12.sp,
             color: AppColors.textPrimary,
           ),
         ),
         Text(
           label,
-          style: TextStyle(color: AppColors.textSecondary, fontSize: 10.sp),
+          maxLines: 1,
+          overflow: TextOverflow.ellipsis,
+          style: TextStyle(color: AppColors.textSecondary, fontSize: 9.sp),
         ),
       ],
     );
   }
 
   Widget _buildEmptyState() {
-    return Center(
-      child: Padding(
-        padding: EdgeInsets.symmetric(vertical: 40.h),
-        child: Column(
-          children: [
-            Icon(LucideIcons.cpu, size: 64.sp, color: AppColors.grey200),
-            SizedBox(height: 16.h),
-            Text(
-              'belum_ada_perangkat_terdaftar'.tr(),
-              style: TextStyle(color: AppColors.textSecondary),
-            ),
-          ],
-        ),
+    return Padding(
+      padding: EdgeInsets.symmetric(vertical: 24.h),
+      child: Column(
+        children: [
+          Icon(LucideIcons.cpu, size: 40.sp, color: AppColors.grey200),
+          SizedBox(height: AppSpacing.sm),
+          Text(
+            'belum_ada_perangkat_terdaftar'.tr(),
+            style: TextStyle(fontSize: 12.sp, color: AppColors.textSecondary),
+          ),
+        ],
       ),
     );
   }
@@ -527,14 +551,14 @@ class _IotDashboardPageState extends State<IotDashboardPage> {
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
           Icon(LucideIcons.info, size: 48.sp, color: AppColors.error),
-          SizedBox(height: 16.h),
+          SizedBox(height: AppSpacing.md),
           Padding(
-            padding: EdgeInsets.symmetric(horizontal: 24.w),
+            padding: EdgeInsets.symmetric(horizontal: AppSpacing.xl),
             child: Text(message, textAlign: TextAlign.center),
           ),
           TextButton(
             onPressed: () => context.read<IotCubit>().getDevices(),
-            child: Text('coba_lagi'.tr()),
+            child: Text('iot.retry'.tr()),
           ),
         ],
       ),
@@ -547,11 +571,11 @@ class _IotDashboardPageState extends State<IotDashboardPage> {
   ) async {
     final confirmed = await showBisaConfirmDialog(
       context,
-      title: 'Nonaktifkan Monitoring?',
-      message:
-          'Perangkat "${device.name}" tidak akan lagi menerima data sensor '
-          'atau mengirim peringatan bahaya. Aktifkan kembali saat produksi dimulai.',
-      confirmText: 'Nonaktifkan',
+      title: 'iot.disable_confirm_title'.tr(),
+      message: 'iot.disable_confirm_message'.tr(
+        namedArgs: {'name': device.name},
+      ),
+      confirmText: 'iot.disable_confirm_action'.tr(),
       destructive: true,
     );
     if (confirmed == true && context.mounted) {
@@ -566,8 +590,9 @@ class _IotDashboardPageState extends State<IotDashboardPage> {
     final confirmed = await showBisaConfirmDialog(
       context,
       title: 'hapus_perangkat'.tr(),
-      message:
-          'Hapus "${device.name}" secara permanen? Riwayat sensor dan peringatan ikut terhapus.',
+      message: 'iot.delete_device_message'.tr(
+        namedArgs: {'name': device.name},
+      ),
       confirmText: 'hapus'.tr(),
       destructive: true,
     );
@@ -586,8 +611,8 @@ class _IotDashboardPageState extends State<IotDashboardPage> {
       submitText: 'simpan'.tr(),
       fields: [
         CustomTextField(
-          label: 'Device ID (Hardware)',
-          hint: 'Scan atau ketik ID',
+          label: 'iot.add_device_id_label'.tr(),
+          hint: 'iot.add_device_id_hint'.tr(),
           controller: idController,
           suffixIcon: IconButton(
             icon: const Icon(LucideIcons.qrCode),
@@ -602,10 +627,10 @@ class _IotDashboardPageState extends State<IotDashboardPage> {
             },
           ),
         ),
-        SizedBox(height: 12.h),
+        SizedBox(height: AppSpacing.md12),
         CustomTextField(
-          label: 'Nama Perangkat',
-          hint: 'Gudang A, dsb',
+          label: 'iot.add_device_name_label'.tr(),
+          hint: 'iot.add_device_name_hint'.tr(),
           controller: nameController,
         ),
       ],
@@ -614,7 +639,7 @@ class _IotDashboardPageState extends State<IotDashboardPage> {
         context.read<IotCubit>().registerDevice(
               idController.text,
               nameController.text.isEmpty
-                  ? 'Perangkat Baru'
+                  ? 'iot.add_device_default_name'.tr()
                   : nameController.text,
             );
         return true;

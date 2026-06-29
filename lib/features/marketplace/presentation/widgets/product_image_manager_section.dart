@@ -1,8 +1,11 @@
+import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 
+import '../../../../core/constants/app_layout.dart';
 import '../../../../core/constants/app_colors.dart';
+import '../../../../core/utils/app_feedback.dart';
 import '../../../../shared/widgets/custom_button.dart';
 import '../../domain/entities/product_entity.dart';
 import '../../domain/entities/product_image_draft.dart';
@@ -75,13 +78,7 @@ class _ProductImageManagerSectionState extends State<ProductImageManagerSection>
 
   Future<void> _save() async {
     if (_drafts.isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Minimal satu foto produk diperlukan'),
-          backgroundColor: AppColors.error,
-          behavior: SnackBarBehavior.floating,
-        ),
-      );
+      showErrorSnackBar(context, 'marketplace.min_one_photo_required');
       return;
     }
     final error = await context.read<ProductManagementCubit>().updateImages(
@@ -90,22 +87,10 @@ class _ProductImageManagerSectionState extends State<ProductImageManagerSection>
         );
     if (!mounted) return;
     if (error != null) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(error),
-          backgroundColor: AppColors.error,
-          behavior: SnackBarBehavior.floating,
-        ),
-      );
+      showErrorSnackBar(context, error);
       return;
     }
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(
-        content: Text('Foto produk berhasil disimpan'),
-        backgroundColor: AppColors.success,
-        behavior: SnackBarBehavior.floating,
-      ),
-    );
+    showSuccessSnackBar(context, 'marketplace.photos_saved');
   }
 
   @override
@@ -133,12 +118,12 @@ class _ProductImageManagerSectionState extends State<ProductImageManagerSection>
         );
       },
       child: Padding(
-        padding: EdgeInsets.symmetric(horizontal: 16.w),
+        padding: EdgeInsets.symmetric(horizontal: AppSpacing.md),
         child: Container(
-          padding: EdgeInsets.all(12.w),
+          padding: EdgeInsets.all(AppSpacing.md12),
           decoration: BoxDecoration(
             color: AppColors.surface,
-            borderRadius: BorderRadius.circular(12.r),
+            borderRadius: BorderRadius.circular(AppRadius.lg),
             border: Border.all(color: AppColors.grey100),
             boxShadow: AppColors.softShadow,
           ),
@@ -156,7 +141,7 @@ class _ProductImageManagerSectionState extends State<ProductImageManagerSection>
                 },
               ),
               if (_dirty) ...[
-                SizedBox(height: 10.h),
+                SizedBox(height: AppSpacing.sm10),
                 BlocBuilder<ProductManagementCubit, ProductManagementState>(
                   builder: (context, state) {
                     final loading = state.maybeWhen(
@@ -164,7 +149,7 @@ class _ProductImageManagerSectionState extends State<ProductImageManagerSection>
                       orElse: () => false,
                     );
                     return CustomButton(
-                      text: 'Simpan Perubahan Foto',
+                      text: 'marketplace.save_photo_changes'.tr(),
                       isLoading: loading,
                       onPressed: loading ? null : _save,
                     );

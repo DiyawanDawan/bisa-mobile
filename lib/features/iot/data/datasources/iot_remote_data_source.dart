@@ -24,6 +24,19 @@ abstract class IotRemoteDataSource {
   Future<void> updateDevice(String deviceId, Map<String, dynamic> data);
   Future<void> deleteDevice(String deviceId);
   Future<Map<String, dynamic>> subscribePro(String channelCode, String method);
+  Future<Map<String, dynamic>?> getPyrolysisSession(String deviceId);
+  Future<Map<String, dynamic>> startPyrolysisSession(
+    String deviceId, {
+    required String biomassaType,
+    required double beratInput,
+  });
+  Future<void> stopPyrolysisSession(String deviceId);
+  Future<Map<String, dynamic>> analyzeRealtime(
+    String deviceId, {
+    String? biomassaType,
+    double? beratInput,
+    int? waktuPembakaranMin,
+  });
 }
 
 class IotRemoteDataSourceImpl implements IotRemoteDataSource {
@@ -145,5 +158,52 @@ class IotRemoteDataSourceImpl implements IotRemoteDataSource {
       'method': method,
     });
     return response.data['data'];
+  }
+
+  @override
+  Future<Map<String, dynamic>?> getPyrolysisSession(String deviceId) async {
+    final response = await dio.get('/iot/devices/$deviceId/pyrolysis-session');
+    final session = response.data['data']?['session'];
+    if (session == null) return null;
+    return Map<String, dynamic>.from(session as Map);
+  }
+
+  @override
+  Future<Map<String, dynamic>> startPyrolysisSession(
+    String deviceId, {
+    required String biomassaType,
+    required double beratInput,
+  }) async {
+    final response = await dio.post(
+      '/iot/devices/$deviceId/pyrolysis-session/start',
+      data: {
+        'biomassaType': biomassaType,
+        'beratInput': beratInput,
+      },
+    );
+    return Map<String, dynamic>.from(response.data['data'] as Map);
+  }
+
+  @override
+  Future<void> stopPyrolysisSession(String deviceId) async {
+    await dio.post('/iot/devices/$deviceId/pyrolysis-session/stop');
+  }
+
+  @override
+  Future<Map<String, dynamic>> analyzeRealtime(
+    String deviceId, {
+    String? biomassaType,
+    double? beratInput,
+    int? waktuPembakaranMin,
+  }) async {
+    final response = await dio.post(
+      '/iot/devices/$deviceId/analyze-realtime',
+      data: {
+        if (biomassaType != null) 'biomassaType': biomassaType,
+        if (beratInput != null) 'beratInput': beratInput,
+        if (waktuPembakaranMin != null) 'waktuPembakaranMin': waktuPembakaranMin,
+      },
+    );
+    return Map<String, dynamic>.from(response.data['data'] as Map);
   }
 }

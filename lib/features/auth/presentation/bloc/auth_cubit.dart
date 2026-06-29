@@ -47,7 +47,7 @@ class AuthCubit extends Cubit<AuthState> {
       final String? idToken = googleAuth.idToken;
 
       if (idToken == null) {
-        emit(const AuthState.error('Gagal mendapatkan token dari Google.'));
+        emit(const AuthState.error('auth.google_token_failed'));
         return;
       }
 
@@ -60,7 +60,7 @@ class AuthCubit extends Cubit<AuthState> {
         (user) => emit(AuthState.authenticated(user)),
       );
     } catch (e) {
-      emit(AuthState.error('Terjadi kesalahan saat masuk dengan Google: ${e.toString()}'));
+      emit(AuthState.error('errors.google_sign_in'));
     }
   }
 
@@ -69,6 +69,7 @@ class AuthCubit extends Cubit<AuthState> {
     required String email,
     required String password,
     String? phone,
+    String? referralCode,
   }) async {
     emit(const AuthState.loading());
     final result = await _repository.registerBuyer(
@@ -76,14 +77,11 @@ class AuthCubit extends Cubit<AuthState> {
       email: email,
       password: password,
       phone: phone,
+      referralCode: referralCode,
     );
     result.fold(
       (failure) => emit(AuthState.error(failure.message)),
-      (_) => emit(
-        const AuthState.success(
-          'Buyer berhasil terdaftar. Silakan cek OTP Anda.',
-        ),
-      ),
+      (_) => emit(const AuthState.success('auth.register_buyer_success')),
     );
   }
 
@@ -94,6 +92,7 @@ class AuthCubit extends Cubit<AuthState> {
     String? phone,
     String? province,
     String? regency,
+    String? referralCode,
   }) async {
     emit(const AuthState.loading());
     final result = await _repository.registerSupplier(
@@ -103,14 +102,11 @@ class AuthCubit extends Cubit<AuthState> {
       phone: phone,
       province: province,
       regency: regency,
+      referralCode: referralCode,
     );
     result.fold(
       (failure) => emit(AuthState.error(failure.message)),
-      (_) => emit(
-        const AuthState.success(
-          'Supplier berhasil terdaftar. Silakan cek OTP Anda.',
-        ),
-      ),
+      (_) => emit(const AuthState.success('auth.register_supplier_success')),
     );
   }
 
@@ -119,7 +115,7 @@ class AuthCubit extends Cubit<AuthState> {
     final result = await _repository.verifyRegistration(email, code);
     result.fold(
       (failure) => emit(AuthState.error(failure.message)),
-      (_) => emit(const AuthState.success('Email berhasil diverifikasi. Silakan login.')),
+      (_) => emit(const AuthState.success('auth.verify_email_success')),
     );
   }
 
@@ -127,7 +123,7 @@ class AuthCubit extends Cubit<AuthState> {
     final result = await _repository.resendOtp(email, type);
     result.fold(
       (failure) => emit(AuthState.error(failure.message)),
-      (_) => emit(const AuthState.success('Kode OTP baru telah dikirim')),
+      (_) => emit(const AuthState.success('auth.otp_resent_success')),
     );
   }
 
@@ -136,7 +132,7 @@ class AuthCubit extends Cubit<AuthState> {
     final result = await _repository.forgotPassword(email);
     result.fold(
       (failure) => emit(AuthState.error(failure.message)),
-      (_) => emit(const AuthState.success('Kode reset telah dikirim ke email Anda')),
+      (_) => emit(const AuthState.success('auth.reset_code_sent')),
     );
   }
 
@@ -154,7 +150,7 @@ class AuthCubit extends Cubit<AuthState> {
     final result = await _repository.resetPasswordWithToken(token, newPassword);
     result.fold(
       (failure) => emit(AuthState.error(failure.message)),
-      (_) => emit(const AuthState.success('Kata sandi berhasil diubah. Silakan masuk kembali.')),
+      (_) => emit(const AuthState.success('auth.password_changed_success')),
     );
   }
 
@@ -174,7 +170,7 @@ class AuthCubit extends Cubit<AuthState> {
     result.fold(
       (failure) => emit(AuthState.error(failure.message)),
       (_) {
-        emit(const AuthState.success('Dokumen verifikasi berhasil dikirim. Mohon tunggu tim kami meninjau akun Anda.'));
+        emit(const AuthState.success('auth.verification_submitted'));
         checkAuth(); // Refresh user data to see verification status
       },
     );
@@ -188,6 +184,14 @@ class AuthCubit extends Cubit<AuthState> {
         emit(const AuthState.unauthenticated());
       },
       (user) async => emit(AuthState.authenticated(user)),
+    );
+  }
+
+  /// Sinkronkan user di memori setelah update profil tanpa round-trip API.
+  void applyUser(UserEntity user) {
+    state.maybeWhen(
+      authenticated: (_) => emit(AuthState.authenticated(user)),
+      orElse: () {},
     );
   }
 

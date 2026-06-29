@@ -1,8 +1,9 @@
+import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
 import 'package:mobile_bisa/core/constants/app_colors.dart';
-import 'package:mobile_bisa/core/utils/extensions.dart';
+import 'package:mobile_bisa/core/utils/money_format.dart';
 import '../../domain/entities/invoice_deal_economics.dart';
 
 /// Panel harga katalog vs nego, diskon %, stok, estimasi bersih supplier.
@@ -24,7 +25,7 @@ class InvoiceDealEconomicsCard extends StatelessWidget {
       width: double.infinity,
       padding: EdgeInsets.all(14.w),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: AppColors.surface,
         borderRadius: BorderRadius.circular(14.r),
         border: Border.all(color: AppColors.grey200),
       ),
@@ -36,7 +37,7 @@ class InvoiceDealEconomicsCard extends StatelessWidget {
               Icon(LucideIcons.chartLine, size: 18.sp, color: AppColors.primary),
               SizedBox(width: 8.w),
               Text(
-                'Ringkasan Harga & Keuntungan',
+                'invoice.deal_economics_title'.tr(),
                 style: TextStyle(
                   fontWeight: FontWeight.w800,
                   fontSize: 14.sp,
@@ -46,37 +47,44 @@ class InvoiceDealEconomicsCard extends StatelessWidget {
           ),
           SizedBox(height: 12.h),
           _metricRow(
-            'Harga katalog / ${e.unit}',
-            e.catalogPricePerUnit.toRupiah,
+            'invoice.deal_catalog_price'.tr(namedArgs: {'unit': e.unit}),
+            formatMoneyIdr(e.catalogPricePerUnit),
             muted: true,
           ),
           _metricRow(
-            'Harga nego / ${e.unit}',
-            e.negotiatedPricePerUnit.toRupiah,
+            'invoice.deal_nego_price'.tr(namedArgs: {'unit': e.unit}),
+            formatMoneyIdr(e.negotiatedPricePerUnit),
             emphasized: true,
           ),
           if (e.hasDiscount)
             _badge(
-              'Diskon ${e.discountPercentPerUnit.toStringAsFixed(1)}% per ${e.unit}',
+              'invoice.deal_discount_badge'.tr(namedArgs: {
+                'percent': e.discountPercentPerUnit.toStringAsFixed(1),
+                'unit': e.unit,
+              }),
               discountColor,
             )
           else if (e.isPremiumOverCatalog)
             _badge(
-              'Di atas katalog (+${(e.negotiatedPricePerUnit - e.catalogPricePerUnit).toRupiah}/${e.unit})',
+              'invoice.deal_premium_badge'.tr(namedArgs: {
+                'amount': formatMoneyIdr(
+                    e.negotiatedPricePerUnit - e.catalogPricePerUnit),
+                'unit': e.unit,
+              }),
               AppColors.warning,
             ),
           SizedBox(height: 8.h),
           const Divider(height: 1, color: AppColors.grey100),
           SizedBox(height: 8.h),
-          _metricRow('Total harga awal (katalog)', e.catalogSubtotal.toRupiah,
+          _metricRow('invoice.deal_catalog_total'.tr(), formatMoneyIdr(e.catalogSubtotal),
               strikethrough: e.hasDiscount),
-          _metricRow('Total setelah nego', e.negotiatedSubtotal.toRupiah,
+          _metricRow('invoice.deal_nego_total'.tr(), formatMoneyIdr(e.negotiatedSubtotal),
               emphasized: true),
           if (e.hasDiscount) ...[
             SizedBox(height: 6.h),
             _metricRow(
-              'Hemat pembeli',
-              '${e.savingsTotal.toRupiah} (${e.discountPercentTotal.toStringAsFixed(1)}%)',
+              'invoice.deal_buyer_savings'.tr(),
+              '${formatMoneyIdr(e.savingsTotal)} (${e.discountPercentTotal.toStringAsFixed(1)}%)',
               valueColor: AppColors.success,
             ),
           ],
@@ -84,16 +92,19 @@ class InvoiceDealEconomicsCard extends StatelessWidget {
           const Divider(height: 1, color: AppColors.grey100),
           SizedBox(height: 8.h),
           _metricRow(
-            'Stok tersedia',
+            'invoice.deal_stock_available'.tr(),
             '${e.productStock.toStringAsFixed(0)} ${e.unit}',
           ),
           _metricRow(
-            'Stok setelah deal',
+            'invoice.deal_stock_after'.tr(),
             '${e.stockAfterDeal.toStringAsFixed(0)} ${e.unit}',
             valueColor:
                 e.stockAfterDeal <= 0 ? AppColors.error : AppColors.textPrimary,
           ),
-          _metricRow('Jumlah nego', '${e.quantity.toStringAsFixed(0)} ${e.unit}'),
+          _metricRow(
+            'invoice.deal_nego_qty'.tr(),
+            '${e.quantity.toStringAsFixed(0)} ${e.unit}',
+          ),
           SizedBox(height: 8.h),
           Container(
             width: double.infinity,
@@ -106,7 +117,7 @@ class InvoiceDealEconomicsCard extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  'Estimasi bersih supplier',
+                  'invoice.deal_seller_net'.tr(),
                   style: TextStyle(
                     fontSize: 11.sp,
                     color: AppColors.textSecondary,
@@ -115,7 +126,7 @@ class InvoiceDealEconomicsCard extends StatelessWidget {
                 ),
                 SizedBox(height: 4.h),
                 Text(
-                  e.sellerNetEstimate.toRupiah,
+                  formatMoneyIdr(e.sellerNetEstimate),
                   style: TextStyle(
                     fontSize: 18.sp,
                     fontWeight: FontWeight.w900,
@@ -124,8 +135,10 @@ class InvoiceDealEconomicsCard extends StatelessWidget {
                 ),
                 SizedBox(height: 4.h),
                 Text(
-                  'Setelah biaya platform ${e.platformFee.toRupiah} '
-                  '(${e.platformFeePercent.toStringAsFixed(1)}% dari subtotal nego)',
+                  'invoice.deal_platform_fee_note'.tr(namedArgs: {
+                    'fee': formatMoneyIdr(e.platformFee),
+                    'percent': e.platformFeePercent.toStringAsFixed(1),
+                  }),
                   style: TextStyle(fontSize: 10.sp, color: AppColors.textHint),
                 ),
               ],

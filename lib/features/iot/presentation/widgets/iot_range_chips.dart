@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
+import '../../../../core/constants/app_layout.dart';
 import '../../../../core/constants/app_colors.dart';
 
 class IotRangeChips extends StatelessWidget {
@@ -22,8 +23,8 @@ class IotRangeChips extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Wrap(
-      spacing: 8.w,
-      runSpacing: 8.h,
+      spacing: AppSpacing.sm,
+      runSpacing: AppSpacing.sm,
       children: options.map((opt) {
         final isSel = selected == opt.$1;
         return ChoiceChip(

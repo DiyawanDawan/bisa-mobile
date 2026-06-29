@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
+import '../../core/constants/app_layout.dart';
 import '../../core/constants/app_colors.dart';
+import '../../core/constants/app_text_styles.dart';
 
 class FloatingBottomNavItem {
   final IconData icon;
@@ -30,7 +32,7 @@ class FloatingBottomNav extends StatelessWidget {
   Widget build(BuildContext context) {
     return SafeArea(
       top: false,
-      minimum: EdgeInsets.only(bottom: 8.h),
+      minimum: EdgeInsets.only(bottom: AppSpacing.sm),
       child: DecoratedBox(
         decoration: BoxDecoration(
           border: Border(
@@ -38,13 +40,21 @@ class FloatingBottomNav extends StatelessWidget {
           ),
         ),
         child: Padding(
-          padding: EdgeInsets.fromLTRB(12.w, 8.h, 12.w, 4.h),
+          padding: EdgeInsets.fromLTRB(
+            AppSpacing.md12,
+            AppSpacing.sm,
+            AppSpacing.md12,
+            AppSpacing.xs,
+          ),
           child: Container(
             height: 58.h,
-            padding: EdgeInsets.symmetric(horizontal: 6.w, vertical: 6.h),
+            padding: EdgeInsets.symmetric(
+              horizontal: AppSpacing.xs6,
+              vertical: AppSpacing.xs6,
+            ),
             decoration: BoxDecoration(
               color: AppColors.grey100,
-              borderRadius: BorderRadius.circular(32.r),
+              borderRadius: BorderRadius.circular(AppSpacing.xxlPx.r),
               boxShadow: [
                 BoxShadow(
                   color: AppColors.black.withValues(alpha: 0.08),
@@ -61,7 +71,7 @@ class FloatingBottomNav extends StatelessWidget {
                 return Expanded(
                   child: InkWell(
                     onTap: () => onTap(index),
-                    borderRadius: BorderRadius.circular(24.r),
+                    borderRadius: BorderRadius.circular(AppSpacing.xlPx.r),
                     child: Column(
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
@@ -77,11 +87,11 @@ class FloatingBottomNav extends StatelessWidget {
                             ),
                             if ((item.badgeCount ?? 0) > 0)
                               Positioned(
-                                right: -8.w,
+                                right: -AppSpacing.sm,
                                 top: -6.h,
                                 child: Container(
                                   padding: EdgeInsets.symmetric(
-                                    horizontal: 4.w,
+                                    horizontal: AppSpacing.xs,
                                     vertical: 1.h,
                                   ),
                                   decoration: const BoxDecoration(
@@ -89,15 +99,14 @@ class FloatingBottomNav extends StatelessWidget {
                                     shape: BoxShape.circle,
                                   ),
                                   constraints: BoxConstraints(
-                                    minWidth: 14.w,
-                                    minHeight: 14.h,
+                                    minWidth: AppSpacing.section,
+                                    minHeight: AppSpacing.section,
                                   ),
                                   child: Center(
                                     child: Text(
                                       '${item.badgeCount}',
-                                      style: TextStyle(
+                                      style: AppTextStyles.micro(
                                         color: AppColors.textOnPrimary,
-                                        fontSize: 8.sp,
                                         fontWeight: FontWeight.w900,
                                       ),
                                     ),
@@ -111,14 +120,12 @@ class FloatingBottomNav extends StatelessWidget {
                           item.label.toUpperCase(),
                           maxLines: 1,
                           overflow: TextOverflow.ellipsis,
-                          style: TextStyle(
-                            fontSize: 8.sp,
+                          style: AppTextStyles.micro(
                             fontWeight:
                                 selected ? FontWeight.w800 : FontWeight.w600,
                             color: selected
                                 ? AppColors.primary
                                 : AppColors.grey400,
-                            letterSpacing: 0.2,
                           ),
                         ),
                       ],

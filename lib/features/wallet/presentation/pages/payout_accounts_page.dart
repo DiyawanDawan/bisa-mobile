@@ -4,6 +4,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
 import 'package:mobile_bisa/core/constants/app_colors.dart';
+import 'package:mobile_bisa/core/i18n/failure_messages.dart';
 import 'package:mobile_bisa/core/utils/safe_area_utils.dart';
 import 'package:mobile_bisa/features/wallet/presentation/bloc/wallet_cubit.dart';
 import 'package:mobile_bisa/features/wallet/domain/entities/payout_account_entity.dart';
@@ -21,8 +22,8 @@ class PayoutAccountsPage extends StatelessWidget {
 
     return Scaffold(
       backgroundColor: AppColors.background,
-      appBar: const BisaAppBar(
-        title: 'Rekening Bank',
+      appBar: BisaAppBar(
+        title: 'wallet.payout_page_title'.tr(),
         backgroundColor: AppColors.surface,
       ),
       body: BlocBuilder<WalletCubit, WalletState>(
@@ -60,7 +61,7 @@ class PayoutAccountsPage extends StatelessWidget {
                 child: Padding(
                   padding: EdgeInsets.fromLTRB(16.w, 8.h, 16.w, 8.h + bottomInset * 0.25),
                   child: CustomButton(
-                    text: 'Tambah Rekening Baru',
+                    text: 'wallet.add_new_account'.tr(),
                     height: 50.h,
                     onPressed: () => _showAddAccountSheet(context, banks),
                   ),
@@ -114,7 +115,7 @@ class PayoutAccountsPage extends StatelessWidget {
                   crossAxisAlignment: WrapCrossAlignment.center,
                   children: [
                     Text(
-                      account.bankName,
+                      localizeFailureMessage(account.bankName),
                       style: TextStyle(
                         fontWeight: FontWeight.w800,
                         fontSize: 14.sp,
@@ -134,7 +135,7 @@ class PayoutAccountsPage extends StatelessWidget {
                           borderRadius: BorderRadius.circular(4.r),
                         ),
                         child: Text(
-                          'Utama',
+                          'wallet.badge_primary'.tr(),
                           style: TextStyle(
                             color: AppColors.primary,
                             fontSize: 10.sp,
@@ -171,7 +172,7 @@ class PayoutAccountsPage extends StatelessWidget {
                         .read<WalletCubit>()
                         .setMainPayoutAccount(account.id),
                     child: Text(
-                      'Set sebagai Utama',
+                      'wallet.set_as_primary'.tr(),
                       style: TextStyle(
                         color: AppColors.primary,
                         fontSize: 11.sp,
@@ -231,7 +232,7 @@ class PayoutAccountsPage extends StatelessWidget {
             Icon(LucideIcons.landmark, size: 64.sp, color: AppColors.grey200),
             SizedBox(height: 16.h),
             Text(
-              'Belum Ada Rekening Bank',
+              'wallet.payout_empty_title'.tr(),
               style: TextStyle(
                 fontSize: 17.sp,
                 fontWeight: FontWeight.w800,
@@ -240,13 +241,13 @@ class PayoutAccountsPage extends StatelessWidget {
             ),
             SizedBox(height: 8.h),
             Text(
-              'Tambahkan rekening untuk mempermudah proses penarikan dana.',
+              'wallet.payout_empty_subtitle'.tr(),
               textAlign: TextAlign.center,
               style: TextStyle(color: AppColors.textSecondary, fontSize: 13.sp),
             ),
             SizedBox(height: 24.h),
             CustomButton(
-              text: 'Tambah Sekarang',
+              text: 'wallet.payout_add_now'.tr(),
               width: 200.w,
               height: 48.h,
               onPressed: () => _showAddAccountSheet(context, banks),
@@ -268,9 +269,7 @@ class PayoutAccountsPage extends StatelessWidget {
             borderRadius: BorderRadius.circular(16.r),
           ),
           title: Text('hapus_rekening'.tr()),
-          content: const Text(
-            'Apakah Anda yakin ingin menghapus rekening ini?',
-          ),
+          content: Text('wallet.delete_account_confirm'.tr()),
           actions: [
             TextButton(
               onPressed: () => Navigator.pop(dialogContext),
@@ -325,7 +324,7 @@ class PayoutAccountsPage extends StatelessWidget {
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
-      backgroundColor: Colors.transparent,
+      backgroundColor: AppColors.transparent,
       builder: (sheetContext) => BlocProvider.value(
         value: walletCubit,
         child: StatefulBuilder(
@@ -356,7 +355,9 @@ class PayoutAccountsPage extends StatelessWidget {
                         children: [
                           Expanded(
                             child: Text(
-                              account == null ? 'Tambah Rekening' : 'Edit Rekening',
+                              account == null
+                                  ? 'wallet.sheet_add_title'.tr()
+                                  : 'wallet.sheet_edit_title'.tr(),
                               style: TextStyle(
                                 fontSize: 18.sp,
                                 fontWeight: FontWeight.w900,
@@ -378,7 +379,7 @@ class PayoutAccountsPage extends StatelessWidget {
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
                             Text(
-                              'Pilih Bank',
+                              'wallet.select_bank'.tr(),
                               style: TextStyle(
                                 fontSize: 13.sp,
                                 fontWeight: FontWeight.w600,
@@ -417,15 +418,15 @@ class PayoutAccountsPage extends StatelessWidget {
                             ),
                             SizedBox(height: 12.h),
                             CustomTextField(
-                              label: 'Nomor Rekening',
-                              hint: 'Masukkan nomor rekening',
+                              label: 'wallet.account_number_label'.tr(),
+                              hint: 'wallet.account_number_hint'.tr(),
                               controller: accountNoController,
                               keyboardType: TextInputType.number,
                             ),
                             SizedBox(height: 12.h),
                             CustomTextField(
-                              label: 'Nama Pemilik Rekening',
-                              hint: 'Nama sesuai buku tabungan',
+                              label: 'wallet.account_name_label'.tr(),
+                              hint: 'wallet.account_name_hint'.tr(),
                               controller: accountNameController,
                             ),
                             SizedBox(height: 8.h),
@@ -449,7 +450,7 @@ class PayoutAccountsPage extends StatelessWidget {
                                   child: GestureDetector(
                                     onTap: () => setState(() => isMain = !isMain),
                                     child: Text(
-                                      'Set sebagai Rekening Utama',
+                                      'wallet.set_primary_checkbox'.tr(),
                                       style: TextStyle(
                                         fontSize: 13.sp,
                                         color: AppColors.textPrimary,
@@ -468,7 +469,9 @@ class PayoutAccountsPage extends StatelessWidget {
                       child: Padding(
                         padding: EdgeInsets.fromLTRB(20.w, 8.h, 20.w, 12.h),
                         child: CustomButton(
-                          text: account == null ? 'Simpan Rekening' : 'Simpan Perubahan',
+                          text: account == null
+                              ? 'wallet.save_account'.tr()
+                              : 'wallet.save_changes'.tr(),
                           height: 50.h,
                           onPressed: () {
                             if (selectedBankId != null &&

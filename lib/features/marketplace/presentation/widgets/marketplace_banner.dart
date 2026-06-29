@@ -1,6 +1,8 @@
+import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'dart:async';
+import 'package:mobile_bisa/core/constants/app_layout.dart';
 import 'package:mobile_bisa/core/constants/app_colors.dart';
 
 class MarketplaceBanner extends StatefulWidget {
@@ -70,23 +72,27 @@ class _MarketplaceBannerState extends State<MarketplaceBanner> {
               if (widget.productMode == 'ORGANIC_PRODUCE') {
                 return _buildBannerItem(
                   _bannerImages[index],
-                  index == 0 ? 'Tani Organik' : 'Bebas Kimia',
                   index == 0
-                      ? 'Pertanian Bebas Kimia & Organik'
-                      : 'Hasil Tani Sehat Premium Lokal',
+                      ? 'marketplace.banner_organic_tag1'.tr()
+                      : 'marketplace.banner_organic_tag2'.tr(),
+                  index == 0
+                      ? 'marketplace.banner_organic_title1'.tr()
+                      : 'marketplace.banner_organic_title2'.tr(),
                 );
               }
               return _buildBannerItem(
                 _bannerImages[index],
-                index == 0 ? 'Green Invest' : 'Promo Spesial',
                 index == 0
-                    ? 'Investasi Hijau dengan Biomassa'
-                    : 'Diskon 20% Biochar Pilihan',
+                    ? 'marketplace.banner_biomass_tag1'.tr()
+                    : 'marketplace.banner_biomass_tag2'.tr(),
+                index == 0
+                    ? 'marketplace.banner_biomass_title1'.tr()
+                    : 'marketplace.banner_biomass_title2'.tr(),
               );
             },
           ),
           Positioned(
-            bottom: 12.h,
+            bottom: AppSpacing.md12,
             left: 0,
             right: 0,
             child: Row(
@@ -100,8 +106,8 @@ class _MarketplaceBannerState extends State<MarketplaceBanner> {
                   height: 6.h,
                   decoration: BoxDecoration(
                     color: _currentPage == index
-                        ? Colors.white
-                        : Colors.white.withOpacity(0.4),
+                        ? AppColors.white
+                        : AppColors.white.withOpacity(0.4),
                     borderRadius: BorderRadius.circular(3.r),
                   ),
                 ),
@@ -116,17 +122,17 @@ class _MarketplaceBannerState extends State<MarketplaceBanner> {
   Widget _buildBannerItem(String assetPath, String tag, String title) {
     return Container(
       decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(24.r),
+        borderRadius: BorderRadius.circular(AppSpacing.xlPx.r),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.15),
+            color: AppColors.black.withOpacity(0.15),
             blurRadius: 15,
             offset: const Offset(0, 8),
           ),
         ],
       ),
       child: ClipRRect(
-        borderRadius: BorderRadius.circular(24.r),
+        borderRadius: BorderRadius.circular(AppSpacing.xlPx.r),
         child: Stack(
           fit: StackFit.expand,
           children: [
@@ -134,49 +140,47 @@ class _MarketplaceBannerState extends State<MarketplaceBanner> {
               assetPath,
               fit: BoxFit.cover,
             ),
-            // Gradient Overlay
             Container(
               decoration: BoxDecoration(
                 gradient: LinearGradient(
                   begin: Alignment.bottomRight,
                   end: Alignment.topLeft,
                   colors: [
-                    Colors.black.withOpacity(0.7),
-                    Colors.black.withOpacity(0.2),
-                    Colors.transparent,
+                    AppColors.black.withOpacity(0.7),
+                    AppColors.black.withOpacity(0.2),
+                    AppColors.transparent,
                   ],
                 ),
               ),
             ),
-            // Content
             Padding(
-              padding: EdgeInsets.all(20.r),
+              padding: EdgeInsets.all(AppSpacing.lg),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 mainAxisAlignment: MainAxisAlignment.end,
                 children: [
                   Container(
                     padding:
-                        EdgeInsets.symmetric(horizontal: 10.w, vertical: 4.h),
+                        EdgeInsets.symmetric(horizontal: AppSpacing.sm10, vertical: AppSpacing.xs),
                     decoration: BoxDecoration(
                       color: AppColors.primary,
-                      borderRadius: BorderRadius.circular(8.r),
+                      borderRadius: BorderRadius.circular(AppRadius.button),
                     ),
                     child: Text(
                       tag,
                       style: TextStyle(
-                        color: Colors.white,
+                        color: AppColors.surface,
                         fontSize: 10.sp,
                         fontWeight: FontWeight.w800,
                         letterSpacing: 0.5,
                       ),
                     ),
                   ),
-                  SizedBox(height: 8.h),
+                  SizedBox(height: AppSpacing.sm),
                   Text(
                     title,
                     style: TextStyle(
-                      color: Colors.white,
+                      color: AppColors.surface,
                       fontSize: 18.sp,
                       fontWeight: FontWeight.w800,
                       letterSpacing: -0.5,

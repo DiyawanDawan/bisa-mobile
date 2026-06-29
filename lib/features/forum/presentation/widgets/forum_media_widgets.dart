@@ -1,11 +1,14 @@
 import 'dart:io';
 
+import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 import 'package:mobile_bisa/core/media/media_upload_queue.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
 import 'package:url_launcher/url_launcher.dart';
+import '../../../../core/constants/app_layout.dart';
 import '../../../../core/constants/app_colors.dart';
+import '../../../../core/utils/app_feedback.dart';
 import '../../../../shared/widgets/bisa_media_skeleton.dart';
 import '../../../../shared/widgets/bisa_network_image.dart';
 import '../../domain/entities/forum_media.dart';
@@ -42,7 +45,7 @@ class ForumMediaGrid extends StatelessWidget {
 
           if (media.length == 1) {
             return Padding(
-              padding: EdgeInsets.only(top: 8.h),
+              padding: EdgeInsets.only(top: AppSpacing.sm),
               child: _MediaTile(
                 item: media.first,
                 width: maxWidth,
@@ -55,10 +58,10 @@ class ForumMediaGrid extends StatelessWidget {
           final tileHeight = tileWidth * 0.72;
 
           return Padding(
-            padding: EdgeInsets.only(top: 8.h),
+            padding: EdgeInsets.only(top: AppSpacing.sm),
             child: Wrap(
-              spacing: 8.w,
-              runSpacing: 8.h,
+              spacing: AppSpacing.sm,
+              runSpacing: AppSpacing.sm,
               children: [
                 for (final item in media)
                   _MediaTile(
@@ -81,8 +84,8 @@ class ForumMediaGrid extends StatelessWidget {
     return Padding(
       padding: EdgeInsets.only(top: isCompact ? 8.h : 12.h),
       child: Wrap(
-        spacing: 8.w,
-        runSpacing: 8.h,
+        spacing: AppSpacing.sm,
+        runSpacing: AppSpacing.sm,
         children: [
           for (int i = 0; i < items.length; i++)
             _MediaTile(
@@ -118,7 +121,7 @@ class _MediaTile extends StatelessWidget {
     return GestureDetector(
       onTap: () => _openMedia(context, item),
       child: ClipRRect(
-        borderRadius: BorderRadius.circular(12.r),
+        borderRadius: BorderRadius.circular(AppRadius.lg),
         child: Stack(
           children: [
             if (item.isImage)
@@ -130,7 +133,7 @@ class _MediaTile extends StatelessWidget {
                 placeholder: (_, __) => BisaMediaSkeleton(
                   width: width,
                   height: height,
-                  borderRadius: BorderRadius.circular(12.r),
+                  borderRadius: BorderRadius.circular(AppRadius.lg),
                 ),
                 errorWidget: (_, __, ___) => _fallback(),
               )
@@ -141,17 +144,17 @@ class _MediaTile extends StatelessWidget {
                 color: AppColors.grey900,
                 child: Icon(
                   LucideIcons.play,
-                  color: Colors.white,
+                  color: AppColors.surface,
                   size: 28.sp,
                 ),
               ),
             if (item.isVideo && !showMoreOverlay)
               Positioned.fill(
                 child: Container(
-                  color: Colors.black26,
+                  color: AppColors.textHint,
                   child: Icon(
                     LucideIcons.play,
-                    color: Colors.white,
+                    color: AppColors.surface,
                     size: 24.sp,
                   ),
                 ),
@@ -159,12 +162,12 @@ class _MediaTile extends StatelessWidget {
             if (showMoreOverlay)
               Positioned.fill(
                 child: Container(
-                  color: Colors.black54,
+                  color: AppColors.textSecondary,
                   alignment: Alignment.center,
                   child: Text(
                     '+$moreCount',
                     style: TextStyle(
-                      color: Colors.white,
+                      color: AppColors.surface,
                       fontWeight: FontWeight.w800,
                       fontSize: 16.sp,
                     ),
@@ -190,10 +193,10 @@ class _MediaTile extends StatelessWidget {
     if (item.isImage) {
       await showDialog<void>(
         context: context,
-        barrierColor: Colors.black87,
+        barrierColor: AppColors.textPrimary,
         builder: (ctx) => Dialog(
           insetPadding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 24.h),
-          backgroundColor: Colors.transparent,
+          backgroundColor: AppColors.transparent,
           child: Stack(
             alignment: Alignment.topRight,
             children: [
@@ -201,7 +204,7 @@ class _MediaTile extends StatelessWidget {
                 minScale: 0.8,
                 maxScale: 4,
                 child: ClipRRect(
-                  borderRadius: BorderRadius.circular(12.r),
+                  borderRadius: BorderRadius.circular(AppRadius.lg),
                   child: BisaNetworkImage(
                     imageUrl: item.url,
                     fit: BoxFit.contain,
@@ -213,7 +216,7 @@ class _MediaTile extends StatelessWidget {
                       height: 240.h,
                       child: Icon(
                         LucideIcons.imageOff,
-                        color: Colors.white54,
+                        color: AppColors.white.withValues(alpha: 0.54),
                         size: 48.sp,
                       ),
                     ),
@@ -222,7 +225,7 @@ class _MediaTile extends StatelessWidget {
               ),
               IconButton(
                 onPressed: () => Navigator.pop(ctx),
-                icon: const Icon(Icons.close, color: Colors.white),
+                icon: const Icon(Icons.close, color: AppColors.textOnPrimary),
               ),
             ],
           ),
@@ -235,9 +238,7 @@ class _MediaTile extends StatelessWidget {
     if (uri == null) return;
     if (!await launchUrl(uri, mode: LaunchMode.externalApplication)) {
       if (context.mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Tidak bisa membuka media')),
-        );
+        showErrorSnackBar(context, 'forum.media_open_failed');
       }
     }
   }
@@ -269,16 +270,16 @@ class ForumMediaPickerRow extends StatelessWidget {
           children: [
             _ActionChip(
               icon: LucideIcons.image,
-              label: 'Foto',
+              label: 'forum.media_photo'.tr(),
               onTap: attachments.length >= maxItems ? null : onPickImage,
             ),
-            SizedBox(width: 8.w),
+            SizedBox(width: AppSpacing.sm),
             _ActionChip(
               icon: LucideIcons.video,
-              label: 'Video',
+              label: 'forum.media_video'.tr(),
               onTap: attachments.length >= maxItems ? null : onPickVideo,
             ),
-            SizedBox(width: 8.w),
+            SizedBox(width: AppSpacing.sm),
             Text(
               '${attachments.length}/$maxItems',
               style: TextStyle(fontSize: 11.sp, color: AppColors.textHint),
@@ -286,20 +287,20 @@ class ForumMediaPickerRow extends StatelessWidget {
           ],
         ),
         if (attachments.isNotEmpty) ...[
-          SizedBox(height: 10.h),
+          SizedBox(height: AppSpacing.sm10),
           SizedBox(
             height: 84.h,
             child: ListView.separated(
               scrollDirection: Axis.horizontal,
               itemCount: attachments.length,
-              separatorBuilder: (_, __) => SizedBox(width: 8.w),
+              separatorBuilder: (_, __) => SizedBox(width: AppSpacing.sm),
               itemBuilder: (context, index) {
                 final item = attachments[index];
                 return Stack(
                   clipBehavior: Clip.none,
                   children: [
                     ClipRRect(
-                      borderRadius: BorderRadius.circular(10.r),
+                      borderRadius: BorderRadius.circular(AppRadius.md),
                       child: item.isVideo
                           ? Container(
                               width: 84.w,
@@ -307,7 +308,7 @@ class ForumMediaPickerRow extends StatelessWidget {
                               color: AppColors.grey900,
                               child: Icon(
                                 LucideIcons.film,
-                                color: Colors.white,
+                                color: AppColors.surface,
                                 size: 24.sp,
                               ),
                             )
@@ -332,7 +333,7 @@ class ForumMediaPickerRow extends StatelessWidget {
                           child: Icon(
                             LucideIcons.x,
                             size: 12.sp,
-                            color: Colors.white,
+                            color: AppColors.surface,
                           ),
                         ),
                       ),
@@ -363,12 +364,12 @@ class _ActionChip extends StatelessWidget {
   Widget build(BuildContext context) {
     return Material(
       color: AppColors.grey50,
-      borderRadius: BorderRadius.circular(10.r),
+      borderRadius: BorderRadius.circular(AppRadius.md),
       child: InkWell(
         onTap: onTap,
-        borderRadius: BorderRadius.circular(10.r),
+        borderRadius: BorderRadius.circular(AppRadius.md),
         child: Padding(
-          padding: EdgeInsets.symmetric(horizontal: 12.w, vertical: 8.h),
+          padding: EdgeInsets.symmetric(horizontal: AppSpacing.md12, vertical: AppSpacing.sm),
           child: Row(
             mainAxisSize: MainAxisSize.min,
             children: [

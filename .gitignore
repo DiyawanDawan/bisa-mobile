@@ -71,3 +71,19 @@ dart_define.*.json
 Palning Interasi/
 Palning%20Interasi/
 **/Palning*/
+open-firewall.ps1
+run-dev.ps1
+run-dev.sh
+setup-phone-dev.ps1
+tool_add_i18n_keys_temp.py
+tool_merge_i18n_batch.dart
+tool_merge_i18n_keys.dart
+tool_merge_orders_profile_i18n.py
+tool_merge_profile_i18n.dart
+tool_translate.dart
+tool_validate_i18n.dart
+tools/
+tool_add_i18n_keys_temp.py
+tool_add_remaining_i18n.dart
+tool_merge_i18n_batch.dart
+/Planning

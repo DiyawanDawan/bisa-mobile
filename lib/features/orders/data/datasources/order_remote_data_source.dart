@@ -10,12 +10,22 @@ abstract class OrderRemoteDataSource {
     int limit = 20,
     String? search,
     String? status,
+    String? orderType,
   });
   Future<List<OrderModel>> getMySales({
     int page = 1,
     int limit = 20,
     String? search,
     String? status,
+    String? orderType,
+  });
+  Future<Map<String, int>> getMyPurchasesStatusCounts({
+    String? search,
+    String? orderType,
+  });
+  Future<Map<String, int>> getMySalesStatusCounts({
+    String? search,
+    String? orderType,
   });
   Future<OrderModel> getOrderDetail(String id);
   Future<Map<String, dynamic>> getCheckoutBatchDetail(String anchorOrderId);
@@ -54,6 +64,8 @@ abstract class OrderRemoteDataSource {
     Map<String, dynamic>? shippingSnapshot,
     List<Map<String, dynamic>>? shippingSelections,
     String? notes,
+    String? orderType,
+    String? voucherCode,
   });
   Future<Map<String, dynamic>> previewDirectOrder({
     required List<Map<String, dynamic>> items,
@@ -61,6 +73,12 @@ abstract class OrderRemoteDataSource {
     Map<String, dynamic>? shippingSnapshot,
     List<Map<String, dynamic>>? shippingSelections,
     String? notes,
+    String? voucherCode,
+  });
+  Future<Map<String, dynamic>> validateVoucher({
+    required String code,
+    required double subtotal,
+    List<String>? sellerIds,
   });
   Future<Map<String, dynamic>?> getShippingOrigin();
   Future<void> setShippingOrigin({
@@ -109,6 +127,7 @@ class OrderRemoteDataSourceImpl implements OrderRemoteDataSource {
     int limit = 20,
     String? search,
     String? status,
+    String? orderType,
   }) async {
     final response = await dio.get('/orders/my-purchases', queryParameters: {
       'page': page,
@@ -116,6 +135,7 @@ class OrderRemoteDataSourceImpl implements OrderRemoteDataSource {
       'productMode': MarketplaceCubit.activeProductMode,
       if (search != null && search.trim().isNotEmpty) 'search': search.trim(),
       if (status != null && status.isNotEmpty) 'status': status,
+      if (orderType != null && orderType.isNotEmpty) 'orderType': orderType,
     });
     final List data = response.data['data'] as List? ?? const [];
     return _parseOrderList(data);
@@ -127,6 +147,7 @@ class OrderRemoteDataSourceImpl implements OrderRemoteDataSource {
     int limit = 20,
     String? search,
     String? status,
+    String? orderType,
   }) async {
     final response = await dio.get('/orders/my-sales', queryParameters: {
       'page': page,
@@ -134,9 +155,52 @@ class OrderRemoteDataSourceImpl implements OrderRemoteDataSource {
       'productMode': MarketplaceCubit.activeProductMode,
       if (search != null && search.trim().isNotEmpty) 'search': search.trim(),
       if (status != null && status.isNotEmpty) 'status': status,
+      if (orderType != null && orderType.isNotEmpty) 'orderType': orderType,
     });
     final List data = response.data['data'] as List? ?? const [];
     return _parseOrderList(data);
+  }
+
+  @override
+  Future<Map<String, int>> getMyPurchasesStatusCounts({
+    String? search,
+    String? orderType,
+  }) async {
+    final response = await dio.get(
+      '/orders/my-purchases/status-counts',
+      queryParameters: {
+        'productMode': MarketplaceCubit.activeProductMode,
+        if (search != null && search.trim().isNotEmpty) 'search': search.trim(),
+        if (orderType != null && orderType.isNotEmpty) 'orderType': orderType,
+      },
+    );
+    return _parseStatusCounts(response.data['data']);
+  }
+
+  @override
+  Future<Map<String, int>> getMySalesStatusCounts({
+    String? search,
+    String? orderType,
+  }) async {
+    final response = await dio.get(
+      '/orders/my-sales/status-counts',
+      queryParameters: {
+        'productMode': MarketplaceCubit.activeProductMode,
+        if (search != null && search.trim().isNotEmpty) 'search': search.trim(),
+        if (orderType != null && orderType.isNotEmpty) 'orderType': orderType,
+      },
+    );
+    return _parseStatusCounts(response.data['data']);
+  }
+
+  Map<String, int> _parseStatusCounts(dynamic raw) {
+    if (raw is! Map) return const {};
+    return raw.map(
+      (key, value) => MapEntry(
+        key.toString(),
+        value is num ? value.toInt() : int.tryParse(value.toString()) ?? 0,
+      ),
+    );
   }
 
   List<OrderModel> _parseOrderList(List data) {
@@ -302,6 +366,8 @@ class OrderRemoteDataSourceImpl implements OrderRemoteDataSource {
     Map<String, dynamic>? shippingSnapshot,
     List<Map<String, dynamic>>? shippingSelections,
     String? notes,
+    String? orderType,
+    String? voucherCode,
   }) async {
     final response = await dio.post(
       '/orders/direct',
@@ -314,6 +380,8 @@ class OrderRemoteDataSourceImpl implements OrderRemoteDataSource {
         if (shippingSelections != null && shippingSelections.isNotEmpty)
           'shippingSelections': shippingSelections,
         if (notes != null && notes.isNotEmpty) 'notes': notes,
+        if (orderType != null && orderType.isNotEmpty) 'orderType': orderType,
+        if (voucherCode != null && voucherCode.isNotEmpty) 'voucherCode': voucherCode,
       },
     );
     return response.data['data'] as Map<String, dynamic>;
@@ -326,6 +394,7 @@ class OrderRemoteDataSourceImpl implements OrderRemoteDataSource {
     Map<String, dynamic>? shippingSnapshot,
     List<Map<String, dynamic>>? shippingSelections,
     String? notes,
+    String? voucherCode,
   }) async {
     final response = await dio.post(
       '/orders/direct/preview',
@@ -338,9 +407,24 @@ class OrderRemoteDataSourceImpl implements OrderRemoteDataSource {
         if (shippingSelections != null && shippingSelections.isNotEmpty)
           'shippingSelections': shippingSelections,
         if (notes != null && notes.isNotEmpty) 'notes': notes,
+        if (voucherCode != null && voucherCode.isNotEmpty) 'voucherCode': voucherCode,
       },
     );
     return response.data['data'] as Map<String, dynamic>;
+  }
+
+  @override
+  Future<Map<String, dynamic>> validateVoucher({
+    required String code,
+    required double subtotal,
+    List<String>? sellerIds,
+  }) async {
+    final response = await dio.post('/commerce/vouchers/validate', data: {
+      'code': code,
+      'subtotal': subtotal,
+      if (sellerIds != null && sellerIds.isNotEmpty) 'sellerIds': sellerIds,
+    });
+    return Map<String, dynamic>.from(response.data['data'] as Map);
   }
 
   @override

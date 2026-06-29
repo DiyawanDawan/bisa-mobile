@@ -119,9 +119,23 @@ class GisCubit extends Cubit<GisState> {
     );
   }
 
-  Future<void> matchSupplyDemand(double lat, double lng, double radius) async {
+  Future<void> matchSupplyDemand(
+    double lat,
+    double lng,
+    double radius, {
+    String? biomassaType,
+    String? regency,
+    String? province,
+  }) async {
     emit(const GisState.loading());
-    final result = await _repository.matchSupplyDemand(lat, lng, radius);
+    final result = await _repository.matchSupplyDemand(
+      lat,
+      lng,
+      radius,
+      biomassaType: biomassaType,
+      regency: regency,
+      province: province,
+    );
     result.fold(
       (failure) => emit(GisState.error(failure.message)),
       (data) => emit(GisState.matchLoaded(data)),

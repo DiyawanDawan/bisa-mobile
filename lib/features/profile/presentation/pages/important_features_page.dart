@@ -1,12 +1,15 @@
+import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:go_router/go_router.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
 import '../../../../core/constants/app_colors.dart';
+import '../../../../core/constants/app_layout.dart';
 import '../../../auth/presentation/bloc/auth_cubit.dart';
 import '../../../home/presentation/pages/main_screen.dart';
 import '../../../../shared/widgets/bisa_app_bar.dart';
+import '../../../../shared/widgets/pro_tier_matrix.dart';
 
 /// Pusat akses fitur penting §28–§32 (bayar, lacak, supplier tools, sosial).
 class ImportantFeaturesPage extends StatelessWidget {
@@ -23,20 +26,35 @@ class ImportantFeaturesPage extends StatelessWidget {
 
     return Scaffold(
       backgroundColor: AppColors.background,
-      appBar: const BisaAppBar(
-        title: 'Fitur Penting',
-        backgroundColor: Colors.white,
+      appBar: BisaAppBar(
+        title: 'profile.menu_important_features'.tr(),
+        backgroundColor: AppColors.surface,
       ),
       body: ListView(
-        padding: EdgeInsets.fromLTRB(16.w, 12.h, 16.w, 28.h),
+        padding: EdgeInsets.fromLTRB(
+          AppSpacing.md,
+          AppSpacing.md12,
+          AppSpacing.md,
+          AppSpacing.xl28,
+        ),
         children: [
           _introCard(),
-          SizedBox(height: 16.h),
-          _sectionTitle('§28 — Bayar & instruksi'),
+          SizedBox(height: AppSpacing.md),
+          _sectionTitle('pro.matrix_section_title'.tr()),
+          const ProTierMatrix(),
+          SizedBox(height: AppSpacing.sm),
+          _tile(
+            icon: LucideIcons.sparkles,
+            title: 'profile.features_bisa_pro_iot_title'.tr(),
+            subtitle: 'pro.matrix_upgrade_hint'.tr(),
+            onTap: () => context.push('/iot-subscription'),
+          ),
+          SizedBox(height: AppSpacing.section),
+          _sectionTitle('profile.features_section_payment'.tr()),
           _tile(
             icon: LucideIcons.creditCard,
-            title: 'Pesanan menunggu bayar',
-            subtitle: 'Pilih metode → VA/QRIS/webview → instruksi bayar',
+            title: 'profile.features_pending_payment_title'.tr(),
+            subtitle: 'profile.features_pending_payment_subtitle'.tr(),
             onTap: loggedIn
                 ? () {
                     MainShellScope.maybeOf(context)?.selectTab(3);
@@ -47,16 +65,16 @@ class ImportantFeaturesPage extends StatelessWidget {
           if (loggedIn)
             _tile(
               icon: LucideIcons.wallet,
-              title: 'Metode pembayaran',
-              subtitle: 'Kanal bayar yang tersedia di platform',
+              title: 'profile.features_payment_methods_title'.tr(),
+              subtitle: 'profile.features_payment_methods_subtitle'.tr(),
               onTap: () => context.push('/payment-methods'),
             ),
-          SizedBox(height: 14.h),
-          _sectionTitle('§29 — Lacak & notifikasi'),
+          SizedBox(height: AppSpacing.section),
+          _sectionTitle('profile.features_section_tracking'.tr()),
           _tile(
             icon: LucideIcons.mapPin,
-            title: 'Lacak pesanan (login)',
-            subtitle: 'Detail pesanan · peta · sync kurir',
+            title: 'profile.features_track_order_title'.tr(),
+            subtitle: 'profile.features_track_order_subtitle'.tr(),
             onTap: loggedIn
                 ? () {
                     MainShellScope.maybeOf(context)?.selectTab(3);
@@ -66,57 +84,83 @@ class ImportantFeaturesPage extends StatelessWidget {
           ),
           _tile(
             icon: LucideIcons.scanLine,
-            title: 'Verifikasi kontrak publik',
-            subtitle: 'Scan QR / nomor pesanan',
+            title: 'profile.features_verify_contract_title'.tr(),
+            subtitle: 'profile.features_verify_contract_subtitle'.tr(),
             onTap: () => context.push('/verify'),
           ),
           _tile(
             icon: LucideIcons.truck,
-            title: 'Lacak pengiriman publik',
-            subtitle: 'Tanpa login — nomor pesanan',
+            title: 'profile.features_public_track_title'.tr(),
+            subtitle: 'profile.features_public_track_subtitle'.tr(),
             onTap: () => context.push('/track'),
           ),
           if (loggedIn)
             _tile(
               icon: LucideIcons.bell,
-              title: 'Notifikasi',
-              subtitle: 'Tap notifikasi → pesanan / nego / KYC',
+              title: 'profile.menu_notifications'.tr(),
+              subtitle: 'profile.features_notifications_subtitle'.tr(),
               onTap: () => context.push('/notifications'),
             ),
-          SizedBox(height: 14.h),
+          SizedBox(height: AppSpacing.section),
           if (isSupplier) ...[
-            _sectionTitle('§30 — Supplier'),
+            _sectionTitle('profile.features_section_supplier'.tr()),
             _tile(
               icon: LucideIcons.store,
-              title: 'Kelola toko & banner',
-              subtitle: 'Banner promosi di halaman toko',
+              title: 'profile.features_store_banner_title'.tr(),
+              subtitle: 'profile.features_store_banner_subtitle'.tr(),
               onTap: () => context.push('/store-management'),
             ),
             _tile(
               icon: LucideIcons.heart,
-              title: 'Minat produk',
-              subtitle: 'Engagement & views',
+              title: 'profile.menu_product_engagement'.tr(),
+              subtitle: 'profile.features_engagement_subtitle'.tr(),
               onTap: () => context.push('/product-engagement'),
             ),
             _tile(
               icon: LucideIcons.chartBar,
-              title: 'Analitik penjualan',
-              subtitle: 'Omzet & tren (BISA Pro)',
+              title: 'profile.features_sales_analytics_title'.tr(),
+              subtitle: 'profile.features_sales_analytics_subtitle'.tr(),
               onTap: () => context.push('/sales-analytics'),
             ),
             _tile(
               icon: LucideIcons.cpu,
-              title: 'BISA Pro & IoT',
-              subtitle: 'Langganan & monitoring',
+              title: 'profile.features_bisa_pro_iot_title'.tr(),
+              subtitle: 'profile.features_bisa_pro_iot_subtitle'.tr(),
               onTap: () => context.push('/iot-subscription'),
             ),
-            SizedBox(height: 14.h),
+            _tile(
+              icon: LucideIcons.plug,
+              title: 'erp.title'.tr(),
+              subtitle: 'erp.menu_subtitle'.tr(),
+              onTap: () => context.push('/erp-integration'),
+            ),
+            SizedBox(height: AppSpacing.section),
           ],
-          _sectionTitle('§31 — Katalog'),
+          _sectionTitle('profile.features_section_catalog'.tr()),
+          if (loggedIn && !isSupplier)
+            _tile(
+              icon: LucideIcons.fileText,
+              title: 'rfq.menu_title'.tr(),
+              subtitle: 'rfq.menu_subtitle'.tr(),
+              onTap: () => context.push('/rfq'),
+            ),
+          if (isSupplier)
+            _tile(
+              icon: LucideIcons.inbox,
+              title: 'rfq.inbox_title'.tr(),
+              subtitle: 'rfq.menu_inbox_subtitle'.tr(),
+              onTap: () => context.push('/rfq/inbox'),
+            ),
+          _tile(
+            icon: LucideIcons.building2,
+            title: 'marketplace.supplier_directory'.tr(),
+            subtitle: 'marketplace.supplier_directory_hint'.tr(),
+            onTap: () => context.push('/supplier-directory'),
+          ),
           _tile(
             icon: LucideIcons.layoutGrid,
-            title: 'Jelajahi katalog',
-            subtitle: 'Koleksi toko · spesifikasi · filter biomassa/organik',
+            title: 'profile.features_browse_catalog_title'.tr(),
+            subtitle: 'profile.features_browse_catalog_subtitle'.tr(),
             onTap: () {
               MainShellScope.maybeOf(context)?.selectTab(0);
               context.pop();
@@ -125,34 +169,49 @@ class ImportantFeaturesPage extends StatelessWidget {
           if (loggedIn)
             _tile(
               icon: LucideIcons.map,
-              title: 'Alamat & peta',
-              subtitle: 'Picker lokasi saat checkout / tagihan',
+              title: 'profile.features_address_map_title'.tr(),
+              subtitle: 'profile.features_address_map_subtitle'.tr(),
               onTap: () => context.push('/addresses'),
             ),
-          SizedBox(height: 14.h),
-          _sectionTitle('§32 — Sosial & akun'),
+          SizedBox(height: AppSpacing.section),
+          _sectionTitle('profile.features_section_growth'.tr()),
+          if (loggedIn)
+            _tile(
+              icon: LucideIcons.gift,
+              title: 'referral.title'.tr(),
+              subtitle: 'referral.menu_subtitle'.tr(),
+              onTap: () => context.push('/referral'),
+            ),
+          _tile(
+            icon: LucideIcons.radio,
+            title: 'live.title'.tr(),
+            subtitle: 'live.menu_subtitle'.tr(),
+            onTap: () => context.push('/live'),
+          ),
+          SizedBox(height: AppSpacing.section),
+          _sectionTitle('profile.features_section_social'.tr()),
           if (loggedIn && !isSupplier) ...[
             _tile(
               icon: LucideIcons.heart,
-              title: 'Wishlist',
+              title: 'profile.features_wishlist_title'.tr(),
               onTap: () => context.push('/wishlist'),
             ),
             _tile(
               icon: LucideIcons.users,
-              title: 'Follow & koneksi',
+              title: 'profile.features_follow_title'.tr(),
               onTap: () => context.push('/follows'),
             ),
           ],
           if (loggedIn)
             _tile(
               icon: LucideIcons.lock,
-              title: 'Ubah kata sandi',
+              title: 'profile.features_change_password_title'.tr(),
               onTap: () => context.push('/change-password'),
             ),
           _tile(
             icon: LucideIcons.settings,
-            title: 'Pengaturan notifikasi',
-            subtitle: 'Preferensi push & bahasa',
+            title: 'profile.features_notification_settings_title'.tr(),
+            subtitle: 'profile.features_notification_settings_subtitle'.tr(),
             onTap: () => context.push('/settings'),
           ),
         ],
@@ -162,7 +221,7 @@ class ImportantFeaturesPage extends StatelessWidget {
 
   Widget _introCard() {
     return Container(
-      padding: EdgeInsets.all(16.w),
+      padding: AppSpacing.cardPadding,
       decoration: BoxDecoration(
         gradient: LinearGradient(
           colors: [
@@ -170,12 +229,12 @@ class ImportantFeaturesPage extends StatelessWidget {
             AppColors.primary.withValues(alpha: 0.85),
           ],
         ),
-        borderRadius: BorderRadius.circular(16.r),
+        borderRadius: BorderRadius.circular(AppRadius.xl),
       ),
       child: Text(
-        'Akses cepat ke alur penting: instruksi bayar, lacak kirim, tools supplier, dan akun.',
+        'profile.features_intro'.tr(),
         style: TextStyle(
-          color: Colors.white,
+          color: AppColors.surface,
           fontSize: 13.sp,
           height: 1.45,
           fontWeight: FontWeight.w500,
@@ -186,7 +245,7 @@ class ImportantFeaturesPage extends StatelessWidget {
 
   Widget _sectionTitle(String text) {
     return Padding(
-      padding: EdgeInsets.only(bottom: 8.h),
+      padding: EdgeInsets.only(bottom: AppSpacing.sm),
       child: Text(
         text,
         style: TextStyle(
@@ -205,19 +264,19 @@ class ImportantFeaturesPage extends StatelessWidget {
     required VoidCallback onTap,
   }) {
     return Container(
-      margin: EdgeInsets.only(bottom: 8.h),
+      margin: EdgeInsets.only(bottom: AppSpacing.sm),
       decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(14.r),
+        color: AppColors.surface,
+        borderRadius: BorderRadius.circular(AppRadius.tile),
         border: Border.all(color: AppColors.grey100),
       ),
       child: ListTile(
         onTap: onTap,
         leading: Container(
-          padding: EdgeInsets.all(8.r),
+          padding: EdgeInsets.all(AppRadius.md),
           decoration: BoxDecoration(
             color: AppColors.primary.withValues(alpha: 0.08),
-            borderRadius: BorderRadius.circular(10.r),
+            borderRadius: BorderRadius.circular(AppRadius.md),
           ),
           child: Icon(icon, color: AppColors.primary, size: 20.sp),
         ),

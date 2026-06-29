@@ -3,7 +3,9 @@ import 'package:flutter/services.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:go_router/go_router.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
+import '../../core/constants/app_layout.dart';
 import '../../core/constants/app_colors.dart';
+import '../../core/constants/app_text_styles.dart';
 import '../../core/utils/safe_navigator.dart';
 
 class BisaAppBar extends StatelessWidget implements PreferredSizeWidget {
@@ -52,11 +54,11 @@ class BisaAppBar extends StatelessWidget implements PreferredSizeWidget {
             : [],
       ),
       child: AppBar(
-        backgroundColor: Colors.transparent,
+        backgroundColor: AppColors.transparent,
         elevation: 0,
         scrolledUnderElevation: 0,
         systemOverlayStyle: const SystemUiOverlayStyle(
-          statusBarColor: Colors.transparent,
+          statusBarColor: AppColors.transparent,
           statusBarIconBrightness: Brightness.dark,
           statusBarBrightness: Brightness.light,
         ),
@@ -65,7 +67,11 @@ class BisaAppBar extends StatelessWidget implements PreferredSizeWidget {
         leadingWidth: showBackButton ? 70.w : 0,
         leading: showBackButton
             ? Padding(
-                padding: EdgeInsets.only(left: 20.w, top: 8.h, bottom: 8.h),
+                padding: EdgeInsets.only(
+                  left: AppSpacing.lg,
+                  top: AppSpacing.sm,
+                  bottom: AppSpacing.sm,
+                ),
                 child: GestureDetector(
                   onTap:
                       onBackTap ??
@@ -85,7 +91,7 @@ class BisaAppBar extends StatelessWidget implements PreferredSizeWidget {
                       border: Border.all(color: AppColors.grey200),
                       boxShadow: [
                         BoxShadow(
-                          color: Colors.black.withValues(alpha: 0.04),
+                          color: AppColors.black.withValues(alpha: 0.04),
                           blurRadius: 8,
                           offset: const Offset(0, 2),
                         ),
@@ -107,11 +113,8 @@ class BisaAppBar extends StatelessWidget implements PreferredSizeWidget {
             (title != null
                 ? Text(
                     title!,
-                    style: TextStyle(
+                    style: AppTextStyles.pageTitle(
                       color: titleColor ?? AppColors.textPrimary,
-                      fontSize: 18.sp,
-                      fontWeight: FontWeight.w800,
-                      letterSpacing: -0.5,
                     ),
                   )
                 : null),
@@ -119,11 +122,11 @@ class BisaAppBar extends StatelessWidget implements PreferredSizeWidget {
             ? [
                 ...actions!.map(
                   (action) => Padding(
-                    padding: EdgeInsets.only(right: 12.w),
+                    padding: EdgeInsets.only(right: AppSpacing.md12),
                     child: action,
                   ),
                 ),
-                SizedBox(width: 8.w),
+                SizedBox(width: AppSpacing.sm),
               ]
             : null,
       ),

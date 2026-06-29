@@ -1,10 +1,13 @@
+import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:go_router/go_router.dart';
-import 'package:intl/intl.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
+import 'package:mobile_bisa/core/constants/app_layout.dart';
 import 'package:mobile_bisa/core/constants/app_colors.dart';
+import 'package:mobile_bisa/core/i18n/locale_formatters.dart';
+import 'package:mobile_bisa/core/utils/app_feedback.dart';
 import 'package:mobile_bisa/core/utils/safe_area_utils.dart';
 import 'package:mobile_bisa/features/forum/domain/entities/forum_entity.dart';
 import 'package:mobile_bisa/features/forum/presentation/bloc/forum_cubit.dart';
@@ -35,16 +38,16 @@ class _MyForumPostsPageState extends State<MyForumPostsPage>
   late final TabController _tabController;
   late final ForumCubit _cubit;
 
-  static const _tabs = [
-    _TabInfo('Diterbitkan', 'PUBLISHED', LucideIcons.circleCheck),
-    _TabInfo('Draft', 'DRAFT', LucideIcons.fileText),
-    _TabInfo('Arsip', 'ARCHIVED', LucideIcons.archive),
+  static const _tabMeta = [
+    ('forum.tab_published', 'PUBLISHED', LucideIcons.circleCheck),
+    ('forum.tab_draft', 'DRAFT', LucideIcons.fileText),
+    ('forum.tab_archived', 'ARCHIVED', LucideIcons.archive),
   ];
 
   @override
   void initState() {
     super.initState();
-    _tabController = TabController(length: _tabs.length, vsync: this);
+    _tabController = TabController(length: _tabMeta.length, vsync: this);
     _tabController.addListener(() {
       if (_tabController.indexIsChanging) return;
       _loadCurrentTab();
@@ -62,7 +65,7 @@ class _MyForumPostsPageState extends State<MyForumPostsPage>
   }
 
   void _loadCurrentTab() {
-    _cubit.getMyPosts(status: _tabs[_tabController.index].status);
+    _cubit.getMyPosts(status: _tabMeta[_tabController.index].$2);
   }
 
   @override
@@ -72,8 +75,8 @@ class _MyForumPostsPageState extends State<MyForumPostsPage>
       child: Scaffold(
         backgroundColor: AppColors.background,
         appBar: BisaAppBar(
-          title: 'Postingan Saya',
-          backgroundColor: Colors.white,
+          title: 'forum.my_posts_title'.tr(),
+          backgroundColor: AppColors.surface,
           actions: [
             BisaAppBarAction(
               icon: LucideIcons.plus,
@@ -90,7 +93,7 @@ class _MyForumPostsPageState extends State<MyForumPostsPage>
           bottom: PreferredSize(
             preferredSize: Size.fromHeight(48.h),
             child: Container(
-              color: Colors.white,
+              color: AppColors.surface,
               child: TabBar(
                 controller: _tabController,
                 isScrollable: false,
@@ -106,16 +109,16 @@ class _MyForumPostsPageState extends State<MyForumPostsPage>
                   fontSize: 13.sp,
                   fontWeight: FontWeight.w600,
                 ),
-                tabs: _tabs
+                tabs: _tabMeta
                     .map(
                       (t) => Tab(
                         height: 44.h,
                         child: Row(
                           mainAxisAlignment: MainAxisAlignment.center,
                           children: [
-                            Icon(t.icon, size: 14.sp),
+                            Icon(t.$3, size: 14.sp),
                             SizedBox(width: 6.w),
-                            Text(t.label),
+                            Text(t.$1.tr()),
                           ],
                         ),
                       ),
@@ -140,7 +143,7 @@ class _MyForumPostsPageState extends State<MyForumPostsPage>
               onRefresh: () async => _loadCurrentTab(),
               child: state.maybeWhen(
                 loading: () => Padding(
-                  padding: EdgeInsets.all(16.w),
+                  padding: EdgeInsets.all(AppSpacing.md),
                   child: const ShimmerListPlaceholder(
                     itemCount: 4,
                     itemHeight: 120,
@@ -157,7 +160,7 @@ class _MyForumPostsPageState extends State<MyForumPostsPage>
                             kind: MainShellScrollKind.forum,
                           ),
                         ),
-                        _emptyState(_tabs[_tabController.index]),
+                        _emptyState(_tabMeta[_tabController.index].$2),
                       ],
                     );
                   }
@@ -173,7 +176,7 @@ class _MyForumPostsPageState extends State<MyForumPostsPage>
                       ),
                     ),
                     itemCount: posts.length,
-                    separatorBuilder: (_, __) => SizedBox(height: 12.h),
+                    separatorBuilder: (_, __) => SizedBox(height: AppSpacing.md12),
                     itemBuilder: (_, i) => _PostManageCard(
                       post: posts[i],
                       onEdit: () => _onEdit(posts[i]),
@@ -197,7 +200,7 @@ class _MyForumPostsPageState extends State<MyForumPostsPage>
                     ),
                     Center(
                       child: Padding(
-                        padding: EdgeInsets.symmetric(horizontal: 24.w),
+                        padding: EdgeInsets.symmetric(horizontal: AppSpacing.xl),
                         child: Column(
                           children: [
                             Icon(
@@ -205,7 +208,7 @@ class _MyForumPostsPageState extends State<MyForumPostsPage>
                               size: 48.sp,
                               color: AppColors.error,
                             ),
-                            SizedBox(height: 12.h),
+                            SizedBox(height: AppSpacing.md12),
                             Text(
                               msg,
                               textAlign: TextAlign.center,
@@ -214,10 +217,10 @@ class _MyForumPostsPageState extends State<MyForumPostsPage>
                                 color: AppColors.textSecondary,
                               ),
                             ),
-                            SizedBox(height: 16.h),
+                            SizedBox(height: AppSpacing.md),
                             TextButton(
                               onPressed: _loadCurrentTab,
-                              child: const Text('Coba Lagi'),
+                              child: Text('coba_lagi'.tr()),
                             ),
                           ],
                         ),
@@ -234,31 +237,33 @@ class _MyForumPostsPageState extends State<MyForumPostsPage>
     );
   }
 
-  Widget _emptyState(_TabInfo tab) {
-    final messages = {
-      'PUBLISHED': (
-        'Belum ada postingan yang dipublikasikan',
-        'Diskusi yang Anda terbitkan akan muncul di sini & terlihat oleh komunitas.',
-      ),
-      'DRAFT': (
-        'Belum ada draft',
-        'Simpan tulisan yang belum siap dipublikasikan untuk diedit nanti.',
-      ),
-      'ARCHIVED': (
-        'Belum ada postingan terarsip',
-        'Postingan yang dihapus atau diarsipkan akan muncul di sini.',
-      ),
+  Widget _emptyState(String status) {
+    final (titleKey, subtitleKey, icon) = switch (status) {
+      'DRAFT' => (
+          'forum.empty_draft_title',
+          'forum.empty_draft_subtitle',
+          LucideIcons.fileText,
+        ),
+      'ARCHIVED' => (
+          'forum.empty_archived_title',
+          'forum.empty_archived_subtitle',
+          LucideIcons.archive,
+        ),
+      _ => (
+          'forum.empty_published_title',
+          'forum.empty_published_subtitle',
+          LucideIcons.circleCheck,
+        ),
     };
-    final (title, subtitle) = messages[tab.status]!;
     return Center(
       child: Padding(
-        padding: EdgeInsets.symmetric(horizontal: 32.w),
+        padding: EdgeInsets.symmetric(horizontal: AppSpacing.xxl),
         child: Column(
           children: [
-            Icon(tab.icon, size: 56.sp, color: AppColors.grey300),
-            SizedBox(height: 16.h),
+            Icon(icon, size: 56.sp, color: AppColors.grey300),
+            SizedBox(height: AppSpacing.md),
             Text(
-              title,
+              titleKey.tr(),
               textAlign: TextAlign.center,
               style: TextStyle(
                 fontSize: 15.sp,
@@ -266,9 +271,9 @@ class _MyForumPostsPageState extends State<MyForumPostsPage>
                 color: AppColors.textPrimary,
               ),
             ),
-            SizedBox(height: 8.h),
+            SizedBox(height: AppSpacing.sm),
             Text(
-              subtitle,
+              subtitleKey.tr(),
               textAlign: TextAlign.center,
               style: TextStyle(
                 fontSize: 12.sp,
@@ -285,16 +290,16 @@ class _MyForumPostsPageState extends State<MyForumPostsPage>
                 if (created == true) _loadCurrentTab();
               },
               icon: const Icon(LucideIcons.plus, size: 16),
-              label: const Text('Buat Postingan Baru'),
+              label: Text('forum.create_new'.tr()),
               style: ElevatedButton.styleFrom(
                 backgroundColor: AppColors.primary,
-                foregroundColor: Colors.white,
+                foregroundColor: AppColors.textOnPrimary,
                 padding: EdgeInsets.symmetric(
                   horizontal: 20.w,
                   vertical: 12.h,
                 ),
                 shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(12.r),
+                  borderRadius: BorderRadius.circular(AppRadius.lg),
                 ),
               ),
             ),
@@ -317,23 +322,23 @@ class _MyForumPostsPageState extends State<MyForumPostsPage>
       context: context,
       builder: (dCtx) => AlertDialog(
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-        title: const Text('Hapus diskusi?'),
+        title: Text('forum.delete_title'.tr()),
         content: Text(
-          'Diskusi "${post.title}" akan dipindahkan ke arsip. Anda bisa lihat di tab Arsip.',
+          'forum.delete_message'.tr(namedArgs: {'title': post.title}),
           style: TextStyle(fontSize: 13.sp),
         ),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(dCtx, false),
-            child: const Text('Batal'),
+            child: Text('batal'.tr()),
           ),
           ElevatedButton(
             onPressed: () => Navigator.pop(dCtx, true),
             style: ElevatedButton.styleFrom(
               backgroundColor: AppColors.error,
-              foregroundColor: Colors.white,
+              foregroundColor: AppColors.textOnPrimary,
             ),
-            child: const Text('Hapus'),
+            child: Text('hapus'.tr()),
           ),
         ],
       ),
@@ -341,15 +346,11 @@ class _MyForumPostsPageState extends State<MyForumPostsPage>
     if (confirmed != true) return;
     final ok = await _cubit.deletePost(post.id);
     if (!mounted) return;
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text(
-          ok ? 'Diskusi dipindahkan ke arsip' : 'Gagal menghapus diskusi',
-        ),
-        backgroundColor: ok ? AppColors.success : AppColors.error,
-        behavior: SnackBarBehavior.floating,
-      ),
-    );
+    if (ok) {
+      showSuccessSnackBar(context, 'forum.archived_success');
+    } else {
+      showErrorSnackBar(context, 'forum.delete_failed');
+    }
     if (ok) _loadCurrentTab();
   }
 
@@ -357,13 +358,6 @@ class _MyForumPostsPageState extends State<MyForumPostsPage>
     await _cubit.updatePost(post.id, status: status);
     // ForumCubit listener akan emit success → re-load tab.
   }
-}
-
-class _TabInfo {
-  final String label;
-  final String status;
-  final IconData icon;
-  const _TabInfo(this.label, this.status, this.icon);
 }
 
 class _PostManageCard extends StatelessWidget {
@@ -388,17 +382,17 @@ class _PostManageCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final statusInfo = _statusInfoFor(post.status);
-    final dateText = DateFormat('dd MMM yyyy • HH:mm').format(post.createdAt);
+    final dateText = context.formatDateTime(post.createdAt);
     final hasMedia = post.mediaUrls.isNotEmpty;
 
     return Material(
-      color: Colors.white,
-      borderRadius: BorderRadius.circular(14.r),
+      color: AppColors.surface,
+      borderRadius: BorderRadius.circular(AppRadius.tile),
       child: InkWell(
         onTap: post.status == 'PUBLISHED' ? onView : onEdit,
-        borderRadius: BorderRadius.circular(14.r),
+        borderRadius: BorderRadius.circular(AppRadius.tile),
         child: Padding(
-          padding: EdgeInsets.all(14.w),
+          padding: EdgeInsets.all(AppSpacing.section),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
@@ -415,7 +409,7 @@ class _PostManageCard extends StatelessWidget {
                   ),
                 ],
               ),
-              SizedBox(height: 10.h),
+              SizedBox(height: AppSpacing.sm10),
               Row(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
@@ -423,10 +417,10 @@ class _PostManageCard extends StatelessWidget {
                     Container(
                       width: 56.w,
                       height: 56.w,
-                      margin: EdgeInsets.only(right: 12.w),
+                      margin: EdgeInsets.only(right: AppSpacing.md12),
                       decoration: BoxDecoration(
                         color: AppColors.grey100,
-                        borderRadius: BorderRadius.circular(10.r),
+                        borderRadius: BorderRadius.circular(AppRadius.md),
                       ),
                       clipBehavior: Clip.antiAlias,
                       child: post.mediaUrls.first.isImage
@@ -473,7 +467,7 @@ class _PostManageCard extends StatelessWidget {
                   ),
                 ],
               ),
-              SizedBox(height: 10.h),
+              SizedBox(height: AppSpacing.sm10),
               Row(
                 children: [
                   _statChip(
@@ -481,13 +475,13 @@ class _PostManageCard extends StatelessWidget {
                     '${post.upvotes}',
                     AppColors.success,
                   ),
-                  SizedBox(width: 8.w),
+                  SizedBox(width: AppSpacing.sm),
                   _statChip(
                     LucideIcons.messageCircle,
                     '${post.commentCount}',
                     AppColors.info,
                   ),
-                  SizedBox(width: 8.w),
+                  SizedBox(width: AppSpacing.sm),
                   _statChip(
                     LucideIcons.eye,
                     '${post.viewCount}',
@@ -513,7 +507,7 @@ class _PostManageCard extends StatelessWidget {
   }
 
   Widget _statusBadge(_StatusInfo info) => Container(
-        padding: EdgeInsets.symmetric(horizontal: 8.w, vertical: 4.h),
+        padding: EdgeInsets.symmetric(horizontal: AppSpacing.sm, vertical: AppSpacing.xs),
         decoration: BoxDecoration(
           color: info.color.withValues(alpha: 0.1),
           borderRadius: BorderRadius.circular(6.r),
@@ -553,12 +547,20 @@ class _PostManageCard extends StatelessWidget {
   static _StatusInfo _statusInfoFor(String status) {
     switch (status) {
       case 'DRAFT':
-        return _StatusInfo('Draft', LucideIcons.fileText, AppColors.warning);
+        return _StatusInfo(
+          'forum.status_draft_badge'.tr(),
+          LucideIcons.fileText,
+          AppColors.warning,
+        );
       case 'ARCHIVED':
-        return _StatusInfo('Arsip', LucideIcons.archive, AppColors.grey500);
+        return _StatusInfo(
+          'forum.status_archived_badge'.tr(),
+          LucideIcons.archive,
+          AppColors.grey500,
+        );
       default:
         return _StatusInfo(
-          'Terbit',
+          'forum.status_live_badge'.tr(),
           LucideIcons.circleCheck,
           AppColors.success,
         );
@@ -596,7 +598,7 @@ class _PostActionsMenu extends StatelessWidget {
   Widget build(BuildContext context) {
     return PopupMenuButton<String>(
       icon: const Icon(LucideIcons.ellipsisVertical, size: 18),
-      tooltip: 'Aksi',
+      tooltip: 'forum.actions_tooltip'.tr(),
       onSelected: (v) {
         switch (v) {
           case 'view':
@@ -621,32 +623,48 @@ class _PostActionsMenu extends StatelessWidget {
       },
       itemBuilder: (_) => [
         if (status == 'PUBLISHED')
-          const PopupMenuItem(
+          PopupMenuItem(
             value: 'view',
-            child: _MenuRow(LucideIcons.eye, 'Lihat di feed'),
+            child: _MenuRow(
+              LucideIcons.eye,
+              'forum.menu_view_feed'.tr(),
+            ),
           ),
-        const PopupMenuItem(
+        PopupMenuItem(
           value: 'edit',
-          child: _MenuRow(LucideIcons.pencil, 'Edit'),
+          child: _MenuRow(LucideIcons.pencil, 'forum.menu_edit'.tr()),
         ),
         if (status == 'DRAFT')
-          const PopupMenuItem(
+          PopupMenuItem(
             value: 'publish',
-            child: _MenuRow(LucideIcons.send, 'Terbitkan'),
+            child: _MenuRow(
+              LucideIcons.send,
+              'forum.menu_publish'.tr(),
+            ),
           ),
         if (status == 'PUBLISHED')
-          const PopupMenuItem(
+          PopupMenuItem(
             value: 'draft',
-            child: _MenuRow(LucideIcons.fileText, 'Pindah ke Draft'),
+            child: _MenuRow(
+              LucideIcons.fileText,
+              'forum.menu_to_draft'.tr(),
+            ),
           ),
         if (status == 'PUBLISHED' || status == 'DRAFT')
-          const PopupMenuItem(
+          PopupMenuItem(
             value: 'archive',
-            child: _MenuRow(LucideIcons.archive, 'Arsipkan'),
+            child: _MenuRow(
+              LucideIcons.archive,
+              'forum.menu_archive'.tr(),
+            ),
           ),
-        const PopupMenuItem(
+        PopupMenuItem(
           value: 'delete',
-          child: _MenuRow(LucideIcons.trash2, 'Hapus', danger: true),
+          child: _MenuRow(
+            LucideIcons.trash2,
+            'forum.menu_delete'.tr(),
+            danger: true,
+          ),
         ),
       ],
     );

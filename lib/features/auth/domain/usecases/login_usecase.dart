@@ -15,7 +15,7 @@ class LoginUseCase implements UseCase<UserEntity, LoginParams> {
   Future<Either<Failure, UserEntity>> call(LoginParams params) async {
     // Validasi domain
     if (params.email.isEmpty || params.password.isEmpty) {
-      return const Left(ValidationFailure(message: 'Email dan kata sandi wajib diisi'));
+      return const Left(ValidationFailure(message: 'auth.email_password_required'));
     }
 
     return _repository.login(

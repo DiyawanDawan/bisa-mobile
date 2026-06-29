@@ -1,14 +1,16 @@
+import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:go_router/go_router.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
+import '../../../../core/constants/app_layout.dart';
 import '../../../../core/constants/app_colors.dart';
-import '../../../../core/utils/extensions.dart';
+import '../../../../core/utils/money_format.dart';
+import '../../../../core/utils/app_feedback.dart';
 import '../../../../core/utils/safe_area_utils.dart';
 import '../../../../shared/widgets/bisa_app_bar.dart';
 import '../../../../shared/widgets/custom_button.dart';
-import '../utils/checkout_navigation.dart';
 import '../bloc/order_cubit.dart';
 import '../widgets/payment_method_picker_sheet.dart';
 
@@ -87,18 +89,11 @@ class _DirectCheckoutResultPageState extends State<DirectCheckoutResultPage> {
     setState(() => _paying = false);
 
     if (payData == null) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(
-            context.read<OrderCubit>().state.maybeWhen(
-                  error: (msg) => msg,
-                  orElse: () => 'Gagal inisialisasi pembayaran',
-                ),
-          ),
-          backgroundColor: AppColors.error,
-          behavior: SnackBarBehavior.floating,
-        ),
-      );
+      final message = context.read<OrderCubit>().state.maybeWhen(
+            error: (msg) => msg,
+            orElse: () => 'orders.payment_init_failed',
+          );
+      showErrorSnackBar(context, message);
       return;
     }
 
@@ -110,8 +105,11 @@ class _DirectCheckoutResultPageState extends State<DirectCheckoutResultPage> {
     final orderLabel = checkoutBatchNumber?.isNotEmpty == true
         ? checkoutBatchNumber!
         : (orderNumbersRaw is List && orderNumbersRaw.length > 1
-            ? '${orderNumbersRaw.length} pesanan checkout'
-            : (widget.orders.first['orderNumber']?.toString() ?? 'Checkout'));
+            ? 'orders.checkout_batch_label'.tr(
+                namedArgs: {'count': '${orderNumbersRaw.length}'},
+              )
+            : (widget.orders.first['orderNumber']?.toString() ??
+                'orders.checkout_fallback_label'.tr()));
 
     if (!mounted) return;
     context.pushReplacement(
@@ -146,8 +144,8 @@ class _DirectCheckoutResultPageState extends State<DirectCheckoutResultPage> {
       child: Scaffold(
         backgroundColor: AppColors.background,
         appBar: BisaAppBar(
-          title: 'Checkout Selesai',
-          backgroundColor: Colors.white,
+          title: 'orders.checkout_complete_title'.tr(),
+          backgroundColor: AppColors.surface,
           onBackTap: _goBack,
         ),
         body: ListView(
@@ -159,10 +157,10 @@ class _DirectCheckoutResultPageState extends State<DirectCheckoutResultPage> {
           ),
           children: [
             Container(
-              padding: EdgeInsets.all(16.w),
+              padding: EdgeInsets.all(AppSpacing.md),
               decoration: BoxDecoration(
                 color: AppColors.primary.withValues(alpha: 0.08),
-                borderRadius: BorderRadius.circular(16.r),
+                borderRadius: BorderRadius.circular(AppRadius.xl),
                 border: Border.all(
                   color: AppColors.primary.withValues(alpha: 0.2),
                 ),
@@ -174,13 +172,15 @@ class _DirectCheckoutResultPageState extends State<DirectCheckoutResultPage> {
                     color: AppColors.primary,
                     size: 28.sp,
                   ),
-                  SizedBox(width: 12.w),
+                  SizedBox(width: AppSpacing.md12),
                   Expanded(
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text(
-                          '$count pesanan dibuat',
+                          'orders.orders_created_count'.tr(
+                            namedArgs: {'count': '$count'},
+                          ),
                           style: TextStyle(
                             fontSize: 16.sp,
                             fontWeight: FontWeight.w800,
@@ -189,7 +189,9 @@ class _DirectCheckoutResultPageState extends State<DirectCheckoutResultPage> {
                         ),
                         SizedBox(height: 4.h),
                         Text(
-                          'Bayar sekali untuk semua toko (${_batchTotal.toRupiah})',
+                          'orders.pay_once_all_stores'.tr(
+                            namedArgs: {'amount': formatMoneyIdr(_batchTotal)},
+                          ),
                           style: TextStyle(
                             fontSize: 12.sp,
                             color: AppColors.textSecondary,
@@ -202,16 +204,20 @@ class _DirectCheckoutResultPageState extends State<DirectCheckoutResultPage> {
                 ],
               ),
             ),
-            SizedBox(height: 16.h),
+            SizedBox(height: AppSpacing.md),
             ...widget.orders.map(_buildOrderTile),
-            SizedBox(height: 16.h),
+            SizedBox(height: AppSpacing.md),
             CustomButton(
-              text: _paying ? 'Memproses...' : 'Bayar semua ($_batchTotal.toRupiah)',
+              text: _paying
+                  ? 'orders.processing'.tr()
+                  : 'orders.pay_all_amount'.tr(
+                      namedArgs: {'amount': formatMoneyIdr(_batchTotal)},
+                    ),
               onPressed: _paying ? null : _payAll,
             ),
-            SizedBox(height: 10.h),
+            SizedBox(height: AppSpacing.sm10),
             CustomButton(
-              text: 'Ke Pesanan Saya',
+              text: 'orders.go_to_my_orders'.tr(),
               isOutlined: true,
               onPressed: () => context.go('/?tab=3'),
             ),
@@ -223,18 +229,19 @@ class _DirectCheckoutResultPageState extends State<DirectCheckoutResultPage> {
 
   Widget _buildOrderTile(Map<String, dynamic> order) {
     final orderNumber = order['orderNumber']?.toString() ?? '-';
-    final sellerName = order['sellerName']?.toString() ?? 'Supplier';
+    final sellerName =
+        order['sellerName']?.toString() ?? 'orders.fallback_supplier'.tr();
     final raw = order['totalAmount'];
     final amount = raw is num
         ? raw.toDouble()
         : double.tryParse(raw?.toString() ?? '') ?? 0;
 
     return Container(
-      margin: EdgeInsets.only(bottom: 10.h),
-      padding: EdgeInsets.all(14.w),
+      margin: EdgeInsets.only(bottom: AppSpacing.sm10),
+      padding: EdgeInsets.all(AppSpacing.section),
       decoration: BoxDecoration(
-        color: AppColors.white,
-        borderRadius: BorderRadius.circular(14.r),
+        color: AppColors.surface,
+        borderRadius: BorderRadius.circular(AppRadius.tile),
         border: Border.all(color: AppColors.grey100),
       ),
       child: Row(
@@ -263,7 +270,7 @@ class _DirectCheckoutResultPageState extends State<DirectCheckoutResultPage> {
             ),
           ),
           Text(
-            amount.toRupiah,
+            formatMoneyIdr(amount),
             style: TextStyle(
               fontSize: 14.sp,
               fontWeight: FontWeight.w800,

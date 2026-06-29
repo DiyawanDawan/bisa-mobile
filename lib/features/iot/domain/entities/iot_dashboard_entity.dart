@@ -62,6 +62,8 @@ class IotDashboardEntity {
     required this.recentAlerts,
     required this.uptimePercent,
     required this.readingsInRange,
+    this.currentReadingsCount,
+    this.statusWindow = '30m',
   });
 
   final String deviceId;
@@ -77,6 +79,8 @@ class IotDashboardEntity {
   final List<IotAlertModel> recentAlerts;
   final double uptimePercent;
   final int readingsInRange;
+  final int? currentReadingsCount;
+  final String statusWindow;
 
   List<IotSeriesPoint> get temperatureSeries => series['temperature'] ?? const [];
   List<IotSeriesPoint> get humiditySeries => series['humidity'] ?? const [];

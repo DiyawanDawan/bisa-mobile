@@ -1,3 +1,5 @@
+import 'package:easy_localization/easy_localization.dart';
+
 import '../../domain/entities/product_entity.dart';
 
 class ProductSpecEntry {
@@ -24,6 +26,43 @@ class ProductSpecEntry {
 
 /// Maps between API `product_specs` table ↔ unified key-value rows.
 class ProductSpecsMapper {
+  /// Canonical Indonesian labels stored in API / DB — do not change.
+  static const _labelI18nKeys = <String, String>{
+    'Jenis Hasil Tani': 'marketplace.spec_label_crop_type',
+    'Pupuk / Nutrisi': 'marketplace.spec_label_fertilizer',
+    'Bebas Bahan Kimia': 'marketplace.spec_label_chemical_free',
+    'Metode Irigasi': 'marketplace.spec_label_irrigation',
+    'Musim Tanam': 'marketplace.spec_label_planting_season',
+    'Sertifikasi': 'marketplace.spec_label_certification',
+    'Kadar Air': 'marketplace.spec_label_moisture',
+    'Kemurnian Karbon': 'marketplace.spec_label_carbon_purity',
+    'Tingkat pH': 'marketplace.spec_label_ph',
+    'Densitas': 'marketplace.spec_label_density',
+    'Kapasitas Produksi': 'marketplace.spec_label_production_capacity',
+    'Luas Permukaan': 'marketplace.spec_label_surface_area',
+    'Offset Karbon per Ton': 'marketplace.spec_label_carbon_offset',
+    'Berat Kotor per Sak': 'marketplace.spec_label_gross_weight',
+    'Berat Bersih per Sak': 'marketplace.spec_label_net_weight',
+    'Dimensi Karung': 'marketplace.spec_label_bag_dimension',
+  };
+
+  static const _valueI18nKeys = <String, String>{
+    'Ya (100% Organik)': 'marketplace.spec_value_chemical_free_yes',
+    'Tidak': 'marketplace.spec_value_no',
+  };
+
+  /// Localized label for UI; falls back to [canonicalLabel] for custom rows.
+  static String displayLabel(String canonicalLabel) {
+    final key = _labelI18nKeys[canonicalLabel.trim()];
+    return key != null ? key.tr() : canonicalLabel;
+  }
+
+  /// Localized value for known preset values; falls back to raw [value].
+  static String displayValue(String value) {
+    final key = _valueI18nKeys[value.trim()];
+    return key != null ? key.tr() : value;
+  }
+
   static List<String> presetLabels(String productMode) {
     if (productMode == 'ORGANIC_PRODUCE') {
       return [

@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
+import '../../../../core/constants/app_layout.dart';
 import '../../domain/entities/order_entity.dart';
 import '../utils/order_list_grouping.dart';
 import 'order_batch_card.dart';
@@ -22,7 +23,7 @@ class GroupedOrdersList extends StatelessWidget {
     final groups = groupOrdersByOrderNumber(orders);
 
     return Padding(
-      padding: EdgeInsets.fromLTRB(20.w, 4.h, 20.w, 16.h),
+      padding: EdgeInsets.fromLTRB(AppSpacing.md12, 2.h, AppSpacing.md12, AppSpacing.sm10),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [

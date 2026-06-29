@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
+import '../../core/constants/app_layout.dart';
 import '../../core/constants/app_colors.dart';
 
 /// Icon badge gradient + shadow (gaya quick action 3D).
@@ -51,7 +52,7 @@ class Bisa3DIconBadge extends StatelessWidget {
       ),
       child: Icon(
         icon,
-        color: AppColors.white,
+        color: AppColors.surface,
         size: iconSize ?? (size * 0.48).sp,
       ),
     );
@@ -75,7 +76,13 @@ class Supplier3DSectionCard extends StatelessWidget {
   Widget build(BuildContext context) {
     return Container(
       width: double.infinity,
-      padding: padding ?? EdgeInsets.fromLTRB(16.w, 16.h, 16.w, 14.h),
+      padding: padding ??
+          EdgeInsets.fromLTRB(
+            AppSpacing.md,
+            AppSpacing.md,
+            AppSpacing.md,
+            AppSpacing.section,
+          ),
         decoration: BoxDecoration(
           color: AppColors.surface,
           borderRadius: BorderRadius.circular(22.r),

@@ -1,3 +1,4 @@
+import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:mobile_bisa/core/constants/app_colors.dart';
@@ -83,7 +84,7 @@ class _InvoiceShippingEditCardState extends State<InvoiceShippingEditCard> {
       width: double.infinity,
       padding: EdgeInsets.all(16.w),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: AppColors.surface,
         borderRadius: BorderRadius.circular(14.r),
         border: Border.all(color: AppColors.grey200),
       ),
@@ -97,7 +98,7 @@ class _InvoiceShippingEditCardState extends State<InvoiceShippingEditCard> {
               SizedBox(width: 8.w),
               Expanded(
                 child: Text(
-                  'Alamat Pengiriman',
+                  'invoice.shipping_section'.tr(),
                   style: TextStyle(
                     fontWeight: FontWeight.w800,
                     fontSize: 14.sp,
@@ -110,22 +111,22 @@ class _InvoiceShippingEditCardState extends State<InvoiceShippingEditCard> {
           Text(
             widget.hintText ??
                 (widget.readOnly
-                    ? 'Alamat tercantum pada tagihan'
-                    : 'Dapat disesuaikan sebelum tagihan diterbitkan'),
+                    ? 'invoice.edit_hint_readonly'.tr()
+                    : 'invoice.edit_hint_editable'.tr()),
             style: TextStyle(fontSize: 11.sp, color: AppColors.textHint),
           ),
           SizedBox(height: 12.h),
           CustomTextField(
-            label: 'Nama Penerima',
-            hint: 'Nama penerima barang',
+            label: 'invoice.edit_recipient_label'.tr(),
+            hint: 'invoice.edit_recipient_hint'.tr(),
             controller: _recipientCtrl,
             enabled: !widget.readOnly,
             onChanged: widget.readOnly ? null : (_) => _emit(),
           ),
           SizedBox(height: 10.h),
           CustomTextField(
-            label: 'Telepon',
-            hint: '08xxxxxxxxxx',
+            label: 'invoice.shipping_address_phone'.tr(),
+            hint: 'profile.edit_phone_hint'.tr(),
             controller: _phoneCtrl,
             keyboardType: TextInputType.phone,
             enabled: !widget.readOnly,
@@ -133,8 +134,8 @@ class _InvoiceShippingEditCardState extends State<InvoiceShippingEditCard> {
           ),
           SizedBox(height: 10.h),
           CustomTextField(
-            label: 'Alamat Lengkap',
-            hint: 'Jl. ..., RT/RW, Kelurahan',
+            label: 'invoice.shipping_address_street'.tr(),
+            hint: 'invoice.edit_address_hint'.tr(),
             controller: _addressCtrl,
             maxLines: 3,
             enabled: !widget.readOnly,
@@ -145,8 +146,8 @@ class _InvoiceShippingEditCardState extends State<InvoiceShippingEditCard> {
             children: [
               Expanded(
                 child: CustomTextField(
-                  label: 'Kab/Kota',
-                  hint: 'Kota',
+                  label: 'invoice.edit_regency_label'.tr(),
+                  hint: 'invoice.edit_regency_hint'.tr(),
                   controller: _regencyCtrl,
                   enabled: !widget.readOnly,
                   onChanged: widget.readOnly ? null : (_) => _emit(),
@@ -155,8 +156,8 @@ class _InvoiceShippingEditCardState extends State<InvoiceShippingEditCard> {
               SizedBox(width: 10.w),
               Expanded(
                 child: CustomTextField(
-                  label: 'Provinsi',
-                  hint: 'Provinsi',
+                  label: 'invoice.edit_province_label'.tr(),
+                  hint: 'invoice.edit_province_hint'.tr(),
                   controller: _provinceCtrl,
                   enabled: !widget.readOnly,
                   onChanged: widget.readOnly ? null : (_) => _emit(),

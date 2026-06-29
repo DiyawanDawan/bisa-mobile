@@ -3,6 +3,7 @@ import 'package:dio/dio.dart';
 
 import '../errors/exceptions.dart';
 import '../errors/failures.dart';
+import '../network/ngrok_support.dart';
 
 // ── UseCase base class ────────────────────────────────────────────────────────
 
@@ -37,6 +38,10 @@ Failure dioExceptionToFailure(DioException e) {
   if (error is ServerException) {
     return ServerFailure(
         message: error.message, statusCode: error.statusCode);
+  }
+
+  if (NgrokSupport.isNgrokErrorBody(e.response?.data)) {
+    return NetworkFailure(NgrokSupport.errorMessageKey(e.response?.data));
   }
 
   switch (e.type) {

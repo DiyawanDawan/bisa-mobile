@@ -1,11 +1,15 @@
+import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
+import '../../../../core/constants/app_layout.dart';
 import '../../../../core/constants/app_colors.dart';
-import '../../../../core/utils/extensions.dart';
+import '../../../../core/i18n/failure_messages.dart';
+import '../../../../core/utils/app_feedback.dart';
+import '../../../../core/utils/money_format.dart';
 import '../../../../injection_container.dart';
 import '../../../../shared/widgets/bisa_app_bar.dart';
 import '../../../../shared/widgets/bisa_avatar.dart';
@@ -60,12 +64,7 @@ class _OrderBatchDetailPageState extends State<OrderBatchDetailPage> {
   Future<void> _copy(String value) async {
     await Clipboard.setData(ClipboardData(text: value));
     if (!mounted) return;
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(
-        content: Text('Disalin'),
-        behavior: SnackBarBehavior.floating,
-      ),
-    );
+    showSuccessSnackBar(context, 'orders.copied');
   }
 
   String? _trackingOf(OrderEntity order) {
@@ -91,7 +90,7 @@ class _OrderBatchDetailPageState extends State<OrderBatchDetailPage> {
     return Scaffold(
       backgroundColor: AppColors.grey50,
       appBar: BisaAppBar(
-        title: 'Detail Pesanan',
+        title: 'orders.detail_title'.tr(),
         onBackTap: () => context.pop(),
       ),
       body: _loading
@@ -99,7 +98,10 @@ class _OrderBatchDetailPageState extends State<OrderBatchDetailPage> {
           : _error != null
               ? _ErrorBody(message: _error!, onRetry: _load)
               : _batch == null
-                  ? _ErrorBody(message: 'Data tidak ditemukan', onRetry: _load)
+                  ? _ErrorBody(
+                      message: 'orders.data_not_found'.tr(),
+                      onRetry: _load,
+                    )
                   : RefreshIndicator(
                       onRefresh: _load,
                       color: AppColors.primary,
@@ -111,9 +113,11 @@ class _OrderBatchDetailPageState extends State<OrderBatchDetailPage> {
                             address: _addressLine(_batch!),
                             onCopy: () => _copy(_batch!.displayOrderNumber),
                           ),
-                          SizedBox(height: 16.h),
+                          SizedBox(height: AppSpacing.md),
           Text(
-            'Detail per toko (${_batch!.orders.length})',
+            'orders.batch_per_store_title'.tr(
+              namedArgs: {'count': '${_batch!.orders.length}'},
+            ),
             style: TextStyle(
               fontSize: 14.sp,
               fontWeight: FontWeight.w900,
@@ -122,15 +126,14 @@ class _OrderBatchDetailPageState extends State<OrderBatchDetailPage> {
           ),
           SizedBox(height: 4.h),
           Text(
-            'Satu pembayaran, tetapi tiap toko mengirim paket sendiri. '
-            'Status dan nomor resi bisa berbeda.',
+            'orders.batch_per_store_subtitle'.tr(),
             style: TextStyle(
               fontSize: 11.sp,
               height: 1.4,
               color: AppColors.textSecondary,
             ),
           ),
-                          SizedBox(height: 12.h),
+                          SizedBox(height: AppSpacing.md12),
                           ..._batch!.orders.map(
                             (order) => _SupplierDetailCard(
                               order: order,
@@ -155,13 +158,13 @@ class _ErrorBody extends StatelessWidget {
   Widget build(BuildContext context) {
     return Center(
       child: Padding(
-        padding: EdgeInsets.all(24.w),
+        padding: EdgeInsets.all(AppSpacing.xl),
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Text(message, textAlign: TextAlign.center),
-            SizedBox(height: 16.h),
-            CustomButton(text: 'Coba lagi', onPressed: onRetry),
+            Text(message.localizedFailure, textAlign: TextAlign.center),
+            SizedBox(height: AppSpacing.md),
+            CustomButton(text: 'orders.retry'.tr(), onPressed: onRetry),
           ],
         ),
       ),
@@ -186,10 +189,10 @@ class _BatchSummaryCard extends StatelessWidget {
         DateFormat('d MMMM yyyy, HH:mm', 'id_ID').format(batch.createdAt);
 
     return Container(
-      padding: EdgeInsets.all(16.w),
+      padding: EdgeInsets.all(AppSpacing.md),
       decoration: BoxDecoration(
-        color: AppColors.white,
-        borderRadius: BorderRadius.circular(16.r),
+        color: AppColors.surface,
+        borderRadius: BorderRadius.circular(AppRadius.xl),
         border: Border.all(color: AppColors.grey100),
         boxShadow: AppColors.softShadow,
       ),
@@ -199,10 +202,12 @@ class _BatchSummaryCard extends StatelessWidget {
           Row(
             children: [
               Icon(LucideIcons.layers, size: 18.sp, color: AppColors.primary),
-              SizedBox(width: 8.w),
+              SizedBox(width: AppSpacing.sm),
               Expanded(
                 child: Text(
-                  'Belanja dari ${batch.supplierCount} toko',
+                  'orders.batch_from_stores'.tr(
+                    namedArgs: {'count': '${batch.supplierCount}'},
+                  ),
                   style: TextStyle(
                     fontSize: 15.sp,
                     fontWeight: FontWeight.w900,
@@ -212,9 +217,9 @@ class _BatchSummaryCard extends StatelessWidget {
               ),
             ],
           ),
-          SizedBox(height: 10.h),
+          SizedBox(height: AppSpacing.sm10),
           Text(
-            'No. Pesanan',
+            'orders.field_order_number'.tr(),
             style: TextStyle(
               fontSize: 10.sp,
               fontWeight: FontWeight.w700,
@@ -224,7 +229,7 @@ class _BatchSummaryCard extends StatelessWidget {
           SizedBox(height: 4.h),
           InkWell(
             onTap: onCopy,
-            borderRadius: BorderRadius.circular(8.r),
+            borderRadius: BorderRadius.circular(AppRadius.button),
             child: Row(
               children: [
                 Expanded(
@@ -241,11 +246,11 @@ class _BatchSummaryCard extends StatelessWidget {
               ],
             ),
           ),
-          SizedBox(height: 10.h),
+          SizedBox(height: AppSpacing.sm10),
           Text(dateLabel,
               style: TextStyle(fontSize: 11.sp, color: AppColors.textSecondary)),
           if (address != null) ...[
-            SizedBox(height: 10.h),
+            SizedBox(height: AppSpacing.sm10),
             Row(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
@@ -260,21 +265,21 @@ class _BatchSummaryCard extends StatelessWidget {
               ],
             ),
           ],
-          SizedBox(height: 12.h),
+          SizedBox(height: AppSpacing.md12),
           Divider(color: AppColors.grey100, height: 1),
-          SizedBox(height: 12.h),
+          SizedBox(height: AppSpacing.md12),
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
               Text(
-                'Total checkout',
+                'orders.batch_total_checkout'.tr(),
                 style: TextStyle(
                   fontSize: 12.sp,
                   color: AppColors.textSecondary,
                 ),
               ),
               Text(
-                batch.batchTotalAmount.toRupiah,
+                formatMoneyIdr(batch.batchTotalAmount),
                 style: TextStyle(
                   fontSize: 16.sp,
                   fontWeight: FontWeight.w900,
@@ -303,14 +308,16 @@ class _SupplierDetailCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final sellerName =
-        order.seller.name.isNotEmpty ? order.seller.name : 'Supplier';
+        order.seller.name.isNotEmpty
+            ? order.seller.name
+            : 'orders.fallback_supplier'.tr();
 
     return Container(
-      margin: EdgeInsets.only(bottom: 12.h),
-      padding: EdgeInsets.all(14.w),
+      margin: EdgeInsets.only(bottom: AppSpacing.md12),
+      padding: EdgeInsets.all(AppSpacing.section),
       decoration: BoxDecoration(
-        color: AppColors.white,
-        borderRadius: BorderRadius.circular(16.r),
+        color: AppColors.surface,
+        borderRadius: BorderRadius.circular(AppRadius.xl),
         border: Border.all(color: AppColors.grey100),
         boxShadow: AppColors.softShadow,
       ),
@@ -322,10 +329,10 @@ class _SupplierDetailCard extends StatelessWidget {
             children: [
               BisaAvatar(
                 imageUrl: order.seller.avatarUrl,
-                radius: 16.r,
+                radius: AppRadius.xl,
                 fallbackIcon: LucideIcons.store,
               ),
-              SizedBox(width: 10.w),
+              SizedBox(width: AppSpacing.sm10),
               Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
@@ -354,7 +361,7 @@ class _SupplierDetailCard extends StatelessWidget {
             ],
           ),
           if (tracking != null) ...[
-            SizedBox(height: 8.h),
+            SizedBox(height: AppSpacing.sm),
             Row(
               children: [
                 Icon(LucideIcons.route, size: 13.sp, color: AppColors.info),
@@ -372,15 +379,15 @@ class _SupplierDetailCard extends StatelessWidget {
               ],
             ),
           ],
-          SizedBox(height: 12.h),
+          SizedBox(height: AppSpacing.md12),
           ...order.items.map((item) {
             return Padding(
-              padding: EdgeInsets.only(bottom: 10.h),
+              padding: EdgeInsets.only(bottom: AppSpacing.sm10),
               child: Row(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   ClipRRect(
-                    borderRadius: BorderRadius.circular(10.r),
+                    borderRadius: BorderRadius.circular(AppRadius.md),
                     child: Container(
                       width: 52.w,
                       height: 52.w,
@@ -394,7 +401,7 @@ class _SupplierDetailCard extends StatelessWidget {
                           : Icon(LucideIcons.package, color: AppColors.grey300),
                     ),
                   ),
-                  SizedBox(width: 10.w),
+                  SizedBox(width: AppSpacing.sm10),
                   Expanded(
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
@@ -410,7 +417,7 @@ class _SupplierDetailCard extends StatelessWidget {
                         ),
                         SizedBox(height: 2.h),
                         Text(
-                          '${item.quantity.toStringAsFixed(0)} × ${item.pricePerUnit.toRupiah}',
+                          '${item.quantity.toStringAsFixed(0)} × ${formatMoneyIdr(item.pricePerUnit)}',
                           style: TextStyle(
                             fontSize: 10.sp,
                             color: AppColors.textSecondary,
@@ -420,7 +427,7 @@ class _SupplierDetailCard extends StatelessWidget {
                     ),
                   ),
                   Text(
-                    item.subtotal.toRupiah,
+                    formatMoneyIdr(item.subtotal),
                     style: TextStyle(
                       fontSize: 11.sp,
                       fontWeight: FontWeight.w800,
@@ -432,16 +439,16 @@ class _SupplierDetailCard extends StatelessWidget {
             );
           }),
           Divider(color: AppColors.grey100, height: 1),
-          SizedBox(height: 10.h),
+          SizedBox(height: AppSpacing.sm10),
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
               Text(
-                'Subtotal toko',
+                'orders.store_subtotal'.tr(),
                 style: TextStyle(fontSize: 11.sp, color: AppColors.textSecondary),
               ),
               Text(
-                order.totalAmount.toRupiah,
+                formatMoneyIdr(order.totalAmount),
                 style: TextStyle(
                   fontSize: 14.sp,
                   fontWeight: FontWeight.w900,
@@ -450,9 +457,9 @@ class _SupplierDetailCard extends StatelessWidget {
               ),
             ],
           ),
-          SizedBox(height: 12.h),
+          SizedBox(height: AppSpacing.md12),
           CustomButton(
-            text: 'Kelola pesanan toko ini',
+            text: 'orders.manage_store_order'.tr(),
             height: 42.h,
             isOutlined: true,
             onPressed: onOpenDetail,

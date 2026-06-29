@@ -7,6 +7,7 @@ abstract class ForumRemoteDataSource {
     String? categoryId,
     String? keyword,
     String? tag,
+    String? groupId,
     int page = 1,
     int limit = 10,
   });
@@ -15,6 +16,7 @@ abstract class ForumRemoteDataSource {
     String title,
     String content,
     String? categoryId, {
+    String? groupId,
     List<Map<String, dynamic>>? mediaUrls,
     String? status,
     List<String>? tags,
@@ -113,6 +115,7 @@ class ForumRemoteDataSourceImpl implements ForumRemoteDataSource {
     String? categoryId,
     String? keyword,
     String? tag,
+    String? groupId,
     int page = 1,
     int limit = 10,
   }) async {
@@ -122,6 +125,7 @@ class ForumRemoteDataSourceImpl implements ForumRemoteDataSource {
         if (categoryId != null) 'categoryId': categoryId,
         if (keyword != null) 'keyword': keyword,
         if (tag != null && tag.isNotEmpty) 'tag': tag,
+        if (groupId != null && groupId.isNotEmpty) 'groupId': groupId,
         'page': page,
         'limit': limit,
       },
@@ -153,6 +157,7 @@ class ForumRemoteDataSourceImpl implements ForumRemoteDataSource {
     String title,
     String content,
     String? categoryId, {
+    String? groupId,
     List<Map<String, dynamic>>? mediaUrls,
     String? status,
     List<String>? tags,
@@ -164,6 +169,7 @@ class ForumRemoteDataSourceImpl implements ForumRemoteDataSource {
         'content': content,
         if (categoryId != null && categoryId.isNotEmpty)
           'categoryId': categoryId,
+        if (groupId != null && groupId.isNotEmpty) 'groupId': groupId,
         if (mediaUrls != null && mediaUrls.isNotEmpty) 'mediaUrls': mediaUrls,
         if (status != null) 'status': status,
         if (tags != null && tags.isNotEmpty) 'tags': tags,

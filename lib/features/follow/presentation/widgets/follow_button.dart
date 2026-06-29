@@ -1,8 +1,10 @@
+import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:go_router/go_router.dart';
 import '../../../../core/constants/app_colors.dart';
+import '../../../../core/utils/app_feedback.dart';
 import '../../../../shared/widgets/auth_sheet.dart';
 import '../../../auth/presentation/bloc/auth_cubit.dart';
 import '../bloc/follow_cubit.dart';
@@ -52,13 +54,7 @@ class _FollowButtonState extends State<FollowButton> {
     if (!mounted) return;
     setState(() => _loading = false);
     if (error != null && error.isNotEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(error),
-          backgroundColor: AppColors.error,
-          behavior: SnackBarBehavior.floating,
-        ),
-      );
+      showErrorSnackBar(context, error);
     }
   }
 
@@ -78,7 +74,9 @@ class _FollowButtonState extends State<FollowButton> {
             : AppColors.primary.withValues(alpha: 0.08);
         final textColor =
             isFollowing ? AppColors.textSecondary : AppColors.primary;
-        final label = isFollowing ? 'Mengikuti' : 'Ikuti';
+        final label = isFollowing
+            ? 'follow.tab_following'.tr()
+            : 'follow.action_follow'.tr();
 
         return GestureDetector(
           onTap: _loading ? null : () => _onTap(context),
@@ -165,12 +163,12 @@ class _UserFollowStatsRowState extends State<UserFollowStatsRow> {
           children: [
             _StatChip(
               value: '${stats.followingCount}',
-              label: 'Mengikuti',
+              label: 'follow.tab_following'.tr(),
             ),
             SizedBox(width: 20.w),
             _StatChip(
               value: '${stats.followersCount}',
-              label: 'Pengikut',
+              label: 'follow.tab_followers'.tr(),
             ),
           ],
         );
@@ -197,13 +195,13 @@ class FollowStatsRow extends StatelessWidget {
           children: [
             _StatTap(
               value: '$following',
-              label: 'Mengikuti',
+              label: 'follow.tab_following'.tr(),
               onTap: () => context.push('/follows?tab=following'),
             ),
             SizedBox(width: 28.w),
             _StatTap(
               value: '$followers',
-              label: 'Pengikut',
+              label: 'follow.tab_followers'.tr(),
               onTap: () => context.push('/follows?tab=followers'),
             ),
           ],

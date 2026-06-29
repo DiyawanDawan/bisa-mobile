@@ -16,6 +16,7 @@ class ForumRepositoryImpl implements ForumRepository {
     String? categoryId,
     String? keyword,
     String? tag,
+    String? groupId,
     int page = 1,
     int limit = 10,
   }) async {
@@ -24,6 +25,7 @@ class ForumRepositoryImpl implements ForumRepository {
         categoryId: categoryId,
         keyword: keyword,
         tag: tag,
+        groupId: groupId,
         page: page,
         limit: limit,
       );
@@ -52,6 +54,7 @@ class ForumRepositoryImpl implements ForumRepository {
     String title,
     String content,
     String? categoryId, {
+    String? groupId,
     List<ForumMediaItem>? mediaUrls,
     String? status,
     List<String>? tags,
@@ -61,6 +64,7 @@ class ForumRepositoryImpl implements ForumRepository {
         title,
         content,
         categoryId,
+        groupId: groupId,
         mediaUrls: forumMediaToJson(mediaUrls),
         status: status,
         tags: tags,
@@ -205,7 +209,7 @@ class ForumRepositoryImpl implements ForumRepository {
       final statusCode = e.response?.statusCode;
       final rawData = e.response?.data;
       final data = rawData is Map<String, dynamic> ? rawData : null;
-      final message = data?['meta']?['message'] ?? data?['message'] ?? 'Terjadi kesalahan';
+      final message = data?['meta']?['message'] ?? data?['message'] ?? 'errors.generic';
       final errors = data?['errors'];
       String? firstFieldError;
       if (errors is List && errors.isNotEmpty) {

@@ -1,6 +1,8 @@
+import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
+import 'package:mobile_bisa/core/constants/app_layout.dart';
 import 'package:mobile_bisa/core/constants/app_colors.dart';
 import 'package:mobile_bisa/core/network/api_client.dart';
 import 'package:mobile_bisa/core/utils/safe_area_utils.dart';
@@ -43,9 +45,9 @@ class PaymentMethodPickerSheet extends StatefulWidget {
     return showModalBottomSheet<PaymentMethodChoice>(
       context: context,
       isScrollControlled: true,
-      backgroundColor: Colors.white,
+      backgroundColor: AppColors.surface,
       shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(24.r)),
+        borderRadius: BorderRadius.vertical(top: Radius.circular(AppSpacing.xlPx.r)),
       ),
       builder: (_) => PaymentMethodPickerSheet(
         amount: amount,
@@ -93,7 +95,7 @@ class _PaymentMethodPickerSheetState extends State<PaymentMethodPickerSheet> {
       if (!mounted) return;
       setState(() {
         _loading = false;
-        _error = 'Gagal memuat metode pembayaran.';
+        _error = 'orders.payment_load_failed'.tr();
       });
     }
   }
@@ -119,18 +121,18 @@ class _PaymentMethodPickerSheetState extends State<PaymentMethodPickerSheet> {
   String _labelFor(String? group) {
     switch (group?.toUpperCase()) {
       case 'E_WALLET':
-        return 'E-Wallet';
+        return 'orders.payment_group_ewallet'.tr();
       case 'QRIS':
-        return 'QRIS';
+        return 'orders.payment_group_qris'.tr();
       case 'BANK_TRANSFER':
       case 'VIRTUAL_ACCOUNT':
-        return 'Transfer Bank (VA)';
+        return 'orders.payment_group_va'.tr();
       case 'CREDIT_CARD':
-        return 'Kartu Kredit';
+        return 'orders.payment_group_credit_card'.tr();
       case 'OVER_THE_COUNTER':
-        return 'Minimarket';
+        return 'orders.payment_group_otc'.tr();
       default:
-        return group ?? 'Pembayaran';
+        return group ?? 'orders.payment_group_fallback'.tr();
     }
   }
 
@@ -156,7 +158,7 @@ class _PaymentMethodPickerSheetState extends State<PaymentMethodPickerSheet> {
         builder: (_, controller) {
           return Column(
             children: [
-              SizedBox(height: 10.h),
+              SizedBox(height: AppSpacing.sm10),
               Container(
                 width: 42.w,
                 height: 4.h,
@@ -166,17 +168,17 @@ class _PaymentMethodPickerSheetState extends State<PaymentMethodPickerSheet> {
                 ),
               ),
               Padding(
-                padding: EdgeInsets.fromLTRB(20.w, 14.h, 20.w, 10.h),
+                padding: EdgeInsets.fromLTRB(AppSpacing.lg, AppSpacing.section, AppSpacing.lg, AppSpacing.sm10),
                 child: Row(
                   children: [
                     Icon(LucideIcons.wallet, color: AppColors.primary, size: 22.sp),
-                    SizedBox(width: 10.w),
+                    SizedBox(width: AppSpacing.sm10),
                     Expanded(
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           Text(
-                            'Pilih Metode Pembayaran',
+                            'orders.pick_payment_method'.tr(),
                             style: TextStyle(
                               fontSize: 16.sp,
                               fontWeight: FontWeight.w900,
@@ -185,7 +187,9 @@ class _PaymentMethodPickerSheetState extends State<PaymentMethodPickerSheet> {
                           ),
                           SizedBox(height: 2.h),
                           Text(
-                            'Total: Rp ${_formatAmount(widget.amount)}',
+                            'orders.picker_total'.tr(namedArgs: {
+                              'amount': _formatAmount(widget.amount),
+                            }),
                             style: TextStyle(
                               fontSize: 12.sp,
                               color: AppColors.textSecondary,
@@ -207,7 +211,7 @@ class _PaymentMethodPickerSheetState extends State<PaymentMethodPickerSheet> {
               SafeArea(
                 top: false,
                 child: Padding(
-                  padding: EdgeInsets.fromLTRB(20.w, 12.h, 20.w, 12.h),
+                  padding: EdgeInsets.fromLTRB(AppSpacing.lg, AppSpacing.md12, AppSpacing.lg, AppSpacing.md12),
                   child: SizedBox(
                     width: double.infinity,
                     height: 50.h,
@@ -229,17 +233,19 @@ class _PaymentMethodPickerSheetState extends State<PaymentMethodPickerSheet> {
                             },
                       style: ElevatedButton.styleFrom(
                         backgroundColor: AppColors.primary,
-                        foregroundColor: Colors.white,
+                        foregroundColor: AppColors.textOnPrimary,
                         disabledBackgroundColor: AppColors.grey200,
                         disabledForegroundColor: AppColors.grey400,
                         shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(14.r),
+                          borderRadius: BorderRadius.circular(AppRadius.tile),
                         ),
                       ),
                       child: Text(
                         _selectedCode == null
-                            ? 'Pilih metode dulu'
-                            : 'Gunakan $_selectedCode',
+                            ? 'orders.picker_select_first'.tr()
+                            : 'orders.picker_use_method'.tr(
+                                namedArgs: {'code': _selectedCode!},
+                              ),
                         style: TextStyle(
                           fontSize: 14.sp,
                           fontWeight: FontWeight.w800,
@@ -264,19 +270,22 @@ class _PaymentMethodPickerSheetState extends State<PaymentMethodPickerSheet> {
     }
     if (_error != null) {
       return Padding(
-        padding: EdgeInsets.all(24.w),
+        padding: EdgeInsets.all(AppSpacing.xl),
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
             Icon(LucideIcons.circleAlert, size: 36.sp, color: AppColors.error),
-            SizedBox(height: 12.h),
+            SizedBox(height: AppSpacing.md12),
             Text(
               _error!,
               textAlign: TextAlign.center,
               style: TextStyle(color: AppColors.textSecondary, fontSize: 13.sp),
             ),
-            SizedBox(height: 16.h),
-            TextButton(onPressed: _fetch, child: const Text('Coba Lagi')),
+            SizedBox(height: AppSpacing.md),
+            TextButton(
+              onPressed: _fetch,
+              child: Text('orders.retry'.tr()),
+            ),
           ],
         ),
       );
@@ -284,7 +293,7 @@ class _PaymentMethodPickerSheetState extends State<PaymentMethodPickerSheet> {
     if (_channels.isEmpty) {
       return Center(
         child: Text(
-          'Belum ada metode pembayaran aktif.',
+          'orders.no_payment_methods'.tr(),
           style: TextStyle(color: AppColors.textSecondary, fontSize: 13.sp),
         ),
       );
@@ -302,15 +311,15 @@ class _PaymentMethodPickerSheetState extends State<PaymentMethodPickerSheet> {
     return ListView(
       controller: controller,
       padding: EdgeInsets.fromLTRB(
-        20.w,
-        12.h,
-        20.w,
-        12.h + systemBottomInset(context),
+        AppSpacing.lg,
+        AppSpacing.md12,
+        AppSpacing.lg,
+        AppSpacing.md12 + systemBottomInset(context),
       ),
       children: [
         for (final g in groupKeys) ...[
           Padding(
-            padding: EdgeInsets.fromLTRB(4.w, 6.h, 0, 8.h),
+            padding: EdgeInsets.fromLTRB(AppSpacing.xs, AppSpacing.xs6, 0, AppSpacing.sm),
             child: Text(
               _labelFor(g),
               style: TextStyle(
@@ -322,7 +331,7 @@ class _PaymentMethodPickerSheetState extends State<PaymentMethodPickerSheet> {
             ),
           ),
           ...grouped[g]!.map((c) => _channelTile(c, g)),
-          SizedBox(height: 14.h),
+          SizedBox(height: AppSpacing.section),
         ],
       ],
     );
@@ -334,35 +343,35 @@ class _PaymentMethodPickerSheetState extends State<PaymentMethodPickerSheet> {
     final isSel = _selectedCode == code;
 
     return Container(
-      margin: EdgeInsets.only(bottom: 8.h),
+      margin: EdgeInsets.only(bottom: AppSpacing.sm),
       decoration: BoxDecoration(
-        color: isSel ? AppColors.primary.withValues(alpha: 0.05) : Colors.white,
-        borderRadius: BorderRadius.circular(14.r),
+        color: isSel ? AppColors.primary.withValues(alpha: 0.05) : AppColors.white,
+        borderRadius: BorderRadius.circular(AppRadius.tile),
         border: Border.all(
           color: isSel ? AppColors.primary : AppColors.grey200,
           width: isSel ? 1.6 : 1,
         ),
       ),
       child: InkWell(
-        borderRadius: BorderRadius.circular(14.r),
+        borderRadius: BorderRadius.circular(AppRadius.tile),
         onTap: () {
           setState(() {
             _selectedCode = code;
           });
         },
         child: Padding(
-          padding: EdgeInsets.symmetric(horizontal: 14.w, vertical: 12.h),
+          padding: EdgeInsets.symmetric(horizontal: AppSpacing.section, vertical: AppSpacing.md12),
           child: Row(
             children: [
               Container(
-                padding: EdgeInsets.all(8.r),
+                padding: EdgeInsets.all(AppSpacing.sm),
                 decoration: BoxDecoration(
                   color: AppColors.primary.withValues(alpha: 0.08),
-                  borderRadius: BorderRadius.circular(10.r),
+                  borderRadius: BorderRadius.circular(AppRadius.md),
                 ),
                 child: Icon(_iconFor(group), size: 18.sp, color: AppColors.primary),
               ),
-              SizedBox(width: 12.w),
+              SizedBox(width: AppSpacing.md12),
               Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,

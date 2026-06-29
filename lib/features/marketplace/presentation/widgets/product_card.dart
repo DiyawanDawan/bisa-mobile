@@ -1,14 +1,21 @@
+import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:go_router/go_router.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
+import 'package:visibility_detector/visibility_detector.dart';
+import '../../../../core/utils/promo_analytics_tracker.dart';
+import '../../../../core/constants/app_layout.dart';
 import '../../../../core/constants/app_colors.dart';
-import '../../../../core/utils/extensions.dart';
+import '../../../../core/utils/app_feedback.dart';
+import '../../../../core/utils/money_format.dart';
 import '../../../../shared/widgets/bisa_network_image.dart';
 import '../../../../shared/widgets/seller_identity_row.dart';
 import '../../domain/entities/product_entity.dart';
 import '../../../commerce/presentation/widgets/product_like_button.dart';
 import '../../../commerce/presentation/widgets/product_add_to_cart_button.dart';
+import '../bloc/compare_cubit.dart';
 
 class ProductCard extends StatelessWidget {
   final ProductEntity product;
@@ -47,12 +54,23 @@ class ProductCard extends StatelessWidget {
               .round();
     }
 
-    return GestureDetector(
-      onTap: onTap ?? () => context.push('/product/${product.id}'),
+    void handleTap() {
+      if (product.isPromotionActive) {
+        PromoAnalyticsTracker.recordClick(product.id);
+      }
+      if (onTap != null) {
+        onTap!();
+      } else {
+        context.push('/product/${product.id}');
+      }
+    }
+
+    final card = GestureDetector(
+      onTap: handleTap,
       child: Container(
         decoration: BoxDecoration(
           color: AppColors.surface,
-          borderRadius: BorderRadius.circular(16.r),
+          borderRadius: BorderRadius.circular(AppRadius.xl),
           boxShadow: AppColors.softShadow,
         ),
         child: Column(
@@ -64,7 +82,7 @@ class ProductCard extends StatelessWidget {
               height: imageHeight ?? 140.h,
               width: double.infinity,
               decoration: BoxDecoration(
-                borderRadius: BorderRadius.vertical(top: Radius.circular(16.r)),
+                borderRadius: BorderRadius.vertical(top: Radius.circular(AppRadius.xl)),
                 color: AppColors.grey100,
               ),
               clipBehavior: Clip.antiAlias,
@@ -76,7 +94,7 @@ class ProductCard extends StatelessWidget {
                     fit: BoxFit.cover,
                     width: double.infinity,
                     height: double.infinity,
-                    borderRadius: BorderRadius.vertical(top: Radius.circular(16.r)),
+                    borderRadius: BorderRadius.vertical(top: Radius.circular(AppRadius.xl)),
                     errorWidget: (context, url, error) => Container(
                       color: AppColors.grey100,
                       child: Icon(
@@ -88,28 +106,49 @@ class ProductCard extends StatelessWidget {
                   ),
                   // Mode badge (Biomassa / Hasil Tani) + opsi BEBAS KIMIA
                   Positioned(
-                    top: 10.h,
-                    left: 10.w,
+                    top: AppSpacing.sm10,
+                    left: AppSpacing.sm10,
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         _ModeBadge(productMode: product.productMode),
-                        if (product.productMode == 'ORGANIC_PRODUCE' &&
-                            product.isChemicalFree) ...[
-                          SizedBox(height: 4.h),
+                        if (product.isPromotionActive) ...[
+                          SizedBox(height: AppSpacing.xs),
                           Container(
                             padding: EdgeInsets.symmetric(
-                              horizontal: 8.w,
-                              vertical: 4.h,
+                              horizontal: AppSpacing.sm,
+                              vertical: AppSpacing.xs,
+                            ),
+                            decoration: BoxDecoration(
+                              color: AppColors.warning,
+                              borderRadius: BorderRadius.circular(AppRadius.button),
+                            ),
+                            child: Text(
+                              'marketplace.badge_promoted'.tr(),
+                              style: TextStyle(
+                                color: AppColors.surface,
+                                fontSize: 9.sp,
+                                fontWeight: FontWeight.w900,
+                              ),
+                            ),
+                          ),
+                        ],
+                        if (product.productMode == 'ORGANIC_PRODUCE' &&
+                            product.isChemicalFree) ...[
+                          SizedBox(height: AppSpacing.xs),
+                          Container(
+                            padding: EdgeInsets.symmetric(
+                              horizontal: AppSpacing.sm,
+                              vertical: AppSpacing.xs,
                             ),
                             decoration: BoxDecoration(
                               color: AppColors.primaryMedium,
-                              borderRadius: BorderRadius.circular(8.r),
+                              borderRadius: BorderRadius.circular(AppRadius.button),
                             ),
                             child: Text(
-                              'BEBAS KIMIA',
+                              'marketplace.badge_chemical_free'.tr(),
                               style: TextStyle(
-                                color: Colors.white,
+                                color: AppColors.surface,
                                 fontSize: 9.sp,
                                 fontWeight: FontWeight.w900,
                               ),
@@ -121,21 +160,23 @@ class ProductCard extends StatelessWidget {
                   ),
                   if (discountPercentage != null && discountPercentage > 0)
                     Positioned(
-                      top: 10.h,
-                      right: 10.w,
+                      top: AppSpacing.sm10,
+                      right: AppSpacing.sm10,
                       child: Container(
                         padding: EdgeInsets.symmetric(
-                          horizontal: 8.w,
-                          vertical: 4.h,
+                          horizontal: AppSpacing.sm,
+                          vertical: AppSpacing.xs,
                         ),
                         decoration: BoxDecoration(
                           color: AppColors.error,
-                          borderRadius: BorderRadius.circular(8.r),
+                          borderRadius: BorderRadius.circular(AppRadius.button),
                         ),
                         child: Text(
-                          '$discountPercentage% OFF',
+                          'marketplace.discount_off'.tr(
+                            namedArgs: {'percent': '$discountPercentage'},
+                          ),
                           style: TextStyle(
-                            color: Colors.white,
+                            color: AppColors.surface,
                             fontSize: 11.sp,
                             fontWeight: FontWeight.w900,
                           ),
@@ -143,16 +184,61 @@ class ProductCard extends StatelessWidget {
                       ),
                     ),
                   Positioned(
-                    bottom: 8.h,
-                    left: 8.w,
+                    bottom: AppSpacing.sm,
+                    left: AppSpacing.sm,
                     child: ProductLikeButton(
                       productId: product.id,
                       size: 16,
                     ),
                   ),
                   Positioned(
-                    bottom: 8.h,
-                    right: 8.w,
+                    bottom: AppSpacing.sm,
+                    right: 44.w,
+                    child: BlocBuilder<CompareCubit, CompareState>(
+                      builder: (context, compareState) {
+                        final selected = compareState.contains(product.id);
+                        return Material(
+                          color: AppColors.transparent,
+                          child: InkWell(
+                            onTap: () {
+                              final cubit = context.read<CompareCubit>();
+                              final wasSelected =
+                                  cubit.state.contains(product.id);
+                              final err = cubit.toggle(product);
+                              if (!context.mounted) return;
+                              if (err != null) {
+                                showErrorSnackBar(context, err);
+                                return;
+                              }
+                              if (!wasSelected) {
+                                context.push('/compare-products');
+                              }
+                            },
+                            borderRadius: BorderRadius.circular(AppRadius.pill),
+                            child: Container(
+                              padding: EdgeInsets.all(AppSpacing.xs6),
+                              decoration: BoxDecoration(
+                                color: selected
+                                    ? AppColors.primaryLight
+                                    : AppColors.surface.withValues(alpha: 0.92),
+                                shape: BoxShape.circle,
+                              ),
+                              child: Icon(
+                                LucideIcons.columns3,
+                                size: 16.sp,
+                                color: selected
+                                    ? AppColors.primary
+                                    : AppColors.textSecondary,
+                              ),
+                            ),
+                          ),
+                        );
+                      },
+                    ),
+                  ),
+                  Positioned(
+                    bottom: AppSpacing.sm,
+                    right: AppSpacing.sm,
                     child: ProductAddToCartButton(
                       product: product,
                       size: 16,
@@ -164,7 +250,12 @@ class ProductCard extends StatelessWidget {
 
             // Content area
             Padding(
-              padding: EdgeInsets.fromLTRB(10.w, 8.h, 10.w, 10.h),
+              padding: EdgeInsets.fromLTRB(
+                AppSpacing.sm10,
+                AppSpacing.sm,
+                AppSpacing.sm10,
+                AppSpacing.sm10,
+              ),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 mainAxisAlignment: MainAxisAlignment.start,
@@ -204,20 +295,20 @@ class ProductCard extends StatelessWidget {
                                       borderRadius: BorderRadius.circular(4.r),
                                     ),
                                     child: Text(
-                                      product.originalPrice!.toRupiah,
+                                      formatMoneyDisplay(product.originalPrice!),
                                       maxLines: 1,
                                       overflow: TextOverflow.ellipsis,
                                       style: TextStyle(
                                         fontSize: 10.sp,
                                         fontWeight: FontWeight.w700,
-                                        color: Colors.white,
+                                        color: AppColors.textOnPrimary,
                                         decoration: TextDecoration.lineThrough,
-                                        decorationColor: Colors.white,
+                                        decorationColor: AppColors.textOnPrimary,
                                       ),
                                     ),
                                   ),
                                 Text(
-                                  product.pricePerUnit.toRupiah,
+                                  formatMoneyDisplay(product.pricePerUnit),
                                   maxLines: 1,
                                   overflow: TextOverflow.ellipsis,
                                   style: TextStyle(
@@ -229,7 +320,7 @@ class ProductCard extends StatelessWidget {
                               ],
                             ),
                           ),
-                          SizedBox(width: 4.w),
+                          SizedBox(width: AppSpacing.xs),
                           Padding(
                             padding: EdgeInsets.only(bottom: 2.h),
                             child: Text(
@@ -245,7 +336,7 @@ class ProductCard extends StatelessWidget {
                       ),
                     ],
                   ),
-                  SizedBox(height: 8.h),
+                  SizedBox(height: AppSpacing.sm),
                   // Bottom Section: Seller, Location and Badges
                   if (showSellerInfo)
                     Column(
@@ -257,7 +348,7 @@ class ProductCard extends StatelessWidget {
                           isVerified: product.seller.isVerified,
                           onTap: () => _openSupplierStore(context),
                           showChevron: true,
-                          avatarRadius: 10.r,
+                          avatarRadius: AppRadius.md,
                         ),
                         SizedBox(height: 3.h),
                         Row(
@@ -267,7 +358,7 @@ class ProductCard extends StatelessWidget {
                               size: 11.sp,
                               color: AppColors.textHint,
                             ),
-                            SizedBox(width: 4.w),
+                            SizedBox(width: AppSpacing.xs),
                             Expanded(
                               child: Text(
                                 product.regency ?? product.province,
@@ -291,9 +382,13 @@ class ProductCard extends StatelessWidget {
                                 size: 11.sp,
                                 color: AppColors.textHint,
                               ),
-                              SizedBox(width: 4.w),
+                              SizedBox(width: AppSpacing.xs),
                               Text(
-                                'Terjual ${product.totalSold}',
+                                'marketplace.sold_count'.tr(
+                                  namedArgs: {
+                                    'count': '${product.totalSold}',
+                                  },
+                                ),
                                 style: TextStyle(
                                   fontSize: 11.sp,
                                   color: AppColors.textSecondary,
@@ -311,8 +406,8 @@ class ProductCard extends StatelessWidget {
                       product.isEscrowProtected) ...[
                     if (showSellerInfo) SizedBox(height: 6.h),
                     Wrap(
-                      spacing: 4.w,
-                      runSpacing: 4.h,
+                      spacing: AppSpacing.xs,
+                      runSpacing: AppSpacing.xs,
                       children: [
                         if (product.productMode == 'ORGANIC_PRODUCE') ...[
                           if (product.fertilizerType != null &&
@@ -322,7 +417,7 @@ class ProductCard extends StatelessWidget {
                               product.fertilizerType!
                                       .toUpperCase()
                                       .contains('BIOCHAR')
-                                  ? 'Tanah Biochar'
+                                  ? 'marketplace.badge_biochar_soil'.tr()
                                   : product.fertilizerType!,
                               AppColors.secondary,
                             ),
@@ -330,26 +425,31 @@ class ProductCard extends StatelessWidget {
                           if (product.grade != null)
                             _buildSmallBadge(
                               LucideIcons.medal,
-                              'Grade ${product.grade}',
+                              'marketplace.badge_grade'.tr(
+                                namedArgs: {'grade': '${product.grade}'},
+                              ),
                               AppColors.warning,
                             ),
                         ],
                         if (product.isCertified)
                           _buildSmallBadge(
                             LucideIcons.award,
-                            'Certified',
+                            'marketplace.badge_certified'.tr(),
                             AppColors.success,
                           ),
                         if (product.isIotMonitored)
-                          _buildSmallBadge(
-                            LucideIcons.cpu,
-                            'IoT',
-                            AppColors.info,
+                          Tooltip(
+                            message: 'marketplace.badge_iot_tooltip'.tr(),
+                            child: _buildSmallBadge(
+                              LucideIcons.cpu,
+                              'marketplace.badge_iot'.tr(),
+                              AppColors.info,
+                            ),
                           ),
                         if (product.isEscrowProtected)
                           _buildSmallBadge(
                             LucideIcons.shieldCheck,
-                            'Secure',
+                            'marketplace.badge_secure'.tr(),
                             AppColors.ocean,
                           ),
                       ],
@@ -362,14 +462,26 @@ class ProductCard extends StatelessWidget {
         ),
       ),
     );
+
+    if (!product.isPromotionActive) return card;
+
+    return VisibilityDetector(
+      key: Key('promo-card-${product.id}'),
+      onVisibilityChanged: (info) {
+        if (info.visibleFraction > 0.55) {
+          PromoAnalyticsTracker.recordImpression(product.id);
+        }
+      },
+      child: card,
+    );
   }
 
   Widget _buildSmallBadge(IconData icon, String label, Color color) {
     return Container(
-      padding: EdgeInsets.symmetric(horizontal: 8.w, vertical: 3.h),
+      padding: EdgeInsets.symmetric(horizontal: AppSpacing.sm, vertical: 3.h),
       decoration: BoxDecoration(
         color: color.withValues(alpha: 0.1),
-        borderRadius: BorderRadius.circular(6.r),
+        borderRadius: BorderRadius.circular(AppRadius.sm),
         border: Border.all(color: color.withValues(alpha: 0.2), width: 0.5),
       ),
       child: Row(
@@ -401,17 +513,22 @@ class _ModeBadge extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final isOrganic = productMode == 'ORGANIC_PRODUCE';
-    final label = isOrganic ? 'Hasil Tani' : 'Biomassa';
+    final label = isOrganic
+        ? 'marketplace.badge_mode_organic'.tr()
+        : 'marketplace.badge_mode_biomass'.tr();
     final icon = isOrganic ? LucideIcons.sprout : LucideIcons.flame;
     // Hasil Tani → hijau emerald (segar/organik)
     // Biomassa  → amber (energi/karbon)
     final color = isOrganic ? AppColors.secondary : AppColors.warning;
 
     return Container(
-      padding: EdgeInsets.symmetric(horizontal: 8.w, vertical: 4.h),
+      padding: EdgeInsets.symmetric(
+        horizontal: AppSpacing.sm,
+        vertical: AppSpacing.xs,
+      ),
       decoration: BoxDecoration(
         color: color,
-        borderRadius: BorderRadius.circular(8.r),
+        borderRadius: BorderRadius.circular(AppRadius.button),
         boxShadow: [
           BoxShadow(
             color: color.withValues(alpha: 0.35),
@@ -423,12 +540,12 @@ class _ModeBadge extends StatelessWidget {
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
-          Icon(icon, size: 11.sp, color: Colors.white),
-          SizedBox(width: 4.w),
+          Icon(icon, size: 11.sp, color: AppColors.textOnPrimary),
+          SizedBox(width: AppSpacing.xs),
           Text(
             label,
             style: TextStyle(
-              color: Colors.white,
+              color: AppColors.surface,
               fontSize: 9.sp,
               fontWeight: FontWeight.w900,
               letterSpacing: 0.3,

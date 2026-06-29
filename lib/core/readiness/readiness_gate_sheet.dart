@@ -1,3 +1,4 @@
+import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:go_router/go_router.dart';
@@ -27,11 +28,10 @@ class ReadinessGateSheet extends StatelessWidget {
     return showModalBottomSheet<void>(
       context: context,
       isScrollControlled: true,
-      backgroundColor: Colors.transparent,
+      backgroundColor: AppColors.transparent,
       builder: (_) => ReadinessGateSheet(
-        title: 'Lengkapi data toko',
-        subtitle:
-            'Anda perlu melengkapi profil toko sebelum menambah atau mempublikasikan produk.',
+        title: 'readiness.store_title'.tr(),
+        subtitle: 'readiness.store_body'.tr(),
         readiness: readiness,
         routeForKey: readinessRouteForStoreKey,
       ),
@@ -45,11 +45,10 @@ class ReadinessGateSheet extends StatelessWidget {
     return showModalBottomSheet<void>(
       context: context,
       isScrollControlled: true,
-      backgroundColor: Colors.transparent,
+      backgroundColor: AppColors.transparent,
       builder: (_) => ReadinessGateSheet(
-        title: 'Lengkapi profil pengiriman',
-        subtitle:
-            'Tambahkan alamat dan kontak penerima sebelum negosiasi atau checkout.',
+        title: 'readiness.shipping_title'.tr(),
+        subtitle: 'readiness.shipping_body'.tr(),
         readiness: readiness,
         routeForKey: readinessRouteForBuyerKey,
       ),
@@ -124,7 +123,7 @@ class ReadinessGateSheet extends StatelessWidget {
           SizedBox(height: 12.h),
           if (readiness.missing.isNotEmpty) ...[
             CustomButton(
-              text: 'Lengkapi sekarang',
+              text: 'readiness.action_complete'.tr(),
               height: 46.h,
               useGradient: true,
               onPressed: () {
@@ -136,7 +135,7 @@ class ReadinessGateSheet extends StatelessWidget {
             SizedBox(height: 8.h),
           ],
           CustomButton(
-            text: 'Tutup',
+            text: 'readiness.close'.tr(),
             height: 44.h,
             isOutlined: true,
             onPressed: () => Navigator.of(context).pop(),

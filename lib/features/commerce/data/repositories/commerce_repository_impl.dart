@@ -136,8 +136,8 @@ class CommerceRepositoryImpl implements CommerceRepository {
     if (e.type == DioExceptionType.badResponse) {
       final data = e.response?.data;
       final message = data is Map
-          ? (data['meta']?['message'] ?? data['message'] ?? 'Terjadi kesalahan')
-          : 'Terjadi kesalahan';
+          ? (data['meta']?['message'] ?? data['message'] ?? 'errors.generic')
+          : 'errors.generic';
       return ServerFailure(message: message.toString(), statusCode: e.response?.statusCode);
     }
     if (e.type == DioExceptionType.connectionError) {

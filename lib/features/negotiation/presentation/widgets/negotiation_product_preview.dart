@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
+import '../../../../core/constants/app_layout.dart';
 import '../../../../core/constants/app_colors.dart';
 import '../../../../core/utils/media_url_utils.dart';
 import '../../../../shared/widgets/bisa_network_image.dart';
@@ -23,16 +24,16 @@ class NegotiationProductPreview extends StatelessWidget {
   Widget build(BuildContext context) {
     final thumb = thumbnailUrl;
     return Container(
-      padding: EdgeInsets.all(10.w),
+      padding: EdgeInsets.all(AppSpacing.sm10),
       decoration: BoxDecoration(
-        color: AppColors.white,
-        borderRadius: BorderRadius.circular(12.r),
+        color: AppColors.surface,
+        borderRadius: BorderRadius.circular(AppRadius.lg),
         border: Border.all(color: AppColors.grey100),
       ),
       child: Row(
         children: [
           ClipRRect(
-            borderRadius: BorderRadius.circular(8.r),
+            borderRadius: BorderRadius.circular(AppRadius.button),
             child: SizedBox(
               width: 48.w,
               height: 48.w,
@@ -51,7 +52,7 @@ class NegotiationProductPreview extends StatelessWidget {
                     ),
             ),
           ),
-          SizedBox(width: 10.w),
+          SizedBox(width: AppSpacing.sm10),
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,

@@ -13,6 +13,278 @@ part of 'user_model.dart';
 T _$identity<T>(T value) => value;
 
 /// @nodoc
+mixin _$UserVerificationModel {
+
+ String? get verificationStatus; bool get isVerified; String? get rejectionReason; DateTime? get reviewedAt;
+/// Create a copy of UserVerificationModel
+/// with the given fields replaced by the non-null parameter values.
+@JsonKey(includeFromJson: false, includeToJson: false)
+@pragma('vm:prefer-inline')
+$UserVerificationModelCopyWith<UserVerificationModel> get copyWith => _$UserVerificationModelCopyWithImpl<UserVerificationModel>(this as UserVerificationModel, _$identity);
+
+  /// Serializes this UserVerificationModel to a JSON map.
+  Map<String, dynamic> toJson();
+
+
+@override
+bool operator ==(Object other) {
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is UserVerificationModel&&(identical(other.verificationStatus, verificationStatus) || other.verificationStatus == verificationStatus)&&(identical(other.isVerified, isVerified) || other.isVerified == isVerified)&&(identical(other.rejectionReason, rejectionReason) || other.rejectionReason == rejectionReason)&&(identical(other.reviewedAt, reviewedAt) || other.reviewedAt == reviewedAt));
+}
+
+@JsonKey(includeFromJson: false, includeToJson: false)
+@override
+int get hashCode => Object.hash(runtimeType,verificationStatus,isVerified,rejectionReason,reviewedAt);
+
+@override
+String toString() {
+  return 'UserVerificationModel(verificationStatus: $verificationStatus, isVerified: $isVerified, rejectionReason: $rejectionReason, reviewedAt: $reviewedAt)';
+}
+
+
+}
+
+/// @nodoc
+abstract mixin class $UserVerificationModelCopyWith<$Res>  {
+  factory $UserVerificationModelCopyWith(UserVerificationModel value, $Res Function(UserVerificationModel) _then) = _$UserVerificationModelCopyWithImpl;
+@useResult
+$Res call({
+ String? verificationStatus, bool isVerified, String? rejectionReason, DateTime? reviewedAt
+});
+
+
+
+
+}
+/// @nodoc
+class _$UserVerificationModelCopyWithImpl<$Res>
+    implements $UserVerificationModelCopyWith<$Res> {
+  _$UserVerificationModelCopyWithImpl(this._self, this._then);
+
+  final UserVerificationModel _self;
+  final $Res Function(UserVerificationModel) _then;
+
+/// Create a copy of UserVerificationModel
+/// with the given fields replaced by the non-null parameter values.
+@pragma('vm:prefer-inline') @override $Res call({Object? verificationStatus = freezed,Object? isVerified = null,Object? rejectionReason = freezed,Object? reviewedAt = freezed,}) {
+  return _then(_self.copyWith(
+verificationStatus: freezed == verificationStatus ? _self.verificationStatus : verificationStatus // ignore: cast_nullable_to_non_nullable
+as String?,isVerified: null == isVerified ? _self.isVerified : isVerified // ignore: cast_nullable_to_non_nullable
+as bool,rejectionReason: freezed == rejectionReason ? _self.rejectionReason : rejectionReason // ignore: cast_nullable_to_non_nullable
+as String?,reviewedAt: freezed == reviewedAt ? _self.reviewedAt : reviewedAt // ignore: cast_nullable_to_non_nullable
+as DateTime?,
+  ));
+}
+
+}
+
+
+/// Adds pattern-matching-related methods to [UserVerificationModel].
+extension UserVerificationModelPatterns on UserVerificationModel {
+/// A variant of `map` that fallback to returning `orElse`.
+///
+/// It is equivalent to doing:
+/// ```dart
+/// switch (sealedClass) {
+///   case final Subclass value:
+///     return ...;
+///   case _:
+///     return orElse();
+/// }
+/// ```
+
+@optionalTypeArgs TResult maybeMap<TResult extends Object?>(TResult Function( _UserVerificationModel value)?  $default,{required TResult orElse(),}){
+final _that = this;
+switch (_that) {
+case _UserVerificationModel() when $default != null:
+return $default(_that);case _:
+  return orElse();
+
+}
+}
+/// A `switch`-like method, using callbacks.
+///
+/// Callbacks receives the raw object, upcasted.
+/// It is equivalent to doing:
+/// ```dart
+/// switch (sealedClass) {
+///   case final Subclass value:
+///     return ...;
+///   case final Subclass2 value:
+///     return ...;
+/// }
+/// ```
+
+@optionalTypeArgs TResult map<TResult extends Object?>(TResult Function( _UserVerificationModel value)  $default,){
+final _that = this;
+switch (_that) {
+case _UserVerificationModel():
+return $default(_that);case _:
+  throw StateError('Unexpected subclass');
+
+}
+}
+/// A variant of `map` that fallback to returning `null`.
+///
+/// It is equivalent to doing:
+/// ```dart
+/// switch (sealedClass) {
+///   case final Subclass value:
+///     return ...;
+///   case _:
+///     return null;
+/// }
+/// ```
+
+@optionalTypeArgs TResult? mapOrNull<TResult extends Object?>(TResult? Function( _UserVerificationModel value)?  $default,){
+final _that = this;
+switch (_that) {
+case _UserVerificationModel() when $default != null:
+return $default(_that);case _:
+  return null;
+
+}
+}
+/// A variant of `when` that fallback to an `orElse` callback.
+///
+/// It is equivalent to doing:
+/// ```dart
+/// switch (sealedClass) {
+///   case Subclass(:final field):
+///     return ...;
+///   case _:
+///     return orElse();
+/// }
+/// ```
+
+@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( String? verificationStatus,  bool isVerified,  String? rejectionReason,  DateTime? reviewedAt)?  $default,{required TResult orElse(),}) {final _that = this;
+switch (_that) {
+case _UserVerificationModel() when $default != null:
+return $default(_that.verificationStatus,_that.isVerified,_that.rejectionReason,_that.reviewedAt);case _:
+  return orElse();
+
+}
+}
+/// A `switch`-like method, using callbacks.
+///
+/// As opposed to `map`, this offers destructuring.
+/// It is equivalent to doing:
+/// ```dart
+/// switch (sealedClass) {
+///   case Subclass(:final field):
+///     return ...;
+///   case Subclass2(:final field2):
+///     return ...;
+/// }
+/// ```
+
+@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( String? verificationStatus,  bool isVerified,  String? rejectionReason,  DateTime? reviewedAt)  $default,) {final _that = this;
+switch (_that) {
+case _UserVerificationModel():
+return $default(_that.verificationStatus,_that.isVerified,_that.rejectionReason,_that.reviewedAt);case _:
+  throw StateError('Unexpected subclass');
+
+}
+}
+/// A variant of `when` that fallback to returning `null`
+///
+/// It is equivalent to doing:
+/// ```dart
+/// switch (sealedClass) {
+///   case Subclass(:final field):
+///     return ...;
+///   case _:
+///     return null;
+/// }
+/// ```
+
+@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( String? verificationStatus,  bool isVerified,  String? rejectionReason,  DateTime? reviewedAt)?  $default,) {final _that = this;
+switch (_that) {
+case _UserVerificationModel() when $default != null:
+return $default(_that.verificationStatus,_that.isVerified,_that.rejectionReason,_that.reviewedAt);case _:
+  return null;
+
+}
+}
+
+}
+
+/// @nodoc
+@JsonSerializable()
+
+class _UserVerificationModel implements UserVerificationModel {
+  const _UserVerificationModel({this.verificationStatus, this.isVerified = false, this.rejectionReason, this.reviewedAt});
+  factory _UserVerificationModel.fromJson(Map<String, dynamic> json) => _$UserVerificationModelFromJson(json);
+
+@override final  String? verificationStatus;
+@override@JsonKey() final  bool isVerified;
+@override final  String? rejectionReason;
+@override final  DateTime? reviewedAt;
+
+/// Create a copy of UserVerificationModel
+/// with the given fields replaced by the non-null parameter values.
+@override @JsonKey(includeFromJson: false, includeToJson: false)
+@pragma('vm:prefer-inline')
+_$UserVerificationModelCopyWith<_UserVerificationModel> get copyWith => __$UserVerificationModelCopyWithImpl<_UserVerificationModel>(this, _$identity);
+
+@override
+Map<String, dynamic> toJson() {
+  return _$UserVerificationModelToJson(this, );
+}
+
+@override
+bool operator ==(Object other) {
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is _UserVerificationModel&&(identical(other.verificationStatus, verificationStatus) || other.verificationStatus == verificationStatus)&&(identical(other.isVerified, isVerified) || other.isVerified == isVerified)&&(identical(other.rejectionReason, rejectionReason) || other.rejectionReason == rejectionReason)&&(identical(other.reviewedAt, reviewedAt) || other.reviewedAt == reviewedAt));
+}
+
+@JsonKey(includeFromJson: false, includeToJson: false)
+@override
+int get hashCode => Object.hash(runtimeType,verificationStatus,isVerified,rejectionReason,reviewedAt);
+
+@override
+String toString() {
+  return 'UserVerificationModel(verificationStatus: $verificationStatus, isVerified: $isVerified, rejectionReason: $rejectionReason, reviewedAt: $reviewedAt)';
+}
+
+
+}
+
+/// @nodoc
+abstract mixin class _$UserVerificationModelCopyWith<$Res> implements $UserVerificationModelCopyWith<$Res> {
+  factory _$UserVerificationModelCopyWith(_UserVerificationModel value, $Res Function(_UserVerificationModel) _then) = __$UserVerificationModelCopyWithImpl;
+@override @useResult
+$Res call({
+ String? verificationStatus, bool isVerified, String? rejectionReason, DateTime? reviewedAt
+});
+
+
+
+
+}
+/// @nodoc
+class __$UserVerificationModelCopyWithImpl<$Res>
+    implements _$UserVerificationModelCopyWith<$Res> {
+  __$UserVerificationModelCopyWithImpl(this._self, this._then);
+
+  final _UserVerificationModel _self;
+  final $Res Function(_UserVerificationModel) _then;
+
+/// Create a copy of UserVerificationModel
+/// with the given fields replaced by the non-null parameter values.
+@override @pragma('vm:prefer-inline') $Res call({Object? verificationStatus = freezed,Object? isVerified = null,Object? rejectionReason = freezed,Object? reviewedAt = freezed,}) {
+  return _then(_UserVerificationModel(
+verificationStatus: freezed == verificationStatus ? _self.verificationStatus : verificationStatus // ignore: cast_nullable_to_non_nullable
+as String?,isVerified: null == isVerified ? _self.isVerified : isVerified // ignore: cast_nullable_to_non_nullable
+as bool,rejectionReason: freezed == rejectionReason ? _self.rejectionReason : rejectionReason // ignore: cast_nullable_to_non_nullable
+as String?,reviewedAt: freezed == reviewedAt ? _self.reviewedAt : reviewedAt // ignore: cast_nullable_to_non_nullable
+as DateTime?,
+  ));
+}
+
+
+}
+
+
+/// @nodoc
 mixin _$UserProfileModel {
 
  String? get companyName; String? get businessType; String? get bio;
@@ -284,7 +556,7 @@ as String?,
 /// @nodoc
 mixin _$UserModel {
 
- String get id;@JsonKey(name: 'fullName') String get name; String get email; String? get phone;@JsonKey(name: 'avatarUrl') String? get avatar; UserProfileModel? get profile;@JsonKey(name: 'province') String? get address; String get role;@JsonKey(name: 'isEmailVerified') bool get isVerified; DateTime get createdAt; String get tier;@JsonKey(name: 'subscriptionExpiresAt') DateTime? get subscriptionExpiresAt;@JsonKey(name: 'enableNotifications') bool get enableNotifications;
+ String get id;@JsonKey(name: 'fullName') String get name; String get email; String? get phone;@JsonKey(name: 'avatarUrl') String? get avatar; UserProfileModel? get profile;@JsonKey(name: 'province') String? get address; String get role;@JsonKey(name: 'isEmailVerified') bool get isVerified; DateTime get createdAt; String get tier;@JsonKey(name: 'subscriptionExpiresAt') DateTime? get subscriptionExpiresAt;@JsonKey(name: 'enableNotifications') bool get enableNotifications; UserVerificationModel? get verification;
 /// Create a copy of UserModel
 /// with the given fields replaced by the non-null parameter values.
 @JsonKey(includeFromJson: false, includeToJson: false)
@@ -297,16 +569,16 @@ $UserModelCopyWith<UserModel> get copyWith => _$UserModelCopyWithImpl<UserModel>
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is UserModel&&(identical(other.id, id) || other.id == id)&&(identical(other.name, name) || other.name == name)&&(identical(other.email, email) || other.email == email)&&(identical(other.phone, phone) || other.phone == phone)&&(identical(other.avatar, avatar) || other.avatar == avatar)&&(identical(other.profile, profile) || other.profile == profile)&&(identical(other.address, address) || other.address == address)&&(identical(other.role, role) || other.role == role)&&(identical(other.isVerified, isVerified) || other.isVerified == isVerified)&&(identical(other.createdAt, createdAt) || other.createdAt == createdAt)&&(identical(other.tier, tier) || other.tier == tier)&&(identical(other.subscriptionExpiresAt, subscriptionExpiresAt) || other.subscriptionExpiresAt == subscriptionExpiresAt)&&(identical(other.enableNotifications, enableNotifications) || other.enableNotifications == enableNotifications));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is UserModel&&(identical(other.id, id) || other.id == id)&&(identical(other.name, name) || other.name == name)&&(identical(other.email, email) || other.email == email)&&(identical(other.phone, phone) || other.phone == phone)&&(identical(other.avatar, avatar) || other.avatar == avatar)&&(identical(other.profile, profile) || other.profile == profile)&&(identical(other.address, address) || other.address == address)&&(identical(other.role, role) || other.role == role)&&(identical(other.isVerified, isVerified) || other.isVerified == isVerified)&&(identical(other.createdAt, createdAt) || other.createdAt == createdAt)&&(identical(other.tier, tier) || other.tier == tier)&&(identical(other.subscriptionExpiresAt, subscriptionExpiresAt) || other.subscriptionExpiresAt == subscriptionExpiresAt)&&(identical(other.enableNotifications, enableNotifications) || other.enableNotifications == enableNotifications)&&(identical(other.verification, verification) || other.verification == verification));
 }
 
 @JsonKey(includeFromJson: false, includeToJson: false)
 @override
-int get hashCode => Object.hash(runtimeType,id,name,email,phone,avatar,profile,address,role,isVerified,createdAt,tier,subscriptionExpiresAt,enableNotifications);
+int get hashCode => Object.hash(runtimeType,id,name,email,phone,avatar,profile,address,role,isVerified,createdAt,tier,subscriptionExpiresAt,enableNotifications,verification);
 
 @override
 String toString() {
-  return 'UserModel(id: $id, name: $name, email: $email, phone: $phone, avatar: $avatar, profile: $profile, address: $address, role: $role, isVerified: $isVerified, createdAt: $createdAt, tier: $tier, subscriptionExpiresAt: $subscriptionExpiresAt, enableNotifications: $enableNotifications)';
+  return 'UserModel(id: $id, name: $name, email: $email, phone: $phone, avatar: $avatar, profile: $profile, address: $address, role: $role, isVerified: $isVerified, createdAt: $createdAt, tier: $tier, subscriptionExpiresAt: $subscriptionExpiresAt, enableNotifications: $enableNotifications, verification: $verification)';
 }
 
 
@@ -317,11 +589,11 @@ abstract mixin class $UserModelCopyWith<$Res>  {
   factory $UserModelCopyWith(UserModel value, $Res Function(UserModel) _then) = _$UserModelCopyWithImpl;
 @useResult
 $Res call({
- String id,@JsonKey(name: 'fullName') String name, String email, String? phone,@JsonKey(name: 'avatarUrl') String? avatar, UserProfileModel? profile,@JsonKey(name: 'province') String? address, String role,@JsonKey(name: 'isEmailVerified') bool isVerified, DateTime createdAt, String tier,@JsonKey(name: 'subscriptionExpiresAt') DateTime? subscriptionExpiresAt,@JsonKey(name: 'enableNotifications') bool enableNotifications
+ String id,@JsonKey(name: 'fullName') String name, String email, String? phone,@JsonKey(name: 'avatarUrl') String? avatar, UserProfileModel? profile,@JsonKey(name: 'province') String? address, String role,@JsonKey(name: 'isEmailVerified') bool isVerified, DateTime createdAt, String tier,@JsonKey(name: 'subscriptionExpiresAt') DateTime? subscriptionExpiresAt,@JsonKey(name: 'enableNotifications') bool enableNotifications, UserVerificationModel? verification
 });
 
 
-$UserProfileModelCopyWith<$Res>? get profile;
+$UserProfileModelCopyWith<$Res>? get profile;$UserVerificationModelCopyWith<$Res>? get verification;
 
 }
 /// @nodoc
@@ -334,7 +606,7 @@ class _$UserModelCopyWithImpl<$Res>
 
 /// Create a copy of UserModel
 /// with the given fields replaced by the non-null parameter values.
-@pragma('vm:prefer-inline') @override $Res call({Object? id = null,Object? name = null,Object? email = null,Object? phone = freezed,Object? avatar = freezed,Object? profile = freezed,Object? address = freezed,Object? role = null,Object? isVerified = null,Object? createdAt = null,Object? tier = null,Object? subscriptionExpiresAt = freezed,Object? enableNotifications = null,}) {
+@pragma('vm:prefer-inline') @override $Res call({Object? id = null,Object? name = null,Object? email = null,Object? phone = freezed,Object? avatar = freezed,Object? profile = freezed,Object? address = freezed,Object? role = null,Object? isVerified = null,Object? createdAt = null,Object? tier = null,Object? subscriptionExpiresAt = freezed,Object? enableNotifications = null,Object? verification = freezed,}) {
   return _then(_self.copyWith(
 id: null == id ? _self.id : id // ignore: cast_nullable_to_non_nullable
 as String,name: null == name ? _self.name : name // ignore: cast_nullable_to_non_nullable
@@ -349,7 +621,8 @@ as bool,createdAt: null == createdAt ? _self.createdAt : createdAt // ignore: ca
 as DateTime,tier: null == tier ? _self.tier : tier // ignore: cast_nullable_to_non_nullable
 as String,subscriptionExpiresAt: freezed == subscriptionExpiresAt ? _self.subscriptionExpiresAt : subscriptionExpiresAt // ignore: cast_nullable_to_non_nullable
 as DateTime?,enableNotifications: null == enableNotifications ? _self.enableNotifications : enableNotifications // ignore: cast_nullable_to_non_nullable
-as bool,
+as bool,verification: freezed == verification ? _self.verification : verification // ignore: cast_nullable_to_non_nullable
+as UserVerificationModel?,
   ));
 }
 /// Create a copy of UserModel
@@ -363,6 +636,18 @@ $UserProfileModelCopyWith<$Res>? get profile {
 
   return $UserProfileModelCopyWith<$Res>(_self.profile!, (value) {
     return _then(_self.copyWith(profile: value));
+  });
+}/// Create a copy of UserModel
+/// with the given fields replaced by the non-null parameter values.
+@override
+@pragma('vm:prefer-inline')
+$UserVerificationModelCopyWith<$Res>? get verification {
+    if (_self.verification == null) {
+    return null;
+  }
+
+  return $UserVerificationModelCopyWith<$Res>(_self.verification!, (value) {
+    return _then(_self.copyWith(verification: value));
   });
 }
 }
@@ -446,10 +731,10 @@ return $default(_that);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( String id, @JsonKey(name: 'fullName')  String name,  String email,  String? phone, @JsonKey(name: 'avatarUrl')  String? avatar,  UserProfileModel? profile, @JsonKey(name: 'province')  String? address,  String role, @JsonKey(name: 'isEmailVerified')  bool isVerified,  DateTime createdAt,  String tier, @JsonKey(name: 'subscriptionExpiresAt')  DateTime? subscriptionExpiresAt, @JsonKey(name: 'enableNotifications')  bool enableNotifications)?  $default,{required TResult orElse(),}) {final _that = this;
+@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( String id, @JsonKey(name: 'fullName')  String name,  String email,  String? phone, @JsonKey(name: 'avatarUrl')  String? avatar,  UserProfileModel? profile, @JsonKey(name: 'province')  String? address,  String role, @JsonKey(name: 'isEmailVerified')  bool isVerified,  DateTime createdAt,  String tier, @JsonKey(name: 'subscriptionExpiresAt')  DateTime? subscriptionExpiresAt, @JsonKey(name: 'enableNotifications')  bool enableNotifications,  UserVerificationModel? verification)?  $default,{required TResult orElse(),}) {final _that = this;
 switch (_that) {
 case _UserModel() when $default != null:
-return $default(_that.id,_that.name,_that.email,_that.phone,_that.avatar,_that.profile,_that.address,_that.role,_that.isVerified,_that.createdAt,_that.tier,_that.subscriptionExpiresAt,_that.enableNotifications);case _:
+return $default(_that.id,_that.name,_that.email,_that.phone,_that.avatar,_that.profile,_that.address,_that.role,_that.isVerified,_that.createdAt,_that.tier,_that.subscriptionExpiresAt,_that.enableNotifications,_that.verification);case _:
   return orElse();
 
 }
@@ -467,10 +752,10 @@ return $default(_that.id,_that.name,_that.email,_that.phone,_that.avatar,_that.p
 /// }
 /// ```
 
-@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( String id, @JsonKey(name: 'fullName')  String name,  String email,  String? phone, @JsonKey(name: 'avatarUrl')  String? avatar,  UserProfileModel? profile, @JsonKey(name: 'province')  String? address,  String role, @JsonKey(name: 'isEmailVerified')  bool isVerified,  DateTime createdAt,  String tier, @JsonKey(name: 'subscriptionExpiresAt')  DateTime? subscriptionExpiresAt, @JsonKey(name: 'enableNotifications')  bool enableNotifications)  $default,) {final _that = this;
+@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( String id, @JsonKey(name: 'fullName')  String name,  String email,  String? phone, @JsonKey(name: 'avatarUrl')  String? avatar,  UserProfileModel? profile, @JsonKey(name: 'province')  String? address,  String role, @JsonKey(name: 'isEmailVerified')  bool isVerified,  DateTime createdAt,  String tier, @JsonKey(name: 'subscriptionExpiresAt')  DateTime? subscriptionExpiresAt, @JsonKey(name: 'enableNotifications')  bool enableNotifications,  UserVerificationModel? verification)  $default,) {final _that = this;
 switch (_that) {
 case _UserModel():
-return $default(_that.id,_that.name,_that.email,_that.phone,_that.avatar,_that.profile,_that.address,_that.role,_that.isVerified,_that.createdAt,_that.tier,_that.subscriptionExpiresAt,_that.enableNotifications);case _:
+return $default(_that.id,_that.name,_that.email,_that.phone,_that.avatar,_that.profile,_that.address,_that.role,_that.isVerified,_that.createdAt,_that.tier,_that.subscriptionExpiresAt,_that.enableNotifications,_that.verification);case _:
   throw StateError('Unexpected subclass');
 
 }
@@ -487,10 +772,10 @@ return $default(_that.id,_that.name,_that.email,_that.phone,_that.avatar,_that.p
 /// }
 /// ```
 
-@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( String id, @JsonKey(name: 'fullName')  String name,  String email,  String? phone, @JsonKey(name: 'avatarUrl')  String? avatar,  UserProfileModel? profile, @JsonKey(name: 'province')  String? address,  String role, @JsonKey(name: 'isEmailVerified')  bool isVerified,  DateTime createdAt,  String tier, @JsonKey(name: 'subscriptionExpiresAt')  DateTime? subscriptionExpiresAt, @JsonKey(name: 'enableNotifications')  bool enableNotifications)?  $default,) {final _that = this;
+@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( String id, @JsonKey(name: 'fullName')  String name,  String email,  String? phone, @JsonKey(name: 'avatarUrl')  String? avatar,  UserProfileModel? profile, @JsonKey(name: 'province')  String? address,  String role, @JsonKey(name: 'isEmailVerified')  bool isVerified,  DateTime createdAt,  String tier, @JsonKey(name: 'subscriptionExpiresAt')  DateTime? subscriptionExpiresAt, @JsonKey(name: 'enableNotifications')  bool enableNotifications,  UserVerificationModel? verification)?  $default,) {final _that = this;
 switch (_that) {
 case _UserModel() when $default != null:
-return $default(_that.id,_that.name,_that.email,_that.phone,_that.avatar,_that.profile,_that.address,_that.role,_that.isVerified,_that.createdAt,_that.tier,_that.subscriptionExpiresAt,_that.enableNotifications);case _:
+return $default(_that.id,_that.name,_that.email,_that.phone,_that.avatar,_that.profile,_that.address,_that.role,_that.isVerified,_that.createdAt,_that.tier,_that.subscriptionExpiresAt,_that.enableNotifications,_that.verification);case _:
   return null;
 
 }
@@ -502,7 +787,7 @@ return $default(_that.id,_that.name,_that.email,_that.phone,_that.avatar,_that.p
 @JsonSerializable()
 
 class _UserModel extends UserModel {
-  const _UserModel({required this.id, @JsonKey(name: 'fullName') required this.name, required this.email, this.phone, @JsonKey(name: 'avatarUrl') this.avatar, this.profile, @JsonKey(name: 'province') this.address, this.role = 'user', @JsonKey(name: 'isEmailVerified') this.isVerified = false, required this.createdAt, this.tier = 'FREE', @JsonKey(name: 'subscriptionExpiresAt') this.subscriptionExpiresAt, @JsonKey(name: 'enableNotifications') this.enableNotifications = true}): super._();
+  const _UserModel({required this.id, @JsonKey(name: 'fullName') required this.name, required this.email, this.phone, @JsonKey(name: 'avatarUrl') this.avatar, this.profile, @JsonKey(name: 'province') this.address, this.role = 'user', @JsonKey(name: 'isEmailVerified') this.isVerified = false, required this.createdAt, this.tier = 'FREE', @JsonKey(name: 'subscriptionExpiresAt') this.subscriptionExpiresAt, @JsonKey(name: 'enableNotifications') this.enableNotifications = true, this.verification}): super._();
   factory _UserModel.fromJson(Map<String, dynamic> json) => _$UserModelFromJson(json);
 
 @override final  String id;
@@ -518,6 +803,7 @@ class _UserModel extends UserModel {
 @override@JsonKey() final  String tier;
 @override@JsonKey(name: 'subscriptionExpiresAt') final  DateTime? subscriptionExpiresAt;
 @override@JsonKey(name: 'enableNotifications') final  bool enableNotifications;
+@override final  UserVerificationModel? verification;
 
 /// Create a copy of UserModel
 /// with the given fields replaced by the non-null parameter values.
@@ -532,16 +818,16 @@ Map<String, dynamic> toJson() {
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is _UserModel&&(identical(other.id, id) || other.id == id)&&(identical(other.name, name) || other.name == name)&&(identical(other.email, email) || other.email == email)&&(identical(other.phone, phone) || other.phone == phone)&&(identical(other.avatar, avatar) || other.avatar == avatar)&&(identical(other.profile, profile) || other.profile == profile)&&(identical(other.address, address) || other.address == address)&&(identical(other.role, role) || other.role == role)&&(identical(other.isVerified, isVerified) || other.isVerified == isVerified)&&(identical(other.createdAt, createdAt) || other.createdAt == createdAt)&&(identical(other.tier, tier) || other.tier == tier)&&(identical(other.subscriptionExpiresAt, subscriptionExpiresAt) || other.subscriptionExpiresAt == subscriptionExpiresAt)&&(identical(other.enableNotifications, enableNotifications) || other.enableNotifications == enableNotifications));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is _UserModel&&(identical(other.id, id) || other.id == id)&&(identical(other.name, name) || other.name == name)&&(identical(other.email, email) || other.email == email)&&(identical(other.phone, phone) || other.phone == phone)&&(identical(other.avatar, avatar) || other.avatar == avatar)&&(identical(other.profile, profile) || other.profile == profile)&&(identical(other.address, address) || other.address == address)&&(identical(other.role, role) || other.role == role)&&(identical(other.isVerified, isVerified) || other.isVerified == isVerified)&&(identical(other.createdAt, createdAt) || other.createdAt == createdAt)&&(identical(other.tier, tier) || other.tier == tier)&&(identical(other.subscriptionExpiresAt, subscriptionExpiresAt) || other.subscriptionExpiresAt == subscriptionExpiresAt)&&(identical(other.enableNotifications, enableNotifications) || other.enableNotifications == enableNotifications)&&(identical(other.verification, verification) || other.verification == verification));
 }
 
 @JsonKey(includeFromJson: false, includeToJson: false)
 @override
-int get hashCode => Object.hash(runtimeType,id,name,email,phone,avatar,profile,address,role,isVerified,createdAt,tier,subscriptionExpiresAt,enableNotifications);
+int get hashCode => Object.hash(runtimeType,id,name,email,phone,avatar,profile,address,role,isVerified,createdAt,tier,subscriptionExpiresAt,enableNotifications,verification);
 
 @override
 String toString() {
-  return 'UserModel(id: $id, name: $name, email: $email, phone: $phone, avatar: $avatar, profile: $profile, address: $address, role: $role, isVerified: $isVerified, createdAt: $createdAt, tier: $tier, subscriptionExpiresAt: $subscriptionExpiresAt, enableNotifications: $enableNotifications)';
+  return 'UserModel(id: $id, name: $name, email: $email, phone: $phone, avatar: $avatar, profile: $profile, address: $address, role: $role, isVerified: $isVerified, createdAt: $createdAt, tier: $tier, subscriptionExpiresAt: $subscriptionExpiresAt, enableNotifications: $enableNotifications, verification: $verification)';
 }
 
 
@@ -552,11 +838,11 @@ abstract mixin class _$UserModelCopyWith<$Res> implements $UserModelCopyWith<$Re
   factory _$UserModelCopyWith(_UserModel value, $Res Function(_UserModel) _then) = __$UserModelCopyWithImpl;
 @override @useResult
 $Res call({
- String id,@JsonKey(name: 'fullName') String name, String email, String? phone,@JsonKey(name: 'avatarUrl') String? avatar, UserProfileModel? profile,@JsonKey(name: 'province') String? address, String role,@JsonKey(name: 'isEmailVerified') bool isVerified, DateTime createdAt, String tier,@JsonKey(name: 'subscriptionExpiresAt') DateTime? subscriptionExpiresAt,@JsonKey(name: 'enableNotifications') bool enableNotifications
+ String id,@JsonKey(name: 'fullName') String name, String email, String? phone,@JsonKey(name: 'avatarUrl') String? avatar, UserProfileModel? profile,@JsonKey(name: 'province') String? address, String role,@JsonKey(name: 'isEmailVerified') bool isVerified, DateTime createdAt, String tier,@JsonKey(name: 'subscriptionExpiresAt') DateTime? subscriptionExpiresAt,@JsonKey(name: 'enableNotifications') bool enableNotifications, UserVerificationModel? verification
 });
 
 
-@override $UserProfileModelCopyWith<$Res>? get profile;
+@override $UserProfileModelCopyWith<$Res>? get profile;@override $UserVerificationModelCopyWith<$Res>? get verification;
 
 }
 /// @nodoc
@@ -569,7 +855,7 @@ class __$UserModelCopyWithImpl<$Res>
 
 /// Create a copy of UserModel
 /// with the given fields replaced by the non-null parameter values.
-@override @pragma('vm:prefer-inline') $Res call({Object? id = null,Object? name = null,Object? email = null,Object? phone = freezed,Object? avatar = freezed,Object? profile = freezed,Object? address = freezed,Object? role = null,Object? isVerified = null,Object? createdAt = null,Object? tier = null,Object? subscriptionExpiresAt = freezed,Object? enableNotifications = null,}) {
+@override @pragma('vm:prefer-inline') $Res call({Object? id = null,Object? name = null,Object? email = null,Object? phone = freezed,Object? avatar = freezed,Object? profile = freezed,Object? address = freezed,Object? role = null,Object? isVerified = null,Object? createdAt = null,Object? tier = null,Object? subscriptionExpiresAt = freezed,Object? enableNotifications = null,Object? verification = freezed,}) {
   return _then(_UserModel(
 id: null == id ? _self.id : id // ignore: cast_nullable_to_non_nullable
 as String,name: null == name ? _self.name : name // ignore: cast_nullable_to_non_nullable
@@ -584,7 +870,8 @@ as bool,createdAt: null == createdAt ? _self.createdAt : createdAt // ignore: ca
 as DateTime,tier: null == tier ? _self.tier : tier // ignore: cast_nullable_to_non_nullable
 as String,subscriptionExpiresAt: freezed == subscriptionExpiresAt ? _self.subscriptionExpiresAt : subscriptionExpiresAt // ignore: cast_nullable_to_non_nullable
 as DateTime?,enableNotifications: null == enableNotifications ? _self.enableNotifications : enableNotifications // ignore: cast_nullable_to_non_nullable
-as bool,
+as bool,verification: freezed == verification ? _self.verification : verification // ignore: cast_nullable_to_non_nullable
+as UserVerificationModel?,
   ));
 }
 
@@ -599,6 +886,18 @@ $UserProfileModelCopyWith<$Res>? get profile {
 
   return $UserProfileModelCopyWith<$Res>(_self.profile!, (value) {
     return _then(_self.copyWith(profile: value));
+  });
+}/// Create a copy of UserModel
+/// with the given fields replaced by the non-null parameter values.
+@override
+@pragma('vm:prefer-inline')
+$UserVerificationModelCopyWith<$Res>? get verification {
+    if (_self.verification == null) {
+    return null;
+  }
+
+  return $UserVerificationModelCopyWith<$Res>(_self.verification!, (value) {
+    return _then(_self.copyWith(verification: value));
   });
 }
 }

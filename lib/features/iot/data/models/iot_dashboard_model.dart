@@ -46,6 +46,8 @@ class IotDashboardModel {
           .toList(),
       uptimePercent: _toDouble(json['uptimePercent']) ?? 0,
       readingsInRange: (json['readingsInRange'] as num?)?.toInt() ?? 0,
+      currentReadingsCount: (json['currentReadingsCount'] as num?)?.toInt(),
+      statusWindow: json['statusWindow']?.toString() ?? '30m',
     );
   }
 

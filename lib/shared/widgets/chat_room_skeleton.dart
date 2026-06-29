@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:skeletonizer/skeletonizer.dart';
 
+import '../../core/constants/app_layout.dart';
 import '../../core/constants/app_colors.dart';
 import 'bisa_media_skeleton.dart';
 import 'shimmer_loading.dart';
@@ -19,17 +20,20 @@ class ShimmerChatRoomPlaceholder extends StatelessWidget {
         Expanded(
           child: ShimmerLoading(
             child: ListView(
-              padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 20.h),
+              padding: EdgeInsets.symmetric(
+                horizontal: AppSpacing.md,
+                vertical: AppSpacing.lg,
+              ),
               physics: const AlwaysScrollableScrollPhysics(),
               children: [
                 _BubbleSkeleton(alignEnd: false, wide: true),
-                SizedBox(height: 12.h),
+                SizedBox(height: AppSpacing.md12),
                 _BubbleSkeleton(alignEnd: true),
-                SizedBox(height: 12.h),
+                SizedBox(height: AppSpacing.md12),
                 _BubbleSkeleton(alignEnd: false),
-                SizedBox(height: 12.h),
+                SizedBox(height: AppSpacing.md12),
                 _BubbleSkeleton(alignEnd: true, wide: true),
-                SizedBox(height: 12.h),
+                SizedBox(height: AppSpacing.md12),
                 _BubbleSkeleton(alignEnd: false),
               ],
             ),
@@ -44,23 +48,28 @@ class _HudSkeleton extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      color: AppColors.white,
-      padding: EdgeInsets.fromLTRB(16.w, 12.h, 16.w, 16.h),
+      color: AppColors.surface,
+      padding: EdgeInsets.fromLTRB(
+        AppSpacing.md,
+        AppSpacing.md12,
+        AppSpacing.md,
+        AppSpacing.md,
+      ),
       child: ShimmerLoading(
         child: Row(
           children: [
             BisaMediaSkeleton(
               width: 48.w,
               height: 48.w,
-              borderRadius: BorderRadius.circular(12.r),
+              borderRadius: BorderRadius.circular(AppRadius.lg),
             ),
-            SizedBox(width: 12.w),
+            SizedBox(width: AppSpacing.md12),
             Expanded(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Bone(width: double.infinity, height: 14.h),
-                  SizedBox(height: 6.h),
+                  SizedBox(height: AppSpacing.xs6),
                   Bone(width: 120.w, height: 11.h),
                 ],
               ),
@@ -85,7 +94,7 @@ class _BubbleSkeleton extends StatelessWidget {
       child: Bone(
         width: wide ? 220.w : 160.w,
         height: wide ? 56.h : 40.h,
-        borderRadius: BorderRadius.circular(16.r),
+        borderRadius: BorderRadius.circular(AppRadius.xl),
       ),
     );
   }

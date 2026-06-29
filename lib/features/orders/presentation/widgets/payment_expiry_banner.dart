@@ -1,8 +1,10 @@
 import 'dart:async';
 
+import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
+import 'package:mobile_bisa/core/constants/app_layout.dart';
 import 'package:mobile_bisa/core/constants/app_colors.dart';
 import 'package:mobile_bisa/core/utils/payment_expiry_utils.dart';
 
@@ -115,13 +117,13 @@ class _ExpiredBanner extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Icon(LucideIcons.circleX, size: compact ? 16.sp : 20.sp, color: color),
-          SizedBox(width: 8.w),
+          SizedBox(width: AppSpacing.sm),
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  'Pembayaran Kedaluwarsa',
+                  'orders.payment_expired_title'.tr(),
                   style: TextStyle(
                     fontSize: compact ? 12.sp : 14.sp,
                     fontWeight: FontWeight.w900,
@@ -130,7 +132,7 @@ class _ExpiredBanner extends StatelessWidget {
                 ),
                 SizedBox(height: compact ? 2.h : 4.h),
                 Text(
-                  'Batas waktu pembayaran telah habis. Pilih metode dan buat instruksi pembayaran baru.',
+                  'orders.payment_expired_body'.tr(),
                   style: TextStyle(
                     fontSize: compact ? 10.sp : 11.sp,
                     color: AppColors.textSecondary,
@@ -178,13 +180,13 @@ class _CountdownBanner extends StatelessWidget {
       child: Row(
         children: [
           Icon(LucideIcons.timer, size: compact ? 16.sp : 20.sp, color: color),
-          SizedBox(width: 8.w),
+          SizedBox(width: AppSpacing.sm),
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  'Selesaikan pembayaran dalam',
+                  'orders.payment_countdown_prefix'.tr(),
                   style: TextStyle(
                     fontSize: compact ? 10.sp : 11.sp,
                     color: AppColors.textSecondary,
@@ -202,7 +204,9 @@ class _CountdownBanner extends StatelessWidget {
                 ),
                 SizedBox(height: 2.h),
                 Text(
-                  'Berlaku hingga ${formatPaymentExpiryDateTime(expiresAt)}',
+                  'orders.payment_valid_until'.tr(namedArgs: {
+                    'datetime': formatPaymentExpiryDateTime(expiresAt),
+                  }),
                   style: TextStyle(
                     fontSize: compact ? 9.sp : 10.sp,
                     color: AppColors.textHint,

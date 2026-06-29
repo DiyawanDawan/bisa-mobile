@@ -22,7 +22,7 @@ abstract class PayoutAccountModel with _$PayoutAccountModel {
   PayoutAccountEntity toEntity() => PayoutAccountEntity(
     id: id,
     bankId: bankId,
-    bankName: bank?['name'] ?? 'Unknown Bank',
+    bankName: bank?['name'] ?? 'wallet.unknown_bank',
     bankCode: bank?['code'] ?? '',
     accountNumber: accountNumber,
     accountName: accountName,

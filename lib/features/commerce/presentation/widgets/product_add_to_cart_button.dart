@@ -2,7 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
+import '../../../../core/constants/app_layout.dart';
 import '../../../../core/constants/app_colors.dart';
+import '../../../../core/utils/app_feedback.dart';
 import '../../../../shared/widgets/auth_sheet.dart';
 import '../../../auth/presentation/bloc/auth_cubit.dart';
 import '../../../marketplace/domain/entities/product_entity.dart';
@@ -40,25 +42,26 @@ class ProductAddToCartButton extends StatelessWidget {
                 product.minOrder,
               );
           if (!context.mounted) return;
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: Text(
-                ok
-                    ? 'Ditambahkan ke keranjang'
-                    : 'Gagal menambahkan ke keranjang',
-              ),
-              behavior: SnackBarBehavior.floating,
+          if (ok) {
+            showSuccessSnackBar(
+              context,
+              'commerce.add_to_cart_success',
               duration: const Duration(seconds: 1),
-              backgroundColor: ok ? AppColors.success : AppColors.error,
-            ),
-          );
+            );
+          } else {
+            showErrorSnackBar(
+              context,
+              'commerce.add_to_cart_failed',
+              duration: const Duration(seconds: 1),
+            );
+          }
         },
         child: Padding(
           padding: EdgeInsets.all(6.r),
           child: Icon(
             LucideIcons.shoppingCart,
             size: size.sp,
-            color: Colors.white,
+            color: AppColors.surface,
           ),
         ),
       ),

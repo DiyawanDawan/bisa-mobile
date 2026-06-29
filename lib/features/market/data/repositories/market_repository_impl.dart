@@ -3,6 +3,7 @@ import 'package:dio/dio.dart';
 import '../../../../core/errors/failures.dart';
 import '../../domain/repositories/market_repository.dart';
 import '../datasources/market_remote_data_source.dart';
+import '../models/market_supply_demand_model.dart';
 import '../models/market_trend_model.dart';
 
 class MarketRepositoryImpl implements MarketRepository {
@@ -36,11 +37,23 @@ class MarketRepositoryImpl implements MarketRepository {
     }
   }
 
+  @override
+  Future<Either<Failure, MarketSupplyDemandOverviewModel>> getSupplyDemandOverview() async {
+    try {
+      final result = await remoteDataSource.getSupplyDemandOverview();
+      return Right(result);
+    } on DioException catch (e) {
+      return Left(_handleDioError(e));
+    } catch (e) {
+      return const Left(UnexpectedFailure());
+    }
+  }
+
   Failure _handleDioError(DioException e) {
     final message =
         e.response?.data?['meta']?['message'] ??
         e.message ??
-        'Terjadi kesalahan';
+        'errors.generic';
     return ServerFailure(message: message);
   }
 }

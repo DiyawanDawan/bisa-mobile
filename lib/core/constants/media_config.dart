@@ -4,12 +4,12 @@ import 'package:mobile_bisa/core/config/app_config.dart';
 abstract class MediaConfig {
   /// Origin tanpa `/api/v1`, mis. `https://xxx.ngrok-free.dev`
   static String get mediaBaseUrl {
-    final explicit = AppConfig.mediaBaseUrl.trim();
+    final explicit = AppConfig.effectiveMediaBaseUrl.trim();
     if (explicit.isNotEmpty) {
       return _stripApiSuffix(explicit);
     }
 
-    final apiUrl = AppConfig.apiUrl.trim();
+    final apiUrl = AppConfig.effectiveApiUrl.trim();
     if (apiUrl.isNotEmpty) {
       return _stripApiSuffix(apiUrl);
     }

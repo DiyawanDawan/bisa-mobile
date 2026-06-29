@@ -57,7 +57,7 @@ class ReadinessGate {
         RoleReadiness(
           ready: false,
           missing: missing,
-          messages: missing.map(readinessLabelForKey).toList(),
+          messages: const [],
         ),
       );
       return;
@@ -69,7 +69,7 @@ class ReadinessGate {
         RoleReadiness(
           ready: false,
           missing: missing,
-          messages: missing.map(readinessLabelForKey).toList(),
+          messages: const [],
         ),
       );
       return;

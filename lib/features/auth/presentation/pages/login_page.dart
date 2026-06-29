@@ -6,7 +6,9 @@ import 'package:flutter_svg/flutter_svg.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:go_router/go_router.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
+import '../../../../core/constants/app_layout.dart';
 import '../../../../core/constants/app_colors.dart';
+import '../../../../core/utils/app_feedback.dart';
 import '../../../../shared/widgets/custom_button.dart';
 import '../../../../shared/widgets/custom_text_field.dart';
 import '../../../../shared/widgets/bisa_logo.dart';
@@ -88,14 +90,7 @@ class _LoginPageState extends State<LoginPage> {
         listener: (context, state) {
           state.maybeWhen(
             authenticated: (_) => context.go('/'),
-            error: (message) => ScaffoldMessenger.of(context).showSnackBar(
-              SnackBar(
-                content: Text(message),
-                backgroundColor: AppColors.error,
-                behavior: SnackBarBehavior.floating,
-                margin: EdgeInsets.all(16.r),
-              ),
-            ),
+            error: (message) => showErrorSnackBar(context, message),
             orElse: () {},
           );
         },
@@ -107,13 +102,13 @@ class _LoginPageState extends State<LoginPage> {
             SafeArea(
               child: SingleChildScrollView(
                 physics: const BouncingScrollPhysics(),
-                padding: EdgeInsets.symmetric(horizontal: 24.w),
+                padding: EdgeInsets.symmetric(horizontal: AppSpacing.xl),
                 child: Form(
                   key: _formKey,
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      SizedBox(height: 32.h),
+                      SizedBox(height: AppSpacing.xxl),
 
                       // Brand Logo & Back for Guests
                       Row(
@@ -134,7 +129,7 @@ class _LoginPageState extends State<LoginPage> {
                           height: 1.1,
                         ),
                       ),
-                      SizedBox(height: 12.h),
+                      SizedBox(height: AppSpacing.md12),
                       Text(
                         'login_subtitle'.tr(),
                         style: TextStyle(
@@ -148,13 +143,13 @@ class _LoginPageState extends State<LoginPage> {
 
                       // Input Fields Card
                       Container(
-                        padding: EdgeInsets.all(24.w),
+                        padding: EdgeInsets.all(AppSpacing.xl),
                         decoration: BoxDecoration(
-                          color: Colors.white,
-                          borderRadius: BorderRadius.circular(24.r),
+                          color: AppColors.surface,
+                          borderRadius: BorderRadius.circular(AppSpacing.xlPx.r),
                           boxShadow: [
                             BoxShadow(
-                              color: Colors.black.withOpacity(0.04),
+                              color: AppColors.black.withOpacity(0.04),
                               blurRadius: 24,
                               offset: const Offset(0, 8),
                             ),
@@ -164,29 +159,29 @@ class _LoginPageState extends State<LoginPage> {
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
                             CustomTextField(
-                              label: 'email_1'.tr().tr(),
-                              hint: 'emailhint_1'.tr().tr().tr(),
+                              label: 'email'.tr(),
+                              hint: 'email_hint'.tr(),
                               controller: _emailController,
                               keyboardType: TextInputType.emailAddress,
                               prefixIcon: LucideIcons.mail,
                             ),
-                            SizedBox(height: 20.h),
+                            SizedBox(height: AppSpacing.lg),
                             CustomTextField(
-                              label: 'password1'.tr().tr().tr(),
-                              hint: 'passwordhint_1'.tr().tr().tr(),
+                              label: 'password'.tr(),
+                              hint: 'password_hint'.tr(),
                               controller: _passwordController,
                               isPassword: true,
                               prefixIcon: LucideIcons.lock,
                             ),
-                            SizedBox(height: 12.h),
+                            SizedBox(height: AppSpacing.md12),
                             Row(
                               mainAxisAlignment: MainAxisAlignment.spaceBetween,
                               children: [
                                 Row(
                                   children: [
                                     SizedBox(
-                                      width: 24.w,
-                                      height: 24.w,
+                                      width: AppSpacing.xl,
+                                      height: AppSpacing.xl,
                                       child: Checkbox(
                                         value: _rememberMe,
                                         onChanged: (value) {
@@ -200,9 +195,9 @@ class _LoginPageState extends State<LoginPage> {
                                         ),
                                       ),
                                     ),
-                                    SizedBox(width: 8.w),
+                                    SizedBox(width: AppSpacing.sm),
                                     Text(
-                                      'Ingat Saya',
+                                      'auth.remember_me'.tr(),
                                       style: TextStyle(
                                         fontSize: 13.sp,
                                         fontWeight: FontWeight.w600,
@@ -214,17 +209,17 @@ class _LoginPageState extends State<LoginPage> {
                                 _buildForgotPassword(),
                               ],
                             ),
-                            SizedBox(height: 32.h),
+                            SizedBox(height: AppSpacing.xxl),
                             _buildLoginButton(),
                             if (kDebugMode) ...[
-                              SizedBox(height: 14.h),
+                              SizedBox(height: AppSpacing.section),
                               _buildDemoQuickFillRow(),
                             ],
                           ],
                         ),
                       ),
 
-                      SizedBox(height: 32.h),
+                      SizedBox(height: AppSpacing.xxl),
 
                       // Social Login Section
                       _buildSocialSection(),
@@ -281,9 +276,12 @@ class _LoginPageState extends State<LoginPage> {
 
   Widget _buildBrandLogo() {
     return Container(
-      padding: EdgeInsets.symmetric(horizontal: 14.w, vertical: 8.h),
+      padding: EdgeInsets.symmetric(
+        horizontal: AppSpacing.section,
+        vertical: AppSpacing.sm,
+      ),
       decoration: BoxDecoration(
-        color: AppColors.white,
+        color: AppColors.surface,
         borderRadius: BorderRadius.circular(50.r),
         boxShadow: AppColors.softShadow,
       ),
@@ -296,7 +294,7 @@ class _LoginPageState extends State<LoginPage> {
       onPressed: () => context.go('/'),
       icon: Icon(LucideIcons.arrowRight, size: 16.sp, color: AppColors.primary),
       label: Text(
-        'Tamu',
+        'auth.guest'.tr(),
         style: TextStyle(
           fontWeight: FontWeight.w800,
           color: AppColors.primary,
@@ -305,7 +303,10 @@ class _LoginPageState extends State<LoginPage> {
       ),
       style: TextButton.styleFrom(
         backgroundColor: AppColors.primaryLight,
-        padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 8.h),
+        padding: EdgeInsets.symmetric(
+        horizontal: AppSpacing.md,
+        vertical: AppSpacing.sm,
+      ),
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(50.r),
         ),
@@ -333,7 +334,7 @@ class _LoginPageState extends State<LoginPage> {
     return BlocBuilder<AuthCubit, AuthState>(
       builder: (context, state) {
         return CustomButton(
-          text: 'login1'.tr(),
+          text: 'login'.tr(),
           useGradient: true,
           isLoading: state.maybeWhen(loading: () => true, orElse: () => false),
           onPressed: () async {
@@ -357,15 +358,15 @@ class _LoginPageState extends State<LoginPage> {
       children: [
         Expanded(
           child: _demoFillChip(
-            label: 'Demo Buyer',
+            label: 'auth.demo_buyer'.tr(),
             icon: LucideIcons.shoppingBag,
             onTap: () => _fillDemoCredentials(buyer: true),
           ),
         ),
-        SizedBox(width: 8.w),
+        SizedBox(width: AppSpacing.sm),
         Expanded(
           child: _demoFillChip(
-            label: 'Demo Supplier',
+            label: 'auth.demo_supplier'.tr(),
             icon: LucideIcons.store,
             onTap: () => _fillDemoCredentials(buyer: false),
           ),
@@ -381,12 +382,15 @@ class _LoginPageState extends State<LoginPage> {
   }) {
     return Material(
       color: AppColors.primaryLight.withValues(alpha: 0.45),
-      borderRadius: BorderRadius.circular(10.r),
+      borderRadius: BorderRadius.circular(AppRadius.md),
       child: InkWell(
         onTap: onTap,
-        borderRadius: BorderRadius.circular(10.r),
+        borderRadius: BorderRadius.circular(AppRadius.md),
         child: Padding(
-          padding: EdgeInsets.symmetric(horizontal: 8.w, vertical: 8.h),
+          padding: EdgeInsets.symmetric(
+          horizontal: AppSpacing.sm,
+          vertical: AppSpacing.sm,
+        ),
           child: Row(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
@@ -418,7 +422,7 @@ class _LoginPageState extends State<LoginPage> {
           children: [
             const Expanded(child: Divider(color: AppColors.grey200)),
             Padding(
-              padding: EdgeInsets.symmetric(horizontal: 16.w),
+              padding: EdgeInsets.symmetric(horizontal: AppSpacing.md),
               child: Text(
                 'or_continue_with'.tr(),
                 style: TextStyle(
@@ -431,7 +435,7 @@ class _LoginPageState extends State<LoginPage> {
             const Expanded(child: Divider(color: AppColors.grey200)),
           ],
         ),
-        SizedBox(height: 24.h),
+        SizedBox(height: AppSpacing.xl),
         BlocBuilder<AuthCubit, AuthState>(
           builder: (context, state) {
             final isLoading = state.maybeWhen(loading: () => true, orElse: () => false);
@@ -464,27 +468,27 @@ class _LoginPageState extends State<LoginPage> {
         child: Container(
           height: 54.h,
           decoration: BoxDecoration(
-            color: AppColors.white,
-            borderRadius: BorderRadius.circular(16.r),
+            color: AppColors.surface,
+            borderRadius: BorderRadius.circular(AppRadius.xl),
             border: Border.all(color: AppColors.grey200),
           ),
           child: InkWell(
             onTap: isDisabled ? null : onTap,
-            borderRadius: BorderRadius.circular(16.r),
+            borderRadius: BorderRadius.circular(AppRadius.xl),
             child: Row(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
                 SvgPicture.network(
                   'https://www.vectorlogo.zone/logos/google/google-icon.svg',
-                  width: 20.w,
-                  height: 20.w,
+                  width: AppSpacing.lg,
+                  height: AppSpacing.lg,
                   placeholderBuilder: (context) => Icon(
                     Icons.g_mobiledata_rounded,
                     size: 24.sp,
                     color: AppColors.textPrimary,
                   ),
                 ),
-                SizedBox(width: 10.w),
+                SizedBox(width: AppSpacing.sm10),
                 Text(
                   label,
                   style: TextStyle(
@@ -494,12 +498,15 @@ class _LoginPageState extends State<LoginPage> {
                   ),
                 ),
                 if (comingSoonLabel != null) ...[
-                  SizedBox(width: 8.w),
+                  SizedBox(width: AppSpacing.sm),
                   Container(
-                    padding: EdgeInsets.symmetric(horizontal: 8.w, vertical: 3.h),
+                    padding: EdgeInsets.symmetric(
+                      horizontal: AppSpacing.sm,
+                      vertical: 3.h,
+                    ),
                     decoration: BoxDecoration(
                       color: AppColors.grey100,
-                      borderRadius: BorderRadius.circular(20.r),
+                      borderRadius: BorderRadius.circular(AppRadius.pill),
                     ),
                     child: Text(
                       comingSoonLabel,

@@ -6,6 +6,26 @@ part of 'user_model.dart';
 // JsonSerializableGenerator
 // **************************************************************************
 
+_UserVerificationModel _$UserVerificationModelFromJson(
+  Map<String, dynamic> json,
+) => _UserVerificationModel(
+  verificationStatus: json['verificationStatus'] as String?,
+  isVerified: json['isVerified'] as bool? ?? false,
+  rejectionReason: json['rejectionReason'] as String?,
+  reviewedAt: json['reviewedAt'] == null
+      ? null
+      : DateTime.parse(json['reviewedAt'] as String),
+);
+
+Map<String, dynamic> _$UserVerificationModelToJson(
+  _UserVerificationModel instance,
+) => <String, dynamic>{
+  'verificationStatus': instance.verificationStatus,
+  'isVerified': instance.isVerified,
+  'rejectionReason': instance.rejectionReason,
+  'reviewedAt': instance.reviewedAt?.toIso8601String(),
+};
+
 _UserProfileModel _$UserProfileModelFromJson(Map<String, dynamic> json) =>
     _UserProfileModel(
       companyName: json['companyName'] as String?,
@@ -38,6 +58,11 @@ _UserModel _$UserModelFromJson(Map<String, dynamic> json) => _UserModel(
       ? null
       : DateTime.parse(json['subscriptionExpiresAt'] as String),
   enableNotifications: json['enableNotifications'] as bool? ?? true,
+  verification: json['verification'] == null
+      ? null
+      : UserVerificationModel.fromJson(
+          json['verification'] as Map<String, dynamic>,
+        ),
 );
 
 Map<String, dynamic> _$UserModelToJson(
@@ -56,4 +81,5 @@ Map<String, dynamic> _$UserModelToJson(
   'tier': instance.tier,
   'subscriptionExpiresAt': instance.subscriptionExpiresAt?.toIso8601String(),
   'enableNotifications': instance.enableNotifications,
+  'verification': instance.verification,
 };

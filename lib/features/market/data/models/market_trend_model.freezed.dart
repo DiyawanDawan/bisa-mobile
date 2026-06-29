@@ -15,7 +15,7 @@ T _$identity<T>(T value) => value;
 mixin _$MarketTrendModel {
 
  String get id; String get label; String get category; String get currentValue; String get trendType;// UP, DOWN, STABLE
- List<MarketDataPointModel> get historyData; List<MarketDataPointModel>? get projectedData; String? get insight;
+ List<MarketDataPointModel> get historyData; List<MarketDataPointModel>? get projectedData; String? get insight; List<String> get dataSources; String? get forecastModel; MarketSupplyDemandModel? get supplyDemand;
 /// Create a copy of MarketTrendModel
 /// with the given fields replaced by the non-null parameter values.
 @JsonKey(includeFromJson: false, includeToJson: false)
@@ -26,16 +26,16 @@ $MarketTrendModelCopyWith<MarketTrendModel> get copyWith => _$MarketTrendModelCo
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is MarketTrendModel&&(identical(other.id, id) || other.id == id)&&(identical(other.label, label) || other.label == label)&&(identical(other.category, category) || other.category == category)&&(identical(other.currentValue, currentValue) || other.currentValue == currentValue)&&(identical(other.trendType, trendType) || other.trendType == trendType)&&const DeepCollectionEquality().equals(other.historyData, historyData)&&const DeepCollectionEquality().equals(other.projectedData, projectedData)&&(identical(other.insight, insight) || other.insight == insight));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is MarketTrendModel&&(identical(other.id, id) || other.id == id)&&(identical(other.label, label) || other.label == label)&&(identical(other.category, category) || other.category == category)&&(identical(other.currentValue, currentValue) || other.currentValue == currentValue)&&(identical(other.trendType, trendType) || other.trendType == trendType)&&const DeepCollectionEquality().equals(other.historyData, historyData)&&const DeepCollectionEquality().equals(other.projectedData, projectedData)&&(identical(other.insight, insight) || other.insight == insight)&&const DeepCollectionEquality().equals(other.dataSources, dataSources)&&(identical(other.forecastModel, forecastModel) || other.forecastModel == forecastModel)&&(identical(other.supplyDemand, supplyDemand) || other.supplyDemand == supplyDemand));
 }
 
 
 @override
-int get hashCode => Object.hash(runtimeType,id,label,category,currentValue,trendType,const DeepCollectionEquality().hash(historyData),const DeepCollectionEquality().hash(projectedData),insight);
+int get hashCode => Object.hash(runtimeType,id,label,category,currentValue,trendType,const DeepCollectionEquality().hash(historyData),const DeepCollectionEquality().hash(projectedData),insight,const DeepCollectionEquality().hash(dataSources),forecastModel,supplyDemand);
 
 @override
 String toString() {
-  return 'MarketTrendModel(id: $id, label: $label, category: $category, currentValue: $currentValue, trendType: $trendType, historyData: $historyData, projectedData: $projectedData, insight: $insight)';
+  return 'MarketTrendModel(id: $id, label: $label, category: $category, currentValue: $currentValue, trendType: $trendType, historyData: $historyData, projectedData: $projectedData, insight: $insight, dataSources: $dataSources, forecastModel: $forecastModel, supplyDemand: $supplyDemand)';
 }
 
 
@@ -46,7 +46,7 @@ abstract mixin class $MarketTrendModelCopyWith<$Res>  {
   factory $MarketTrendModelCopyWith(MarketTrendModel value, $Res Function(MarketTrendModel) _then) = _$MarketTrendModelCopyWithImpl;
 @useResult
 $Res call({
- String id, String label, String category, String currentValue, String trendType, List<MarketDataPointModel> historyData, List<MarketDataPointModel>? projectedData, String? insight
+ String id, String label, String category, String currentValue, String trendType, List<MarketDataPointModel> historyData, List<MarketDataPointModel>? projectedData, String? insight, List<String> dataSources, String? forecastModel, MarketSupplyDemandModel? supplyDemand
 });
 
 
@@ -63,7 +63,7 @@ class _$MarketTrendModelCopyWithImpl<$Res>
 
 /// Create a copy of MarketTrendModel
 /// with the given fields replaced by the non-null parameter values.
-@pragma('vm:prefer-inline') @override $Res call({Object? id = null,Object? label = null,Object? category = null,Object? currentValue = null,Object? trendType = null,Object? historyData = null,Object? projectedData = freezed,Object? insight = freezed,}) {
+@pragma('vm:prefer-inline') @override $Res call({Object? id = null,Object? label = null,Object? category = null,Object? currentValue = null,Object? trendType = null,Object? historyData = null,Object? projectedData = freezed,Object? insight = freezed,Object? dataSources = null,Object? forecastModel = freezed,Object? supplyDemand = freezed,}) {
   return _then(_self.copyWith(
 id: null == id ? _self.id : id // ignore: cast_nullable_to_non_nullable
 as String,label: null == label ? _self.label : label // ignore: cast_nullable_to_non_nullable
@@ -73,7 +73,10 @@ as String,trendType: null == trendType ? _self.trendType : trendType // ignore: 
 as String,historyData: null == historyData ? _self.historyData : historyData // ignore: cast_nullable_to_non_nullable
 as List<MarketDataPointModel>,projectedData: freezed == projectedData ? _self.projectedData : projectedData // ignore: cast_nullable_to_non_nullable
 as List<MarketDataPointModel>?,insight: freezed == insight ? _self.insight : insight // ignore: cast_nullable_to_non_nullable
-as String?,
+as String?,dataSources: null == dataSources ? _self.dataSources : dataSources // ignore: cast_nullable_to_non_nullable
+as List<String>,forecastModel: freezed == forecastModel ? _self.forecastModel : forecastModel // ignore: cast_nullable_to_non_nullable
+as String?,supplyDemand: freezed == supplyDemand ? _self.supplyDemand : supplyDemand // ignore: cast_nullable_to_non_nullable
+as MarketSupplyDemandModel?,
   ));
 }
 
@@ -158,10 +161,10 @@ return $default(_that);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( String id,  String label,  String category,  String currentValue,  String trendType,  List<MarketDataPointModel> historyData,  List<MarketDataPointModel>? projectedData,  String? insight)?  $default,{required TResult orElse(),}) {final _that = this;
+@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( String id,  String label,  String category,  String currentValue,  String trendType,  List<MarketDataPointModel> historyData,  List<MarketDataPointModel>? projectedData,  String? insight,  List<String> dataSources,  String? forecastModel,  MarketSupplyDemandModel? supplyDemand)?  $default,{required TResult orElse(),}) {final _that = this;
 switch (_that) {
 case _MarketTrendModel() when $default != null:
-return $default(_that.id,_that.label,_that.category,_that.currentValue,_that.trendType,_that.historyData,_that.projectedData,_that.insight);case _:
+return $default(_that.id,_that.label,_that.category,_that.currentValue,_that.trendType,_that.historyData,_that.projectedData,_that.insight,_that.dataSources,_that.forecastModel,_that.supplyDemand);case _:
   return orElse();
 
 }
@@ -179,10 +182,10 @@ return $default(_that.id,_that.label,_that.category,_that.currentValue,_that.tre
 /// }
 /// ```
 
-@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( String id,  String label,  String category,  String currentValue,  String trendType,  List<MarketDataPointModel> historyData,  List<MarketDataPointModel>? projectedData,  String? insight)  $default,) {final _that = this;
+@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( String id,  String label,  String category,  String currentValue,  String trendType,  List<MarketDataPointModel> historyData,  List<MarketDataPointModel>? projectedData,  String? insight,  List<String> dataSources,  String? forecastModel,  MarketSupplyDemandModel? supplyDemand)  $default,) {final _that = this;
 switch (_that) {
 case _MarketTrendModel():
-return $default(_that.id,_that.label,_that.category,_that.currentValue,_that.trendType,_that.historyData,_that.projectedData,_that.insight);case _:
+return $default(_that.id,_that.label,_that.category,_that.currentValue,_that.trendType,_that.historyData,_that.projectedData,_that.insight,_that.dataSources,_that.forecastModel,_that.supplyDemand);case _:
   throw StateError('Unexpected subclass');
 
 }
@@ -199,10 +202,10 @@ return $default(_that.id,_that.label,_that.category,_that.currentValue,_that.tre
 /// }
 /// ```
 
-@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( String id,  String label,  String category,  String currentValue,  String trendType,  List<MarketDataPointModel> historyData,  List<MarketDataPointModel>? projectedData,  String? insight)?  $default,) {final _that = this;
+@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( String id,  String label,  String category,  String currentValue,  String trendType,  List<MarketDataPointModel> historyData,  List<MarketDataPointModel>? projectedData,  String? insight,  List<String> dataSources,  String? forecastModel,  MarketSupplyDemandModel? supplyDemand)?  $default,) {final _that = this;
 switch (_that) {
 case _MarketTrendModel() when $default != null:
-return $default(_that.id,_that.label,_that.category,_that.currentValue,_that.trendType,_that.historyData,_that.projectedData,_that.insight);case _:
+return $default(_that.id,_that.label,_that.category,_that.currentValue,_that.trendType,_that.historyData,_that.projectedData,_that.insight,_that.dataSources,_that.forecastModel,_that.supplyDemand);case _:
   return null;
 
 }
@@ -214,7 +217,7 @@ return $default(_that.id,_that.label,_that.category,_that.currentValue,_that.tre
 
 
 class _MarketTrendModel implements MarketTrendModel {
-  const _MarketTrendModel({required this.id, required this.label, required this.category, required this.currentValue, required this.trendType, required final  List<MarketDataPointModel> historyData, final  List<MarketDataPointModel>? projectedData, this.insight}): _historyData = historyData,_projectedData = projectedData;
+  const _MarketTrendModel({required this.id, required this.label, required this.category, required this.currentValue, required this.trendType, required final  List<MarketDataPointModel> historyData, final  List<MarketDataPointModel>? projectedData, this.insight, final  List<String> dataSources = const [], this.forecastModel, this.supplyDemand}): _historyData = historyData,_projectedData = projectedData,_dataSources = dataSources;
   
 
 @override final  String id;
@@ -241,6 +244,15 @@ class _MarketTrendModel implements MarketTrendModel {
 }
 
 @override final  String? insight;
+ final  List<String> _dataSources;
+@override@JsonKey() List<String> get dataSources {
+  if (_dataSources is EqualUnmodifiableListView) return _dataSources;
+  // ignore: implicit_dynamic_type
+  return EqualUnmodifiableListView(_dataSources);
+}
+
+@override final  String? forecastModel;
+@override final  MarketSupplyDemandModel? supplyDemand;
 
 /// Create a copy of MarketTrendModel
 /// with the given fields replaced by the non-null parameter values.
@@ -252,16 +264,16 @@ _$MarketTrendModelCopyWith<_MarketTrendModel> get copyWith => __$MarketTrendMode
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is _MarketTrendModel&&(identical(other.id, id) || other.id == id)&&(identical(other.label, label) || other.label == label)&&(identical(other.category, category) || other.category == category)&&(identical(other.currentValue, currentValue) || other.currentValue == currentValue)&&(identical(other.trendType, trendType) || other.trendType == trendType)&&const DeepCollectionEquality().equals(other._historyData, _historyData)&&const DeepCollectionEquality().equals(other._projectedData, _projectedData)&&(identical(other.insight, insight) || other.insight == insight));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is _MarketTrendModel&&(identical(other.id, id) || other.id == id)&&(identical(other.label, label) || other.label == label)&&(identical(other.category, category) || other.category == category)&&(identical(other.currentValue, currentValue) || other.currentValue == currentValue)&&(identical(other.trendType, trendType) || other.trendType == trendType)&&const DeepCollectionEquality().equals(other._historyData, _historyData)&&const DeepCollectionEquality().equals(other._projectedData, _projectedData)&&(identical(other.insight, insight) || other.insight == insight)&&const DeepCollectionEquality().equals(other._dataSources, _dataSources)&&(identical(other.forecastModel, forecastModel) || other.forecastModel == forecastModel)&&(identical(other.supplyDemand, supplyDemand) || other.supplyDemand == supplyDemand));
 }
 
 
 @override
-int get hashCode => Object.hash(runtimeType,id,label,category,currentValue,trendType,const DeepCollectionEquality().hash(_historyData),const DeepCollectionEquality().hash(_projectedData),insight);
+int get hashCode => Object.hash(runtimeType,id,label,category,currentValue,trendType,const DeepCollectionEquality().hash(_historyData),const DeepCollectionEquality().hash(_projectedData),insight,const DeepCollectionEquality().hash(_dataSources),forecastModel,supplyDemand);
 
 @override
 String toString() {
-  return 'MarketTrendModel(id: $id, label: $label, category: $category, currentValue: $currentValue, trendType: $trendType, historyData: $historyData, projectedData: $projectedData, insight: $insight)';
+  return 'MarketTrendModel(id: $id, label: $label, category: $category, currentValue: $currentValue, trendType: $trendType, historyData: $historyData, projectedData: $projectedData, insight: $insight, dataSources: $dataSources, forecastModel: $forecastModel, supplyDemand: $supplyDemand)';
 }
 
 
@@ -272,7 +284,7 @@ abstract mixin class _$MarketTrendModelCopyWith<$Res> implements $MarketTrendMod
   factory _$MarketTrendModelCopyWith(_MarketTrendModel value, $Res Function(_MarketTrendModel) _then) = __$MarketTrendModelCopyWithImpl;
 @override @useResult
 $Res call({
- String id, String label, String category, String currentValue, String trendType, List<MarketDataPointModel> historyData, List<MarketDataPointModel>? projectedData, String? insight
+ String id, String label, String category, String currentValue, String trendType, List<MarketDataPointModel> historyData, List<MarketDataPointModel>? projectedData, String? insight, List<String> dataSources, String? forecastModel, MarketSupplyDemandModel? supplyDemand
 });
 
 
@@ -289,7 +301,7 @@ class __$MarketTrendModelCopyWithImpl<$Res>
 
 /// Create a copy of MarketTrendModel
 /// with the given fields replaced by the non-null parameter values.
-@override @pragma('vm:prefer-inline') $Res call({Object? id = null,Object? label = null,Object? category = null,Object? currentValue = null,Object? trendType = null,Object? historyData = null,Object? projectedData = freezed,Object? insight = freezed,}) {
+@override @pragma('vm:prefer-inline') $Res call({Object? id = null,Object? label = null,Object? category = null,Object? currentValue = null,Object? trendType = null,Object? historyData = null,Object? projectedData = freezed,Object? insight = freezed,Object? dataSources = null,Object? forecastModel = freezed,Object? supplyDemand = freezed,}) {
   return _then(_MarketTrendModel(
 id: null == id ? _self.id : id // ignore: cast_nullable_to_non_nullable
 as String,label: null == label ? _self.label : label // ignore: cast_nullable_to_non_nullable
@@ -299,7 +311,10 @@ as String,trendType: null == trendType ? _self.trendType : trendType // ignore: 
 as String,historyData: null == historyData ? _self._historyData : historyData // ignore: cast_nullable_to_non_nullable
 as List<MarketDataPointModel>,projectedData: freezed == projectedData ? _self._projectedData : projectedData // ignore: cast_nullable_to_non_nullable
 as List<MarketDataPointModel>?,insight: freezed == insight ? _self.insight : insight // ignore: cast_nullable_to_non_nullable
-as String?,
+as String?,dataSources: null == dataSources ? _self._dataSources : dataSources // ignore: cast_nullable_to_non_nullable
+as List<String>,forecastModel: freezed == forecastModel ? _self.forecastModel : forecastModel // ignore: cast_nullable_to_non_nullable
+as String?,supplyDemand: freezed == supplyDemand ? _self.supplyDemand : supplyDemand // ignore: cast_nullable_to_non_nullable
+as MarketSupplyDemandModel?,
   ));
 }
 

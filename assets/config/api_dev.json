@@ -1,0 +1,5 @@
+{
+  "API_URL": "https://art-calamitean-milton.ngrok-free.dev/api/v1",
+  "MEDIA_BASE_URL": "https://art-calamitean-milton.ngrok-free.dev",
+  "_note": "Flutter WEB otomatis pakai http://localhost:3000 (CORS). File ini untuk HP fisik/emulator."
+}

@@ -42,7 +42,8 @@ extension EditInvoiceStateReadiness on EditInvoiceState {
   InvoiceIssueReadiness get saveReadiness =>
       InvoiceIssueReadinessEvaluator.evaluateEditShipping(
         canEdit: canEdit,
-        shippingBlockers: draft?.shippingFieldBlockers() ?? ['Data belum dimuat'],
+        shippingBlockers:
+            draft?.shippingFieldBlockers() ?? ['invoice.error_data_not_loaded'],
       );
 }
 
@@ -75,7 +76,7 @@ class EditInvoiceCubit extends Cubit<EditInvoiceState> {
         if (orderId == null || orderId.isEmpty) {
           emit(state.copyWith(
             status: EditInvoiceStatus.error,
-            errorMessage: 'Tagihan belum diterbitkan.',
+            errorMessage: 'invoice.error_not_issued',
           ));
           return;
         }
@@ -108,7 +109,7 @@ class EditInvoiceCubit extends Cubit<EditInvoiceState> {
     if (!state.canEdit) {
       emit(state.copyWith(
         status: EditInvoiceStatus.error,
-        errorMessage: 'Tagihan tidak bisa diedit setelah pembayaran.',
+        errorMessage: 'invoice.error_locked_after_payment',
       ));
       return false;
     }

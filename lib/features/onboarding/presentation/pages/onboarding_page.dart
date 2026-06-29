@@ -1,3 +1,4 @@
+import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
@@ -23,44 +24,40 @@ class _OnboardingPageState extends State<OnboardingPage> {
   final PageController _pageController = PageController();
   int _currentPage = 0;
 
-  final List<OnboardingContent> _contents = const [
-    OnboardingContent(
-      stepLabel: 'Marketplace',
-      title: 'Marketplace B2B\nBiomassa',
-      description:
-          'Jelajahi ribuan produk biomassa & hasil tani dari supplier terverifikasi di seluruh Indonesia.',
-      imageAsset: AppAssets.onboardingMarketplace,
-      icon: LucideIcons.store,
-      accent: AppColors.primary,
-    ),
-    OnboardingContent(
-      stepLabel: 'Negosiasi',
-      title: 'Negosiasi\nTransparan',
-      description:
-          'Tawar harga dan volume langsung lewat chat bisnis — cepat, jelas, tanpa ribet.',
-      imageAsset: AppAssets.onboardingNegotiate,
-      icon: LucideIcons.handshake,
-      accent: AppColors.primaryMedium,
-    ),
-    OnboardingContent(
-      stepLabel: 'Insight',
-      title: 'Insight Pasar\n& AI',
-      description:
-          'Pantau tren harga, prediksi pasar, dan rekomendasi untuk keputusan bisnis yang lebih kuat.',
-      imageAsset: AppAssets.onboardingInsight,
-      icon: LucideIcons.sparkles,
-      accent: AppColors.secondary,
-    ),
-    OnboardingContent(
-      stepLabel: 'Aman',
-      title: 'Bayar Aman\ndengan Escrow',
-      description:
-          'Dana terlindungi hingga transaksi selesai. Lacak pesanan dari checkout sampai terima barang.',
-      imageAsset: AppAssets.onboardingPayment,
-      icon: LucideIcons.shieldCheck,
-      accent: AppColors.primaryDark,
-    ),
-  ];
+  List<OnboardingContent> get _contents => [
+        OnboardingContent(
+          stepLabel: 'onboarding.slide1_step'.tr(),
+          title: 'onboarding.slide1_title'.tr(),
+          description: 'onboarding.slide1_desc'.tr(),
+          imageAsset: AppAssets.onboardingMarketplace,
+          icon: LucideIcons.store,
+          accent: AppColors.primary,
+        ),
+        OnboardingContent(
+          stepLabel: 'onboarding.slide2_step'.tr(),
+          title: 'onboarding.slide2_title'.tr(),
+          description: 'onboarding.slide2_desc'.tr(),
+          imageAsset: AppAssets.onboardingNegotiate,
+          icon: LucideIcons.handshake,
+          accent: AppColors.primaryMedium,
+        ),
+        OnboardingContent(
+          stepLabel: 'onboarding.slide3_step'.tr(),
+          title: 'onboarding.slide3_title'.tr(),
+          description: 'onboarding.slide3_desc'.tr(),
+          imageAsset: AppAssets.onboardingInsight,
+          icon: LucideIcons.sparkles,
+          accent: AppColors.secondary,
+        ),
+        OnboardingContent(
+          stepLabel: 'onboarding.slide4_step'.tr(),
+          title: 'onboarding.slide4_title'.tr(),
+          description: 'onboarding.slide4_desc'.tr(),
+          imageAsset: AppAssets.onboardingPayment,
+          icon: LucideIcons.shieldCheck,
+          accent: AppColors.primaryDark,
+        ),
+      ];
 
   bool get _isLastPage => _currentPage == _contents.length - 1;
 
@@ -113,7 +110,7 @@ class _OnboardingPageState extends State<OnboardingPage> {
 
     return AnnotatedRegion<SystemUiOverlayStyle>(
       value: SystemUiOverlayStyle.light.copyWith(
-        statusBarColor: Colors.transparent,
+        statusBarColor: AppColors.transparent,
         statusBarIconBrightness: Brightness.light,
       ),
       child: Scaffold(
@@ -159,7 +156,7 @@ class _OnboardingPageState extends State<OnboardingPage> {
             end: Alignment.bottomCenter,
             colors: [
               AppColors.black.withValues(alpha: 0.55),
-              Colors.transparent,
+              AppColors.transparent,
             ],
           ),
         ),
@@ -172,15 +169,15 @@ class _OnboardingPageState extends State<OnboardingPage> {
               TextButton(
                 onPressed: _goToCatalog,
                 style: TextButton.styleFrom(
-                  foregroundColor: AppColors.white,
+                  foregroundColor: AppColors.textOnPrimary,
                   padding: EdgeInsets.symmetric(horizontal: 14.w, vertical: 8.h),
-                  backgroundColor: Colors.white.withValues(alpha: 0.12),
+                  backgroundColor: AppColors.surface.withValues(alpha: 0.12),
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(20.r),
                   ),
                 ),
                 child: Text(
-                  'Lewati',
+                  'onboarding.skip'.tr(),
                   style: TextStyle(
                     fontSize: 13.sp,
                     fontWeight: FontWeight.w700,
@@ -198,7 +195,7 @@ class _OnboardingPageState extends State<OnboardingPage> {
     return Container(
       padding: EdgeInsets.fromLTRB(20.w, 16.h, 20.w, 20.h),
       decoration: BoxDecoration(
-        color: AppColors.white,
+        color: AppColors.surface,
         borderRadius: BorderRadius.vertical(top: Radius.circular(28.r)),
         boxShadow: [
           BoxShadow(
@@ -252,7 +249,9 @@ class _OnboardingPageState extends State<OnboardingPage> {
                   SizedBox(width: 48.w),
                 Expanded(
                   child: _PrimaryCtaButton(
-                    label: _isLastPage ? 'Jelajahi Katalog' : 'Lanjut',
+                    label: _isLastPage
+                        ? 'onboarding.explore_catalog'.tr()
+                        : 'onboarding.continue'.tr(),
                     icon: _isLastPage
                         ? LucideIcons.layoutGrid
                         : LucideIcons.arrowRight,
@@ -272,9 +271,9 @@ class _OnboardingPageState extends State<OnboardingPage> {
                       color: AppColors.textSecondary,
                     ),
                     children: [
-                      const TextSpan(text: 'Sudah punya akun? '),
+                      TextSpan(text: '${'onboarding.have_account'.tr()} '),
                       TextSpan(
-                        text: 'Masuk',
+                        text: 'onboarding.sign_in'.tr(),
                         style: TextStyle(
                           color: AppColors.primary,
                           fontWeight: FontWeight.w800,
@@ -322,7 +321,7 @@ class _OnboardingSlide extends StatelessWidget {
                 end: Alignment.bottomCenter,
                 colors: [
                   AppColors.black.withValues(alpha: 0.4),
-                  Colors.transparent,
+                  AppColors.transparent,
                 ],
               ),
             ),
@@ -339,7 +338,7 @@ class _OnboardingSlide extends StatelessWidget {
                 end: Alignment.bottomCenter,
                 stops: const [0.0, 0.35, 1.0],
                 colors: [
-                  Colors.transparent,
+                  AppColors.transparent,
                   AppColors.black.withValues(alpha: 0.45),
                   AppColors.black.withValues(alpha: 0.82),
                 ],
@@ -358,7 +357,7 @@ class _OnboardingSlide extends StatelessWidget {
                     style: TextStyle(
                       fontSize: 28.sp,
                       fontWeight: FontWeight.w900,
-                      color: AppColors.white,
+                      color: AppColors.surface,
                       height: 1.12,
                       letterSpacing: -0.8,
                       shadows: [
@@ -375,7 +374,7 @@ class _OnboardingSlide extends StatelessWidget {
                     content.description,
                     style: TextStyle(
                       fontSize: 14.sp,
-                      color: AppColors.white.withValues(alpha: 0.92),
+                      color: AppColors.textOnPrimary.withValues(alpha: 0.92),
                       height: 1.5,
                       fontWeight: FontWeight.w500,
                     ),
@@ -428,10 +427,10 @@ class _StepChip extends StatelessWidget {
     return Container(
       padding: EdgeInsets.symmetric(horizontal: 12.w, vertical: 6.h),
       decoration: BoxDecoration(
-        color: Colors.white.withValues(alpha: 0.18),
+        color: AppColors.white.withValues(alpha: 0.18),
         borderRadius: BorderRadius.circular(20.r),
         border: Border.all(
-          color: Colors.white.withValues(alpha: 0.35),
+          color: AppColors.white.withValues(alpha: 0.35),
         ),
       ),
       child: Row(
@@ -444,7 +443,7 @@ class _StepChip extends StatelessWidget {
             style: TextStyle(
               fontSize: 11.sp,
               fontWeight: FontWeight.w800,
-              color: AppColors.white,
+              color: AppColors.surface,
               letterSpacing: 0.3,
             ),
           ),
@@ -454,7 +453,7 @@ class _StepChip extends StatelessWidget {
             style: TextStyle(
               fontSize: 10.sp,
               fontWeight: FontWeight.w700,
-              color: AppColors.white.withValues(alpha: 0.75),
+              color: AppColors.textOnPrimary.withValues(alpha: 0.75),
             ),
           ),
         ],
@@ -477,7 +476,7 @@ class _PrimaryCtaButton extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Material(
-      color: Colors.transparent,
+      color: AppColors.transparent,
       child: InkWell(
         onTap: onPressed,
         borderRadius: BorderRadius.circular(16.r),
@@ -501,14 +500,14 @@ class _PrimaryCtaButton extends StatelessWidget {
                 Text(
                   label,
                   style: TextStyle(
-                    color: Colors.white,
+                    color: AppColors.surface,
                     fontSize: 15.sp,
                     fontWeight: FontWeight.w800,
                     letterSpacing: 0.2,
                   ),
                 ),
                 SizedBox(width: 8.w),
-                Icon(icon, color: Colors.white, size: 18.sp),
+                Icon(icon, color: AppColors.textOnPrimary, size: 18.sp),
               ],
             ),
           ),

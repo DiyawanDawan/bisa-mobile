@@ -80,6 +80,7 @@ dependencies:
   
   # Image Picker
   image_picker: ^1.2.1
+  file_picker: ^8.1.7
   flutter_image_compress: ^2.4.0
   firebase_core: ^3.15.2
   firebase_analytics: ^11.3.1
@@ -104,6 +105,8 @@ dependencies:
 
 dev_dependencies:
   flutter_test:
+    sdk: flutter
+  integration_test:
     sdk: flutter
   flutter_lints: ^4.0.0
   flutter_launcher_icons: ^0.14.3
@@ -145,8 +148,8 @@ flutter:
     - assets/animations/
     - assets/translations/
     - assets/indonesia_provinces.json
-    # SEC-MOB-002 hardening: konfigurasi runtime dipindah ke `--dart-define`.
-    # Jangan bundle file .env ke APK production.
+    - assets/config/api_dev.json
+    # SEC-MOB-002: production pakai `--dart-define`. api_dev.json hanya fallback debug.
 
 #  fonts:
 #    - family: Poppins

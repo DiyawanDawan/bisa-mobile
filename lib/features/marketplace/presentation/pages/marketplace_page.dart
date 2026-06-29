@@ -1,10 +1,12 @@
 import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
+import '../../../../core/i18n/failure_messages.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
 import 'package:flutter_staggered_grid_view/flutter_staggered_grid_view.dart';
 import 'dart:async';
+import 'package:mobile_bisa/core/constants/app_layout.dart';
 import 'package:mobile_bisa/core/constants/app_colors.dart';
 import 'package:mobile_bisa/core/utils/safe_area_utils.dart';
 import 'package:mobile_bisa/injection_container.dart';
@@ -19,8 +21,9 @@ import 'package:mobile_bisa/features/marketplace/presentation/widgets/marketplac
 import 'package:mobile_bisa/features/marketplace/presentation/widgets/horizontal_product_section.dart';
 import 'package:go_router/go_router.dart';
 import 'package:mobile_bisa/features/marketplace/presentation/widgets/category_search_picker.dart';
+import 'package:mobile_bisa/features/marketplace/presentation/marketplace_i18n.dart';
 import 'package:mobile_bisa/features/auth/presentation/bloc/auth_cubit.dart';
-import 'package:mobile_bisa/shared/widgets/product_card_skeleton.dart';
+import 'package:mobile_bisa/shared/widgets/shimmer_loading.dart';
 
 class MarketplacePage extends StatefulWidget {
   final ValueChanged<String>? onProductModeChanged;
@@ -162,7 +165,7 @@ class _MarketplacePageState extends State<MarketplacePage> {
               FilterBottomSheet.show(
                 context,
                 sortBy: _sortBy,
-                category: _selectedCategory?.name ?? 'Semua',
+                category: _selectedCategory?.name ?? kMarketplaceFilterAllCategory,
                 minPrice: _minPrice,
                 maxPrice: _maxPrice,
                 minRating: _minRating,
@@ -176,7 +179,7 @@ class _MarketplacePageState extends State<MarketplacePage> {
                 onApply: (sortBy, category, minPrice, maxPrice, minRating) {
                   setState(() {
                     _sortBy = sortBy;
-                    if (category == 'Semua') {
+                    if (category == kMarketplaceFilterAllCategory) {
                       _selectedCategory = null;
                     } else {
                       final catState = context.read<CategoryCubit>().state;
@@ -211,26 +214,37 @@ class _MarketplacePageState extends State<MarketplacePage> {
                     slivers: [
                       SliverToBoxAdapter(
                         child: Padding(
-                          padding: EdgeInsets.only(bottom: 12.h),
+                          padding: EdgeInsets.only(bottom: AppSpacing.md12),
                           child: MarketplaceBanner(productMode: _activeProductMode),
+                        ),
+                      ),
+                      SliverToBoxAdapter(
+                        child: Padding(
+                          padding: EdgeInsets.fromLTRB(
+                            AppSpacing.md,
+                            0,
+                            AppSpacing.md,
+                            AppSpacing.md12,
+                          ),
+                          child: _buildSupplierDirectoryEntry(context),
                         ),
                       ),
                       if (user != null && user.role == 'BUYER')
                         SliverToBoxAdapter(
                           child: Padding(
-                            padding: EdgeInsets.only(bottom: 12.h),
+                            padding: EdgeInsets.only(bottom: AppSpacing.md12),
                             child: _buildBuyerProductsBanner(context),
                           ),
                         ),
                       SliverToBoxAdapter(child: _buildProductModeSelector()),
-                      SliverToBoxAdapter(child: SizedBox(height: 8.h)),
+                      SliverToBoxAdapter(child: SizedBox(height: AppSpacing.sm)),
                       if (_activeProductMode == 'BIOMASS_MATERIAL')
                         SliverToBoxAdapter(child: _buildBiomassaTypeBar()),
                       SliverToBoxAdapter(
                         child: HorizontalProductSection(
                           title: _activeProductMode == 'ORGANIC_PRODUCE'
-                              ? 'Rekomendasi Hasil Tani Baru'
-                              : 'Rekomendasi Produk Baru',
+                              ? 'marketplace.new_rec_organic'.tr()
+                              : 'marketplace.new_rec_biochar'.tr(),
                           sortBy: 'createdAt',
                           sortOrder: 'desc',
                           limit: 20,
@@ -240,8 +254,8 @@ class _MarketplacePageState extends State<MarketplacePage> {
                               '/collection-products',
                               extra: {
                                 'title': _activeProductMode == 'ORGANIC_PRODUCE'
-                                    ? 'Rekomendasi Hasil Tani Baru'
-                                    : 'Rekomendasi Produk Baru',
+                                    ? 'marketplace.new_rec_organic'.tr()
+                                    : 'marketplace.new_rec_biochar'.tr(),
                                 'sortBy': 'createdAt',
                                 'sortOrder': 'desc',
                                 'productMode': _activeProductMode,
@@ -253,8 +267,8 @@ class _MarketplacePageState extends State<MarketplacePage> {
                       SliverToBoxAdapter(
                         child: HorizontalProductSection(
                           title: _activeProductMode == 'ORGANIC_PRODUCE'
-                              ? 'Hasil Tani Termurah'
-                              : 'Produk Termurah',
+                              ? 'marketplace.cheapest_organic'.tr()
+                              : 'marketplace.cheapest_biochar'.tr(),
                           sortBy: 'pricePerUnit',
                           sortOrder: 'asc',
                           limit: 10,
@@ -264,8 +278,8 @@ class _MarketplacePageState extends State<MarketplacePage> {
                               '/collection-products',
                               extra: {
                                 'title': _activeProductMode == 'ORGANIC_PRODUCE'
-                                    ? 'Hasil Tani Termurah'
-                                    : 'Produk Termurah',
+                                    ? 'marketplace.cheapest_organic'.tr()
+                                    : 'marketplace.cheapest_biochar'.tr(),
                                 'sortBy': 'pricePerUnit',
                                 'sortOrder': 'asc',
                                 'productMode': _activeProductMode,
@@ -276,11 +290,14 @@ class _MarketplacePageState extends State<MarketplacePage> {
                       ),
                       SliverToBoxAdapter(
                         child: Padding(
-                          padding: EdgeInsets.symmetric(horizontal: 20.w, vertical: 8.h),
+                          padding: EdgeInsets.symmetric(
+                            horizontal: AppSpacing.lg,
+                            vertical: AppSpacing.sm,
+                          ),
                           child: Text(
                             _activeProductMode == 'ORGANIC_PRODUCE'
-                                ? 'Semua Hasil Tani Organik'
-                                : 'Semua Produk',
+                                ? 'marketplace.all_organic'.tr()
+                                : 'marketplace.all_products'.tr(),
                             style: TextStyle(
                               fontSize: 16.sp,
                               fontWeight: FontWeight.w800,
@@ -296,27 +313,23 @@ class _MarketplacePageState extends State<MarketplacePage> {
                             initial: () => const SliverToBoxAdapter(
                               child: SizedBox.shrink(),
                             ),
-                            loading: () => SliverPadding(
-                              padding: EdgeInsets.fromLTRB(
-                                12.w,
-                                0,
-                                12.w,
-                                mainShellBottomPadding(
-                                  context,
-                                  kind: MainShellScrollKind.grid,
+                            loading: () => SliverToBoxAdapter(
+                              child: ShimmerProductGridPlaceholder(
+                                itemCount: 6,
+                                showSellerInfo: false,
+                                padding: EdgeInsets.fromLTRB(
+                                  AppSpacing.md12,
+                                  0,
+                                  AppSpacing.md12,
+                                  mainShellBottomPadding(
+                                    context,
+                                    kind: MainShellScrollKind.grid,
+                                  ),
                                 ),
-                              ),
-                              sliver: SliverMasonryGrid.count(
-                                crossAxisCount: 2,
-                                mainAxisSpacing: 16.h,
-                                crossAxisSpacing: 12.w,
-                                childCount: 6,
-                                itemBuilder: (_, __) =>
-                                    const ProductCardSkeleton(),
                               ),
                             ),
                             error: (message) => SliverFillRemaining(
-                              child: Center(child: Text(message)),
+                              child: Center(child: Text(message.localizedFailure)),
                             ),
                             suppliersLoaded: (_) => const SliverToBoxAdapter(
                               child: SizedBox.shrink(),
@@ -329,9 +342,9 @@ class _MarketplacePageState extends State<MarketplacePage> {
                               }
                               return SliverPadding(
                                 padding: EdgeInsets.fromLTRB(
-                                  12.w,
+                                  AppSpacing.md12,
                                   0,
-                                  12.w,
+                                  AppSpacing.md12,
                                   mainShellBottomPadding(
                                   context,
                                   kind: MainShellScrollKind.grid,
@@ -339,8 +352,8 @@ class _MarketplacePageState extends State<MarketplacePage> {
                                 ),
                                 sliver: SliverMasonryGrid.count(
                                   crossAxisCount: 2,
-                                  mainAxisSpacing: 16.h,
-                                  crossAxisSpacing: 12.w,
+                                  mainAxisSpacing: AppSpacing.md,
+                                  crossAxisSpacing: AppSpacing.md12,
                                   itemBuilder: (context, index) =>
                                       ProductCard(product: products[index]),
                                   childCount: products.length,
@@ -371,7 +384,7 @@ class _MarketplacePageState extends State<MarketplacePage> {
       height: 44.h,
       margin: EdgeInsets.only(bottom: 4.h),
       child: ListView.builder(
-        padding: EdgeInsets.symmetric(horizontal: 20.w),
+        padding: EdgeInsets.symmetric(horizontal: AppSpacing.lg),
         scrollDirection: Axis.horizontal,
         physics: const BouncingScrollPhysics(),
         itemCount: kBiomassaTypeValues.length,
@@ -379,7 +392,7 @@ class _MarketplacePageState extends State<MarketplacePage> {
           final type = kBiomassaTypeValues[index];
           final isSel = _selectedBiomassaType == type;
           return Padding(
-            padding: EdgeInsets.only(right: 8.w),
+            padding: EdgeInsets.only(right: AppSpacing.sm),
             child: GestureDetector(
               onTap: () {
                 if (_selectedBiomassaType == type) return;
@@ -395,11 +408,11 @@ class _MarketplacePageState extends State<MarketplacePage> {
               },
               child: AnimatedContainer(
                 duration: const Duration(milliseconds: 200),
-                padding: EdgeInsets.symmetric(horizontal: 14.w),
+                padding: EdgeInsets.symmetric(horizontal: AppSpacing.section),
                 alignment: Alignment.center,
                 decoration: BoxDecoration(
                   color: isSel ? AppColors.primary.withValues(alpha: 0.12) : AppColors.surface,
-                  borderRadius: BorderRadius.circular(20.r),
+                  borderRadius: BorderRadius.circular(AppRadius.pill),
                   border: Border.all(
                     color: isSel ? AppColors.primary : AppColors.grey200,
                   ),
@@ -435,7 +448,7 @@ class _MarketplacePageState extends State<MarketplacePage> {
             children: [
               Expanded(
                 child: ListView.builder(
-                  padding: EdgeInsets.symmetric(horizontal: 20.w),
+                  padding: EdgeInsets.symmetric(horizontal: AppSpacing.lg),
                   scrollDirection: Axis.horizontal,
                   physics: const BouncingScrollPhysics(),
                   itemCount: categories.length + 1,
@@ -447,7 +460,7 @@ class _MarketplacePageState extends State<MarketplacePage> {
                         : _selectedCategory?.id == cat?.id;
 
                     return Padding(
-                      padding: EdgeInsets.only(right: 8.w),
+                      padding: EdgeInsets.only(right: AppSpacing.sm),
                       child: GestureDetector(
                         onTap: () {
                           setState(() => _selectedCategory = cat);
@@ -455,13 +468,13 @@ class _MarketplacePageState extends State<MarketplacePage> {
                         },
                         child: AnimatedContainer(
                           duration: const Duration(milliseconds: 200),
-                          padding: EdgeInsets.symmetric(horizontal: 16.w),
+                          padding: EdgeInsets.symmetric(horizontal: AppSpacing.md),
                           alignment: Alignment.center,
                           decoration: BoxDecoration(
                             color: isSel
                                 ? AppColors.primary
                                 : AppColors.surface,
-                            borderRadius: BorderRadius.circular(12.r),
+                            borderRadius: BorderRadius.circular(AppRadius.lg),
                             border: Border.all(
                               color: isSel
                                   ? AppColors.primary
@@ -470,10 +483,10 @@ class _MarketplacePageState extends State<MarketplacePage> {
                             ),
                           ),
                           child: Text(
-                            isAll ? 'Semua' : cat!.name,
+                            isAll ? 'marketplace.category_all'.tr() : cat!.name,
                             style: TextStyle(
                               color: isSel
-                                  ? Colors.white
+                                  ? AppColors.textOnPrimary
                                   : AppColors.textSecondary,
                               fontWeight: isSel
                                   ? FontWeight.w800
@@ -488,13 +501,13 @@ class _MarketplacePageState extends State<MarketplacePage> {
                 ),
               ),
               Padding(
-                padding: EdgeInsets.only(right: 20.w),
+                padding: EdgeInsets.only(right: AppSpacing.lg),
                 child: GestureDetector(
                   onTap: () {
                     FilterBottomSheet.show(
                       context,
                       sortBy: _sortBy,
-                      category: _selectedCategory?.name ?? 'Semua',
+                      category: _selectedCategory?.name ?? kMarketplaceFilterAllCategory,
                       minPrice: _minPrice,
                       maxPrice: _maxPrice,
                       minRating: _minRating,
@@ -511,7 +524,7 @@ class _MarketplacePageState extends State<MarketplacePage> {
                           (sortBy, category, minPrice, maxPrice, minRating) {
                             setState(() {
                               _sortBy = sortBy;
-                              if (category == 'Semua') {
+                              if (category == kMarketplaceFilterAllCategory) {
                                 _selectedCategory = null;
                               } else {
                                 final catState = context
@@ -533,10 +546,10 @@ class _MarketplacePageState extends State<MarketplacePage> {
                     );
                   },
                   child: Container(
-                    padding: EdgeInsets.all(10.r),
+                    padding: EdgeInsets.all(AppSpacing.sm10),
                     decoration: BoxDecoration(
                       color: AppColors.primary,
-                      borderRadius: BorderRadius.circular(12.r),
+                      borderRadius: BorderRadius.circular(AppRadius.lg),
                       boxShadow: [
                         BoxShadow(
                           color: AppColors.primary.withValues(alpha: 0.3),
@@ -547,7 +560,7 @@ class _MarketplacePageState extends State<MarketplacePage> {
                     ),
                     child: Icon(
                       LucideIcons.slidersHorizontal,
-                      color: Colors.white,
+                      color: AppColors.surface,
                       size: 18.sp,
                     ),
                   ),
@@ -570,9 +583,9 @@ class _MarketplacePageState extends State<MarketplacePage> {
             size: 64.sp,
             color: AppColors.grey200,
           ),
-          SizedBox(height: 20.h),
+          SizedBox(height: AppSpacing.lg),
           Text(
-            'Produk tidak ditemukan',
+            'marketplace.no_products_found'.tr(),
             style: TextStyle(
               color: AppColors.textSecondary,
               fontSize: 16.sp,
@@ -606,20 +619,20 @@ class _MarketplacePageState extends State<MarketplacePage> {
         return GestureDetector(
           onTap: () => setState(() => _isSearching = false),
           child: Container(
-            color: Colors.black.withOpacity(0.3),
+            color: AppColors.black.withOpacity(0.3),
             child: Column(
               children: [
                 Container(
                   margin: EdgeInsets.symmetric(
-                    horizontal: 20.w,
-                    vertical: 10.h,
+                    horizontal: AppSpacing.lg,
+                    vertical: AppSpacing.sm10,
                   ),
                   decoration: BoxDecoration(
-                    color: Colors.white,
-                    borderRadius: BorderRadius.circular(16.r),
+                    color: AppColors.surface,
+                    borderRadius: BorderRadius.circular(AppRadius.xl),
                     boxShadow: [
                       BoxShadow(
-                        color: Colors.black.withOpacity(0.1),
+                        color: AppColors.black.withOpacity(0.1),
                         blurRadius: 10,
                         offset: const Offset(0, 4),
                       ),
@@ -656,25 +669,30 @@ class _MarketplacePageState extends State<MarketplacePage> {
 
   Widget _buildProductModeSelector() {
     return Padding(
-      padding: EdgeInsets.fromLTRB(20.w, 4.h, 20.w, 12.h),
+      padding: EdgeInsets.fromLTRB(
+        AppSpacing.lg,
+        AppSpacing.xs,
+        AppSpacing.lg,
+        AppSpacing.md12,
+      ),
       child: Container(
         height: 50.h,
         decoration: BoxDecoration(
           color: AppColors.grey100,
-          borderRadius: BorderRadius.circular(16.r),
+          borderRadius: BorderRadius.circular(AppRadius.xl),
         ),
         child: Row(
           children: [
             Expanded(
               child: _buildModeTab(
-                label: 'Bahan Baku Biomassa',
+                label: 'marketplace.mode_biomass'.tr(),
                 icon: LucideIcons.package,
                 mode: 'BIOMASS_MATERIAL',
               ),
             ),
             Expanded(
               child: _buildModeTab(
-                label: 'Hasil Tani Organik',
+                label: 'marketplace.mode_organic'.tr(),
                 icon: LucideIcons.sprout,
                 mode: 'ORGANIC_PRODUCE',
               ),
@@ -715,8 +733,8 @@ class _MarketplacePageState extends State<MarketplacePage> {
         duration: const Duration(milliseconds: 250),
         alignment: Alignment.center,
         decoration: BoxDecoration(
-          color: isSelected ? AppColors.primary : Colors.transparent,
-          borderRadius: BorderRadius.circular(16.r),
+          color: isSelected ? AppColors.primary : AppColors.transparent,
+          borderRadius: BorderRadius.circular(AppRadius.xl),
           boxShadow: isSelected
               ? [
                   BoxShadow(
@@ -733,13 +751,13 @@ class _MarketplacePageState extends State<MarketplacePage> {
             Icon(
               icon,
               size: 16.sp,
-              color: isSelected ? Colors.white : AppColors.textSecondary,
+              color: isSelected ? AppColors.textOnPrimary : AppColors.textSecondary,
             ),
-            SizedBox(width: 8.w),
+            SizedBox(width: AppSpacing.sm),
             Text(
               label,
               style: TextStyle(
-                color: isSelected ? Colors.white : AppColors.textSecondary,
+                color: isSelected ? AppColors.textOnPrimary : AppColors.textSecondary,
                 fontWeight: isSelected ? FontWeight.w800 : FontWeight.w600,
                 fontSize: 12.sp,
               ),
@@ -750,48 +768,107 @@ class _MarketplacePageState extends State<MarketplacePage> {
     );
   }
 
+  Widget _buildSupplierDirectoryEntry(BuildContext context) {
+    return Material(
+      color: AppColors.transparent,
+      child: InkWell(
+        onTap: () => context.push('/supplier-directory'),
+        borderRadius: BorderRadius.circular(AppRadius.tile),
+        child: Ink(
+          padding: EdgeInsets.symmetric(
+            horizontal: AppSpacing.section,
+            vertical: AppSpacing.md12,
+          ),
+          decoration: BoxDecoration(
+            color: AppColors.surface,
+            borderRadius: BorderRadius.circular(AppRadius.tile),
+            border: Border.all(color: AppColors.grey200),
+            boxShadow: AppColors.softShadow,
+          ),
+          child: Row(
+            children: [
+              Icon(LucideIcons.building2, color: AppColors.primary, size: 22.sp),
+              SizedBox(width: AppSpacing.md12),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      'marketplace.supplier_directory'.tr(),
+                      style: TextStyle(
+                        color: AppColors.textPrimary,
+                        fontSize: 14.sp,
+                        fontWeight: FontWeight.w800,
+                      ),
+                    ),
+                    Text(
+                      'marketplace.supplier_directory_hint'.tr(),
+                      style: TextStyle(
+                        color: AppColors.textSecondary,
+                        fontSize: 11.sp,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              Icon(LucideIcons.chevronRight, color: AppColors.grey400, size: 18.sp),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
   Widget _buildBuyerProductsBanner(BuildContext context) {
     return Padding(
-      padding: EdgeInsets.fromLTRB(16.w, 8.h, 16.w, 4.h),
+      padding: EdgeInsets.fromLTRB(
+        AppSpacing.md,
+        AppSpacing.sm,
+        AppSpacing.md,
+        AppSpacing.xs,
+      ),
       child: Material(
-        color: Colors.transparent,
+        color: AppColors.transparent,
         child: InkWell(
           onTap: () => context.push('/buyer-products'),
-          borderRadius: BorderRadius.circular(14.r),
+          borderRadius: BorderRadius.circular(AppRadius.tile),
           child: Ink(
-            padding: EdgeInsets.symmetric(horizontal: 14.w, vertical: 12.h),
+            padding: EdgeInsets.symmetric(
+            horizontal: AppSpacing.section,
+            vertical: AppSpacing.md12,
+          ),
             decoration: BoxDecoration(
               gradient: AppColors.primaryGradient,
-              borderRadius: BorderRadius.circular(14.r),
+              borderRadius: BorderRadius.circular(AppRadius.tile),
               boxShadow: AppColors.mediumShadow,
             ),
             child: Row(
               children: [
-                Icon(LucideIcons.package, color: Colors.white, size: 22.sp),
-                SizedBox(width: 12.w),
+                Icon(LucideIcons.package, color: AppColors.textOnPrimary, size: 22.sp),
+                SizedBox(width: AppSpacing.md12),
                 Expanded(
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
-                        'Produk Saya',
+                        'marketplace.buyer_products_title'.tr(),
                         style: TextStyle(
-                          color: Colors.white,
+                          color: AppColors.surface,
                           fontSize: 14.sp,
                           fontWeight: FontWeight.w800,
                         ),
                       ),
                       Text(
-                        'Lihat produk dibeli, nego, & favorit',
+                        'marketplace.buyer_products_subtitle'.tr(),
                         style: TextStyle(
-                          color: Colors.white.withOpacity(0.85),
+                          color: AppColors.textOnPrimary.withOpacity(0.85),
                           fontSize: 11.sp,
                         ),
                       ),
                     ],
                   ),
                 ),
-                Icon(LucideIcons.chevronRight, color: Colors.white, size: 18.sp),
+                Icon(LucideIcons.chevronRight, color: AppColors.textOnPrimary, size: 18.sp),
               ],
             ),
           ),

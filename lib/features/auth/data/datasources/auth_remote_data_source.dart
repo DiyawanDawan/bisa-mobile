@@ -18,6 +18,7 @@ abstract class AuthRemoteDataSource {
     required String email,
     required String password,
     String? phone,
+    String? referralCode,
   });
   Future<UserModel> registerSupplier({
     required String fullName,
@@ -26,6 +27,7 @@ abstract class AuthRemoteDataSource {
     String? phone,
     String? province,
     String? regency,
+    String? referralCode,
   });
   Future<bool> checkEmailAvailable(String email);
   Future<void> verifyRegistration(String email, String code);
@@ -39,6 +41,7 @@ abstract class AuthRemoteDataSource {
     String? nibPath,
     String? selfiePath,
     String? siupPath,
+    void Function(String status)? onUploadStatus,
   });
   Future<List<Map<String, dynamic>>> getAddresses();
   Future<Map<String, dynamic>> createAddress(Map<String, dynamic> data);
@@ -122,12 +125,14 @@ class AuthRemoteDataSourceImpl implements AuthRemoteDataSource {
     required String email,
     required String password,
     String? phone,
+    String? referralCode,
   }) async {
     final response = await dio.post('/auth/register/buyer', data: {
       'fullName': fullName,
       'email': email,
       'password': password,
       'phone': phone,
+      if (referralCode != null && referralCode.isNotEmpty) 'referralCode': referralCode,
     });
     return UserModel.fromJson(response.data['data']);
   }
@@ -140,6 +145,7 @@ class AuthRemoteDataSourceImpl implements AuthRemoteDataSource {
     String? phone,
     String? province,
     String? regency,
+    String? referralCode,
   }) async {
     final response = await dio.post('/auth/register/supplier', data: {
       'fullName': fullName,
@@ -148,6 +154,7 @@ class AuthRemoteDataSourceImpl implements AuthRemoteDataSource {
       'phone': phone,
       'province': province,
       'regency': regency,
+      if (referralCode != null && referralCode.isNotEmpty) 'referralCode': referralCode,
     });
     return UserModel.fromJson(response.data['data']);
   }
@@ -214,23 +221,31 @@ class AuthRemoteDataSourceImpl implements AuthRemoteDataSource {
     String? nibPath,
     String? selfiePath,
     String? siupPath,
+    void Function(String status)? onUploadStatus,
   }) async {
     final body = <String, dynamic>{};
 
-    Future<void> addDoc(String? localPath, String field) async {
+    Future<void> addDoc(String? localPath, String field, String statusCode) async {
       if (localPath == null) return;
+      onUploadStatus?.call(statusCode);
       final uploaded = await uploadQueue.uploadFile(
         localPath: localPath,
         folder: 'verification',
+        forceFresh: true,
       );
       body[field] = uploaded.path;
     }
 
-    await addDoc(ktpPath, 'ktpUrl');
-    await addDoc(nibPath, 'nibUrl');
-    await addDoc(selfiePath, 'selfieUrl');
-    await addDoc(siupPath, 'siupUrl');
+    await addDoc(ktpPath, 'ktpUrl', 'ktp');
+    await addDoc(nibPath, 'nibUrl', 'nib');
+    await addDoc(selfiePath, 'selfieUrl', 'selfie');
+    await addDoc(siupPath, 'siupUrl', 'siup');
 
+    if (body.isEmpty) {
+      throw Exception('Missing required verification documents');
+    }
+
+    onUploadStatus?.call('submit');
     await dio.post(
       '/users/me/verify',
       data: body,

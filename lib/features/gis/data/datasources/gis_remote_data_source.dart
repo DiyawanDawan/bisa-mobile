@@ -9,7 +9,14 @@ abstract class GisRemoteDataSource {
     String? search,
   });
   Future<List<WastePointModel>> getWastePoints();
-  Future<Map<String, dynamic>> matchSupplyDemand(double lat, double lng, double radius);
+  Future<Map<String, dynamic>> matchSupplyDemand(
+    double lat,
+    double lng,
+    double radius, {
+    String? biomassaType,
+    String? regency,
+    String? province,
+  });
 }
 
 class GisRemoteDataSourceImpl implements GisRemoteDataSource {
@@ -44,11 +51,22 @@ class GisRemoteDataSourceImpl implements GisRemoteDataSource {
   }
 
   @override
-  Future<Map<String, dynamic>> matchSupplyDemand(double lat, double lng, double radius) async {
+  Future<Map<String, dynamic>> matchSupplyDemand(
+    double lat,
+    double lng,
+    double radius, {
+    String? biomassaType,
+    String? regency,
+    String? province,
+  }) async {
     final response = await dio.post('/gis/match', data: {
       'lat': lat,
       'lng': lng,
       'radius': radius,
+      if (biomassaType != null && biomassaType.isNotEmpty)
+        'biomassaType': biomassaType,
+      if (regency != null && regency.isNotEmpty) 'regency': regency,
+      if (province != null && province.isNotEmpty) 'province': province,
     });
     return response.data['data'];
   }

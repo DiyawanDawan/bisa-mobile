@@ -42,7 +42,7 @@ class BisaLogoBadge extends StatelessWidget {
   const BisaLogoBadge({
     super.key,
     this.size = 120,
-    this.backgroundColor = Colors.white,
+    this.backgroundColor = AppColors.surface,
     this.showShadow = true,
   });
 
@@ -62,7 +62,7 @@ class BisaLogoBadge extends StatelessWidget {
         boxShadow: showShadow
             ? [
                 BoxShadow(
-                  color: Colors.black.withOpacity(0.15),
+                  color: AppColors.black.withValues(alpha: 0.15),
                   blurRadius: 30,
                   offset: const Offset(0, 10),
                 ),

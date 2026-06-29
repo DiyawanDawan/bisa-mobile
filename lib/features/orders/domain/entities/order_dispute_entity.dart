@@ -70,30 +70,36 @@ class OrderDisputeEntity {
   bool get supplierCanRespond =>
       isActive && sellerResponse == null && sellerRespondedAt == null;
 
+  /// i18n keys — call `.tr()` or `order_dispute_i18n` helpers in UI.
   String get mediationPhaseLabel {
     if (readyToResolveAt != null) {
-      return 'Fase mediasi selesai — menunggu keputusan admin';
+      return 'orders.dispute.phase_mediation_done';
     }
     if (mediationStartedAt != null) {
-      return 'Mediasi aktif — Admin BISA ikut diskusi';
+      return 'orders.dispute.phase_mediation_active';
     }
-    return 'Menunggu mediasi admin';
+    return 'orders.dispute.phase_waiting_mediation';
   }
 
+  /// i18n keys — localize at presentation layer.
   String get statusLabel {
     if (isActive && (mediationStartedAt != null || readyToResolveAt != null)) {
       return mediationPhaseLabel;
     }
     switch (status.toUpperCase()) {
       case 'UNDER_REVIEW':
-        return 'Sedang Ditinjau Admin';
+        return 'orders.dispute.status_under_review';
       case 'RESOLVED':
-        if (resolution == 'RELEASE') return 'Selesai — Dana ke Supplier';
-        if (resolution == 'REFUND') return 'Selesai — Refund ke Buyer';
-        return 'Selesai';
+        if (resolution == 'RELEASE') {
+          return 'orders.dispute.status_resolved_release';
+        }
+        if (resolution == 'REFUND') {
+          return 'orders.dispute.status_resolved_refund';
+        }
+        return 'orders.dispute.status_resolved';
       case 'OPEN':
       default:
-        return 'Menunggu Review Admin';
+        return 'orders.dispute.status_open';
     }
   }
 }

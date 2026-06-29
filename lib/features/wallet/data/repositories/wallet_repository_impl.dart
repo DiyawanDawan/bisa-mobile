@@ -19,7 +19,7 @@ class WalletRepositoryImpl implements WalletRepository {
       final model = await remoteDataSource.getBalance();
       return Right(model.toEntity());
     } on DioException catch (e) {
-      return Left(ServerFailure(message: e.response?.data['message'] ?? 'Gagal mengambil saldo'));
+      return Left(ServerFailure(message: e.response?.data['message'] ?? 'errors.wallet_balance'));
     } catch (e) {
       return Left(ServerFailure(message: e.toString()));
     }
@@ -41,7 +41,7 @@ class WalletRepositoryImpl implements WalletRepository {
       );
       return Right(models.map((m) => m.toEntity()).toList());
     } on DioException catch (e) {
-      return Left(ServerFailure(message: e.response?.data['message'] ?? 'Gagal mengambil transaksi'));
+      return Left(ServerFailure(message: e.response?.data['message'] ?? 'errors.wallet_transactions'));
     } catch (e) {
       return Left(ServerFailure(message: e.toString()));
     }
@@ -55,8 +55,8 @@ class WalletRepositoryImpl implements WalletRepository {
     } on DioException catch (e) {
       final data = e.response?.data;
       final message = data is Map
-          ? (data['meta']?['message'] ?? data['message'] ?? 'Gagal memproses penarikan')
-          : 'Gagal memproses penarikan';
+          ? (data['meta']?['message'] ?? data['message'] ?? 'errors.wallet_withdraw')
+          : 'errors.wallet_withdraw';
       return Left(ServerFailure(message: message.toString()));
     } catch (e) {
       return Left(ServerFailure(message: e.toString()));
@@ -69,7 +69,7 @@ class WalletRepositoryImpl implements WalletRepository {
       final banks = await remoteDataSource.getSupportedBanks();
       return Right(banks);
     } on DioException catch (e) {
-      return Left(ServerFailure(message: e.response?.data['message'] ?? 'Gagal mengambil daftar bank'));
+      return Left(ServerFailure(message: e.response?.data['message'] ?? 'errors.wallet_banks'));
     } catch (e) {
       return Left(ServerFailure(message: e.toString()));
     }
@@ -81,7 +81,7 @@ class WalletRepositoryImpl implements WalletRepository {
       final models = await remoteDataSource.getPayoutAccounts();
       return Right(models.map((m) => m.toEntity()).toList());
     } on DioException catch (e) {
-      return Left(ServerFailure(message: e.response?.data['message'] ?? 'Gagal mengambil daftar rekening'));
+      return Left(ServerFailure(message: e.response?.data['message'] ?? 'errors.wallet_accounts_list'));
     } catch (e) {
       return Left(ServerFailure(message: e.toString()));
     }
@@ -93,7 +93,7 @@ class WalletRepositoryImpl implements WalletRepository {
       final model = await remoteDataSource.getPayoutAccountDetail(id);
       return Right(model.toEntity());
     } on DioException catch (e) {
-      return Left(ServerFailure(message: e.response?.data['message'] ?? 'Gagal mengambil detail rekening'));
+      return Left(ServerFailure(message: e.response?.data['message'] ?? 'errors.wallet_account_detail'));
     } catch (e) {
       return Left(ServerFailure(message: e.toString()));
     }
@@ -105,7 +105,7 @@ class WalletRepositoryImpl implements WalletRepository {
       final PayoutAccountModel model = await remoteDataSource.createPayoutAccount(data);
       return Right(model.toEntity());
     } on DioException catch (e) {
-      return Left(ServerFailure(message: e.response?.data['message'] ?? 'Gagal menyimpan rekening'));
+      return Left(ServerFailure(message: e.response?.data['message'] ?? 'errors.wallet_account_save'));
     } catch (e) {
       return Left(ServerFailure(message: e.toString()));
     }
@@ -117,7 +117,7 @@ class WalletRepositoryImpl implements WalletRepository {
       final PayoutAccountModel model = await remoteDataSource.updatePayoutAccount(id, data);
       return Right(model.toEntity());
     } on DioException catch (e) {
-      return Left(ServerFailure(message: e.response?.data['message'] ?? 'Gagal memperbarui rekening'));
+      return Left(ServerFailure(message: e.response?.data['message'] ?? 'errors.wallet_account_update'));
     } catch (e) {
       return Left(ServerFailure(message: e.toString()));
     }
@@ -129,7 +129,7 @@ class WalletRepositoryImpl implements WalletRepository {
       await remoteDataSource.deletePayoutAccount(id);
       return const Right(unit);
     } on DioException catch (e) {
-      return Left(ServerFailure(message: e.response?.data['message'] ?? 'Gagal menghapus rekening'));
+      return Left(ServerFailure(message: e.response?.data['message'] ?? 'errors.wallet_account_delete'));
     } catch (e) {
       return Left(ServerFailure(message: e.toString()));
     }
@@ -141,7 +141,7 @@ class WalletRepositoryImpl implements WalletRepository {
       await remoteDataSource.setMainPayoutAccount(id);
       return const Right(unit);
     } on DioException catch (e) {
-      return Left(ServerFailure(message: e.response?.data['message'] ?? 'Gagal memperbarui rekening utama'));
+      return Left(ServerFailure(message: e.response?.data['message'] ?? 'errors.wallet_account_main'));
     } catch (e) {
       return Left(ServerFailure(message: e.toString()));
     }

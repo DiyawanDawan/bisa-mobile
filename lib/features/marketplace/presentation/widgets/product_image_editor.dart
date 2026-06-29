@@ -1,10 +1,12 @@
 import 'dart:io';
 
+import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
 
+import '../../../../core/constants/app_layout.dart';
 import '../../../../core/constants/app_colors.dart';
 import '../../../../shared/widgets/bisa_media_skeleton.dart';
 import '../../../../shared/widgets/bisa_network_image.dart';
@@ -104,7 +106,7 @@ class ProductImageEditorState extends State<ProductImageEditor> {
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
             Text(
-              'Foto Produk',
+              'marketplace.product_photos_title'.tr(),
               style: TextStyle(
                 fontWeight: FontWeight.w700,
                 fontSize: 13.sp,
@@ -124,7 +126,7 @@ class ProductImageEditorState extends State<ProductImageEditor> {
         if (widget.showHint) ...[
           SizedBox(height: 3.h),
           Text(
-            'Tahan ikon grip lalu geser untuk ubah urutan. Foto pertama = cover.',
+            'marketplace.product_photos_reorder_hint'.tr(),
             style: TextStyle(
               fontSize: 10.sp,
               color: AppColors.textHint,
@@ -132,7 +134,7 @@ class ProductImageEditorState extends State<ProductImageEditor> {
             ),
           ),
         ],
-        SizedBox(height: 8.h),
+        SizedBox(height: AppSpacing.sm),
         SizedBox(
           height: 84.h,
           child: Row(
@@ -150,8 +152,8 @@ class ProductImageEditorState extends State<ProductImageEditor> {
                         proxyDecorator: (child, index, animation) {
                           return Material(
                             elevation: 4,
-                            borderRadius: BorderRadius.circular(12.r),
-                            color: Colors.transparent,
+                            borderRadius: BorderRadius.circular(AppRadius.lg),
+                            color: AppColors.transparent,
                             child: child,
                           );
                         },
@@ -167,13 +169,13 @@ class ProductImageEditorState extends State<ProductImageEditor> {
                               child: Container(
                                 padding: EdgeInsets.all(4.r),
                                 decoration: BoxDecoration(
-                                  color: Colors.black.withValues(alpha: 0.45),
+                                  color: AppColors.black.withValues(alpha: 0.45),
                                   borderRadius: BorderRadius.circular(6.r),
                                 ),
                                 child: Icon(
                                   LucideIcons.gripVertical,
                                   size: 12.sp,
-                                  color: Colors.white,
+                                  color: AppColors.surface,
                                 ),
                               ),
                             ),
@@ -182,7 +184,7 @@ class ProductImageEditorState extends State<ProductImageEditor> {
                       ),
               ),
               if (_items.length < widget.maxImages) ...[
-                SizedBox(width: 8.w),
+                SizedBox(width: AppSpacing.sm),
                 _buildAddButton(),
               ],
             ],
@@ -199,7 +201,7 @@ class ProductImageEditorState extends State<ProductImageEditor> {
         width: double.infinity,
         decoration: BoxDecoration(
           color: AppColors.grey50,
-          borderRadius: BorderRadius.circular(12.r),
+          borderRadius: BorderRadius.circular(AppRadius.lg),
           border: Border.all(color: AppColors.grey200, width: 1.2),
         ),
         child: Column(
@@ -208,7 +210,7 @@ class ProductImageEditorState extends State<ProductImageEditor> {
             Icon(LucideIcons.imagePlus, color: AppColors.primary, size: 22.sp),
             SizedBox(height: 4.h),
             Text(
-              'Tambah Foto',
+              'marketplace.product_photos_add'.tr(),
               style: TextStyle(
                 fontSize: 11.sp,
                 fontWeight: FontWeight.w700,
@@ -228,7 +230,7 @@ class ProductImageEditorState extends State<ProductImageEditor> {
         width: 68.w,
         decoration: BoxDecoration(
           color: AppColors.primary.withValues(alpha: 0.06),
-          borderRadius: BorderRadius.circular(10.r),
+          borderRadius: BorderRadius.circular(AppRadius.md),
           border: Border.all(color: AppColors.primary.withValues(alpha: 0.25)),
         ),
         child: Column(
@@ -237,7 +239,7 @@ class ProductImageEditorState extends State<ProductImageEditor> {
             Icon(LucideIcons.plus, color: AppColors.primary, size: 18.sp),
             SizedBox(height: 3.h),
             Text(
-              'Tambah',
+              'tambah'.tr(),
               style: TextStyle(
                 fontSize: 9.sp,
                 fontWeight: FontWeight.w700,
@@ -270,20 +272,20 @@ class _ImageTile extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Padding(
-      padding: EdgeInsets.only(right: 8.w),
+      padding: EdgeInsets.only(right: AppSpacing.sm),
       child: SizedBox(
         width: 80.w,
         child: Stack(
           fit: StackFit.expand,
           children: [
             ClipRRect(
-              borderRadius: BorderRadius.circular(12.r),
+              borderRadius: BorderRadius.circular(AppRadius.lg),
               child: draft.isRemote
                   ? BisaNetworkImage(
                       imageUrl: draft.remoteUrl!,
                       fit: BoxFit.cover,
                       placeholder: (_, __) => BisaMediaSkeleton(
-                        borderRadius: BorderRadius.circular(12.r),
+                        borderRadius: BorderRadius.circular(AppRadius.lg),
                       ),
                       errorWidget: (_, __, ___) => Container(
                         color: AppColors.grey100,
@@ -303,9 +305,9 @@ class _ImageTile extends StatelessWidget {
                     borderRadius: BorderRadius.circular(4.r),
                   ),
                   child: Text(
-                    'Cover',
+                    'marketplace.product_photos_cover'.tr(),
                     style: TextStyle(
-                      color: Colors.white,
+                      color: AppColors.surface,
                       fontSize: 9.sp,
                       fontWeight: FontWeight.w800,
                     ),
@@ -324,7 +326,7 @@ class _ImageTile extends StatelessWidget {
                     color: AppColors.error,
                     shape: BoxShape.circle,
                   ),
-                  child: Icon(LucideIcons.x, size: 11.sp, color: Colors.white),
+                  child: Icon(LucideIcons.x, size: 11.sp, color: AppColors.white),
                 ),
               ),
             ),
@@ -336,10 +338,10 @@ class _ImageTile extends StatelessWidget {
                 child: Container(
                   padding: EdgeInsets.all(4.r),
                   decoration: BoxDecoration(
-                    color: Colors.black.withValues(alpha: 0.5),
+                    color: AppColors.black.withValues(alpha: 0.5),
                     borderRadius: BorderRadius.circular(6.r),
                   ),
-                  child: Icon(LucideIcons.pencil, size: 11.sp, color: Colors.white),
+                  child: Icon(LucideIcons.pencil, size: 11.sp, color: AppColors.white),
                 ),
               ),
             ),

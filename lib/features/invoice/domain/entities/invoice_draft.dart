@@ -131,19 +131,19 @@ class InvoiceDraft {
   List<String> validationBlockers() {
     final blockers = <String>[];
     if (recipient.trim().length < 2) {
-      blockers.add('Nama penerima wajib diisi');
+      blockers.add('invoice.blocker_recipient_required');
     }
     if (phone.trim().length < 8) {
-      blockers.add('Nomor telepon penerima wajib diisi (min. 8 digit)');
+      blockers.add('invoice.blocker_phone_required');
     }
     if (address.trim().length < 10) {
-      blockers.add('Alamat lengkap minimal 10 karakter');
+      blockers.add('invoice.blocker_address_min');
     }
     if (regency.trim().isEmpty && province.trim().isEmpty) {
-      blockers.add('Kabupaten/kota atau provinsi wajib diisi');
+      blockers.add('invoice.blocker_region_required');
     }
-    if (quantity <= 0) blockers.add('Jumlah harus lebih dari 0');
-    if (pricePerUnit <= 0) blockers.add('Harga per unit harus lebih dari 0');
+    if (quantity <= 0) blockers.add('invoice.blocker_qty_positive');
+    if (pricePerUnit <= 0) blockers.add('invoice.blocker_price_positive');
     return blockers;
   }
 
@@ -157,7 +157,8 @@ class InvoiceDraft {
     return validationBlockers()
         .where(
           (b) =>
-              !b.contains('Jumlah') && !b.contains('Harga per unit'),
+              b != 'invoice.blocker_qty_positive' &&
+              b != 'invoice.blocker_price_positive',
         )
         .toList();
   }

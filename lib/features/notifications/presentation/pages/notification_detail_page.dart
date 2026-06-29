@@ -5,6 +5,7 @@ import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:go_router/go_router.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
 import '../../../../core/constants/app_colors.dart';
+import '../../../../core/i18n/locale_formatters.dart';
 import '../../../../shared/widgets/bisa_app_bar.dart';
 import '../../../../shared/widgets/custom_button.dart';
 import 'package:skeletonizer/skeletonizer.dart';
@@ -47,7 +48,7 @@ class _NotificationDetailPageState extends State<NotificationDetailPage> {
     if (notification == null) {
       setState(() {
         _loading = false;
-        _error = 'Notifikasi tidak ditemukan';
+        _error = 'notifications.not_found'.tr();
       });
       return;
     }
@@ -66,13 +67,16 @@ class _NotificationDetailPageState extends State<NotificationDetailPage> {
     final confirmed = await showDialog<bool>(
       context: context,
       builder: (ctx) => AlertDialog(
-        title: const Text('Hapus Notifikasi'),
-        content: const Text('Notifikasi ini akan dihapus permanen.'),
+        title: Text('notifications.delete_title'.tr()),
+        content: Text('notifications.delete_message'.tr()),
         actions: [
-          TextButton(onPressed: () => Navigator.pop(ctx, false), child: const Text('Batal')),
+          TextButton(
+            onPressed: () => Navigator.pop(ctx, false),
+            child: Text('batal'.tr()),
+          ),
           TextButton(
             onPressed: () => Navigator.pop(ctx, true),
-            child: Text('Hapus', style: TextStyle(color: AppColors.error)),
+            child: Text('hapus'.tr(), style: TextStyle(color: AppColors.error)),
           ),
         ],
       ),
@@ -91,7 +95,7 @@ class _NotificationDetailPageState extends State<NotificationDetailPage> {
       backgroundColor: AppColors.background,
       appBar: BisaAppBar(
         backgroundColor: AppColors.surface,
-        title: 'Detail Notifikasi',
+        title: 'notifications.detail_title'.tr(),
         actions: [
           if (_notification != null)
             IconButton(
@@ -144,7 +148,7 @@ class _NotificationDetailPageState extends State<NotificationDetailPage> {
     final n = _notification!;
     final action = notificationAction(n);
     final typeColor = notificationColor(n.type);
-    final formattedDate = DateFormat('EEEE, d MMMM yyyy · HH:mm', 'id_ID').format(n.createdAt);
+    final formattedDate = context.formatDateTimeLong(n.createdAt);
 
     return SingleChildScrollView(
       padding: EdgeInsets.fromLTRB(20.w, 16.h, 20.w, 32.h),
@@ -155,7 +159,7 @@ class _NotificationDetailPageState extends State<NotificationDetailPage> {
             width: double.infinity,
             padding: EdgeInsets.all(16.w),
             decoration: BoxDecoration(
-              color: Colors.white,
+              color: AppColors.surface,
               borderRadius: BorderRadius.circular(20.r),
               border: Border.all(color: AppColors.grey100),
               boxShadow: AppColors.softShadow,
@@ -196,7 +200,9 @@ class _NotificationDetailPageState extends State<NotificationDetailPage> {
                                 notificationPriorityColor(n.priority),
                               ),
                               _badge(
-                                n.isRead ? 'Sudah dibaca' : 'Belum dibaca',
+                                n.isRead
+                                    ? 'notifications.badge_read'.tr()
+                                    : 'notifications.badge_unread'.tr(),
                                 n.isRead ? AppColors.grey500 : AppColors.primary,
                               ),
                             ],
@@ -255,7 +261,7 @@ class _NotificationDetailPageState extends State<NotificationDetailPage> {
               width: double.infinity,
               padding: EdgeInsets.all(12.w),
               decoration: BoxDecoration(
-                color: Colors.white,
+                color: AppColors.surface,
                 borderRadius: BorderRadius.circular(12.r),
                 border: Border.all(color: AppColors.grey100),
               ),
@@ -265,7 +271,9 @@ class _NotificationDetailPageState extends State<NotificationDetailPage> {
                   SizedBox(width: 8.w),
                   Expanded(
                     child: Text(
-                      'Referensi: ${n.refId}',
+                      'notifications.reference_label'.tr(
+                        namedArgs: {'refId': n.refId ?? '—'},
+                      ),
                       style: TextStyle(fontSize: 11.sp, color: AppColors.textSecondary),
                       maxLines: 2,
                       overflow: TextOverflow.ellipsis,

@@ -1,9 +1,11 @@
+import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:flutter_staggered_grid_view/flutter_staggered_grid_view.dart';
 import 'package:go_router/go_router.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
+import '../../../../core/constants/app_layout.dart';
 import '../../../../core/constants/app_colors.dart';
 import '../../../../injection_container.dart';
 import '../../../home/presentation/pages/main_screen.dart';
@@ -28,19 +30,19 @@ class ProductModeTabSelector extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Padding(
-      padding: EdgeInsets.fromLTRB(16.w, 8.h, 16.w, 12.h),
+      padding: EdgeInsets.fromLTRB(AppSpacing.md, AppSpacing.sm, AppSpacing.md, AppSpacing.md12),
       child: Container(
         height: 46.h,
         decoration: BoxDecoration(
           color: AppColors.grey100,
-          borderRadius: BorderRadius.circular(14.r),
+          borderRadius: BorderRadius.circular(AppRadius.tile),
         ),
         child: Row(
           children: [
             if (includeAllTab)
               Expanded(
                 child: _ModeTab(
-                  label: 'Semua',
+                  label: 'commerce.tab_all'.tr(),
                   icon: LucideIcons.layoutGrid,
                   mode: 'ALL',
                   selectedMode: selectedMode,
@@ -49,7 +51,7 @@ class ProductModeTabSelector extends StatelessWidget {
               ),
             Expanded(
               child: _ModeTab(
-                label: 'Biomassa',
+                label: 'commerce.tab_biomass'.tr(),
                 icon: LucideIcons.flame,
                 mode: 'BIOMASS_MATERIAL',
                 selectedMode: selectedMode,
@@ -58,7 +60,7 @@ class ProductModeTabSelector extends StatelessWidget {
             ),
             Expanded(
               child: _ModeTab(
-                label: 'Hasil Tani',
+                label: 'commerce.tab_organic'.tr(),
                 icon: LucideIcons.sprout,
                 mode: 'ORGANIC_PRODUCE',
                 selectedMode: selectedMode,
@@ -96,8 +98,8 @@ class _ModeTab extends StatelessWidget {
         duration: const Duration(milliseconds: 200),
         alignment: Alignment.center,
         decoration: BoxDecoration(
-          color: isSelected ? AppColors.primary : Colors.transparent,
-          borderRadius: BorderRadius.circular(14.r),
+          color: isSelected ? AppColors.primary : AppColors.transparent,
+          borderRadius: BorderRadius.circular(AppRadius.tile),
         ),
         child: Row(
           mainAxisAlignment: MainAxisAlignment.center,
@@ -105,7 +107,7 @@ class _ModeTab extends StatelessWidget {
             Icon(
               icon,
               size: 14.sp,
-              color: isSelected ? Colors.white : AppColors.textSecondary,
+              color: isSelected ? AppColors.textOnPrimary : AppColors.textSecondary,
             ),
             SizedBox(width: 4.w),
             Flexible(
@@ -116,7 +118,7 @@ class _ModeTab extends StatelessWidget {
                 style: TextStyle(
                   fontSize: 11.sp,
                   fontWeight: FontWeight.w800,
-                  color: isSelected ? Colors.white : AppColors.textSecondary,
+                  color: isSelected ? AppColors.textOnPrimary : AppColors.textSecondary,
                 ),
               ),
             ),
@@ -213,18 +215,18 @@ class _ModeProductGridSectionState extends State<ModeProductGridSection> {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Padding(
-                padding: EdgeInsets.fromLTRB(16.w, 16.h, 16.w, 4.h),
+                padding: EdgeInsets.fromLTRB(AppSpacing.md, AppSpacing.md, AppSpacing.md, AppSpacing.xs),
                 child: Row(
                   children: [
                     Container(
                       padding: EdgeInsets.all(6.r),
                       decoration: BoxDecoration(
                         color: _modeColor.withValues(alpha: 0.12),
-                        borderRadius: BorderRadius.circular(8.r),
+                        borderRadius: BorderRadius.circular(AppRadius.button),
                       ),
                       child: Icon(_modeIcon, size: 14.sp, color: _modeColor),
                     ),
-                    SizedBox(width: 8.w),
+                    SizedBox(width: AppSpacing.sm),
                     Expanded(
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
@@ -252,7 +254,7 @@ class _ModeProductGridSectionState extends State<ModeProductGridSection> {
                       GestureDetector(
                         onTap: _openMarketplace,
                         child: Text(
-                          'Lihat Semua',
+                          'commerce.see_all'.tr(),
                           style: TextStyle(
                             fontSize: 12.sp,
                             fontWeight: FontWeight.w700,
@@ -273,9 +275,9 @@ class _ModeProductGridSectionState extends State<ModeProductGridSection> {
                       .toList();
                   if (filtered.isEmpty) {
                     return Padding(
-                      padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 8.h),
+                      padding: EdgeInsets.symmetric(horizontal: AppSpacing.md, vertical: AppSpacing.sm),
                       child: Text(
-                        'Belum ada produk untuk mode ini.',
+                        'commerce.no_products_mode'.tr(),
                         style: TextStyle(
                           fontSize: 12.sp,
                           color: AppColors.textSecondary,
@@ -284,13 +286,13 @@ class _ModeProductGridSectionState extends State<ModeProductGridSection> {
                     );
                   }
                   return Padding(
-                    padding: EdgeInsets.fromLTRB(16.w, 8.h, 16.w, 4.h),
+                    padding: EdgeInsets.fromLTRB(AppSpacing.md, AppSpacing.sm, AppSpacing.md, AppSpacing.xs),
                     child: MasonryGridView.count(
                       shrinkWrap: true,
                       physics: const NeverScrollableScrollPhysics(),
                       crossAxisCount: 2,
-                      mainAxisSpacing: 12.h,
-                      crossAxisSpacing: 10.w,
+                      mainAxisSpacing: AppSpacing.md12,
+                      crossAxisSpacing: AppSpacing.sm10,
                       itemCount: filtered.length,
                       itemBuilder: (context, index) {
                         return ProductCard(product: filtered[index]);
@@ -316,8 +318,11 @@ class _ModeProductGridSectionState extends State<ModeProductGridSection> {
 
   Widget _retryBox() {
     return Padding(
-      padding: EdgeInsets.symmetric(horizontal: 16.w),
-      child: TextButton(onPressed: _fetch, child: const Text('Coba Lagi')),
+      padding: EdgeInsets.symmetric(horizontal: AppSpacing.md),
+      child: TextButton(
+        onPressed: _fetch,
+        child: Text('coba_lagi'.tr()),
+      ),
     );
   }
 }
@@ -339,16 +344,16 @@ class DualModeProductCatalog extends StatelessWidget {
       children: [
         ModeProductGridSection(
           productMode: 'BIOMASS_MATERIAL',
-          title: 'Semua Produk Biomassa',
-          subtitle: 'Bahan baku & produk biomassa terlaris',
+          title: 'commerce.catalog_biomass_title'.tr(),
+          subtitle: 'commerce.catalog_biomass_subtitle'.tr(),
           excludeIds: excludeIds,
           limit: limitPerMode,
         ),
-        SizedBox(height: 8.h),
+        SizedBox(height: AppSpacing.sm),
         ModeProductGridSection(
           productMode: 'ORGANIC_PRODUCE',
-          title: 'Semua Produk Hasil Tani',
-          subtitle: 'Hasil pertanian organik terlaris',
+          title: 'commerce.catalog_organic_title'.tr(),
+          subtitle: 'commerce.catalog_organic_subtitle'.tr(),
           excludeIds: excludeIds,
           limit: limitPerMode,
         ),
@@ -375,7 +380,7 @@ class WishlistModeProductGrid extends StatelessWidget {
     if (products.isEmpty) {
       if (emptyHint == null) return const SizedBox.shrink();
       return Padding(
-        padding: EdgeInsets.fromLTRB(16.w, 8.h, 16.w, 4.h),
+        padding: EdgeInsets.fromLTRB(AppSpacing.md, AppSpacing.sm, AppSpacing.md, AppSpacing.xs),
         child: Text(
           emptyHint!,
           style: TextStyle(fontSize: 12.sp, color: AppColors.textSecondary),
@@ -387,7 +392,7 @@ class WishlistModeProductGrid extends StatelessWidget {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Padding(
-          padding: EdgeInsets.fromLTRB(16.w, 12.h, 16.w, 8.h),
+          padding: EdgeInsets.fromLTRB(AppSpacing.md, AppSpacing.md12, AppSpacing.md, AppSpacing.sm),
           child: Text(
             title,
             style: TextStyle(
@@ -398,13 +403,13 @@ class WishlistModeProductGrid extends StatelessWidget {
           ),
         ),
         Padding(
-          padding: EdgeInsets.symmetric(horizontal: 16.w),
+          padding: EdgeInsets.symmetric(horizontal: AppSpacing.md),
           child: MasonryGridView.count(
             shrinkWrap: true,
             physics: const NeverScrollableScrollPhysics(),
             crossAxisCount: 2,
-            mainAxisSpacing: 12.h,
-            crossAxisSpacing: 10.w,
+            mainAxisSpacing: AppSpacing.md12,
+            crossAxisSpacing: AppSpacing.sm10,
             itemCount: products.length,
             itemBuilder: (context, index) {
               return ProductCard(product: products[index]);

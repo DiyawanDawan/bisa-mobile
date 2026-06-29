@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import '../../core/constants/app_colors.dart';
+import '../../core/constants/app_layout.dart';
+import '../../core/constants/app_text_styles.dart';
 
 class CustomTextField extends StatefulWidget {
   final String label;
@@ -47,24 +49,19 @@ class _CustomTextFieldState extends State<CustomTextField> {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Padding(
-          padding: EdgeInsets.only(left: 4.w),
+          padding: EdgeInsets.only(left: AppSpacing.xs),
           child: Text(
             widget.label,
-            style: TextStyle(
-              fontSize: 13.sp,
-              fontWeight: FontWeight.w600,
-              color: AppColors.textSecondary,
-              letterSpacing: 0.2,
-            ),
+            style: AppTextStyles.fieldLabel(),
           ),
         ),
-        SizedBox(height: 8.h),
+        SizedBox(height: AppSpacing.sm),
         Focus(
           onFocusChange: (focused) => setState(() => _isFocused = focused),
           child: AnimatedContainer(
             duration: const Duration(milliseconds: 200),
             decoration: BoxDecoration(
-              borderRadius: BorderRadius.circular(16.r),
+              borderRadius: BorderRadius.circular(AppRadius.xl),
               boxShadow: _isFocused ? AppColors.softShadow : [],
             ),
             child: TextFormField(
@@ -76,18 +73,10 @@ class _CustomTextFieldState extends State<CustomTextField> {
               maxLines: widget.maxLines,
               onChanged: widget.onChanged,
               inputFormatters: widget.inputFormatters,
-              style: TextStyle(
-                fontSize: 15.sp,
-                color: AppColors.textPrimary,
-                fontWeight: FontWeight.w500,
-              ),
+              style: AppTextStyles.fieldValue(),
               decoration: InputDecoration(
                 hintText: widget.hint,
-                hintStyle: TextStyle(
-                  color: AppColors.textHint,
-                  fontSize: 14.sp,
-                  fontWeight: FontWeight.w400,
-                ),
+                hintStyle: AppTextStyles.fieldHint(),
                 prefixIcon: widget.prefixIcon != null 
                     ? Icon(widget.prefixIcon, size: 22.sp, color: _isFocused ? AppColors.primary : AppColors.grey400) 
                     : null,
@@ -102,26 +91,26 @@ class _CustomTextFieldState extends State<CustomTextField> {
                       )
                     : widget.suffixIcon,
                 filled: true,
-                fillColor: widget.enabled ? AppColors.white : AppColors.grey50,
+                fillColor: widget.enabled ? AppColors.surface : AppColors.grey50,
                 contentPadding: EdgeInsets.symmetric(horizontal: 20.w, vertical: 16.h),
                 border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(16.r),
+                  borderRadius: BorderRadius.circular(AppRadius.xl),
                   borderSide: BorderSide(color: AppColors.grey200),
                 ),
                 enabledBorder: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(16.r),
+                  borderRadius: BorderRadius.circular(AppRadius.xl),
                   borderSide: BorderSide(color: AppColors.grey200),
                 ),
                 focusedBorder: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(16.r),
+                  borderRadius: BorderRadius.circular(AppRadius.xl),
                   borderSide: const BorderSide(color: AppColors.primary, width: 1.5),
                 ),
                 errorBorder: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(16.r),
+                  borderRadius: BorderRadius.circular(AppRadius.xl),
                   borderSide: const BorderSide(color: AppColors.error, width: 1),
                 ),
                 focusedErrorBorder: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(16.r),
+                  borderRadius: BorderRadius.circular(AppRadius.xl),
                   borderSide: const BorderSide(color: AppColors.error, width: 1.5),
                 ),
               ),

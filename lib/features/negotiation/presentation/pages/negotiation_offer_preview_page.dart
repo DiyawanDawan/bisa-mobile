@@ -1,13 +1,16 @@
 import 'dart:io';
 
+import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:go_router/go_router.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
+import '../../../../core/constants/app_layout.dart';
 import '../../../../core/constants/app_colors.dart';
 import '../../../../core/readiness/readiness_gate.dart';
-import '../../../../core/utils/extensions.dart';
+import '../../../../core/utils/app_feedback.dart';
+import '../../../../core/utils/money_format.dart';
 import '../../../../shared/widgets/bisa_app_bar.dart';
 import '../../../../shared/widgets/custom_button.dart';
 import '../../domain/models/negotiation_offer_draft.dart';
@@ -29,7 +32,7 @@ class NegotiationOfferPreviewPage extends StatelessWidget {
     return Scaffold(
       backgroundColor: AppColors.grey50,
       appBar: BisaAppBar(
-        title: 'Ringkasan Penawaran',
+        title: 'negotiation.preview_title'.tr(),
         onBackTap: () => context.pop(draft),
       ),
       body: Column(
@@ -45,33 +48,33 @@ class NegotiationOfferPreviewPage extends StatelessWidget {
                     avatarUrl: draft.sellerAvatarUrl,
                     isVerified: draft.sellerIsVerified,
                   ),
-                  SizedBox(height: 10.h),
+                  SizedBox(height: AppSpacing.sm10),
                   NegotiationProductPreview(
                     name: draft.productName,
                     thumbnailUrl: draft.productThumbnailUrl,
-                    priceLabel: draft.catalogPricePerUnit.toRupiah,
-                    subtitle: 'Harga di katalog',
+                    priceLabel: formatMoneyIdr(draft.catalogPricePerUnit),
+                    subtitle: 'negotiation.preview_catalog_price'.tr(),
                   ),
-                  SizedBox(height: 10.h),
+                  SizedBox(height: AppSpacing.sm10),
                   NegotiationStockBanner(
                     stock: draft.stock,
                     minOrder: draft.minOrder,
                     unit: draft.unit,
                     requestedQty: draft.quantity,
                   ),
-                  SizedBox(height: 16.h),
+                  SizedBox(height: AppSpacing.md),
                   _ComparisonCard(draft: draft),
-                  SizedBox(height: 12.h),
+                  SizedBox(height: AppSpacing.md12),
                   _QuantityRow(draft: draft),
                   if (draft.message != null && draft.message!.trim().isNotEmpty) ...[
-                    SizedBox(height: 12.h),
+                    SizedBox(height: AppSpacing.md12),
                     _NoteCard(message: draft.message!),
                   ],
                   if (draft.localImagePath != null) ...[
-                    SizedBox(height: 12.h),
+                    SizedBox(height: AppSpacing.md12),
                     _AttachmentPreview(path: draft.localImagePath!),
                   ],
-                  SizedBox(height: 12.h),
+                  SizedBox(height: AppSpacing.md12),
                   _InfoNote(draft: draft),
                 ],
               ),
@@ -95,10 +98,10 @@ class _ComparisonCard extends StatelessWidget {
     final pct = draft.discountTotalPercent.abs();
 
     return Container(
-      padding: EdgeInsets.all(16.w),
+      padding: EdgeInsets.all(AppSpacing.md),
       decoration: BoxDecoration(
-        color: AppColors.white,
-        borderRadius: BorderRadius.circular(16.r),
+        color: AppColors.surface,
+        borderRadius: BorderRadius.circular(AppRadius.xl),
         border: Border.all(color: AppColors.grey100),
         boxShadow: AppColors.softShadow,
       ),
@@ -106,24 +109,28 @@ class _ComparisonCard extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
           Text(
-            'Perbandingan harga',
+            'negotiation.preview_price_compare'.tr(),
             style: TextStyle(
               fontSize: 14.sp,
               fontWeight: FontWeight.w900,
               color: AppColors.textPrimary,
             ),
           ),
-          SizedBox(height: 14.h),
+          SizedBox(height: AppSpacing.section),
           _PriceCompareRow(
-            label: 'Harga awal / ${draft.unit}',
-            value: draft.catalogPricePerUnit.toRupiah,
+            label: 'negotiation.preview_price_initial_per'.tr(
+              namedArgs: {'unit': draft.unit},
+            ),
+            value: formatMoneyIdr(draft.catalogPricePerUnit),
             tone: _RowTone.neutral,
             strikethrough: draft.hasDiscount,
           ),
-          SizedBox(height: 10.h),
+          SizedBox(height: AppSpacing.sm10),
           _PriceCompareRow(
-            label: 'Harga tawaran / ${draft.unit}',
-            value: draft.offerPricePerUnit.toRupiah,
+            label: 'negotiation.preview_price_offer_per'.tr(
+              namedArgs: {'unit': draft.unit},
+            ),
+            value: formatMoneyIdr(draft.offerPricePerUnit),
             tone: draft.hasDiscount
                 ? _RowTone.success
                 : draft.isHigherThanCatalog
@@ -131,46 +138,50 @@ class _ComparisonCard extends StatelessWidget {
                     : _RowTone.primary,
           ),
           if (draft.hasDiscount) ...[
-            SizedBox(height: 10.h),
+            SizedBox(height: AppSpacing.sm10),
             _PriceCompareRow(
-              label: 'Hemat per ${draft.unit}',
+              label: 'negotiation.preview_savings_per'.tr(
+                namedArgs: {'unit': draft.unit},
+              ),
               value:
-                  '${(draft.catalogPricePerUnit - draft.offerPricePerUnit).toRupiah} (${pct.toStringAsFixed(1)}%)',
+                  '${formatMoneyIdr(draft.catalogPricePerUnit - draft.offerPricePerUnit)} (${pct.toStringAsFixed(1)}%)',
               tone: _RowTone.success,
             ),
           ] else if (draft.isHigherThanCatalog) ...[
-            SizedBox(height: 10.h),
+            SizedBox(height: AppSpacing.sm10),
             _PriceCompareRow(
-              label: 'Selisih per ${draft.unit}',
+              label: 'negotiation.preview_diff_per'.tr(
+                namedArgs: {'unit': draft.unit},
+              ),
               value:
-                  '+${(draft.offerPricePerUnit - draft.catalogPricePerUnit).toRupiah}',
+                  '+${formatMoneyIdr(draft.offerPricePerUnit - draft.catalogPricePerUnit)}',
               tone: _RowTone.warning,
             ),
           ],
           Padding(
-            padding: EdgeInsets.symmetric(vertical: 12.h),
+            padding: EdgeInsets.symmetric(vertical: AppSpacing.md12),
             child: const Divider(height: 1, color: AppColors.grey100),
           ),
           _PriceCompareRow(
-            label: 'Total harga awal',
-            value: draft.catalogSubtotal.toRupiah,
+            label: 'negotiation.preview_total_initial'.tr(),
+            value: formatMoneyIdr(draft.catalogSubtotal),
             tone: _RowTone.neutral,
             strikethrough: draft.hasDiscount,
           ),
-          SizedBox(height: 8.h),
+          SizedBox(height: AppSpacing.sm),
           _PriceCompareRow(
-            label: 'Total penawaran Anda',
-            value: draft.offerSubtotal.toRupiah,
+            label: 'negotiation.preview_total_offer'.tr(),
+            value: formatMoneyIdr(draft.offerSubtotal),
             tone: _RowTone.primary,
             emphasized: true,
           ),
           if (draft.hasDiscount) ...[
-            SizedBox(height: 12.h),
+            SizedBox(height: AppSpacing.md12),
             Container(
-              padding: EdgeInsets.all(12.w),
+              padding: EdgeInsets.all(AppSpacing.md12),
               decoration: BoxDecoration(
                 color: AppColors.success.withValues(alpha: 0.08),
-                borderRadius: BorderRadius.circular(12.r),
+                borderRadius: BorderRadius.circular(AppRadius.lg),
               ),
               child: Row(
                 children: [
@@ -179,11 +190,15 @@ class _ComparisonCard extends StatelessWidget {
                     size: 20.sp,
                     color: AppColors.success,
                   ),
-                  SizedBox(width: 10.w),
+                  SizedBox(width: AppSpacing.sm10),
                   Expanded(
                     child: Text(
-                      'Anda menghemat ${savings.toRupiah} '
-                      '(${pct.toStringAsFixed(1)}% dari total katalog)',
+                      'negotiation.preview_savings_total'.tr(
+                        namedArgs: {
+                          'amount': formatMoneyIdr(savings),
+                          'percent': pct.toStringAsFixed(1),
+                        },
+                      ),
                       style: TextStyle(
                         fontSize: 12.sp,
                         fontWeight: FontWeight.w800,
@@ -280,10 +295,10 @@ class _QuantityRow extends StatelessWidget {
     );
 
     return Container(
-      padding: EdgeInsets.symmetric(horizontal: 14.w, vertical: 12.h),
+      padding: EdgeInsets.symmetric(horizontal: AppSpacing.section, vertical: AppSpacing.md12),
       decoration: BoxDecoration(
-        color: AppColors.white,
-        borderRadius: BorderRadius.circular(12.r),
+        color: AppColors.surface,
+        borderRadius: BorderRadius.circular(AppRadius.lg),
         border: Border.all(
           color: qtyInvalid
               ? AppColors.error.withValues(alpha: 0.4)
@@ -300,9 +315,9 @@ class _QuantityRow extends StatelessWidget {
                 size: 18.sp,
                 color: qtyInvalid ? AppColors.error : AppColors.primary,
               ),
-              SizedBox(width: 10.w),
+              SizedBox(width: AppSpacing.sm10),
               Text(
-                'Jumlah pesanan',
+                'negotiation.preview_order_qty'.tr(),
                 style: TextStyle(
                   fontSize: 12.sp,
                   fontWeight: FontWeight.w700,
@@ -320,13 +335,15 @@ class _QuantityRow extends StatelessWidget {
               ),
             ],
           ),
-          SizedBox(height: 8.h),
+          SizedBox(height: AppSpacing.sm),
           Row(
             children: [
               Icon(LucideIcons.warehouse, size: 14.sp, color: AppColors.textHint),
               SizedBox(width: 6.w),
               Text(
-                'Stok tersedia: $stockLabel',
+                'negotiation.preview_stock_available'.tr(
+                  namedArgs: {'stock': stockLabel},
+                ),
                 style: TextStyle(
                   fontSize: 11.sp,
                   fontWeight: FontWeight.w600,
@@ -344,7 +361,7 @@ class _QuantityRow extends StatelessWidget {
                     stock: draft.stock,
                     unit: draft.unit,
                   ) ??
-                  'Jumlah tidak valid',
+                  'negotiation.preview_qty_invalid'.tr(),
               style: TextStyle(
                 fontSize: 11.sp,
                 fontWeight: FontWeight.w700,
@@ -366,17 +383,17 @@ class _NoteCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding: EdgeInsets.all(14.w),
+      padding: EdgeInsets.all(AppSpacing.section),
       decoration: BoxDecoration(
-        color: AppColors.white,
-        borderRadius: BorderRadius.circular(12.r),
+        color: AppColors.surface,
+        borderRadius: BorderRadius.circular(AppRadius.lg),
         border: Border.all(color: AppColors.grey100),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
-            'Catatan untuk penjual',
+            'negotiation.preview_note_for_seller'.tr(),
             style: TextStyle(
               fontSize: 11.sp,
               fontWeight: FontWeight.w700,
@@ -406,7 +423,7 @@ class _AttachmentPreview extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return ClipRRect(
-      borderRadius: BorderRadius.circular(12.r),
+      borderRadius: BorderRadius.circular(AppRadius.lg),
       child: Image.file(
         File(path),
         height: 120.h,
@@ -425,21 +442,20 @@ class _InfoNote extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final text = draft.isHigherThanCatalog
-        ? 'Harga tawaran Anda di atas katalog. Penjual bisa menolak atau menawar balik.'
-        : 'Setelah dikirim, penjual akan membalas di chat negosiasi. '
-            'Anda masih bisa ubah penawaran sebelum menekan kirim.';
+        ? 'negotiation.preview_note_higher'.tr()
+        : 'negotiation.preview_note_normal'.tr();
 
     return Container(
-      padding: EdgeInsets.all(12.w),
+      padding: EdgeInsets.all(AppSpacing.md12),
       decoration: BoxDecoration(
         color: AppColors.info.withValues(alpha: 0.06),
-        borderRadius: BorderRadius.circular(10.r),
+        borderRadius: BorderRadius.circular(AppRadius.md),
       ),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Icon(LucideIcons.info, size: 16.sp, color: AppColors.info),
-          SizedBox(width: 8.w),
+          SizedBox(width: AppSpacing.sm),
           Expanded(
             child: Text(
               text,
@@ -466,10 +482,10 @@ class _BottomActions extends StatelessWidget {
     return Container(
       padding: EdgeInsets.fromLTRB(20.w, 12.h, 20.w, 16.h),
       decoration: BoxDecoration(
-        color: AppColors.white,
+        color: AppColors.surface,
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withValues(alpha: 0.06),
+            color: AppColors.black.withValues(alpha: 0.06),
             blurRadius: 12,
             offset: const Offset(0, -4),
           ),
@@ -484,14 +500,7 @@ class _BottomActions extends StatelessWidget {
                 context.pop();
                 context.push('/negotiation/${negotiation.id}');
               },
-              error: (message) {
-                ScaffoldMessenger.of(context).showSnackBar(
-                  SnackBar(
-                    content: Text(message),
-                    backgroundColor: AppColors.error,
-                  ),
-                );
-              },
+              error: (message) => showErrorSnackBar(context, message),
               orElse: () {},
             );
           },
@@ -505,16 +514,16 @@ class _BottomActions extends StatelessWidget {
               mainAxisSize: MainAxisSize.min,
               children: [
                 CustomButton(
-                  text: 'Ubah penawaran',
+                  text: 'negotiation.preview_edit_offer'.tr(),
                   height: 44.h,
                   isOutlined: true,
                   onPressed: loading ? null : () => context.pop(draft),
                 ),
-                SizedBox(height: 10.h),
+                SizedBox(height: AppSpacing.sm10),
                 CustomButton(
                   text: canSend
-                      ? 'Kirim negosiasi ke penjual'
-                      : 'Perbaiki jumlah pesanan',
+                      ? 'negotiation.preview_send_offer'.tr()
+                      : 'negotiation.preview_fix_qty'.tr(),
                   height: 48.h,
                   useGradient: true,
                   isLoading: loading,

@@ -1,9 +1,12 @@
+import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
+import '../../../../core/i18n/failure_messages.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:go_router/go_router.dart';
+import 'package:mobile_bisa/core/constants/app_layout.dart';
 import 'package:mobile_bisa/core/constants/app_colors.dart';
-import 'package:mobile_bisa/core/utils/extensions.dart';
+import 'package:mobile_bisa/core/utils/money_format.dart';
 import 'package:mobile_bisa/features/auth/presentation/bloc/auth_cubit.dart';
 import 'package:mobile_bisa/features/negotiation/domain/entities/negotiation_entity.dart';
 import 'package:mobile_bisa/features/negotiation/domain/entities/negotiation_entity_extensions.dart';
@@ -45,22 +48,22 @@ class NegotiationProductPage extends StatelessWidget {
             },
             loading: () => Scaffold(
               backgroundColor: AppColors.background,
-              appBar: const BisaAppBar(
-                title: 'Produk Negosiasi',
-                backgroundColor: Colors.white,
+              appBar: BisaAppBar(
+                title: 'negotiation.product_page_title'.tr(),
+                backgroundColor: AppColors.surface,
               ),
               body: Padding(
-                padding: EdgeInsets.all(16.w),
+                padding: EdgeInsets.all(AppSpacing.md),
                 child: const ShimmerListPlaceholder(itemCount: 4, itemHeight: 88),
               ),
             ),
             error: (message) => Scaffold(
               backgroundColor: AppColors.background,
-              appBar: const BisaAppBar(
-                title: 'Produk Negosiasi',
-                backgroundColor: Colors.white,
+              appBar: BisaAppBar(
+                title: 'negotiation.product_page_title'.tr(),
+                backgroundColor: AppColors.surface,
               ),
-              body: Center(child: Text(message)),
+              body: Center(child: Text(message.localizedFailure)),
             ),
             orElse: () => const SizedBox.shrink(),
           );
@@ -83,7 +86,9 @@ class _NegotiationProductBody extends StatelessWidget {
   Widget build(BuildContext context) {
     final product = negotiation.product;
     final party = isSupplier ? negotiation.buyer : negotiation.seller;
-    final partyLabel = isSupplier ? 'Pembeli' : 'Supplier';
+    final partyLabel = isSupplier
+        ? 'negotiation.product_party_buyer'.tr()
+        : 'negotiation.product_party_supplier'.tr();
     final economics = negotiation.economics ??
         InvoiceDealEconomics.compute(
           catalogPricePerUnit: product.pricePerUnit,
@@ -96,56 +101,88 @@ class _NegotiationProductBody extends StatelessWidget {
 
     return Scaffold(
       backgroundColor: AppColors.background,
-      appBar: const BisaAppBar(
-        title: 'Produk Negosiasi',
-        backgroundColor: Colors.white,
+      appBar: BisaAppBar(
+        title: 'negotiation.product_page_title'.tr(),
+        backgroundColor: AppColors.surface,
         centerTitle: false,
       ),
       body: SingleChildScrollView(
         physics: const BouncingScrollPhysics(),
-        padding: EdgeInsets.fromLTRB(16.w, 16.h, 16.w, 24.h),
+        padding: EdgeInsets.fromLTRB(AppSpacing.md, AppSpacing.md, AppSpacing.md, AppSpacing.xl),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             _productHeader(product),
-            SizedBox(height: 16.h),
+            SizedBox(height: AppSpacing.md),
             _section(
-              title: 'Kesepakatan Negosiasi',
+              title: 'negotiation.product_deal_title'.tr(),
               child: Column(
                 children: [
-                  _row('Status', NegotiationStatusDisplay.forList(negotiation.status).label),
-                  _row('Jumlah', '${negotiation.quantity.toStringAsFixed(0)} ${product.unit}'),
-                  _row('Harga Nego/Unit', negotiation.pricePerUnit.toRupiah),
-                  _row('Total Estimasi', negotiation.totalEstimate.toRupiah, isBold: true),
+                  _row(
+                    'negotiation.product_label_status'.tr(),
+                    NegotiationStatusDisplay.forList(negotiation.status).label,
+                  ),
+                  _row(
+                    'negotiation.product_label_qty'.tr(),
+                    '${negotiation.quantity.toStringAsFixed(0)} ${product.unit}',
+                  ),
+                  _row(
+                    'negotiation.product_label_nego_price'.tr(),
+                    formatMoneyIdr(negotiation.pricePerUnit),
+                  ),
+                  _row(
+                    'negotiation.product_label_total'.tr(),
+                    formatMoneyIdr(negotiation.totalEstimate),
+                    isBold: true,
+                  ),
                   if (negotiation.specifications != null &&
                       negotiation.specifications!.isNotEmpty)
-                    _row('Catatan', negotiation.specifications!),
+                    _row(
+                      'negotiation.product_label_note'.tr(),
+                      negotiation.specifications!,
+                    ),
                 ],
               ),
             ),
-            SizedBox(height: 14.h),
+            SizedBox(height: AppSpacing.section),
             InvoiceDealEconomicsCard(economics: economics),
-            SizedBox(height: 14.h),
+            SizedBox(height: AppSpacing.section),
             _section(
-              title: 'Metadata Produk',
+              title: 'negotiation.product_metadata_title'.tr(),
               child: Column(
                 children: [
-                  _row('Harga Katalog/Unit', product.pricePerUnit.toRupiah),
-                  _row('Stok saat ini', '${product.stock.toStringAsFixed(0)} ${product.unit}'),
-                  _row('Min. Order', '${product.minOrder.toStringAsFixed(0)} ${product.unit}'),
+                  _row(
+                    'negotiation.product_label_catalog_price'.tr(),
+                    formatMoneyDisplay(product.pricePerUnit),
+                  ),
+                  _row(
+                    'negotiation.product_label_stock'.tr(),
+                    '${product.stock.toStringAsFixed(0)} ${product.unit}',
+                  ),
+                  _row(
+                    'negotiation.product_label_min_order'.tr(),
+                    '${product.minOrder.toStringAsFixed(0)} ${product.unit}',
+                  ),
                   if (product.biomassaType != null)
-                    _row('Jenis Biomassa', product.biomassaType!),
+                    _row(
+                      'negotiation.product_label_biomass'.tr(),
+                      product.biomassaType!,
+                    ),
                   if (product.regency != null || product.province != null)
                     _row(
-                      'Lokasi',
+                      'negotiation.product_label_location'.tr(),
                       [product.regency, product.province]
                           .whereType<String>()
                           .where((e) => e.isNotEmpty)
                           .join(', '),
                     ),
-                  if (product.status != null) _row('Status Produk', product.status!),
+                  if (product.status != null)
+                    _row(
+                      'negotiation.product_label_product_status'.tr(),
+                      product.status!,
+                    ),
                   if (product.description != null && product.description!.isNotEmpty) ...[
-                    SizedBox(height: 8.h),
+                    SizedBox(height: AppSpacing.sm),
                     Text(
                       product.description!,
                       style: TextStyle(
@@ -158,7 +195,7 @@ class _NegotiationProductBody extends StatelessWidget {
                 ],
               ),
             ),
-            SizedBox(height: 14.h),
+            SizedBox(height: AppSpacing.section),
             _section(
               title: partyLabel,
               child: Column(
@@ -184,24 +221,24 @@ class _NegotiationProductBody extends StatelessWidget {
                 ],
               ),
             ),
-            SizedBox(height: 20.h),
+            SizedBox(height: AppSpacing.lg),
             if (isSupplier)
               CustomButton(
-                text: 'Kelola Produk Lengkap',
+                text: 'negotiation.product_manage_full'.tr(),
                 height: 48.h,
                 isOutlined: true,
                 onPressed: () => context.push('/product-manage/${product.id}'),
               )
             else
               CustomButton(
-                text: 'Lihat di Marketplace',
+                text: 'negotiation.product_view_marketplace'.tr(),
                 height: 48.h,
                 isOutlined: true,
                 onPressed: () => context.push('/product/${product.id}'),
               ),
-            SizedBox(height: 8.h),
+            SizedBox(height: AppSpacing.sm),
             CustomButton(
-              text: 'Kembali ke Chat',
+              text: 'negotiation.back_to_chat'.tr(),
               height: 48.h,
               onPressed: () => context.pop(),
             ),
@@ -214,16 +251,16 @@ class _NegotiationProductBody extends StatelessWidget {
   Widget _productHeader(NegotiationProductEntity product) {
     return Container(
       width: double.infinity,
-      padding: EdgeInsets.all(14.w),
+      padding: EdgeInsets.all(AppSpacing.section),
       decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(14.r),
+        color: AppColors.surface,
+        borderRadius: BorderRadius.circular(AppRadius.tile),
         border: Border.all(color: AppColors.grey200),
       ),
       child: Row(
         children: [
           ClipRRect(
-            borderRadius: BorderRadius.circular(12.r),
+            borderRadius: BorderRadius.circular(AppRadius.lg),
             child: product.thumbnailUrl != null && product.thumbnailUrl!.isNotEmpty
                 ? BisaNetworkImage(
                     imageUrl: product.thumbnailUrl!,
@@ -238,7 +275,7 @@ class _NegotiationProductBody extends StatelessWidget {
                     child: Icon(Icons.inventory_2_outlined, color: AppColors.primary),
                   ),
           ),
-          SizedBox(width: 12.w),
+          SizedBox(width: AppSpacing.md12),
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -252,7 +289,9 @@ class _NegotiationProductBody extends StatelessWidget {
                 ),
                 SizedBox(height: 6.h),
                 Text(
-                  'ID: ${product.id.substring(0, 8)}...',
+                  'negotiation.product_id_prefix'.tr(
+                    namedArgs: {'id': '${product.id.substring(0, 8)}...'},
+                  ),
                   style: TextStyle(fontSize: 10.sp, color: AppColors.textHint),
                 ),
               ],
@@ -266,10 +305,10 @@ class _NegotiationProductBody extends StatelessWidget {
   Widget _section({required String title, required Widget child}) {
     return Container(
       width: double.infinity,
-      padding: EdgeInsets.all(14.w),
+      padding: EdgeInsets.all(AppSpacing.section),
       decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(14.r),
+        color: AppColors.surface,
+        borderRadius: BorderRadius.circular(AppRadius.tile),
         border: Border.all(color: AppColors.grey200),
       ),
       child: Column(
@@ -282,7 +321,7 @@ class _NegotiationProductBody extends StatelessWidget {
               fontSize: 14.sp,
             ),
           ),
-          SizedBox(height: 10.h),
+          SizedBox(height: AppSpacing.sm10),
           child,
         ],
       ),
@@ -291,7 +330,7 @@ class _NegotiationProductBody extends StatelessWidget {
 
   Widget _row(String label, String value, {bool isBold = false}) {
     return Padding(
-      padding: EdgeInsets.only(bottom: 8.h),
+      padding: EdgeInsets.only(bottom: AppSpacing.sm),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [

@@ -1,15 +1,17 @@
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
+import '../../../../core/i18n/failure_messages.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
 import 'package:easy_localization/easy_localization.dart';
 import 'package:skeletonizer/skeletonizer.dart';
+import '../../../../core/constants/app_layout.dart';
 import '../../../../core/constants/app_colors.dart';
 import '../../../../core/utils/media_url_utils.dart';
 import '../../../../shared/widgets/bisa_app_bar.dart';
 import '../../../../shared/widgets/bisa_search_field.dart';
 import '../bloc/marketplace_cubit.dart';
-import 'supplier_profile_page.dart';
 import '../../../follow/presentation/widgets/follow_button.dart';
 import '../../../../injection_container.dart';
 import '../../data/models/supplier_model.dart';
@@ -37,8 +39,8 @@ class _SupplierDirectoryPageState extends State<SupplierDirectoryPage> {
       child: Scaffold(
         backgroundColor: AppColors.background,
         appBar: BisaAppBar(
-          title: 'supplier_directory'.tr(),
-          backgroundColor: Colors.white,
+          title: 'marketplace.supplier_directory'.tr(),
+          backgroundColor: AppColors.surface,
         ),
         body: Column(
           children: [
@@ -48,15 +50,15 @@ class _SupplierDirectoryPageState extends State<SupplierDirectoryPage> {
                 builder: (context, state) {
                   return state.maybeWhen(
                     loading: () => _buildLoadingList(),
-                    error: (message) => Center(child: Text(message)),
+                    error: (message) => Center(child: Text(message.localizedFailure)),
                     suppliersLoaded: (suppliers) {
                       if (suppliers.isEmpty) {
                         return _buildEmptyState();
                       }
                       return ListView.separated(
-                        padding: EdgeInsets.all(20.w),
+                        padding: EdgeInsets.all(AppSpacing.lg),
                         itemCount: suppliers.length,
-                        separatorBuilder: (_, __) => SizedBox(height: 12.h),
+                        separatorBuilder: (_, __) => SizedBox(height: AppSpacing.md12),
                         itemBuilder: (context, index) {
                           final s = suppliers[index];
                           return _buildSupplierCard(context, s);
@@ -76,11 +78,11 @@ class _SupplierDirectoryPageState extends State<SupplierDirectoryPage> {
 
   Widget _buildSearchBox(BuildContext context) {
     return Container(
-      padding: EdgeInsets.all(20.w),
-      color: Colors.white,
+      padding: EdgeInsets.all(AppSpacing.lg),
+      color: AppColors.surface,
       child: BisaSearchField(
         controller: _searchController,
-        hint: 'search_supplier'.tr(),
+        hint: 'marketplace.search_supplier'.tr(),
         onChanged: (val) =>
             context.read<MarketplaceCubit>().getSuppliers(search: val),
         onClear: () {
@@ -94,7 +96,7 @@ class _SupplierDirectoryPageState extends State<SupplierDirectoryPage> {
   Widget _buildEmptyState() {
     return Center(
       child: Padding(
-        padding: EdgeInsets.all(32.w),
+        padding: EdgeInsets.all(AppSpacing.xxl),
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
@@ -103,9 +105,9 @@ class _SupplierDirectoryPageState extends State<SupplierDirectoryPage> {
               size: 64.sp,
               color: AppColors.grey300,
             ),
-            SizedBox(height: 16.h),
+            SizedBox(height: AppSpacing.md),
             Text(
-              'no_supplier_found'.tr(),
+              'marketplace.no_supplier_found'.tr(),
               textAlign: TextAlign.center,
               style: TextStyle(
                 color: AppColors.textSecondary,
@@ -120,26 +122,21 @@ class _SupplierDirectoryPageState extends State<SupplierDirectoryPage> {
 
   Widget _buildSupplierCard(BuildContext context, SupplierModel s) {
     return Container(
-      padding: EdgeInsets.all(16.w),
+      padding: EdgeInsets.all(AppSpacing.md),
       decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(16.r),
+        color: AppColors.surface,
+        borderRadius: BorderRadius.circular(AppRadius.xl),
         boxShadow: AppColors.softShadow,
       ),
       child: Row(
         children: [
           Expanded(
             child: InkWell(
-              onTap: () => Navigator.push(
-                context,
-                MaterialPageRoute(
-                  builder: (context) => SupplierProfilePage(
-                    supplierId: s.id,
-                    supplierName: s.name,
-                  ),
-                ),
+              onTap: () => context.push(
+                '/supplier/${s.id}',
+                extra: {'name': s.name},
               ),
-              borderRadius: BorderRadius.circular(12.r),
+              borderRadius: BorderRadius.circular(AppRadius.lg),
               child: Row(
                 children: [
                   CircleAvatar(
@@ -149,7 +146,7 @@ class _SupplierDirectoryPageState extends State<SupplierDirectoryPage> {
                         ? const Icon(LucideIcons.user)
                         : null,
                   ),
-                  SizedBox(width: 16.w),
+                  SizedBox(width: AppSpacing.md),
                   Expanded(
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
@@ -171,7 +168,7 @@ class _SupplierDirectoryPageState extends State<SupplierDirectoryPage> {
                               SizedBox(width: 4.w),
                               Icon(
                                 LucideIcons.check,
-                                color: Colors.blue,
+                                color: AppColors.info,
                                 size: 14.sp,
                               ),
                             ],
@@ -185,12 +182,12 @@ class _SupplierDirectoryPageState extends State<SupplierDirectoryPage> {
                             fontSize: 12.sp,
                           ),
                         ),
-                        SizedBox(height: 8.h),
+                        SizedBox(height: AppSpacing.sm),
                         Row(
                           children: [
                             Icon(
                               LucideIcons.star,
-                              color: Colors.amber,
+                              color: AppColors.warning,
                               size: 14.sp,
                             ),
                             SizedBox(width: 4.w),
@@ -201,9 +198,11 @@ class _SupplierDirectoryPageState extends State<SupplierDirectoryPage> {
                                 fontSize: 12.sp,
                               ),
                             ),
-                            SizedBox(width: 12.w),
+                            SizedBox(width: AppSpacing.md12),
                             Text(
-                              '${s.totalProducts} Produk',
+                              'marketplace.products_count'.tr(
+                                namedArgs: {'count': '${s.totalProducts}'},
+                              ),
                               style: TextStyle(
                                 color: AppColors.primary,
                                 fontSize: 12.sp,
@@ -224,7 +223,7 @@ class _SupplierDirectoryPageState extends State<SupplierDirectoryPage> {
               ),
             ),
           ),
-          SizedBox(width: 10.w),
+          SizedBox(width: AppSpacing.sm10),
           FollowButton(userId: s.id, compact: true),
         ],
       ),
@@ -235,9 +234,9 @@ class _SupplierDirectoryPageState extends State<SupplierDirectoryPage> {
     return Skeletonizer(
       enabled: true,
       child: ListView.separated(
-        padding: EdgeInsets.all(20.w),
+        padding: EdgeInsets.all(AppSpacing.lg),
         itemCount: 5,
-        separatorBuilder: (_, __) => SizedBox(height: 12.h),
+        separatorBuilder: (_, __) => SizedBox(height: AppSpacing.md12),
         itemBuilder: (context, index) {
           return _buildSupplierCard(
             context,

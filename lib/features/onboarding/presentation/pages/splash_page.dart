@@ -1,3 +1,4 @@
+import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:go_router/go_router.dart';
@@ -101,19 +102,19 @@ class _SplashPageState extends State<SplashPage> with SingleTickerProviderStateM
                         style: TextStyle(
                           fontSize: 38.sp,
                           fontWeight: FontWeight.w900,
-                          color: Colors.white,
+                          color: AppColors.surface,
                           letterSpacing: 4,
                           height: 1.0,
                         ),
                       ),
                       SizedBox(height: 12.h),
                       Text(
-                        'Biochart indonesia Sirkular Agritectur',
+                        'splash.tagline'.tr(),
                         textAlign: TextAlign.center,
                         style: TextStyle(
                           fontSize: 14.sp,
                           fontWeight: FontWeight.w500,
-                          color: Colors.white.withValues(alpha: 0.92),
+                          color: AppColors.textOnPrimary.withValues(alpha: 0.92),
                           height: 1.5,
                         ),
                       ),
@@ -133,11 +134,11 @@ class _SplashPageState extends State<SplashPage> with SingleTickerProviderStateM
       width: 156.w,
       height: 156.w,
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: AppColors.surface,
         shape: BoxShape.circle,
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withValues(alpha: 0.12),
+            color: AppColors.black.withValues(alpha: 0.12),
             blurRadius: 24,
             offset: const Offset(0, 8),
           ),

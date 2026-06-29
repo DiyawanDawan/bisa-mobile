@@ -32,6 +32,20 @@ class AiRepositoryImpl implements AiRepository {
   }
 
   @override
+  Future<Either<Failure, List<Map<String, dynamic>>>> getRecentIotPredictions({
+    int limit = 20,
+  }) async {
+    try {
+      final result = await remoteDataSource.getRecentPredictions(limit: limit, iotOnly: true);
+      return Right(result);
+    } on DioException catch (e) {
+      return Left(_mapDioExceptionToFailure(e));
+    } catch (e) {
+      return const Left(UnexpectedFailure());
+    }
+  }
+
+  @override
   Future<Either<Failure, String>> askChatbot(String question) async {
     try {
       final answer = await remoteDataSource.askChatbot(question);
@@ -52,7 +66,7 @@ class AiRepositoryImpl implements AiRepository {
       final statusCode = e.response?.statusCode;
       final rawData = e.response?.data;
       final data = rawData is Map<String, dynamic> ? rawData : null;
-      final message = data?['meta']?['message'] ?? data?['message'] ?? 'Terjadi kesalahan';
+      final message = data?['meta']?['message'] ?? data?['message'] ?? 'errors.generic';
 
       switch (statusCode) {
         case 401:

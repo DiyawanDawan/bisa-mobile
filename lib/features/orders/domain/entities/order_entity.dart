@@ -11,6 +11,7 @@ abstract class OrderEntity with _$OrderEntity {
     String? checkoutBatchId,
     String? checkoutBatchNumber,
     required String status,
+    @Default('STANDARD') String orderType,
     required double totalAmount,
     required double totalQuantity,
     required double subtotal,
@@ -31,7 +32,15 @@ abstract class OrderEntity with _$OrderEntity {
     Map<String, dynamic>? pendingPayment,
     OrderDisputeEntity? dispute,
     String? negotiationId,
+    @Default(false) bool isDigitalSigned,
+    DateTime? buyerSignedAt,
+    DateTime? sellerSignedAt,
   }) = _OrderEntity;
+
+  const OrderEntity._();
+
+  bool get needsMySignature =>
+      !isDigitalSigned && (buyerSignedAt == null || sellerSignedAt == null);
 }
 
 @freezed

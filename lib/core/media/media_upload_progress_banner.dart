@@ -1,3 +1,4 @@
+import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:mobile_bisa/core/constants/app_colors.dart';
@@ -28,7 +29,7 @@ class MediaUploadProgressBanner extends StatelessWidget {
 
         if (snap.hasError) {
           return _ErrorBanner(
-            message: snap.errorMessage ?? 'Upload gagal',
+            message: snap.errorMessage ?? 'shared.upload_failed'.tr(),
             onRetry: uploadQueue == null
                 ? null
                 : () async {
@@ -37,14 +38,18 @@ class MediaUploadProgressBanner extends StatelessWidget {
                       onRetrySuccess?.call();
                       if (context.mounted) {
                         ScaffoldMessenger.of(context).showSnackBar(
-                          const SnackBar(content: Text('Upload berhasil dilanjutkan')),
+                          SnackBar(content: Text('shared.upload_resumed'.tr())),
                         );
                       }
                     } catch (e) {
                       if (context.mounted) {
                         ScaffoldMessenger.of(context).showSnackBar(
                           SnackBar(
-                            content: Text('Gagal melanjutkan: $e'),
+                            content: Text(
+                              'shared.upload_resume_failed'.tr(
+                                namedArgs: {'error': '$e'},
+                              ),
+                            ),
                             backgroundColor: AppColors.error,
                           ),
                         );
@@ -54,9 +59,20 @@ class MediaUploadProgressBanner extends StatelessWidget {
           );
         }
 
+        final fileName = snap.currentFileName != null
+            ? ' — ${snap.currentFileName}'
+            : '';
         final label = snap.totalFiles > 1
-            ? 'Mengunggah ${snap.completedFiles + 1}/${snap.totalFiles}${snap.currentFileName != null ? ' — ${snap.currentFileName}' : ''}'
-            : 'Mengunggah${snap.currentFileName != null ? ' ${snap.currentFileName}' : ''}...';
+            ? 'shared.upload_progress_multi'.tr(namedArgs: {
+                'current': '${snap.completedFiles + 1}',
+                'total': '${snap.totalFiles}',
+                'fileName': fileName,
+              })
+            : 'shared.upload_progress_single'.tr(namedArgs: {
+                'fileName': snap.currentFileName != null
+                    ? ' ${snap.currentFileName}'
+                    : '',
+              });
 
         return Container(
           width: double.infinity,
@@ -122,7 +138,7 @@ class _ErrorBanner extends StatelessWidget {
               TextButton(
                 onPressed: onRetry,
                 child: Text(
-                  'Coba lagi',
+                  'shared.upload_retry'.tr(),
                   style: TextStyle(
                     fontSize: 12.sp,
                     color: AppColors.primary,

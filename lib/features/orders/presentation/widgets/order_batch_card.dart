@@ -3,10 +3,13 @@ import 'package:flutter/services.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:go_router/go_router.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
-import 'package:timeago/timeago.dart' as timeago;
+import 'package:easy_localization/easy_localization.dart';
+import 'package:mobile_bisa/core/i18n/locale_formatters.dart';
+import '../../../../core/constants/app_layout.dart';
 import '../../../../core/constants/app_colors.dart';
+import '../../../../core/utils/app_feedback.dart';
 import '../../../../core/utils/safe_area_utils.dart';
-import '../../../../core/utils/extensions.dart';
+import '../../../../core/utils/money_format.dart';
 import '../../../../core/utils/media_url_utils.dart';
 import '../../../../shared/widgets/bisa_avatar.dart';
 import '../../../../shared/widgets/bisa_network_image.dart';
@@ -25,12 +28,10 @@ class OrderBatchCard extends StatelessWidget {
   Future<void> _copy(BuildContext context, String value) async {
     await Clipboard.setData(ClipboardData(text: value));
     if (!context.mounted) return;
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(
-        content: Text('No. pesanan disalin'),
-        behavior: SnackBarBehavior.floating,
-        duration: Duration(seconds: 2),
-      ),
+    showSuccessSnackBar(
+      context,
+      'orders.order_number_copied',
+      duration: const Duration(seconds: 2),
     );
   }
 
@@ -58,21 +59,24 @@ class OrderBatchCard extends StatelessWidget {
     final itemCount = cluster.totalItemCount;
 
     return Container(
-      margin: EdgeInsets.only(bottom: 12.h),
+      margin: EdgeInsets.only(bottom: AppSpacing.sm10),
       decoration: BoxDecoration(
-        color: AppColors.white,
-        borderRadius: BorderRadius.circular(16.r),
+        color: AppColors.surface,
+        borderRadius: BorderRadius.circular(AppRadius.xl),
         border: Border.all(color: AppColors.grey100),
         boxShadow: AppColors.softShadow,
       ),
       child: Material(
-        color: Colors.transparent,
-        borderRadius: BorderRadius.circular(16.r),
+        color: AppColors.transparent,
+        borderRadius: BorderRadius.circular(AppRadius.xl),
         child: InkWell(
-          borderRadius: BorderRadius.circular(16.r),
+          borderRadius: BorderRadius.circular(AppRadius.xl),
           onTap: () => _openBatchDetail(context),
           child: Padding(
-            padding: EdgeInsets.all(14.w),
+            padding: EdgeInsets.symmetric(
+              horizontal: AppSpacing.sm10,
+              vertical: AppSpacing.sm10,
+            ),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
@@ -86,25 +90,25 @@ class OrderBatchCard extends StatelessWidget {
                       : cluster.aggregateStatus,
                   statusesDiffer: !_allSameStatus,
                 ),
-                SizedBox(height: 10.h),
+                SizedBox(height: AppSpacing.sm10),
                 _InfoBanner(storeCount: storeCount),
                 if (batchNumber != null) ...[
-                  SizedBox(height: 10.h),
+                  SizedBox(height: AppSpacing.sm10),
                   _OrderNumberRow(
                     batchNumber: batchNumber,
                     onCopy: () => _copy(context, batchNumber),
                   ),
                 ],
-                SizedBox(height: 12.h),
+                SizedBox(height: AppSpacing.md12),
                 ...cluster.orders.map(
                   (order) => _SupplierSection(
                     order: order,
                     hasTracking: _trackingOf(order) != null,
                   ),
                 ),
-                SizedBox(height: 12.h),
+                SizedBox(height: AppSpacing.md12),
                 const Divider(height: 1, color: AppColors.grey100),
-                SizedBox(height: 12.h),
+                SizedBox(height: AppSpacing.md12),
                 Row(
                   children: [
                     Expanded(
@@ -112,14 +116,14 @@ class OrderBatchCard extends StatelessWidget {
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           Text(
-                            'Total yang dibayar',
+                            'orders.total_paid'.tr(),
                             style: TextStyle(
                               fontSize: 10.sp,
                               color: AppColors.textSecondary,
                             ),
                           ),
                           Text(
-                            cluster.totalAmount.toRupiah,
+                            formatMoneyIdr(cluster.totalAmount),
                             style: TextStyle(
                               fontSize: 17.sp,
                               fontWeight: FontWeight.w900,
@@ -136,21 +140,21 @@ class OrderBatchCard extends StatelessWidget {
                     ),
                   ],
                 ),
-                SizedBox(height: 12.h),
+                SizedBox(height: AppSpacing.md12),
                 Row(
                   children: [
                     Expanded(
                       child: CustomButton(
-                        text: 'Lacak paket',
+                        text: 'orders.action_track_packages'.tr(),
                         height: 42.h,
                         isOutlined: true,
                         onPressed: () => _showTrackingSheet(context),
                       ),
                     ),
-                    SizedBox(width: 10.w),
+                    SizedBox(width: AppSpacing.sm10),
                     Expanded(
                       child: CustomButton(
-                        text: 'Lihat detail',
+                        text: 'orders.action_view_detail'.tr(),
                         height: 42.h,
                         useGradient: true,
                         onPressed: () => _openBatchDetail(context),
@@ -170,7 +174,7 @@ class OrderBatchCard extends StatelessWidget {
     showModalBottomSheet<void>(
       context: context,
       isScrollControlled: true,
-      backgroundColor: Colors.transparent,
+      backgroundColor: AppColors.transparent,
       builder: (ctx) {
         final maxH = MediaQuery.sizeOf(ctx).height * 0.75;
         return Padding(
@@ -179,13 +183,13 @@ class OrderBatchCard extends StatelessWidget {
             constraints: BoxConstraints(maxHeight: maxH),
             child: Container(
               decoration: BoxDecoration(
-                color: AppColors.white,
-                borderRadius: BorderRadius.vertical(top: Radius.circular(24.r)),
+                color: AppColors.surface,
+                borderRadius: BorderRadius.vertical(top: Radius.circular(AppSpacing.xlPx.r)),
               ),
               child: Column(
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  SizedBox(height: 10.h),
+                  SizedBox(height: AppSpacing.sm10),
                   Container(
                     width: 40.w,
                     height: 4.h,
@@ -201,7 +205,7 @@ class OrderBatchCard extends StatelessWidget {
                         crossAxisAlignment: CrossAxisAlignment.stretch,
                         children: [
                           Text(
-                            'Lacak paket per toko',
+                            'orders.track_per_store_title'.tr(),
                             style: TextStyle(
                               fontSize: 18.sp,
                               fontWeight: FontWeight.w900,
@@ -210,15 +214,16 @@ class OrderBatchCard extends StatelessWidget {
                           ),
                           SizedBox(height: 6.h),
                           Text(
-                            'Anda belanja dari ${cluster.length} toko. '
-                            'Setiap toko mengirim paket sendiri dengan nomor resi berbeda.',
+                            'orders.track_per_store_body'.tr(
+                              namedArgs: {'count': '${cluster.length}'},
+                            ),
                             style: TextStyle(
                               fontSize: 12.sp,
                               height: 1.45,
                               color: AppColors.textSecondary,
                             ),
                           ),
-                          SizedBox(height: 16.h),
+                          SizedBox(height: AppSpacing.md),
                           ...cluster.orders.map(
                             (order) => _TrackingStoreCard(
                               order: order,
@@ -275,7 +280,7 @@ class _BatchCardHeader extends StatelessWidget {
           height: 44.w,
           decoration: BoxDecoration(
             color: AppColors.primary.withValues(alpha: 0.1),
-            borderRadius: BorderRadius.circular(12.r),
+            borderRadius: BorderRadius.circular(AppRadius.lg),
           ),
           child: Icon(
             LucideIcons.store,
@@ -283,13 +288,15 @@ class _BatchCardHeader extends StatelessWidget {
             color: AppColors.primary,
           ),
         ),
-        SizedBox(width: 12.w),
+        SizedBox(width: AppSpacing.md12),
         Expanded(
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Text(
-                'Belanja dari $storeCount toko',
+                'orders.batch_from_stores'.tr(
+                  namedArgs: {'count': '$storeCount'},
+                ),
                 style: TextStyle(
                   fontSize: 15.sp,
                   fontWeight: FontWeight.w900,
@@ -298,7 +305,10 @@ class _BatchCardHeader extends StatelessWidget {
               ),
               SizedBox(height: 2.h),
               Text(
-                '1× bayar · $itemCount barang · ${timeago.format(createdAt, locale: 'id')}',
+                'orders.batch_meta'.tr(namedArgs: {
+                  'count': '$itemCount',
+                  'time': context.formatTimeAgo(createdAt),
+                }),
                 style: TextStyle(
                   fontSize: 11.sp,
                   color: AppColors.textSecondary,
@@ -309,13 +319,13 @@ class _BatchCardHeader extends StatelessWidget {
         ),
         if (statusesDiffer)
           Container(
-            padding: EdgeInsets.symmetric(horizontal: 10.w, vertical: 5.h),
+            padding: EdgeInsets.symmetric(horizontal: AppSpacing.sm10, vertical: 5.h),
             decoration: BoxDecoration(
-              color: AppColors.grey100,
-              borderRadius: BorderRadius.circular(20.r),
+              color: AppColors.surfaceVariant,
+              borderRadius: BorderRadius.circular(AppRadius.pill),
             ),
             child: Text(
-              'Status beda',
+              'orders.batch_status_mixed'.tr(),
               style: TextStyle(
                 fontSize: 10.sp,
                 fontWeight: FontWeight.w800,
@@ -338,23 +348,22 @@ class _InfoBanner extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding: EdgeInsets.symmetric(horizontal: 10.w, vertical: 8.h),
+      padding: EdgeInsets.symmetric(horizontal: AppSpacing.sm10, vertical: AppSpacing.sm),
       decoration: BoxDecoration(
         color: AppColors.info.withValues(alpha: 0.06),
-        borderRadius: BorderRadius.circular(10.r),
+        borderRadius: BorderRadius.circular(AppRadius.md),
         border: Border.all(color: AppColors.info.withValues(alpha: 0.12)),
       ),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Icon(LucideIcons.info, size: 14.sp, color: AppColors.info),
-          SizedBox(width: 8.w),
+          SizedBox(width: AppSpacing.sm),
           Expanded(
             child: Text(
               storeCount > 1
-                  ? 'Tiap toko punya pengiriman & status sendiri. '
-                      'Nomor resi bisa berbeda-beda.'
-                  : 'Pesanan dari beberapa toko dalam satu pembayaran.',
+                  ? 'orders.batch_info_multi'.tr()
+                  : 'orders.batch_info_single'.tr(),
               style: TextStyle(
                 fontSize: 10.sp,
                 height: 1.4,
@@ -381,10 +390,10 @@ class _OrderNumberRow extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding: EdgeInsets.symmetric(horizontal: 10.w, vertical: 8.h),
+      padding: EdgeInsets.symmetric(horizontal: AppSpacing.sm10, vertical: AppSpacing.sm),
       decoration: BoxDecoration(
         color: AppColors.grey50,
-        borderRadius: BorderRadius.circular(10.r),
+        borderRadius: BorderRadius.circular(AppRadius.md),
       ),
       child: Row(
         children: [
@@ -393,7 +402,7 @@ class _OrderNumberRow extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  'No. pesanan (untuk CS)',
+                  'orders.order_number_for_cs'.tr(),
                   style: TextStyle(
                     fontSize: 9.sp,
                     fontWeight: FontWeight.w700,
@@ -418,7 +427,7 @@ class _OrderNumberRow extends StatelessWidget {
             onPressed: onCopy,
             icon: Icon(LucideIcons.copy, size: 14.sp),
             label: Text(
-              'Salin',
+              'orders.copy'.tr(),
               style: TextStyle(
                 fontSize: 11.sp,
                 fontWeight: FontWeight.w800,
@@ -426,7 +435,7 @@ class _OrderNumberRow extends StatelessWidget {
             ),
             style: TextButton.styleFrom(
               foregroundColor: AppColors.primary,
-              padding: EdgeInsets.symmetric(horizontal: 8.w),
+              padding: EdgeInsets.symmetric(horizontal: AppSpacing.sm),
               minimumSize: Size.zero,
               tapTargetSize: MaterialTapTargetSize.shrinkWrap,
             ),
@@ -455,18 +464,20 @@ class _SupplierSection extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final sellerName =
-        order.seller.name.isNotEmpty ? order.seller.name : 'Toko';
+        order.seller.name.isNotEmpty
+            ? order.seller.name
+            : 'orders.fallback_store'.tr();
     final items = order.items;
     const maxPreview = 2;
     final preview = items.take(maxPreview).toList();
     final extra = items.length - preview.length;
 
     return Container(
-      margin: EdgeInsets.only(bottom: 8.h),
-      padding: EdgeInsets.all(10.w),
+      margin: EdgeInsets.only(bottom: AppSpacing.sm),
+      padding: EdgeInsets.all(AppSpacing.sm10),
       decoration: BoxDecoration(
         color: AppColors.grey50,
-        borderRadius: BorderRadius.circular(12.r),
+        borderRadius: BorderRadius.circular(AppRadius.lg),
         border: Border.all(color: AppColors.grey100),
       ),
       child: Column(
@@ -475,7 +486,7 @@ class _SupplierSection extends StatelessWidget {
           Row(
             children: [
               _SellerAvatar(name: sellerName, avatarUrl: order.seller.avatarUrl),
-              SizedBox(width: 8.w),
+              SizedBox(width: AppSpacing.sm),
               Expanded(
                 child: Text(
                   sellerName,
@@ -491,7 +502,7 @@ class _SupplierSection extends StatelessWidget {
               OrderStatusBadge(status: order.status),
             ],
           ),
-          SizedBox(height: 8.h),
+          SizedBox(height: AppSpacing.sm),
           ...preview.map(
             (item) => Padding(
               padding: EdgeInsets.only(bottom: 4.h),
@@ -508,7 +519,7 @@ class _SupplierSection extends StatelessWidget {
                               fit: BoxFit.cover,
                             )
                           : ColoredBox(
-                              color: AppColors.white,
+                              color: AppColors.surface,
                               child: Icon(
                                 LucideIcons.package,
                                 size: 14.sp,
@@ -517,7 +528,7 @@ class _SupplierSection extends StatelessWidget {
                             ),
                     ),
                   ),
-                  SizedBox(width: 8.w),
+                  SizedBox(width: AppSpacing.sm),
                   Expanded(
                     child: Text(
                       item.productName,
@@ -544,7 +555,7 @@ class _SupplierSection extends StatelessWidget {
           ),
           if (extra > 0)
             Text(
-              '+$extra produk lainnya',
+              'orders.more_products'.tr(namedArgs: {'count': '$extra'}),
               style: TextStyle(
                 fontSize: 10.sp,
                 fontWeight: FontWeight.w700,
@@ -562,7 +573,7 @@ class _SupplierSection extends StatelessWidget {
                 ),
                 SizedBox(width: 4.w),
                 Text(
-                  'Sudah ada nomor resi',
+                  'orders.tracking_available'.tr(),
                   style: TextStyle(
                     fontSize: 10.sp,
                     fontWeight: FontWeight.w700,
@@ -589,7 +600,7 @@ class _SellerAvatar extends StatelessWidget {
     if (hasResolvableMediaUrl(avatarUrl)) {
       return BisaAvatar(
         imageUrl: avatarUrl,
-        radius: 14.r,
+        radius: AppRadius.tile,
         fallbackIcon: LucideIcons.store,
       );
     }
@@ -597,7 +608,7 @@ class _SellerAvatar extends StatelessWidget {
     final initial =
         name.trim().isNotEmpty ? name.trim()[0].toUpperCase() : 'T';
     return CircleAvatar(
-      radius: 14.r,
+      radius: AppRadius.tile,
       backgroundColor: AppColors.primary.withValues(alpha: 0.15),
       child: Text(
         initial,
@@ -627,15 +638,17 @@ class _TrackingStoreCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final sellerName =
-        order.seller.name.isNotEmpty ? order.seller.name : 'Toko';
+        order.seller.name.isNotEmpty
+            ? order.seller.name
+            : 'orders.fallback_store'.tr();
     final trk = tracking;
 
     return Container(
-      margin: EdgeInsets.only(bottom: 10.h),
-      padding: EdgeInsets.all(14.w),
+      margin: EdgeInsets.only(bottom: AppSpacing.sm10),
+      padding: EdgeInsets.all(AppSpacing.section),
       decoration: BoxDecoration(
         color: AppColors.grey50,
-        borderRadius: BorderRadius.circular(14.r),
+        borderRadius: BorderRadius.circular(AppRadius.tile),
         border: Border.all(color: AppColors.grey100),
       ),
       child: Column(
@@ -644,7 +657,7 @@ class _TrackingStoreCard extends StatelessWidget {
           Row(
             children: [
               _SellerAvatar(name: sellerName, avatarUrl: order.seller.avatarUrl),
-              SizedBox(width: 8.w),
+              SizedBox(width: AppSpacing.sm),
               Expanded(
                 child: Text(
                   sellerName,
@@ -657,10 +670,10 @@ class _TrackingStoreCard extends StatelessWidget {
               OrderStatusBadge(status: order.status),
             ],
           ),
-          SizedBox(height: 10.h),
+          SizedBox(height: AppSpacing.sm10),
           if (trk != null) ...[
             Text(
-              'Nomor resi',
+              'orders.field_tracking_number'.tr(),
               style: TextStyle(
                 fontSize: 10.sp,
                 fontWeight: FontWeight.w700,
@@ -676,38 +689,38 @@ class _TrackingStoreCard extends StatelessWidget {
                 color: AppColors.textPrimary,
               ),
             ),
-            SizedBox(height: 10.h),
+            SizedBox(height: AppSpacing.sm10),
             Row(
               children: [
                 Expanded(
                   child: OutlinedButton.icon(
                     onPressed: () => onCopy(trk),
                     icon: Icon(LucideIcons.copy, size: 16.sp),
-                    label: const Text('Salin resi'),
+                    label: Text('orders.copy_tracking'.tr()),
                     style: OutlinedButton.styleFrom(
                       foregroundColor: AppColors.primary,
                       side: BorderSide(color: AppColors.primary.withValues(alpha: 0.4)),
                     ),
                   ),
                 ),
-                SizedBox(width: 8.w),
+                SizedBox(width: AppSpacing.sm),
                 Expanded(
                   child: FilledButton(
                     onPressed: onOpenDetail,
                     style: FilledButton.styleFrom(
                       backgroundColor: AppColors.primary,
                     ),
-                    child: const Text('Detail toko'),
+                    child: Text('orders.store_detail'.tr()),
                   ),
                 ),
               ],
             ),
           ] else
             Container(
-              padding: EdgeInsets.all(10.w),
+              padding: EdgeInsets.all(AppSpacing.sm10),
               decoration: BoxDecoration(
-                color: AppColors.white,
-                borderRadius: BorderRadius.circular(10.r),
+                color: AppColors.surface,
+                borderRadius: BorderRadius.circular(AppRadius.md),
               ),
               child: Row(
                 children: [
@@ -716,10 +729,10 @@ class _TrackingStoreCard extends StatelessWidget {
                     size: 16.sp,
                     color: AppColors.textHint,
                   ),
-                  SizedBox(width: 8.w),
+                  SizedBox(width: AppSpacing.sm),
                   Expanded(
                     child: Text(
-                      'Resi belum tersedia. Toko akan mengirim setelah pesanan diproses.',
+                      'orders.tracking_not_available'.tr(),
                       style: TextStyle(
                         fontSize: 11.sp,
                         height: 1.35,

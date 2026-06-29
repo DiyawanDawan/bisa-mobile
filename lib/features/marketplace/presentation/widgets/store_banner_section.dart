@@ -1,8 +1,10 @@
+import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
+import '../../../../core/constants/app_layout.dart';
 import '../../../../core/constants/app_colors.dart';
 import '../../../../shared/widgets/bisa_media_skeleton.dart';
 import '../../../../shared/widgets/bisa_network_image.dart';
@@ -77,9 +79,9 @@ class _StoreBannerSectionState extends State<StoreBannerSection> {
 
     final confirmed = await showBisaConfirmDialog(
       context,
-      title: 'Hapus Banner?',
-      message: 'Banner ini akan dihapus permanen dari toko Anda.',
-      confirmText: 'Hapus',
+      title: 'marketplace.store_banner_delete_title'.tr(),
+      message: 'marketplace.store_banner_delete_body'.tr(),
+      confirmText: 'hapus'.tr(),
       destructive: true,
     );
     if (confirmed != true || !mounted) return;
@@ -96,7 +98,7 @@ class _StoreBannerSectionState extends State<StoreBannerSection> {
     final height = widget.compact ? 120.h : 150.h;
 
     return Padding(
-      padding: EdgeInsets.fromLTRB(16.w, 12.h, 16.w, 4.h),
+      padding: EdgeInsets.fromLTRB(AppSpacing.md, AppSpacing.md12, AppSpacing.md, AppSpacing.xs),
       child: BlocBuilder<StoreBannerCubit, StoreBannerState>(
         builder: (context, state) {
           final banners = state.maybeWhen(
@@ -113,7 +115,7 @@ class _StoreBannerSectionState extends State<StoreBannerSection> {
               Row(
                 children: [
                   Text(
-                    'Banner Toko',
+                    'marketplace.store_banner_title'.tr(),
                     style: TextStyle(
                       fontSize: 14.sp,
                       fontWeight: FontWeight.w800,
@@ -132,7 +134,7 @@ class _StoreBannerSectionState extends State<StoreBannerSection> {
                     ),
                 ],
               ),
-              SizedBox(height: 8.h),
+              SizedBox(height: AppSpacing.sm),
               Container(
                 height: height,
                 decoration: BoxDecoration(
@@ -182,7 +184,7 @@ class _StoreBannerSectionState extends State<StoreBannerSection> {
                             begin: Alignment.topCenter,
                             end: Alignment.bottomCenter,
                             colors: [
-                              Colors.transparent,
+                              AppColors.transparent,
                               AppColors.black.withValues(alpha: 0.3),
                             ],
                           ),
@@ -223,19 +225,19 @@ class _StoreBannerSectionState extends State<StoreBannerSection> {
                 ),
               ),
               if (widget.editable) ...[
-                SizedBox(height: 8.h),
+                SizedBox(height: AppSpacing.sm),
                 Text(
-                  'Unggah hingga 10 banner. Rekomendasi 1200×400 px.',
+                  'marketplace.store_banner_upload_hint'.tr(),
                   style: TextStyle(fontSize: 11.sp, color: AppColors.textSecondary),
                 ),
                 if (banners.length > 1) ...[
-                  SizedBox(height: 10.h),
+                  SizedBox(height: AppSpacing.sm10),
                   SizedBox(
                     height: 52.h,
                     child: ListView.separated(
                       scrollDirection: Axis.horizontal,
                       itemCount: banners.length,
-                      separatorBuilder: (_, __) => SizedBox(width: 8.w),
+                      separatorBuilder: (_, __) => SizedBox(width: AppSpacing.sm),
                       itemBuilder: (context, index) {
                         final banner = banners[index];
                         final selected = index == _currentPage;
@@ -250,7 +252,7 @@ class _StoreBannerSectionState extends State<StoreBannerSection> {
                           child: Container(
                             width: 72.w,
                             decoration: BoxDecoration(
-                              borderRadius: BorderRadius.circular(10.r),
+                              borderRadius: BorderRadius.circular(AppRadius.md),
                               border: Border.all(
                                 color: selected
                                     ? AppColors.primary
@@ -287,15 +289,17 @@ class _StoreBannerSectionState extends State<StoreBannerSection> {
           if (banners.isNotEmpty)
             _OverlayButton(
               icon: LucideIcons.trash2,
-              label: 'Hapus',
+              label: 'hapus'.tr(),
               onTap: () => _deleteCurrent(banners),
               color: AppColors.error,
             ),
-          if (banners.isNotEmpty) SizedBox(width: 8.w),
+          if (banners.isNotEmpty) SizedBox(width: AppSpacing.sm),
           if (banners.length < 10)
             _OverlayButton(
               icon: LucideIcons.plus,
-              label: banners.isEmpty ? 'Unggah' : 'Tambah',
+              label: banners.isEmpty
+                  ? 'marketplace.store_banner_upload'.tr()
+                  : 'marketplace.store_banner_add'.tr(),
               onTap: _pickAndUpload,
               color: AppColors.primary,
             ),
@@ -314,7 +318,7 @@ class _EmptyBannerSlot extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Material(
-      color: Colors.transparent,
+      color: AppColors.transparent,
       child: InkWell(
         onTap: editable ? onTap : null,
         child: Container(
@@ -328,11 +332,13 @@ class _EmptyBannerSlot extends StatelessWidget {
                   color: AppColors.white.withValues(alpha: 0.9),
                   size: 28.sp,
                 ),
-                SizedBox(height: 8.h),
+                SizedBox(height: AppSpacing.sm),
                 Text(
-                  editable ? 'Tap untuk unggah banner pertama' : 'Belum ada banner',
+                  editable
+                      ? 'marketplace.store_banner_tap_upload'.tr()
+                      : 'marketplace.store_banner_empty'.tr(),
                   style: TextStyle(
-                    color: AppColors.white.withValues(alpha: 0.95),
+                    color: AppColors.textOnPrimary.withValues(alpha: 0.95),
                     fontSize: 12.sp,
                     fontWeight: FontWeight.w600,
                   ),
@@ -363,11 +369,11 @@ class _OverlayButton extends StatelessWidget {
   Widget build(BuildContext context) {
     return Material(
       color: AppColors.white.withValues(alpha: 0.95),
-      borderRadius: BorderRadius.circular(20.r),
+      borderRadius: BorderRadius.circular(AppRadius.pill),
       elevation: 4,
       child: InkWell(
         onTap: onTap,
-        borderRadius: BorderRadius.circular(20.r),
+        borderRadius: BorderRadius.circular(AppRadius.pill),
         child: Padding(
           padding: EdgeInsets.symmetric(horizontal: 10.w, vertical: 6.h),
           child: Row(
@@ -414,14 +420,14 @@ class StoreBannerCarousel extends StatelessWidget {
               size: 48.sp,
             ),
             if (message != null) ...[
-              SizedBox(height: 8.h),
+              SizedBox(height: AppSpacing.sm),
               Padding(
-                padding: EdgeInsets.symmetric(horizontal: 24.w),
+                padding: EdgeInsets.symmetric(horizontal: AppSpacing.xl),
                 child: Text(
                   message,
                   textAlign: TextAlign.center,
                   style: TextStyle(
-                    color: AppColors.white.withValues(alpha: 0.85),
+                    color: AppColors.textOnPrimary.withValues(alpha: 0.85),
                     fontSize: 12.sp,
                     fontWeight: FontWeight.w500,
                   ),
@@ -429,15 +435,15 @@ class StoreBannerCarousel extends StatelessWidget {
               ),
             ],
             if (onRetry != null) ...[
-              SizedBox(height: 10.h),
+              SizedBox(height: AppSpacing.sm10),
               TextButton(
                 onPressed: onRetry,
                 style: TextButton.styleFrom(
-                  foregroundColor: Colors.white,
-                  backgroundColor: Colors.white.withValues(alpha: 0.15),
+                  foregroundColor: AppColors.textOnPrimary,
+                  backgroundColor: AppColors.surface.withValues(alpha: 0.15),
                 ),
                 child: Text(
-                  'Muat Ulang',
+                  'orders.reload'.tr(),
                   style: TextStyle(fontSize: 12.sp, fontWeight: FontWeight.w700),
                 ),
               ),
@@ -464,7 +470,7 @@ class StoreBannerCarousel extends StatelessWidget {
               if (active.isEmpty) {
                 return _placeholder(
                   h,
-                  message: 'Supplier belum menambahkan banner toko',
+                  message: 'marketplace.store_banner_supplier_empty'.tr(),
                 );
               }
               if (active.length == 1) {
@@ -488,7 +494,7 @@ class StoreBannerCarousel extends StatelessWidget {
             ),
             error: (_) => _placeholder(
               h,
-              message: 'Gagal memuat banner toko',
+              message: 'marketplace.store_banner_load_error'.tr(),
               onRetry: () => context.read<StoreBannerCubit>().retryLastUserBanners(),
             ),
             orElse: () => _placeholder(h),

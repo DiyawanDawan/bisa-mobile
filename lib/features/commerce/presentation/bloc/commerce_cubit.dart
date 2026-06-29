@@ -46,7 +46,14 @@ class CommerceCubit extends Cubit<CommerceState> {
   }
 
   Future<void> loadCart() async {
-    emit(CommerceState(isLoading: true, likedIds: state.likedIds, cartCount: state.cartCount));
+    emit(
+      CommerceState(
+        isLoading: true,
+        cart: state.cart,
+        likedIds: state.likedIds,
+        cartCount: state.cartCount,
+      ),
+    );
     final result = await _repository.getCart();
     result.fold(
       (f) => emit(CommerceState(error: f.message, likedIds: state.likedIds)),

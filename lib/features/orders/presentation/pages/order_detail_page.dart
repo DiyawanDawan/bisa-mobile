@@ -3,13 +3,16 @@ import 'dart:io';
 import 'package:dartz/dartz.dart' hide State;
 import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
+import 'package:mobile_bisa/core/i18n/failure_messages.dart';
 import 'package:go_router/go_router.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
 import 'package:url_launcher/url_launcher.dart' as url_launcher;
+import 'package:mobile_bisa/core/constants/app_layout.dart';
 import 'package:mobile_bisa/core/constants/app_colors.dart';
+import '../../../../core/constants/app_text_styles.dart';
 import 'package:mobile_bisa/core/utils/payment_status_utils.dart';
 import 'package:mobile_bisa/core/utils/safe_area_utils.dart';
 import 'package:mobile_bisa/core/errors/failures.dart';
@@ -32,6 +35,9 @@ import 'package:mobile_bisa/shared/widgets/bisa_dialog.dart';
 import 'package:mobile_bisa/shared/widgets/custom_button.dart';
 import 'package:mobile_bisa/shared/widgets/custom_text_field.dart';
 import 'package:mobile_bisa/injection_container.dart';
+import 'package:mobile_bisa/features/orders/presentation/utils/order_dispute_i18n.dart';
+import 'package:mobile_bisa/features/orders/presentation/utils/order_shipment_utils.dart';
+import 'package:mobile_bisa/features/orders/presentation/utils/order_status_i18n.dart';
 
 class OrderDetailPage extends StatefulWidget {
   final String orderId;
@@ -191,7 +197,7 @@ class _OrderDetailPageState extends State<OrderDetailPage> {
     if (url != null) {
       final webResult = await context.push(
         '/payment-webview',
-        extra: {'url': url, 'title': 'Pembayaran Xendit'},
+        extra: {'url': url, 'title': 'orders.payment_webview_title'.tr()},
       );
       if (!mounted) return;
       final exit = parsePaymentWebViewExit(webResult);
@@ -204,9 +210,7 @@ class _OrderDetailPageState extends State<OrderDetailPage> {
     if (mounted) {
       showBisaSnackBar(
         context,
-        content: const Text(
-          'Pembayaran diinisialisasi, tapi data tidak lengkap. Muat ulang halaman.',
-        ),
+        content: Text('orders.payment_init_incomplete'.tr()),
         backgroundColor: AppColors.warning,
       );
     }
@@ -218,9 +222,9 @@ class _OrderDetailPageState extends State<OrderDetailPage> {
       create: (context) => sl<OrderCubit>()..getOrderDetail(widget.orderId),
       child: Scaffold(
         backgroundColor: AppColors.background,
-        appBar: const BisaAppBar(
-          title: 'Detail Pesanan',
-          backgroundColor: Colors.white,
+        appBar: BisaAppBar(
+          title: 'orders.detail_title'.tr(),
+          backgroundColor: AppColors.surface,
         ),
         body: BlocConsumer<OrderCubit, OrderState>(
           listener: (context, state) async {
@@ -238,8 +242,8 @@ class _OrderDetailPageState extends State<OrderDetailPage> {
                   context,
                   content: Row(
                     children: [
-                      const Icon(Icons.error_outline, color: Colors.white),
-                      SizedBox(width: 8.w),
+                      const Icon(Icons.error_outline, color: AppColors.textOnPrimary),
+                      SizedBox(width: AppSpacing.sm),
                       Expanded(
                         child: Text(
                           message,
@@ -278,13 +282,13 @@ class _OrderDetailPageState extends State<OrderDetailPage> {
                   if (isProcessing)
                     Positioned.fill(
                       child: ColoredBox(
-                        color: Colors.black.withValues(alpha: 0.15),
+                        color: AppColors.black.withValues(alpha: 0.15),
                         child: Center(
                           child: Container(
-                            padding: EdgeInsets.all(20.w),
+                            padding: EdgeInsets.all(AppSpacing.lg),
                             decoration: BoxDecoration(
-                              color: Colors.white,
-                              borderRadius: BorderRadius.circular(16.r),
+                              color: AppColors.surface,
+                              borderRadius: BorderRadius.circular(AppRadius.xl),
                             ),
                             child: Column(
                               mainAxisSize: MainAxisSize.min,
@@ -292,9 +296,9 @@ class _OrderDetailPageState extends State<OrderDetailPage> {
                                 const CircularProgressIndicator(
                                   color: AppColors.primary,
                                 ),
-                                SizedBox(height: 12.h),
+                                SizedBox(height: AppSpacing.md12),
                                 Text(
-                                  'Membuat VA / instruksi bayar...',
+                                  'orders.payment_creating_va'.tr(),
                                   style: TextStyle(
                                     fontSize: 13.sp,
                                     fontWeight: FontWeight.w700,
@@ -313,7 +317,7 @@ class _OrderDetailPageState extends State<OrderDetailPage> {
 
             return state.maybeWhen(
               loading: () => Padding(
-                padding: EdgeInsets.all(16.w),
+                padding: EdgeInsets.all(AppSpacing.md),
                 child: const ShimmerListPlaceholder(
                   itemCount: 5,
                   itemHeight: 72,
@@ -321,7 +325,7 @@ class _OrderDetailPageState extends State<OrderDetailPage> {
               ),
               error: (message) => Center(
                 child: Padding(
-                  padding: EdgeInsets.all(24.w),
+                  padding: EdgeInsets.all(AppSpacing.xl),
                   child: Column(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
@@ -330,18 +334,18 @@ class _OrderDetailPageState extends State<OrderDetailPage> {
                         size: 48.sp,
                         color: AppColors.error,
                       ),
-                      SizedBox(height: 12.h),
+                      SizedBox(height: AppSpacing.md12),
                       Text(
                         message,
                         textAlign: TextAlign.center,
                         style: TextStyle(fontSize: 13.sp),
                       ),
-                      SizedBox(height: 16.h),
+                      SizedBox(height: AppSpacing.md),
                       TextButton(
                         onPressed: () => context
                             .read<OrderCubit>()
                             .getOrderDetail(widget.orderId),
-                        child: const Text('Muat Ulang'),
+                        child: Text('orders.reload'.tr()),
                       ),
                     ],
                   ),
@@ -349,7 +353,7 @@ class _OrderDetailPageState extends State<OrderDetailPage> {
               ),
               loaded: (_) => const SizedBox(),
               orElse: () => Padding(
-                padding: EdgeInsets.all(16.w),
+                padding: EdgeInsets.all(AppSpacing.md),
                 child: const ShimmerListPlaceholder(
                   itemCount: 4,
                   itemHeight: 72,
@@ -377,17 +381,20 @@ class _OrderDetailPageState extends State<OrderDetailPage> {
     final isBuyer = currentUser?.role == 'BUYER';
 
     return SingleChildScrollView(
-      padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 12.h),
+      padding: EdgeInsets.symmetric(
+        horizontal: AppSpacing.md,
+        vertical: AppSpacing.md12,
+      ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           _buildStatusCard(o),
           if (_batchOrderIds.length > 1) ...[
-            SizedBox(height: 12.h),
+            SizedBox(height: AppSpacing.md12),
             _buildBatchCheckoutBanner(o),
           ],
           if (o.status.toUpperCase() == 'DISPUTED' && o.dispute != null) ...[
-            SizedBox(height: 12.h),
+            SizedBox(height: AppSpacing.md12),
             OrderDisputeSection(
               order: o,
               isBuyer: isBuyer,
@@ -397,26 +404,30 @@ class _OrderDetailPageState extends State<OrderDetailPage> {
                   : null,
             ),
             if (o.negotiationId != null && o.negotiationId!.isNotEmpty) ...[
-              SizedBox(height: 12.h),
+              SizedBox(height: AppSpacing.md12),
               CustomButton(
-                text: 'Buka chat mediasi',
+                text: 'orders.open_mediation_chat'.tr(),
                 useGradient: true,
                 onPressed: () => context.push('/negotiation/${o.negotiationId}'),
               ),
             ] else ...[
-              SizedBox(height: 12.h),
+              SizedBox(height: AppSpacing.md12),
               CustomButton(
-                text: 'Muat chat mediasi',
+                text: 'orders.load_mediation_chat'.tr(),
                 useGradient: true,
                 onPressed: () => _pageOrderCubit?.getOrderDetail(o.id),
               ),
             ],
           ],
-          SizedBox(height: 12.h),
+          SizedBox(height: AppSpacing.md12),
           _buildParticipantCard(
             participant: isSupplier ? o.buyer : o.seller,
-            sectionLabel: isSupplier ? 'Pembeli' : 'Supplier',
-            verifiedLabel: isSupplier ? 'Pembeli Terverifikasi' : 'Supplier Terverifikasi',
+            sectionLabel: isSupplier
+                ? 'orders.participant_buyer'.tr()
+                : 'orders.participant_supplier'.tr(),
+            verifiedLabel: isSupplier
+                ? 'orders.buyer_verified'.tr()
+                : 'orders.supplier_verified'.tr(),
             onTap: isSupplier
                 ? null
                 : () => context.push(
@@ -424,40 +435,40 @@ class _OrderDetailPageState extends State<OrderDetailPage> {
                       extra: {'name': o.seller.name},
                     ),
           ),
-          SizedBox(height: 12.h),
-          _buildSection('Informasi Dasar', [
-            _infoRow('No. Pesanan', o.displayOrderNumber),
+          SizedBox(height: AppSpacing.md12),
+          _buildSection('orders.section_basic_info'.tr(), [
+            _infoRow('orders.field_order_number'.tr(), o.displayOrderNumber),
             if (_batchOrderIds.length > 1)
-              _infoRow('No. internal toko', o.orderNumber),
+              _infoRow('orders.field_internal_store_number'.tr(), o.orderNumber),
             _infoRow(
-              'Tanggal Pesan',
+              'orders.field_order_date'.tr(),
               DateFormat('dd MMM yyyy, HH:mm').format(o.createdAt),
             ),
           ]),
-          SizedBox(height: 12.h),
+          SizedBox(height: AppSpacing.md12),
           _buildShippingSection(o),
           if (o.status == 'PENDING') ...[
-            SizedBox(height: 12.h),
+            SizedBox(height: AppSpacing.md12),
             _buildAwaitingPaymentBanner(o),
           ],
           if (o.status != 'PENDING' &&
               o.shipment != null &&
               o.shipment?.vesselName != null &&
-              o.shipment!.vesselName != 'Menunggu pembayaran') ...[
-            SizedBox(height: 12.h),
-            _buildSection('Status Pengiriman', [
-              _infoRow('Kapal/Kendaraan', o.shipment!.vesselName!),
+              !isPendingPaymentVesselPlaceholder(o.shipment!.vesselName)) ...[
+            SizedBox(height: AppSpacing.md12),
+            _buildSection('orders.section_shipping_status'.tr(), [
+              _infoRow('orders.field_vessel'.tr(), o.shipment!.vesselName!),
               if (o.shipment?.originHub != null)
-                _infoRow('Hub Asal', o.shipment!.originHub!),
+                _infoRow('orders.field_origin_hub'.tr(), o.shipment!.originHub!),
               if (o.shipment?.destinationHub != null)
-                _infoRow('Hub Tujuan', o.shipment!.destinationHub!),
+                _infoRow('orders.field_destination_hub'.tr(), o.shipment!.destinationHub!),
               if (o.shipment?.currentLat != null && o.shipment?.currentLng != null) ...[
-                SizedBox(height: 10.h),
+                SizedBox(height: AppSpacing.sm10),
                 OrderTrackingMap(
                   lat: (o.shipment!.currentLat as num).toDouble(),
                   lng: (o.shipment!.currentLng as num).toDouble(),
                 ),
-                SizedBox(height: 8.h),
+                SizedBox(height: AppSpacing.sm),
                 InkWell(
                   onTap: () => url_launcher.launchUrl(
                     Uri.parse(
@@ -467,9 +478,9 @@ class _OrderDetailPageState extends State<OrderDetailPage> {
                   child: Row(
                     children: [
                       Icon(LucideIcons.mapPin, color: AppColors.primary, size: 16.sp),
-                      SizedBox(width: 8.w),
+                      SizedBox(width: AppSpacing.sm),
                       Text(
-                        'Buka di Google Maps',
+                        'orders.open_google_maps'.tr(),
                         style: TextStyle(
                           color: AppColors.primary,
                           fontWeight: FontWeight.bold,
@@ -483,13 +494,13 @@ class _OrderDetailPageState extends State<OrderDetailPage> {
               ],
             ]),
           ],
-          SizedBox(height: 12.h),
-          _buildSection('Item Pesanan', [
+          SizedBox(height: AppSpacing.md12),
+          _buildSection('orders.section_order_items'.tr(), [
             ...o.items.map((item) => _itemRow(item, currencyFormatter)),
           ]),
           if (o.specifications != null && o.specifications!.isNotEmpty) ...[
-            SizedBox(height: 12.h),
-            _buildSection('Spesifikasi Kesepakatan', [
+            SizedBox(height: AppSpacing.md12),
+            _buildSection('orders.section_agreed_specs'.tr(), [
               Text(
                 o.specifications!,
                 style: TextStyle(
@@ -501,33 +512,33 @@ class _OrderDetailPageState extends State<OrderDetailPage> {
               ),
             ]),
           ],
-          SizedBox(height: 12.h),
-          _buildSection('Rincian Pembayaran', [
-            _priceRow('Subtotal Produk', o.subtotal, currencyFormatter),
-            _priceRow('Biaya Layanan', o.platformFee, currencyFormatter),
+          SizedBox(height: AppSpacing.md12),
+          _buildSection('orders.section_payment_breakdown'.tr(), [
+            _priceRow('orders.field_subtotal'.tr(), o.subtotal, currencyFormatter),
+            _priceRow('orders.field_platform_fee'.tr(), o.platformFee, currencyFormatter),
             if (o.logisticsFee > 0)
-              _priceRow('Biaya Ongkir', o.logisticsFee, currencyFormatter),
-            _priceRow('PPN (VAT)', o.vatAmount, currencyFormatter),
+              _priceRow('orders.field_shipping_fee'.tr(), o.logisticsFee, currencyFormatter),
+            _priceRow('orders.field_vat'.tr(), o.vatAmount, currencyFormatter),
             Padding(
-              padding: EdgeInsets.symmetric(vertical: 8.h),
+              padding: EdgeInsets.symmetric(vertical: AppSpacing.sm),
               child: const Divider(color: AppColors.grey100),
             ),
             _priceRow(
-              'Total Pembayaran',
+              'orders.field_total_payment'.tr(),
               o.totalAmount,
               currencyFormatter,
               isBold: true,
             ),
           ]),
-          SizedBox(height: 12.h),
+          SizedBox(height: AppSpacing.md12),
           _buildPaymentStatusSection(o),
           if (o.status == 'PENDING') ...[
-            SizedBox(height: 12.h),
+            SizedBox(height: AppSpacing.md12),
             _buildPaymentMethodSection(context, o),
           ],
-          SizedBox(height: 24.h),
+          SizedBox(height: AppSpacing.xl),
           _buildActions(context),
-          SizedBox(height: MediaQuery.paddingOf(context).bottom + 24.h),
+          SizedBox(height: MediaQuery.paddingOf(context).bottom + AppSpacing.xl),
         ],
       ),
     );
@@ -536,23 +547,23 @@ class _OrderDetailPageState extends State<OrderDetailPage> {
   Widget _buildAwaitingPaymentBanner(OrderEntity o) {
     return Container(
       width: double.infinity,
-      padding: EdgeInsets.all(14.w),
+      padding: EdgeInsets.all(AppSpacing.section),
       decoration: BoxDecoration(
         color: AppColors.warning.withValues(alpha: 0.1),
-        borderRadius: BorderRadius.circular(12.r),
+        borderRadius: BorderRadius.circular(AppRadius.lg),
         border: Border.all(color: AppColors.warning.withValues(alpha: 0.35)),
       ),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Icon(LucideIcons.clock, size: 18.sp, color: AppColors.warning),
-          SizedBox(width: 10.w),
+          SizedBox(width: AppSpacing.sm10),
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  'Menunggu pembayaran',
+                  'orders.awaiting_payment_title'.tr(),
                   style: TextStyle(
                     fontSize: 13.sp,
                     fontWeight: FontWeight.w800,
@@ -561,7 +572,9 @@ class _OrderDetailPageState extends State<OrderDetailPage> {
                 ),
                 SizedBox(height: 4.h),
                 Text(
-                  'Pesanan #${o.orderNumber} sudah dibuat. Pilih metode pembayaran lalu lanjut ke instruksi bayar.',
+                  'orders.awaiting_payment_body'.tr(
+                    namedArgs: {'orderNumber': o.orderNumber},
+                  ),
                   style: TextStyle(
                     fontSize: 11.sp,
                     color: AppColors.textSecondary,
@@ -584,34 +597,31 @@ class _OrderDetailPageState extends State<OrderDetailPage> {
         _pendingPayment!['channelCode']?.toString().toUpperCase() !=
             channelCode?.toUpperCase();
 
-    return _buildSection('Metode Pembayaran', [
+    return _buildSection('orders.section_payment_method'.tr(), [
       if (hasSelection) ...[
         Container(
           width: double.infinity,
-          padding: EdgeInsets.all(12.w),
+          padding: EdgeInsets.all(AppSpacing.md12),
           decoration: BoxDecoration(
             color: AppColors.primary.withValues(alpha: 0.06),
-            borderRadius: BorderRadius.circular(10.r),
+            borderRadius: BorderRadius.circular(AppRadius.md),
             border: Border.all(color: AppColors.primary.withValues(alpha: 0.2)),
           ),
           child: Row(
             children: [
               Icon(LucideIcons.wallet, size: 18.sp, color: AppColors.primary),
-              SizedBox(width: 10.w),
+              SizedBox(width: AppSpacing.sm10),
               Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      'Metode dipilih',
-                      style: TextStyle(
-                        fontSize: 11.sp,
-                        color: AppColors.textSecondary,
-                      ),
+                      'orders.method_selected_label'.tr(),
+                      style: AppTextStyles.caption(color: AppColors.textSecondary),
                     ),
                     SizedBox(height: 2.h),
                     Text(
-                      channelName ?? 'Pembayaran',
+                      channelName ?? 'orders.payment_fallback'.tr(),
                       style: TextStyle(
                         fontSize: 15.sp,
                         fontWeight: FontWeight.w900,
@@ -625,12 +635,15 @@ class _OrderDetailPageState extends State<OrderDetailPage> {
                 onPressed: () => _pickPaymentMethod(context, o),
                 style: TextButton.styleFrom(
                   foregroundColor: AppColors.primary,
-                  padding: EdgeInsets.symmetric(horizontal: 8.w, vertical: 4.h),
+                  padding: EdgeInsets.symmetric(
+                    horizontal: AppSpacing.sm,
+                    vertical: AppSpacing.xs,
+                  ),
                   minimumSize: Size.zero,
                   tapTargetSize: MaterialTapTargetSize.shrinkWrap,
                 ),
                 child: Text(
-                  'Ubah',
+                  'orders.change_method'.tr(),
                   style: TextStyle(
                     fontSize: 13.sp,
                     fontWeight: FontWeight.w800,
@@ -641,9 +654,9 @@ class _OrderDetailPageState extends State<OrderDetailPage> {
           ),
         ),
         if (selectedDiffersFromInitialized) ...[
-          SizedBox(height: 8.h),
+          SizedBox(height: AppSpacing.sm),
           Text(
-            'Metode baru dipilih. Tekan "Lanjut ke Pembayaran" untuk memperbarui VA/QR.',
+            'orders.method_changed_hint'.tr(),
             style: TextStyle(
               fontSize: 11.sp,
               color: AppColors.warning,
@@ -656,7 +669,7 @@ class _OrderDetailPageState extends State<OrderDetailPage> {
           onPressed: () => _pickPaymentMethod(context, o),
           icon: Icon(LucideIcons.wallet, size: 16.sp),
           label: Text(
-            'Pilih Metode Pembayaran',
+            'orders.pick_payment_method'.tr(),
             style: TextStyle(fontSize: 13.sp, fontWeight: FontWeight.w700),
           ),
           style: OutlinedButton.styleFrom(
@@ -664,13 +677,13 @@ class _OrderDetailPageState extends State<OrderDetailPage> {
             side: BorderSide(color: AppColors.primary.withValues(alpha: 0.5)),
             minimumSize: Size(double.infinity, 44.h),
             shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(10.r),
+              borderRadius: BorderRadius.circular(AppRadius.md),
             ),
           ),
         ),
         SizedBox(height: 6.h),
         Text(
-          'Pilih metode terlebih dahulu untuk mengaktifkan tombol lanjut bayar.',
+          'orders.pick_method_hint'.tr(),
           style: TextStyle(
             fontSize: 11.sp,
             color: AppColors.textHint,
@@ -682,22 +695,7 @@ class _OrderDetailPageState extends State<OrderDetailPage> {
   }
 
   String _paymentStatusLabel(OrderEntity o) {
-    final tx = o.transaction;
-    if (tx == null) return 'Belum diinisialisasi';
-    switch (tx.paymentStatus?.toUpperCase()) {
-      case 'SUCCESS':
-        return 'Lunas';
-      case 'PENDING':
-        return 'Menunggu Pembayaran';
-      case 'FAILED':
-        return 'Gagal';
-      case 'EXPIRED':
-        return 'Kedaluwarsa';
-      case 'REFUNDED':
-        return 'Dikembalikan';
-      default:
-        return tx.paymentStatus ?? '-';
-    }
+    return orderPaymentStatusLabel(o.transaction?.paymentStatus);
   }
 
   Color _paymentStatusColor(OrderEntity o) {
@@ -718,20 +716,7 @@ class _OrderDetailPageState extends State<OrderDetailPage> {
   }
 
   String _escrowStatusLabel(OrderEntity o) {
-    final tx = o.transaction;
-    if (tx == null) return '-';
-    switch (tx.status.toUpperCase()) {
-      case 'ESCROW_HELD':
-        return 'Dana ditahan (escrow)';
-      case 'RELEASED':
-        return 'Dana dilepas ke penjual';
-      case 'PENDING':
-        return 'Menunggu pembayaran';
-      case 'REFUNDED':
-        return 'Dana dikembalikan';
-      default:
-        return tx.status;
-    }
+    return orderEscrowStatusLabel(o.transaction?.status);
   }
 
   Widget _buildPaymentStatusSection(OrderEntity o) {
@@ -744,7 +729,7 @@ class _OrderDetailPageState extends State<OrderDetailPage> {
     final isPaymentExpired =
         tx?.paymentStatus?.toUpperCase() == 'EXPIRED';
 
-    return _buildSection('Status Pembayaran', [
+    return _buildSection('orders.section_payment_status'.tr(), [
       if (tx?.paymentStatus?.toUpperCase() == 'PENDING' ||
           isPaymentExpired) ...[
         PaymentExpiryBanner(
@@ -752,14 +737,14 @@ class _OrderDetailPageState extends State<OrderDetailPage> {
           orderCreatedAt: o.createdAt,
           paymentStatus: tx?.paymentStatus,
         ),
-        SizedBox(height: 10.h),
+        SizedBox(height: AppSpacing.sm10),
       ],
       Container(
         width: double.infinity,
-        padding: EdgeInsets.all(12.w),
+        padding: EdgeInsets.all(AppSpacing.md12),
         decoration: BoxDecoration(
           color: paymentColor.withValues(alpha: 0.08),
-          borderRadius: BorderRadius.circular(12.r),
+          borderRadius: BorderRadius.circular(AppRadius.lg),
           border: Border.all(color: paymentColor.withValues(alpha: 0.25)),
         ),
         child: Row(
@@ -773,7 +758,7 @@ class _OrderDetailPageState extends State<OrderDetailPage> {
               size: 20.sp,
               color: paymentColor,
             ),
-            SizedBox(width: 10.w),
+            SizedBox(width: AppSpacing.sm10),
             Expanded(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -789,11 +774,10 @@ class _OrderDetailPageState extends State<OrderDetailPage> {
                   if (tx != null) ...[
                     SizedBox(height: 4.h),
                     Text(
-                      'Escrow: ${_escrowStatusLabel(o)}',
-                      style: TextStyle(
-                        fontSize: 11.sp,
-                        color: AppColors.textSecondary,
+                      'orders.escrow_prefix'.tr(
+                        namedArgs: {'status': _escrowStatusLabel(o)},
                       ),
+                      style: AppTextStyles.caption(color: AppColors.textSecondary),
                     ),
                   ],
                 ],
@@ -803,17 +787,17 @@ class _OrderDetailPageState extends State<OrderDetailPage> {
         ),
       ),
       if (channelName != null && channelName.isNotEmpty)
-        _infoRow('Metode', channelName),
+        _infoRow('orders.field_method'.tr(), channelName),
       if (paidAt != null)
         _infoRow(
-          'Dibayar pada',
+          'orders.field_paid_at'.tr(),
           DateFormat('dd MMM yyyy, HH:mm').format(paidAt),
         ),
       if (tx == null)
         Padding(
           padding: EdgeInsets.only(top: 4.h),
           child: Text(
-            'Pembayaran belum diinisialisasi. Pilih metode lalu lanjut bayar.',
+            'orders.payment_not_init_hint'.tr(),
             style: TextStyle(
               fontSize: 11.sp,
               color: AppColors.textHint,
@@ -841,14 +825,14 @@ class _OrderDetailPageState extends State<OrderDetailPage> {
       children: [
         if (o.status != 'CANCELLED')
           _actionButton(
-            'Unduh Invoice (PDF)',
+            'orders.action_download_invoice'.tr(),
             AppColors.primary,
             () => InvoiceExportHelper.exportOrder(context, o),
             isOutlined: true,
           ),
         if (isBuyer && o.status == 'PENDING') ...[
           _actionButton(
-            'Lanjut ke Pembayaran',
+            'orders.action_continue_payment'.tr(),
             AppColors.primary,
             _hasPaymentMethodSelected(o) && !_paymentBusy
                 ? () => _continueToPayment(context, o)
@@ -860,13 +844,13 @@ class _OrderDetailPageState extends State<OrderDetailPage> {
             (o.status == 'SHIPPED' || o.status == 'PROCESSING')) ...[
           if (o.status == 'SHIPPED')
             _actionButton(
-              'Pesanan Diterima',
+              'orders.action_confirm_received'.tr(),
               AppColors.secondary,
               () => _confirmReleaseEscrow(context),
               useGradient: true,
             ),
           _actionButton(
-            'Ajukan Sengketa',
+            'orders.action_file_dispute'.tr(),
             AppColors.error,
             () => _showDisputeDialog(context),
             isOutlined: true,
@@ -875,7 +859,7 @@ class _OrderDetailPageState extends State<OrderDetailPage> {
         // Buyer Actions (Completed Order)
         if (isBuyer && o.status == 'COMPLETED') ...[
           if (o.review == null)
-            _actionButton('Tulis Ulasan', AppColors.primary, () async {
+            _actionButton('orders.action_write_review'.tr(), AppColors.primary, () async {
               if (o.items.isNotEmpty) {
                 final result = await Navigator.push(
                   context,
@@ -909,12 +893,12 @@ class _OrderDetailPageState extends State<OrderDetailPage> {
               }
             })
           else ...[
-            SizedBox(height: 12.h),
+            SizedBox(height: AppSpacing.md12),
             Container(
-              padding: EdgeInsets.all(16.w),
+              padding: EdgeInsets.all(AppSpacing.md),
               decoration: BoxDecoration(
                 color: AppColors.primary.withValues(alpha: 0.03),
-                borderRadius: BorderRadius.circular(20.r),
+                borderRadius: BorderRadius.circular(AppRadius.pill),
                 border: Border.all(color: AppColors.primary.withValues(alpha: 0.1)),
               ),
               child: Column(
@@ -927,12 +911,12 @@ class _OrderDetailPageState extends State<OrderDetailPage> {
                         children: [
                           Container(
                             padding: EdgeInsets.symmetric(
-                              horizontal: 8.w,
+                              horizontal: AppSpacing.sm,
                               vertical: 4.h,
                             ),
                             decoration: BoxDecoration(
                               color: AppColors.primary.withValues(alpha: 0.1),
-                              borderRadius: BorderRadius.circular(8.r),
+                              borderRadius: BorderRadius.circular(AppRadius.button),
                             ),
                             child: Row(
                               children: [
@@ -943,7 +927,7 @@ class _OrderDetailPageState extends State<OrderDetailPage> {
                                 ),
                                 SizedBox(width: 4.w),
                                 Text(
-                                  'Ulasan Terverifikasi',
+                                  'orders.review_verified'.tr(),
                                   style: TextStyle(
                                     fontSize: 10.sp,
                                     color: AppColors.primary,
@@ -999,7 +983,7 @@ class _OrderDetailPageState extends State<OrderDetailPage> {
                         },
                         icon: Icon(LucideIcons.pencil, size: 14.sp),
                         label: Text(
-                          'Ubah',
+                          'orders.change_method'.tr(),
                           style: TextStyle(
                             fontSize: 12.sp,
                             fontWeight: FontWeight.bold,
@@ -1014,20 +998,20 @@ class _OrderDetailPageState extends State<OrderDetailPage> {
                       ),
                     ],
                   ),
-                  SizedBox(height: 12.h),
+                  SizedBox(height: AppSpacing.md12),
                   Row(
                     children: List.generate(5, (index) {
                       return Icon(
                         LucideIcons.star,
                         color: index < o.review!.rating
-                            ? Colors.amber
+                            ? AppColors.warning
                             : AppColors.grey200,
                         size: 18.sp,
                         fill: index < o.review!.rating ? 1 : 0,
                       );
                     }),
                   ),
-                  SizedBox(height: 12.h),
+                  SizedBox(height: AppSpacing.md12),
                   Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
@@ -1050,11 +1034,11 @@ class _OrderDetailPageState extends State<OrderDetailPage> {
                             () => _showFullReview = !_showFullReview,
                           ),
                           child: Padding(
-                            padding: EdgeInsets.only(top: 8.h),
+                            padding: EdgeInsets.only(top: AppSpacing.sm),
                             child: Text(
                               _showFullReview
-                                  ? 'Sembunyikan'
-                                  : 'Lihat Selengkapnya',
+                                  ? 'orders.review_show_less'.tr()
+                                  : 'orders.review_show_more'.tr(),
                               style: TextStyle(
                                 fontSize: 12.sp,
                                 color: AppColors.primary,
@@ -1072,13 +1056,13 @@ class _OrderDetailPageState extends State<OrderDetailPage> {
         ],
         if (isSupplier && (o.status == 'PROCESSING' || o.status == 'SHIPPED'))
           _actionButton(
-            'Update Pengiriman',
+            'orders.action_update_shipping'.tr(),
             AppColors.primary,
             () => _showUpdateTrackingDialog(context, o),
           ),
         if (o.status.toUpperCase() == 'DISPUTED') ...[
           _actionButton(
-            'Refresh Status Sengketa',
+            'orders.action_refresh_dispute'.tr(),
             AppColors.primary,
             () => _reloadOrderDetail(),
             isOutlined: true,
@@ -1101,58 +1085,63 @@ class _OrderDetailPageState extends State<OrderDetailPage> {
             padding: EdgeInsets.only(bottom: viewInsets.bottom),
             duration: const Duration(milliseconds: 150),
             child: Dialog(
-              insetPadding: EdgeInsets.symmetric(horizontal: 20.w, vertical: 24.h),
+              insetPadding: EdgeInsets.symmetric(
+                horizontal: AppSpacing.lg,
+                vertical: AppSpacing.xl,
+              ),
               shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(16.r),
+                borderRadius: BorderRadius.circular(AppRadius.xl),
               ),
               child: Padding(
-                padding: EdgeInsets.fromLTRB(20.w, 20.h, 20.w, 16.h),
+                padding: EdgeInsets.fromLTRB(
+                  AppSpacing.lg,
+                  AppSpacing.lg,
+                  AppSpacing.lg,
+                  AppSpacing.md,
+                ),
                 child: SingleChildScrollView(
                   child: Column(
                     mainAxisSize: MainAxisSize.min,
                     crossAxisAlignment: CrossAxisAlignment.stretch,
                     children: [
                       Text(
-                        'Tanggapan Sengketa',
-                        style: TextStyle(
-                          fontSize: 16.sp,
-                          fontWeight: FontWeight.w800,
-                        ),
+                        'orders.dispute_response_title'.tr(),
+                        style: AppTextStyles.sectionTitle(fontWeight: FontWeight.w800),
                       ),
-                      SizedBox(height: 8.h),
+                      SizedBox(height: AppSpacing.sm),
                       Text(
-                        'Jelaskan posisi Anda dan lampirkan bukti jika ada.',
+                        'orders.dispute_response_hint'.tr(),
                         style: TextStyle(
                           fontSize: 12.sp,
                           color: AppColors.textSecondary,
                           height: 1.4,
                         ),
                       ),
-                      SizedBox(height: 14.h),
+                      SizedBox(height: AppSpacing.section),
                       CustomTextField(
-                        label: 'Tanggapan',
-                        hint: 'Min. 10 karakter',
+                        label: 'orders.dispute_response_label'.tr(),
+                        hint: 'orders.dispute_min_chars_hint'.tr(),
                         controller: responseController,
                         maxLines: 4,
                       ),
-                      SizedBox(height: 12.h),
+                      SizedBox(height: AppSpacing.md12),
                       Text(
-                        'Foto Bukti (opsional, max 5)',
+                        'orders.dispute_evidence_label'.tr(),
                         style: TextStyle(
                           fontSize: 12.sp,
                           fontWeight: FontWeight.w700,
                         ),
                       ),
-                      SizedBox(height: 8.h),
+                      SizedBox(height: AppSpacing.sm),
                       Wrap(
-                        spacing: 8.w,
-                        runSpacing: 8.h,
+                        spacing: AppSpacing.sm,
+                        runSpacing: AppSpacing.sm,
                         children: [
                           ...evidencePaths.map(
                             (path) => Stack(
                               children: [
                                 ClipRRect(
-                                  borderRadius: BorderRadius.circular(8.r),
+                                  borderRadius: BorderRadius.circular(AppRadius.button),
                                   child: Image.file(
                                     File(path),
                                     width: 64.w,
@@ -1175,7 +1164,7 @@ class _OrderDetailPageState extends State<OrderDetailPage> {
                                       child: Icon(
                                         LucideIcons.x,
                                         size: 14.sp,
-                                        color: Colors.white,
+                                        color: AppColors.surface,
                                       ),
                                     ),
                                   ),
@@ -1201,7 +1190,7 @@ class _OrderDetailPageState extends State<OrderDetailPage> {
                                 height: 64.w,
                                 decoration: BoxDecoration(
                                   border: Border.all(color: AppColors.grey200),
-                                  borderRadius: BorderRadius.circular(8.r),
+                                  borderRadius: BorderRadius.circular(AppRadius.button),
                                 ),
                                 child: const Icon(
                                   LucideIcons.camera,
@@ -1211,9 +1200,9 @@ class _OrderDetailPageState extends State<OrderDetailPage> {
                             ),
                         ],
                       ),
-                      SizedBox(height: 16.h),
+                      SizedBox(height: AppSpacing.md),
                       CustomButton(
-                        text: 'kirim'.tr(),
+                        text: 'orders.send'.tr(),
                         height: 46.h,
                         onPressed: () {
                           if (responseController.text.trim().length >= 10) {
@@ -1226,9 +1215,9 @@ class _OrderDetailPageState extends State<OrderDetailPage> {
                           }
                         },
                       ),
-                      SizedBox(height: 8.h),
+                      SizedBox(height: AppSpacing.sm),
                       CustomButton(
-                        text: 'batal'.tr(),
+                        text: 'orders.cancel'.tr(),
                         height: 46.h,
                         isOutlined: true,
                         onPressed: () => Navigator.pop(dContext),
@@ -1252,7 +1241,7 @@ class _OrderDetailPageState extends State<OrderDetailPage> {
     bool useGradient = false,
   }) {
     return Padding(
-      padding: EdgeInsets.only(bottom: 12.h),
+      padding: EdgeInsets.only(bottom: AppSpacing.md12),
       child: CustomButton(
         text: title,
         onPressed: onTap,
@@ -1266,10 +1255,9 @@ class _OrderDetailPageState extends State<OrderDetailPage> {
   void _confirmReleaseEscrow(BuildContext context) async {
     final confirmed = await showBisaConfirmDialog(
       context,
-      title: 'konfirmasi'.tr(),
-      message:
-          'Apakah Anda yakin pesanan sudah diterima dengan baik? Dana akan diteruskan ke penjual.',
-      confirmText: 'ya_terima'.tr(),
+      title: 'orders.confirm_title'.tr(),
+      message: 'orders.confirm_receive_message'.tr(),
+      confirmText: 'orders.confirm_receive_yes'.tr(),
     );
     if (confirmed == true && context.mounted) {
       _pageOrderCubit?.releaseEscrow(widget.orderId);
@@ -1348,11 +1336,11 @@ class _OrderDetailPageState extends State<OrderDetailPage> {
             context,
             content: Row(
               children: [
-                const Icon(Icons.error_outline, color: Colors.white),
-                SizedBox(width: 8.w),
+                const Icon(Icons.error_outline, color: AppColors.textOnPrimary),
+                SizedBox(width: AppSpacing.sm),
                 Expanded(
                   child: Text(
-                    failure.message,
+                    failure.message.localizedFailure,
                     style: TextStyle(fontSize: 13.sp),
                   ),
                 ),
@@ -1391,55 +1379,60 @@ class _OrderDetailPageState extends State<OrderDetailPage> {
             padding: EdgeInsets.only(bottom: viewInsets.bottom),
             duration: const Duration(milliseconds: 150),
             child: Dialog(
-              insetPadding: EdgeInsets.symmetric(horizontal: 20.w, vertical: 24.h),
+              insetPadding: EdgeInsets.symmetric(
+                horizontal: AppSpacing.lg,
+                vertical: AppSpacing.xl,
+              ),
               shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(16.r),
+                borderRadius: BorderRadius.circular(AppRadius.xl),
               ),
               child: Padding(
-                padding: EdgeInsets.fromLTRB(20.w, 20.h, 20.w, 16.h),
+                padding: EdgeInsets.fromLTRB(
+                  AppSpacing.lg,
+                  AppSpacing.lg,
+                  AppSpacing.lg,
+                  AppSpacing.md,
+                ),
                 child: SingleChildScrollView(
                   child: Column(
                     mainAxisSize: MainAxisSize.min,
                     crossAxisAlignment: CrossAxisAlignment.stretch,
                     children: [
                       Text(
-                        'ajukan_sengketa'.tr(),
-                        style: TextStyle(
-                          fontSize: 16.sp,
-                          fontWeight: FontWeight.w800,
-                        ),
+                        'orders.file_dispute_title'.tr(),
+                        style: AppTextStyles.sectionTitle(fontWeight: FontWeight.w800),
                       ),
-                      SizedBox(height: 14.h),
+                      SizedBox(height: AppSpacing.section),
                       CustomTextField(
-                        label: 'Alasan',
-                        hint: 'Min. 10 karakter',
+                        label: 'orders.dispute_reason_label'.tr(),
+                        hint: 'orders.dispute_min_chars_hint'.tr(),
                         controller: reasonController,
                       ),
-                      SizedBox(height: 12.h),
+                      SizedBox(height: AppSpacing.md12),
                       CustomTextField(
-                        label: 'Deskripsi Masalah',
-                        hint: 'Jelaskan masalah',
+                        label: 'orders.dispute_description_label'.tr(),
+                        hint: 'orders.dispute_description_hint'.tr(),
                         controller: descController,
                         maxLines: 3,
                       ),
-                      SizedBox(height: 12.h),
+                      SizedBox(height: AppSpacing.md12),
                       Text(
-                        'Foto Bukti (opsional, max 5)',
+                        'orders.dispute_evidence_label'.tr(),
                         style: TextStyle(
                           fontSize: 12.sp,
                           fontWeight: FontWeight.w700,
                         ),
                       ),
-                      SizedBox(height: 8.h),
+                      SizedBox(height: AppSpacing.sm),
                       Wrap(
-                        spacing: 8.w,
-                        runSpacing: 8.h,
+                        spacing: AppSpacing.sm,
+                        runSpacing: AppSpacing.sm,
                         children: [
                           ...evidencePaths.map(
                             (path) => Stack(
                               children: [
                                 ClipRRect(
-                                  borderRadius: BorderRadius.circular(8.r),
+                                  borderRadius: BorderRadius.circular(AppRadius.button),
                                   child: Image.file(
                                     File(path),
                                     width: 64.w,
@@ -1464,7 +1457,7 @@ class _OrderDetailPageState extends State<OrderDetailPage> {
                                       child: Icon(
                                         LucideIcons.x,
                                         size: 14.sp,
-                                        color: Colors.white,
+                                        color: AppColors.surface,
                                       ),
                                     ),
                                   ),
@@ -1490,7 +1483,7 @@ class _OrderDetailPageState extends State<OrderDetailPage> {
                                 height: 64.w,
                                 decoration: BoxDecoration(
                                   border: Border.all(color: AppColors.grey200),
-                                  borderRadius: BorderRadius.circular(8.r),
+                                  borderRadius: BorderRadius.circular(AppRadius.button),
                                 ),
                                 child: const Icon(
                                   LucideIcons.camera,
@@ -1500,9 +1493,9 @@ class _OrderDetailPageState extends State<OrderDetailPage> {
                             ),
                         ],
                       ),
-                      SizedBox(height: 16.h),
+                      SizedBox(height: AppSpacing.md),
                       CustomButton(
-                        text: 'kirim'.tr(),
+                        text: 'orders.send'.tr(),
                         height: 46.h,
                         onPressed: () {
                           if (reasonController.text.trim().length >= 10) {
@@ -1516,9 +1509,9 @@ class _OrderDetailPageState extends State<OrderDetailPage> {
                           }
                         },
                       ),
-                      SizedBox(height: 8.h),
+                      SizedBox(height: AppSpacing.sm),
                       CustomButton(
-                        text: 'batal'.tr(),
+                        text: 'orders.cancel'.tr(),
                         height: 46.h,
                         isOutlined: true,
                         onPressed: () => Navigator.pop(dContext),
@@ -1537,7 +1530,7 @@ class _OrderDetailPageState extends State<OrderDetailPage> {
   void _showUpdateTrackingDialog(BuildContext context, OrderEntity order) {
     final shipment = order.shipment;
     final vesselController = TextEditingController(
-      text: shipment?.vesselName ?? 'Pengiriman BISA',
+      text: shipment?.vesselName ?? 'orders.default_fleet_name'.tr(),
     );
     final awbController = TextEditingController(text: shipment?.awbNumber ?? '');
     final courierController = TextEditingController(
@@ -1551,28 +1544,35 @@ class _OrderDetailPageState extends State<OrderDetailPage> {
     showDialog(
       context: context,
       builder: (dContext) => Dialog(
-        insetPadding: EdgeInsets.symmetric(horizontal: 20.w, vertical: 24.h),
+        insetPadding: EdgeInsets.symmetric(
+          horizontal: AppSpacing.lg,
+          vertical: AppSpacing.xl,
+        ),
         shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(16.r),
+          borderRadius: BorderRadius.circular(AppRadius.xl),
         ),
         child: Padding(
-          padding: EdgeInsets.fromLTRB(20.w, 20.h, 20.w, 16.h),
+          padding: EdgeInsets.fromLTRB(
+            AppSpacing.lg,
+            AppSpacing.lg,
+            AppSpacing.lg,
+            AppSpacing.md,
+          ),
           child: SingleChildScrollView(
             child: Column(
               mainAxisSize: MainAxisSize.min,
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
                 Text(
-                  'update_pengiriman'.tr(),
-                  style: TextStyle(
-                    fontSize: 16.sp,
-                    fontWeight: FontWeight.w800,
-                  ),
+                  'orders.update_shipping_title'.tr(),
+                  style: AppTextStyles.sectionTitle(fontWeight: FontWeight.w800),
                 ),
                 if (shipment?.trackingNumber?.isNotEmpty ?? false) ...[
-                  SizedBox(height: 8.h),
+                  SizedBox(height: AppSpacing.sm),
                   Text(
-                    'Tracking BISA: ${shipment!.trackingNumber}',
+                    'orders.tracking_bisa_label'.tr(
+                      namedArgs: {'tracking': shipment!.trackingNumber!},
+                    ),
                     style: TextStyle(
                       fontSize: 11.sp,
                       fontWeight: FontWeight.w700,
@@ -1580,46 +1580,46 @@ class _OrderDetailPageState extends State<OrderDetailPage> {
                     ),
                   ),
                 ],
-                SizedBox(height: 14.h),
+                SizedBox(height: AppSpacing.section),
                 CustomTextField(
-                  label: 'Nama armada / ekspedisi',
-                  hint: 'Contoh: JNE Reguler',
+                  label: 'orders.tracking_fleet_label'.tr(),
+                  hint: 'orders.tracking_fleet_hint'.tr(),
                   controller: vesselController,
                 ),
-                SizedBox(height: 10.h),
+                SizedBox(height: AppSpacing.sm10),
                 CustomTextField(
-                  label: 'Nomor resi kurir (AWB)',
-                  hint: 'Minimal 5 karakter',
+                  label: 'orders.tracking_awb_label'.tr(),
+                  hint: 'orders.tracking_awb_hint'.tr(),
                   controller: awbController,
                 ),
-                SizedBox(height: 10.h),
+                SizedBox(height: AppSpacing.sm10),
                 CustomTextField(
-                  label: 'Kode kurir',
-                  hint: 'jne, jnt, sicepat, ...',
+                  label: 'orders.tracking_courier_code_label'.tr(),
+                  hint: 'orders.tracking_courier_code_hint'.tr(),
                   controller: courierController,
                 ),
-                SizedBox(height: 10.h),
+                SizedBox(height: AppSpacing.sm10),
                 CustomTextField(
-                  label: 'Asal hub',
-                  hint: 'Opsional',
+                  label: 'orders.tracking_origin_hub_label'.tr(),
+                  hint: 'orders.tracking_optional_hint'.tr(),
                   controller: originController,
                 ),
-                SizedBox(height: 10.h),
+                SizedBox(height: AppSpacing.sm10),
                 CustomTextField(
-                  label: 'Tujuan hub',
-                  hint: 'Opsional',
+                  label: 'orders.tracking_dest_hub_label'.tr(),
+                  hint: 'orders.tracking_optional_hint'.tr(),
                   controller: destController,
                 ),
-                SizedBox(height: 16.h),
+                SizedBox(height: AppSpacing.md),
                 CustomButton(
-                  text: 'update'.tr(),
+                  text: 'orders.update'.tr(),
                   height: 46.h,
                   onPressed: () async {
                     final vessel = vesselController.text.trim();
                     if (vessel.length < 3) {
                       showBisaSnackBar(
                         context,
-                        content: const Text('Nama armada minimal 3 karakter.'),
+                        content: Text('orders.tracking_fleet_min_error'.tr()),
                       );
                       return;
                     }
@@ -1638,9 +1638,9 @@ class _OrderDetailPageState extends State<OrderDetailPage> {
                     });
                   },
                 ),
-                SizedBox(height: 8.h),
+                SizedBox(height: AppSpacing.sm),
                 CustomButton(
-                  text: 'batal'.tr(),
+                  text: 'orders.cancel'.tr(),
                   height: 46.h,
                   isOutlined: true,
                   onPressed: () => Navigator.pop(dContext),
@@ -1656,19 +1656,21 @@ class _OrderDetailPageState extends State<OrderDetailPage> {
   Widget _buildBatchCheckoutBanner(OrderEntity o) {
     return Material(
       color: AppColors.primary.withValues(alpha: 0.06),
-      borderRadius: BorderRadius.circular(12.r),
+      borderRadius: BorderRadius.circular(AppRadius.lg),
       child: InkWell(
-        borderRadius: BorderRadius.circular(12.r),
+        borderRadius: BorderRadius.circular(AppRadius.lg),
         onTap: () => context.push('/order-batch/${o.id}'),
         child: Padding(
-          padding: EdgeInsets.all(12.w),
+          padding: EdgeInsets.all(AppSpacing.md12),
           child: Row(
             children: [
               Icon(LucideIcons.layers, size: 18.sp, color: AppColors.primary),
-              SizedBox(width: 10.w),
+              SizedBox(width: AppSpacing.sm10),
               Expanded(
                 child: Text(
-                  'Bagian checkout ${_batchOrderIds.length} toko — lihat semua produk & status',
+                  'orders.batch_checkout_banner'.tr(
+                    namedArgs: {'count': '${_batchOrderIds.length}'},
+                  ),
                   style: TextStyle(
                     fontSize: 12.sp,
                     fontWeight: FontWeight.w700,
@@ -1715,28 +1717,31 @@ class _OrderDetailPageState extends State<OrderDetailPage> {
     }
 
     return Container(
-      padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 16.h),
+      padding: EdgeInsets.symmetric(
+        horizontal: AppSpacing.md,
+        vertical: AppSpacing.md,
+      ),
       decoration: BoxDecoration(
         color: statusColor,
-        borderRadius: BorderRadius.circular(16.r),
+        borderRadius: BorderRadius.circular(AppRadius.xl),
       ),
       child: Row(
         children: [
           Container(
-            padding: EdgeInsets.all(10.r),
+            padding: EdgeInsets.all(AppSpacing.sm10),
             decoration: BoxDecoration(
               color: AppColors.textOnPrimary.withValues(alpha: 0.2),
               shape: BoxShape.circle,
             ),
             child: Icon(statusIcon, color: AppColors.textOnPrimary, size: 24.sp),
           ),
-          SizedBox(width: 12.w),
+          SizedBox(width: AppSpacing.md12),
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  'order_status'.tr(),
+                  'orders.status_label'.tr(),
                   style: TextStyle(
                     color: AppColors.textOnPrimary.withValues(alpha: 0.9),
                     fontSize: 12.sp,
@@ -1760,22 +1765,15 @@ class _OrderDetailPageState extends State<OrderDetailPage> {
   }
 
   String _orderStatusLabel(OrderEntity o) {
-    switch (o.status.toUpperCase()) {
-      case 'DISPUTED':
-        return o.dispute?.statusLabel ?? 'Sengketa';
-      case 'PENDING':
-        return 'Menunggu Pembayaran';
-      case 'PROCESSING':
-        return 'Diproses';
-      case 'SHIPPED':
-        return 'Dikirim';
-      case 'COMPLETED':
-        return 'Selesai';
-      case 'CANCELLED':
-        return 'Dibatalkan';
-      default:
-        return o.status.toUpperCase();
+    if (o.status.toUpperCase() == 'DISPUTED') {
+      return o.dispute != null
+          ? disputeStatusLabel(o.dispute!)
+          : orderStatusLabel('DISPUTED');
     }
+    if (o.status.toUpperCase() == 'PENDING') {
+      return 'orders.status.pending_payment'.tr();
+    }
+    return orderStatusLabel(o.status);
   }
 
 
@@ -1786,13 +1784,13 @@ class _OrderDetailPageState extends State<OrderDetailPage> {
     VoidCallback? onTap,
   }) {
     final content = Container(
-      padding: EdgeInsets.all(12.w),
+      padding: EdgeInsets.all(AppSpacing.md12),
       decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(16.r),
+        color: AppColors.surface,
+        borderRadius: BorderRadius.circular(AppRadius.xl),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withValues(alpha: 0.04),
+            color: AppColors.black.withValues(alpha: 0.04),
             blurRadius: 10,
             offset: const Offset(0, 4),
           ),
@@ -1805,7 +1803,7 @@ class _OrderDetailPageState extends State<OrderDetailPage> {
             radius: 22.r,
             fallbackIcon: LucideIcons.user,
           ),
-          SizedBox(width: 12.w),
+          SizedBox(width: AppSpacing.md12),
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -1901,23 +1899,23 @@ class _OrderDetailPageState extends State<OrderDetailPage> {
       final zipCode = snap['zipCode']?.toString();
 
       if (recipient != null && recipient.isNotEmpty) {
-        rows.add(_infoRow('Penerima', recipient));
+        rows.add(_infoRow('orders.field_recipient'.tr(), recipient));
       }
       if (phone != null && phone.isNotEmpty) {
-        rows.add(_infoRow('Telepon', phone));
+        rows.add(_infoRow('orders.field_phone'.tr(), phone));
       }
       if (email != null && email.isNotEmpty) {
-        rows.add(_infoRow('Email', email));
+        rows.add(_infoRow('orders.field_email'.tr(), email));
       }
       if (address != null && address.isNotEmpty) {
         rows.add(
           Padding(
-            padding: EdgeInsets.only(bottom: 8.h),
+            padding: EdgeInsets.only(bottom: AppSpacing.sm),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  'Alamat Lengkap',
+                  'orders.field_full_address'.tr(),
                   style: TextStyle(
                     color: AppColors.textSecondary,
                     fontSize: 13.sp,
@@ -1945,7 +1943,7 @@ class _OrderDetailPageState extends State<OrderDetailPage> {
         if (zipCode != null && zipCode.isNotEmpty) zipCode,
       ];
       if (locationParts.isNotEmpty) {
-        rows.add(_infoRow('Wilayah', locationParts.join(', ')));
+        rows.add(_infoRow('orders.field_region'.tr(), locationParts.join(', ')));
       }
 
       final logistics = snap['logistics'];
@@ -1958,16 +1956,16 @@ class _OrderDetailPageState extends State<OrderDetailPage> {
         final costRaw = logistics['cost'];
 
         if (courier != null && courier.isNotEmpty) {
-          rows.add(_infoRow('Kurir', courier.toUpperCase()));
+          rows.add(_infoRow('orders.field_courier'.tr(), courier.toUpperCase()));
         }
         if (service != null && service.isNotEmpty) {
-          rows.add(_infoRow('Layanan', service));
+          rows.add(_infoRow('orders.field_service'.tr(), service));
         }
         if (destinationLabel != null && destinationLabel.isNotEmpty) {
-          rows.add(_infoRow('Tujuan Ongkir', destinationLabel));
+          rows.add(_infoRow('orders.field_shipping_destination'.tr(), destinationLabel));
         }
         if (etd != null && etd.isNotEmpty) {
-          rows.add(_infoRow('Estimasi', etd));
+          rows.add(_infoRow('orders.field_estimate'.tr(), etd));
         }
         if (costRaw != null) {
           final cost = double.tryParse(costRaw.toString());
@@ -1977,7 +1975,7 @@ class _OrderDetailPageState extends State<OrderDetailPage> {
               symbol: 'Rp ',
               decimalDigits: 0,
             ).format(cost);
-            rows.add(_infoRow('Biaya Ongkir', formattedCost));
+            rows.add(_infoRow('orders.field_shipping_fee'.tr(), formattedCost));
           }
         }
       }
@@ -1987,14 +1985,14 @@ class _OrderDetailPageState extends State<OrderDetailPage> {
     if (orderShipping != null) {
       if (orderShipping.courierCode != null &&
           orderShipping.courierCode!.isNotEmpty) {
-        rows.add(_infoRow('Kurir', orderShipping.courierCode!.toUpperCase()));
+        rows.add(_infoRow('orders.field_courier'.tr(), orderShipping.courierCode!.toUpperCase()));
       }
       if (orderShipping.serviceName != null && orderShipping.serviceName!.isNotEmpty) {
-        rows.add(_infoRow('Layanan', orderShipping.serviceName!));
+        rows.add(_infoRow('orders.field_service'.tr(), orderShipping.serviceName!));
       }
       if (orderShipping.destinationLabel != null &&
           orderShipping.destinationLabel!.isNotEmpty) {
-        rows.add(_infoRow('Tujuan', orderShipping.destinationLabel!));
+        rows.add(_infoRow('orders.field_destination'.tr(), orderShipping.destinationLabel!));
       }
       if (orderShipping.shippingCost != null) {
         final formattedCost = NumberFormat.currency(
@@ -2002,10 +2000,10 @@ class _OrderDetailPageState extends State<OrderDetailPage> {
           symbol: 'Rp ',
           decimalDigits: 0,
         ).format(orderShipping.shippingCost);
-        rows.add(_infoRow('Biaya Ongkir', formattedCost));
+        rows.add(_infoRow('orders.field_shipping_fee'.tr(), formattedCost));
       }
       if (orderShipping.etd != null && orderShipping.etd!.isNotEmpty) {
-        rows.add(_infoRow('ETD', orderShipping.etd!));
+        rows.add(_infoRow('orders.field_etd'.tr(), orderShipping.etd!));
       }
     }
 
@@ -2013,21 +2011,21 @@ class _OrderDetailPageState extends State<OrderDetailPage> {
     if (shipment != null) {
       final tracking = shipment.trackingNumber?.trim();
       if (tracking != null && tracking.isNotEmpty) {
-        rows.add(_infoRow('No. Tracking BISA', tracking));
+        rows.add(_infoRow('orders.field_bisa_tracking'.tr(), tracking));
       }
       if (shipment.awbNumber != null && shipment.awbNumber!.isNotEmpty) {
-        rows.add(_infoRow('No. Resi Kurir', shipment.awbNumber!));
+        rows.add(_infoRow('orders.field_courier_awb'.tr(), shipment.awbNumber!));
       }
       if (shipment.courierCode != null && shipment.courierCode!.isNotEmpty) {
-        rows.add(_infoRow('Kurir', shipment.courierCode!.toUpperCase()));
+        rows.add(_infoRow('orders.field_courier'.tr(), shipment.courierCode!.toUpperCase()));
       }
       if (shipment.deliveryStatus != null && shipment.deliveryStatus!.isNotEmpty) {
-        rows.add(_infoRow('Status Kirim', shipment.deliveryStatus!));
+        rows.add(_infoRow('orders.field_delivery_status'.tr(), shipment.deliveryStatus!));
       }
       if (shipment.lastTrackedAt != null) {
         rows.add(
           _infoRow(
-            'Terakhir Sinkron',
+            'orders.field_last_sync'.tr(),
             DateFormat('dd MMM yyyy, HH:mm').format(shipment.lastTrackedAt!),
           ),
         );
@@ -2043,13 +2041,15 @@ class _OrderDetailPageState extends State<OrderDetailPage> {
               onPressed: _trackingSyncBusy ? null : () => _syncTrackingFromRajaOngkir(o),
               icon: _trackingSyncBusy
                   ? SizedBox(
-                      width: 14.w,
-                      height: 14.w,
+                      width: AppSpacing.section,
+                      height: AppSpacing.section,
                       child: const CircularProgressIndicator(strokeWidth: 2),
                     )
                   : Icon(LucideIcons.refreshCcw, size: 15.sp),
               label: Text(
-                _trackingSyncBusy ? 'Sinkronisasi...' : 'Sync Tracking RajaOngkir',
+                _trackingSyncBusy
+                    ? 'orders.tracking_syncing'.tr()
+                    : 'orders.tracking_sync_button'.tr(),
                 style: TextStyle(fontSize: 12.sp, fontWeight: FontWeight.w700),
               ),
               style: OutlinedButton.styleFrom(
@@ -2057,7 +2057,7 @@ class _OrderDetailPageState extends State<OrderDetailPage> {
                 side: BorderSide(color: AppColors.primary.withValues(alpha: 0.5)),
                 minimumSize: Size(double.infinity, 42.h),
                 shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(10.r),
+                  borderRadius: BorderRadius.circular(AppRadius.md),
                 ),
               ),
             ),
@@ -2069,7 +2069,7 @@ class _OrderDetailPageState extends State<OrderDetailPage> {
     if (rows.isEmpty) {
       rows.add(
         Text(
-          'Alamat pengiriman belum tersedia untuk pesanan ini.',
+          'orders.shipping_address_unavailable'.tr(),
           style: TextStyle(
             fontSize: 13.sp,
             color: AppColors.textSecondary,
@@ -2079,7 +2079,7 @@ class _OrderDetailPageState extends State<OrderDetailPage> {
       );
     }
 
-    return _buildSection('Alamat Pengiriman', rows);
+    return _buildSection('orders.section_shipping_address'.tr(), rows);
   }
 
   Future<void> _syncTrackingFromRajaOngkir(OrderEntity order) async {
@@ -2089,9 +2089,7 @@ class _OrderDetailPageState extends State<OrderDetailPage> {
     if (awb == null || awb.isEmpty || courier == null || courier.isEmpty) {
       showBisaSnackBar(
         context,
-        content: const Text(
-          'Nomor resi / kurir belum tersedia untuk sinkronisasi.',
-        ),
+        content: Text('orders.tracking_sync_no_awb'.tr()),
         backgroundColor: AppColors.warning,
       );
       return;
@@ -2108,7 +2106,7 @@ class _OrderDetailPageState extends State<OrderDetailPage> {
       if (result == null) {
         showBisaSnackBar(
           context,
-          content: const Text('Gagal sinkron tracking dari RajaOngkir.'),
+          content: Text('orders.tracking_sync_failed'.tr()),
           backgroundColor: AppColors.error,
         );
         return;
@@ -2117,7 +2115,7 @@ class _OrderDetailPageState extends State<OrderDetailPage> {
       if (!mounted) return;
       showBisaSnackBar(
         context,
-        content: const Text('Tracking berhasil disinkronkan.'),
+        content: Text('orders.tracking_sync_success'.tr()),
         backgroundColor: AppColors.success,
       );
     } finally {
@@ -2129,10 +2127,10 @@ class _OrderDetailPageState extends State<OrderDetailPage> {
 
   Widget _buildSection(String title, List<Widget> children) {
     return Container(
-      padding: EdgeInsets.all(16.w),
+      padding: EdgeInsets.all(AppSpacing.md),
       decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(16.r),
+        color: AppColors.surface,
+        borderRadius: BorderRadius.circular(AppRadius.xl),
         border: Border.all(color: AppColors.grey100),
       ),
       child: Column(
@@ -2146,7 +2144,7 @@ class _OrderDetailPageState extends State<OrderDetailPage> {
               color: AppColors.textPrimary,
             ),
           ),
-          SizedBox(height: 12.h),
+          SizedBox(height: AppSpacing.md12),
           ...children,
         ],
       ),
@@ -2155,7 +2153,7 @@ class _OrderDetailPageState extends State<OrderDetailPage> {
 
   Widget _infoRow(String label, String value) {
     return Padding(
-      padding: EdgeInsets.only(bottom: 8.h),
+      padding: EdgeInsets.only(bottom: AppSpacing.sm),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -2167,7 +2165,7 @@ class _OrderDetailPageState extends State<OrderDetailPage> {
               fontWeight: FontWeight.w500,
             ),
           ),
-          SizedBox(width: 12.w),
+          SizedBox(width: AppSpacing.md12),
           Expanded(
             child: Text(
               value,
@@ -2188,7 +2186,7 @@ class _OrderDetailPageState extends State<OrderDetailPage> {
 
   Widget _itemRow(OrderItemEntity item, NumberFormat formatter) {
     return Padding(
-      padding: EdgeInsets.only(bottom: 12.h),
+      padding: EdgeInsets.only(bottom: AppSpacing.md12),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -2199,13 +2197,13 @@ class _OrderDetailPageState extends State<OrderDetailPage> {
               height: 52.w,
               decoration: BoxDecoration(
                 color: AppColors.grey50,
-                borderRadius: BorderRadius.circular(10.r),
+                borderRadius: BorderRadius.circular(AppRadius.md),
                 border: Border.all(color: AppColors.grey100),
               ),
               child: item.thumbnailUrl != null &&
                       item.thumbnailUrl!.trim().isNotEmpty
                   ? ClipRRect(
-                      borderRadius: BorderRadius.circular(10.r),
+                      borderRadius: BorderRadius.circular(AppRadius.md),
                       child: BisaNetworkImage(
                         imageUrl: item.thumbnailUrl,
                         fit: BoxFit.cover,
@@ -2218,7 +2216,7 @@ class _OrderDetailPageState extends State<OrderDetailPage> {
                     ),
             ),
           ),
-          SizedBox(width: 12.w),
+          SizedBox(width: AppSpacing.md12),
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -2274,7 +2272,7 @@ class _OrderDetailPageState extends State<OrderDetailPage> {
               ],
             ),
           ),
-          SizedBox(width: 8.w),
+          SizedBox(width: AppSpacing.sm),
           Text(
             formatter.format(item.subtotal),
             style: TextStyle(
@@ -2295,7 +2293,7 @@ class _OrderDetailPageState extends State<OrderDetailPage> {
     bool isBold = false,
   }) {
     return Padding(
-      padding: EdgeInsets.only(bottom: 8.h),
+      padding: EdgeInsets.only(bottom: AppSpacing.sm),
       child: Row(
         children: [
           Expanded(

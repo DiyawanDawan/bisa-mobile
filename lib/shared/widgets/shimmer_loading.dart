@@ -93,16 +93,19 @@ class ShimmerProductGridPlaceholder extends StatelessWidget {
     // Masonry = sama dengan grid produk loaded (marketplace); hindari overflow aspect-ratio tetap.
     return Padding(
       padding: padding ?? EdgeInsets.fromLTRB(12.w, 0, 12.w, 24.h),
-      child: MasonryGridView.count(
-        shrinkWrap: true,
-        physics: const NeverScrollableScrollPhysics(),
-        crossAxisCount: crossAxisCount,
-        mainAxisSpacing: 16.h,
-        crossAxisSpacing: 12.w,
-        itemCount: itemCount,
-        itemBuilder: (_, __) => ProductCardSkeleton(
-          imageHeight: imageHeight,
-          showSellerInfo: showSellerInfo,
+      child: ShimmerLoading(
+        child: MasonryGridView.count(
+          shrinkWrap: true,
+          physics: const NeverScrollableScrollPhysics(),
+          crossAxisCount: crossAxisCount,
+          mainAxisSpacing: 16.h,
+          crossAxisSpacing: 12.w,
+          itemCount: itemCount,
+          itemBuilder: (_, __) => ProductCardSkeleton(
+            imageHeight: imageHeight,
+            showSellerInfo: showSellerInfo,
+            wrapWithShimmer: false,
+          ),
         ),
       ),
     );

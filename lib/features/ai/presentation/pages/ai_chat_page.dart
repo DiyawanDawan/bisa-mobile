@@ -1,9 +1,11 @@
+import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
 import '../../../../core/constants/app_colors.dart';
+import '../../../../core/i18n/failure_messages.dart';
 import '../../../../shared/widgets/bisa_app_bar.dart';
 import '../../../../shared/widgets/bisa_logo.dart';
 import '../../../../injection_container.dart';
@@ -20,12 +22,12 @@ class AiChatPage extends StatefulWidget {
 }
 
 class _AiChatPageState extends State<AiChatPage> {
-  static const _suggestedPrompts = [
-    'Apa itu biochar dan manfaatnya untuk tanah?',
-    'Bagaimana mengolah limbah biomass jadi produk?',
-    'Tips negosiasi harga yang adil dengan supplier',
-    'Cara mulai jual produk di marketplace BISA',
-  ];
+  List<String> get _suggestedPrompts => [
+        'ai.prompt_biochar'.tr(),
+        'ai.prompt_biomass'.tr(),
+        'ai.prompt_negotiation'.tr(),
+        'ai.prompt_marketplace'.tr(),
+      ];
 
   final _messageController = TextEditingController();
   final _scrollController = ScrollController();
@@ -54,20 +56,20 @@ class _AiChatPageState extends State<AiChatPage> {
       child: Scaffold(
         backgroundColor: AppColors.background,
         appBar: BisaAppBar(
-          backgroundColor: Colors.white,
+          backgroundColor: AppColors.surface,
           titleWidget: Row(
             mainAxisSize: MainAxisSize.min,
             children: [
               ClipOval(
                 child: Container(
-                  color: Colors.white,
+                  color: AppColors.surface,
                   padding: EdgeInsets.all(4.r),
                   child: BisaLogo(size: 24.r),
                 ),
               ),
               SizedBox(width: 10.w),
               Text(
-                'Asisten BISA',
+                'ai.title'.tr(),
                 style: TextStyle(
                   color: AppColors.textPrimary,
                   fontSize: 16.sp,
@@ -129,16 +131,21 @@ class _AiChatPageState extends State<AiChatPage> {
                       ),
                     ),
                     error: (message) {
-                      final isProError = message.contains('PRO') || message.contains('Langganan');
+                      final display = localizeFailureMessage(message);
+                      final lowered = message.toLowerCase();
+                      final isProError = message.contains('PRO') ||
+                          message.contains('Langganan') ||
+                          lowered.contains('subscription') ||
+                          lowered.contains('langganan');
                       if (isProError) {
                         return ProRequiredPlaceholder(
-                          message: message,
+                          message: display,
                           icon: LucideIcons.bot,
                           onRetryPressed: () => context.read<AiCubit>().sendMessage(''), // Or some refresh logic
                           onActionPressed: () => context.push('/iot-subscription'),
                         );
                       }
-                      return Center(child: Text(message));
+                      return Center(child: Text(display));
                     },
                     orElse: () => const SizedBox.shrink(),
                   );
@@ -170,7 +177,7 @@ class _AiChatPageState extends State<AiChatPage> {
                 _buildEmptyHero(),
                 SizedBox(height: 28.h),
                 Text(
-                  'Halo! Saya Asisten BISA',
+                  'ai.greeting'.tr(),
                   textAlign: TextAlign.center,
                   style: TextStyle(
                     fontSize: 20.sp,
@@ -181,7 +188,7 @@ class _AiChatPageState extends State<AiChatPage> {
                 ),
                 SizedBox(height: 10.h),
                 Text(
-                  'Belum ada percakapan. Mulai dengan mengetik di bawah atau pilih topik populer.',
+                  'ai.empty_subtitle'.tr(),
                   textAlign: TextAlign.center,
                   style: TextStyle(
                     fontSize: 14.sp,
@@ -193,7 +200,7 @@ class _AiChatPageState extends State<AiChatPage> {
                 Align(
                   alignment: Alignment.centerLeft,
                   child: Text(
-                    'Saran pertanyaan',
+                    'ai.suggested_title'.tr(),
                     style: TextStyle(
                       fontSize: 13.sp,
                       fontWeight: FontWeight.w700,
@@ -260,7 +267,7 @@ class _AiChatPageState extends State<AiChatPage> {
               Icon(
                 LucideIcons.sparkles,
                 size: 28.sp,
-                color: Colors.white.withValues(alpha: 0.35),
+                color: AppColors.white.withValues(alpha: 0.35),
               ),
               Padding(
                 padding: EdgeInsets.all(18.w),
@@ -275,12 +282,12 @@ class _AiChatPageState extends State<AiChatPage> {
           child: Container(
             padding: EdgeInsets.all(8.r),
             decoration: BoxDecoration(
-              color: Colors.white,
+              color: AppColors.surface,
               shape: BoxShape.circle,
               border: Border.all(color: AppColors.primaryLight, width: 2),
               boxShadow: [
                 BoxShadow(
-                  color: Colors.black.withValues(alpha: 0.06),
+                  color: AppColors.black.withValues(alpha: 0.06),
                   blurRadius: 8,
                   offset: const Offset(0, 2),
                 ),
@@ -305,7 +312,7 @@ class _AiChatPageState extends State<AiChatPage> {
         padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 10.h),
         constraints: BoxConstraints(maxWidth: 0.75.sw),
         decoration: BoxDecoration(
-          color: message.isUser ? AppColors.primary : Colors.white,
+          color: message.isUser ? AppColors.primary : AppColors.surface,
           borderRadius: BorderRadius.only(
             topLeft: Radius.circular(12.r),
             topRight: Radius.circular(12.r),
@@ -314,7 +321,7 @@ class _AiChatPageState extends State<AiChatPage> {
           ),
           boxShadow: [
             BoxShadow(
-              color: Colors.black.withOpacity(0.02),
+              color: AppColors.black.withOpacity(0.02),
               blurRadius: 5,
               offset: const Offset(0, 2),
             ),
@@ -323,7 +330,7 @@ class _AiChatPageState extends State<AiChatPage> {
         child: Text(
           message.text,
           style: TextStyle(
-            color: message.isUser ? Colors.white : AppColors.textPrimary,
+            color: message.isUser ? AppColors.white : AppColors.textPrimary,
             fontSize: 14.sp,
           ),
         ),
@@ -340,10 +347,10 @@ class _AiChatPageState extends State<AiChatPage> {
           child: Container(
             padding: EdgeInsets.all(16.w),
             decoration: BoxDecoration(
-              color: Colors.white,
+              color: AppColors.surface,
               boxShadow: [
                 BoxShadow(
-                  color: Colors.black.withValues(alpha: 0.05),
+                  color: AppColors.black.withValues(alpha: 0.05),
                   blurRadius: 10,
                   offset: const Offset(0, -2),
                 ),
@@ -361,8 +368,8 @@ class _AiChatPageState extends State<AiChatPage> {
                     child: TextField(
                       controller: _messageController,
                       enabled: !isLoading,
-                      decoration: const InputDecoration(
-                        hintText: 'Tulis pertanyaan tentang biochar, pasar, atau IoT...',
+                      decoration: InputDecoration(
+                        hintText: 'ai.input_hint'.tr(),
                         border: InputBorder.none,
                       ),
                       onSubmitted: isLoading ? null : (_) => _submitMessage(context),
@@ -379,10 +386,10 @@ class _AiChatPageState extends State<AiChatPage> {
                             height: 18.w,
                             child: const CircularProgressIndicator(
                               strokeWidth: 2,
-                              color: Colors.white,
+                              color: AppColors.surface,
                             ),
                           )
-                        : const Icon(LucideIcons.send, color: Colors.white, size: 18),
+                        : const Icon(LucideIcons.send, color: AppColors.textOnPrimary, size: 18),
                     onPressed: isLoading ? null : () => _submitMessage(context),
                   ),
                 ),
@@ -411,7 +418,7 @@ class _SuggestedPromptCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Material(
-      color: Colors.white,
+      color: AppColors.surface,
       borderRadius: BorderRadius.circular(14.r),
       child: InkWell(
         onTap: onTap,

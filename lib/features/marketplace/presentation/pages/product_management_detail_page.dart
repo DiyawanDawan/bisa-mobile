@@ -1,14 +1,19 @@
+import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:go_router/go_router.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
+import 'package:mobile_bisa/core/i18n/locale_formatters.dart';
 import 'package:mobile_bisa/features/marketplace/domain/entities/product_entity.dart';
 import 'package:mobile_bisa/features/marketplace/domain/entities/product_stats_entity.dart';
 import 'package:timeago/timeago.dart' as timeago;
+import '../../../../core/constants/app_layout.dart';
 import '../../../../core/constants/app_colors.dart';
+import '../../../../core/constants/app_text_styles.dart';
 import '../../../../core/utils/product_pricing.dart';
-import '../../../../core/utils/extensions.dart';
+import '../../../../core/utils/app_feedback.dart';
+import '../../../../core/utils/money_format.dart';
 import '../../../../core/utils/media_url_utils.dart';
 import '../../../../shared/widgets/bisa_network_image.dart';
 import '../../../../injection_container.dart';
@@ -28,6 +33,8 @@ import '../bloc/review_state.dart';
 import '../widgets/product_image_manager_section.dart';
 import 'dart:convert';
 
+import 'package:file_picker/file_picker.dart';
+import '../../../../shared/widgets/product_video_player.dart';
 import '../widgets/product_specs_sheet.dart';
 
 class ProductManagementDetailPage extends StatelessWidget {
@@ -51,32 +58,14 @@ class ProductManagementDetailPage extends StatelessWidget {
           state.maybeWhen(
             deleted: () {
               context.pop();
-              ScaffoldMessenger.of(context).showSnackBar(
-                SnackBar(
-                  content: const Text('Produk berhasil dihapus'),
-                  backgroundColor: AppColors.success,
-                  behavior: SnackBarBehavior.floating,
-                ),
-              );
+              showSuccessSnackBar(context, 'marketplace.product_deleted'.tr());
             },
             duplicated: (product) {
-              ScaffoldMessenger.of(context).showSnackBar(
-                SnackBar(
-                  content: const Text('Produk berhasil diduplikasi'),
-                  backgroundColor: AppColors.success,
-                  behavior: SnackBarBehavior.floating,
-                ),
-              );
+              showSuccessSnackBar(context, 'marketplace.product_duplicated'.tr());
               context.pushReplacement('/product-manage/${product.id}');
             },
             error: (message) {
-              ScaffoldMessenger.of(context).showSnackBar(
-                SnackBar(
-                  content: Text(message),
-                  backgroundColor: AppColors.error,
-                  behavior: SnackBarBehavior.floating,
-                ),
-              );
+              showFailureSnackBarFromMessage(context, message);
             },
             orElse: () {},
           );
@@ -85,14 +74,14 @@ class ProductManagementDetailPage extends StatelessWidget {
           return Scaffold(
             backgroundColor: AppColors.background,
             appBar: BisaAppBar(
-              title: 'Kelola Produk',
+              title: 'marketplace.manage_product_title'.tr(),
               backgroundColor: AppColors.surface,
             ),
             body: state.maybeWhen(
               loading: () => const ShimmerProductDetailPlaceholder(),
               error: (message) => Center(
                 child: Padding(
-                  padding: EdgeInsets.symmetric(horizontal: 32.w),
+                  padding: EdgeInsets.symmetric(horizontal: AppSpacing.xxl),
                   child: Column(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
@@ -101,21 +90,18 @@ class ProductManagementDetailPage extends StatelessWidget {
                         size: 64.r,
                         color: AppColors.grey200,
                       ),
-                      SizedBox(height: 16.h),
+                      SizedBox(height: AppSpacing.md),
                       Text(
                         message,
                         textAlign: TextAlign.center,
-                        style: TextStyle(
-                          fontSize: 14.sp,
-                          color: AppColors.textSecondary,
-                        ),
+                        style: AppTextStyles.body(color: AppColors.textSecondary),
                       ),
-                      SizedBox(height: 16.h),
+                      SizedBox(height: AppSpacing.md),
                       TextButton(
                         onPressed: () => context
                             .read<ProductManagementCubit>()
                             .getProductDetail(productId),
-                        child: const Text('Coba Lagi'),
+                        child: Text('marketplace.try_again'.tr()),
                       ),
                     ],
                   ),
@@ -142,23 +128,23 @@ class ProductManagementDetailPage extends StatelessWidget {
   Widget _buildAccessDenied(BuildContext context) {
     return Center(
       child: Padding(
-        padding: EdgeInsets.symmetric(horizontal: 32.w),
+        padding: EdgeInsets.symmetric(horizontal: AppSpacing.xxl),
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
             Icon(LucideIcons.shieldOff, size: 64.r, color: AppColors.grey200),
-            SizedBox(height: 16.h),
+            SizedBox(height: AppSpacing.md),
             Text(
-              'Akses Ditolak',
+              'marketplace.access_denied'.tr(),
               style: TextStyle(
                 fontSize: 18.sp,
                 fontWeight: FontWeight.w800,
                 color: AppColors.textPrimary,
               ),
             ),
-            SizedBox(height: 8.h),
+            SizedBox(height: AppSpacing.sm),
             Text(
-              'Anda tidak memiliki akses untuk mengelola produk ini.',
+              'marketplace.access_denied_body'.tr(),
               textAlign: TextAlign.center,
               style: TextStyle(
                 fontSize: 13.sp,
@@ -166,9 +152,9 @@ class ProductManagementDetailPage extends StatelessWidget {
                 height: 1.4,
               ),
             ),
-            SizedBox(height: 20.h),
+            SizedBox(height: AppSpacing.lg),
             CustomButton(
-              text: 'Kembali',
+              text: 'marketplace.back'.tr(),
               width: 160.w,
               height: 48.h,
               onPressed: () => context.pop(),
@@ -199,11 +185,15 @@ class ProductManagementDetailPage extends StatelessWidget {
           ProductImageManagerSection(product: p),
           SizedBox(height: _secGap.h),
           _buildQuickActions(context, p),
+          SizedBox(height: _secGap.h),
+          _buildPromotionSection(context, p),
+          SizedBox(height: _secGap.h),
+          _buildVideoSection(context, p),
           _section(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                _rowHeader('Informasi Produk', onEdit: () => _editTitle(context, p)),
+                _rowHeader('marketplace.section_product_info_short'.tr(), onEdit: () => _editTitle(context, p)),
                 SizedBox(height: 6.h),
                 _buildInfoGrid(context, p),
               ],
@@ -214,7 +204,7 @@ class ProductManagementDetailPage extends StatelessWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                _rowHeader('Stok & Harga', onEdit: () => _editStock(context, p)),
+                _rowHeader('marketplace.section_stock_price'.tr(), onEdit: () => _editStock(context, p)),
                 SizedBox(height: 6.h),
                 _buildStockGrid(context, p),
               ],
@@ -225,7 +215,7 @@ class ProductManagementDetailPage extends StatelessWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                _rowHeader('Deskripsi', onEdit: () => _editDescription(context, p)),
+                _rowHeader('marketplace.section_description'.tr(), onEdit: () => _editDescription(context, p)),
                 SizedBox(height: 6.h),
                 _buildDescriptionBody(p),
               ],
@@ -237,7 +227,7 @@ class ProductManagementDetailPage extends StatelessWidget {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  _rowHeader('Spesifikasi', onEdit: () => _editSpecs(context, p)),
+                  _rowHeader('marketplace.section_specs'.tr(), onEdit: () => _editSpecs(context, p)),
                   SizedBox(height: 6.h),
                   _buildSpecsBody(p),
                 ],
@@ -249,10 +239,10 @@ class ProductManagementDetailPage extends StatelessWidget {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  _rowHeader('Spesifikasi', onEdit: () => _editSpecs(context, p)),
+                  _rowHeader('marketplace.section_specs'.tr(), onEdit: () => _editSpecs(context, p)),
                   SizedBox(height: 6.h),
                   Text(
-                    'Belum ada spesifikasi — tap edit untuk menambahkan',
+                    'marketplace.no_specs_hint'.tr(),
                     style: TextStyle(
                       fontSize: 12.sp,
                       color: AppColors.textHint,
@@ -268,7 +258,7 @@ class ProductManagementDetailPage extends StatelessWidget {
           _buildNegotiationsSection(context, p.id),
           SizedBox(height: _secGap.h),
           _buildReviewsSection(context, p),
-          SizedBox(height: 16.h),
+          SizedBox(height: AppSpacing.md),
           _buildDangerZone(context, p),
           SizedBox(height: 24.h + bottomSafe),
         ],
@@ -281,13 +271,13 @@ class ProductManagementDetailPage extends StatelessWidget {
       children: [
         Container(
           width: 3.w,
-          height: 14.h,
+          height: AppSpacing.section,
           decoration: BoxDecoration(
             color: AppColors.primary,
             borderRadius: BorderRadius.circular(2.r),
           ),
         ),
-        SizedBox(width: 8.w),
+        SizedBox(width: AppSpacing.sm),
         Expanded(
           child: Text(
             title,
@@ -301,10 +291,10 @@ class ProductManagementDetailPage extends StatelessWidget {
         if (onEdit != null)
           Material(
             color: AppColors.primaryLight.withOpacity(0.2),
-            borderRadius: BorderRadius.circular(8.r),
+            borderRadius: BorderRadius.circular(AppRadius.button),
             child: InkWell(
               onTap: onEdit,
-              borderRadius: BorderRadius.circular(8.r),
+              borderRadius: BorderRadius.circular(AppRadius.button),
               child: Padding(
                 padding: EdgeInsets.all(6.r),
                 child: Icon(
@@ -322,14 +312,14 @@ class ProductManagementDetailPage extends StatelessWidget {
   Widget _section({required Widget child}) {
     return Container(
       margin: EdgeInsets.symmetric(horizontal: _hPad.w),
-      padding: EdgeInsets.all(12.r),
+      padding: EdgeInsets.all(AppSpacing.md12),
       decoration: BoxDecoration(
         color: AppColors.surface,
-        borderRadius: BorderRadius.circular(12.r),
+        borderRadius: BorderRadius.circular(AppRadius.lg),
         border: Border.all(color: AppColors.grey100),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.03),
+            color: AppColors.black.withOpacity(0.03),
             blurRadius: 12,
             offset: const Offset(0, 4),
           ),
@@ -341,15 +331,15 @@ class ProductManagementDetailPage extends StatelessWidget {
 
   Widget _buildImageSection(ProductEntity p, List<String> images) {
     return Padding(
-      padding: EdgeInsets.fromLTRB(_hPad.w, 10.h, _hPad.w, 0),
+      padding: EdgeInsets.fromLTRB(_hPad.w, AppSpacing.sm10, _hPad.w, 0),
       child: ClipRRect(
-        borderRadius: BorderRadius.circular(12.r),
+        borderRadius: BorderRadius.circular(AppRadius.lg),
         child: Stack(
           children: [
             _ProductImageCarousel(images: images),
             Positioned(
-              top: 12.h,
-              right: 12.w,
+              top: AppSpacing.md12,
+              right: AppSpacing.md12,
               child: Wrap(
                 spacing: 6.w,
                 runSpacing: 6.h,
@@ -375,8 +365,8 @@ class ProductManagementDetailPage extends StatelessWidget {
                         begin: Alignment.bottomCenter,
                         end: Alignment.topCenter,
                         colors: [
-                          Colors.black.withOpacity(0.35),
-                          Colors.transparent,
+                          AppColors.black.withOpacity(0.35),
+                          AppColors.transparent,
                         ],
                       ),
                     ),
@@ -394,7 +384,7 @@ class ProductManagementDetailPage extends StatelessWidget {
       padding: EdgeInsets.all(6.r),
       decoration: BoxDecoration(
         color: color.withOpacity(0.12),
-        borderRadius: BorderRadius.circular(8.r),
+        borderRadius: BorderRadius.circular(AppRadius.button),
         border: Border.all(color: color.withOpacity(0.35), width: 0.5),
       ),
       child: Icon(icon, size: 13.sp, color: color),
@@ -407,29 +397,29 @@ class ProductManagementDetailPage extends StatelessWidget {
     switch (status.toUpperCase()) {
       case 'ACTIVE':
         color = AppColors.success;
-        label = 'Aktif';
+        label = 'marketplace.status_active'.tr();
         break;
       case 'DRAFT':
         color = AppColors.warning;
-        label = 'Draft';
+        label = 'marketplace.status_draft'.tr();
         break;
       case 'OUT_OF_STOCK':
         color = AppColors.error;
-        label = 'Stok Habis';
+        label = 'marketplace.status_out_of_stock'.tr();
         break;
       case 'INACTIVE':
         color = AppColors.grey500;
-        label = 'Non-aktif';
+        label = 'marketplace.status_inactive'.tr();
         break;
       default:
         color = AppColors.grey500;
         label = status;
     }
     return Container(
-      padding: EdgeInsets.symmetric(horizontal: 10.w, vertical: 5.h),
+      padding: EdgeInsets.symmetric(horizontal: AppSpacing.sm10, vertical: 5.h),
       decoration: BoxDecoration(
         color: AppColors.surface.withOpacity(0.92),
-        borderRadius: BorderRadius.circular(8.r),
+        borderRadius: BorderRadius.circular(AppRadius.button),
         border: Border.all(color: color.withOpacity(0.5), width: 0.5),
         boxShadow: AppColors.softShadow,
       ),
@@ -444,34 +434,202 @@ class ProductManagementDetailPage extends StatelessWidget {
     );
   }
 
+  Widget _buildPromotionSection(BuildContext context, ProductEntity p) {
+    final active = p.isPromotionActive;
+    return _section(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          _rowHeader('marketplace.promote_section_title'.tr()),
+          SizedBox(height: AppSpacing.sm),
+          if (active && p.promotedUntil != null)
+            Text(
+              'marketplace.promote_active_until'.tr(
+                namedArgs: {
+                  'date': LocaleFormatters.formatDateTime(context, p.promotedUntil!),
+                },
+              ),
+              style: TextStyle(fontSize: 12.sp, color: AppColors.success),
+            ),
+          if (p.promoImpressions > 0 || p.promoClicks > 0) ...[
+            SizedBox(height: 6.h),
+            Text(
+              'marketplace.promote_stats'.tr(
+                namedArgs: {
+                  'impressions': '${p.promoImpressions}',
+                  'clicks': '${p.promoClicks}',
+                },
+              ),
+              style: TextStyle(fontSize: 11.sp, color: AppColors.textSecondary),
+            ),
+          ],
+          SizedBox(height: AppSpacing.sm10),
+          Text(
+            'marketplace.promote_hint'.tr(),
+            style: TextStyle(fontSize: 11.sp, color: AppColors.textSecondary, height: 1.4),
+          ),
+          SizedBox(height: AppSpacing.md12),
+          CustomButton(
+            text: active
+                ? 'marketplace.promote_extend'.tr()
+                : 'marketplace.promote_cta'.tr(),
+            useGradient: true,
+            onPressed: p.status.toUpperCase() == 'ACTIVE'
+                ? () => _confirmPromote(context, p)
+                : null,
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildVideoSection(BuildContext context, ProductEntity p) {
+    final hasVideo = p.videoUrl != null && p.videoUrl!.isNotEmpty;
+    return _section(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          _rowHeader('marketplace.video_section_title'.tr()),
+          SizedBox(height: AppSpacing.sm),
+          Text(
+            'marketplace.video_section_hint'.tr(),
+            style: TextStyle(fontSize: 11.sp, color: AppColors.textSecondary, height: 1.4),
+          ),
+          if (hasVideo) ...[
+            SizedBox(height: AppSpacing.md12),
+            ClipRRect(
+              borderRadius: BorderRadius.circular(AppRadius.lg),
+              child: ProductVideoPlayer(videoUrl: p.videoUrl!, height: 180.h),
+            ),
+            SizedBox(height: AppSpacing.sm10),
+            Row(
+              children: [
+                Expanded(
+                  child: OutlinedButton.icon(
+                    onPressed: () => _pickAndUploadVideo(context, p),
+                    icon: Icon(LucideIcons.refreshCw, size: 16.sp),
+                    label: Text('marketplace.video_replace'.tr()),
+                  ),
+                ),
+                SizedBox(width: AppSpacing.sm),
+                Expanded(
+                  child: OutlinedButton.icon(
+                    onPressed: () => _confirmDeleteVideo(context, p),
+                    icon: Icon(LucideIcons.trash2, size: 16.sp, color: AppColors.error),
+                    label: Text(
+                      'marketplace.video_remove'.tr(),
+                      style: TextStyle(color: AppColors.error),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ] else ...[
+            SizedBox(height: AppSpacing.md12),
+            CustomButton(
+              text: 'marketplace.video_upload'.tr(),
+              icon: LucideIcons.video,
+              onPressed: () => _pickAndUploadVideo(context, p),
+            ),
+          ],
+        ],
+      ),
+    );
+  }
+
+  Future<void> _pickAndUploadVideo(BuildContext context, ProductEntity p) async {
+    final result = await FilePicker.platform.pickFiles(
+      type: FileType.video,
+      allowMultiple: false,
+    );
+    final path = result?.files.single.path;
+    if (path == null || !context.mounted) return;
+
+    final err = await context.read<ProductManagementCubit>().uploadProductVideo(p.id, path);
+    if (!context.mounted) return;
+    if (err != null) {
+      showFailureSnackBarFromMessage(context, err);
+    } else {
+      showSuccessSnackBar(context, 'marketplace.video_uploaded'.tr());
+    }
+  }
+
+  Future<void> _confirmDeleteVideo(BuildContext context, ProductEntity p) async {
+    final ok = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: Text('marketplace.video_remove_title'.tr()),
+        content: Text('marketplace.video_remove_body'.tr()),
+        actions: [
+          TextButton(onPressed: () => Navigator.pop(ctx, false), child: Text('cancel'.tr())),
+          TextButton(
+            onPressed: () => Navigator.pop(ctx, true),
+            child: Text('marketplace.video_remove'.tr(), style: TextStyle(color: AppColors.error)),
+          ),
+        ],
+      ),
+    );
+    if (ok != true || !context.mounted) return;
+    final err = await context.read<ProductManagementCubit>().deleteProductVideo(p.id);
+    if (!context.mounted) return;
+    if (err != null) {
+      showFailureSnackBarFromMessage(context, err);
+    }
+  }
+
+  Future<void> _confirmPromote(BuildContext context, ProductEntity p) async {
+    final ok = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: Text('marketplace.promote_confirm_title'.tr()),
+        content: Text('marketplace.promote_confirm_body'.tr()),
+        actions: [
+          TextButton(onPressed: () => Navigator.pop(ctx, false), child: Text('cancel'.tr())),
+          TextButton(
+            onPressed: () => Navigator.pop(ctx, true),
+            child: Text('marketplace.promote_cta'.tr(), style: TextStyle(color: AppColors.primary, fontWeight: FontWeight.w700)),
+          ),
+        ],
+      ),
+    );
+    if (ok != true || !context.mounted) return;
+    final err = await context.read<ProductManagementCubit>().promoteProduct(p.id);
+    if (!context.mounted) return;
+    if (err != null) {
+      showFailureSnackBarFromMessage(context, err);
+    } else {
+      showSuccessSnackBar(context, 'marketplace.promote_success'.tr());
+    }
+  }
+
   Widget _buildQuickActions(BuildContext context, ProductEntity p) {
     final isActive = p.status.toUpperCase() == 'ACTIVE';
     return Padding(
-      padding: EdgeInsets.fromLTRB(_hPad.w, 10.h, _hPad.w, 6.h),
+      padding: EdgeInsets.fromLTRB(_hPad.w, AppSpacing.sm10, _hPad.w, AppSpacing.xs6),
       child: Row(
         children: [
           Expanded(
             child: _actionBtn(
               LucideIcons.pencil,
-              'Edit',
+              'marketplace.edit'.tr(),
               AppColors.primary,
               () => context.push('/edit-product', extra: p),
             ),
           ),
-          SizedBox(width: 8.w),
+          SizedBox(width: AppSpacing.sm),
           Expanded(
             child: _actionBtn(
               LucideIcons.copy,
-              'Duplikat',
+              'marketplace.duplicate'.tr(),
               AppColors.info,
               () => _confirmDuplicate(context, p),
             ),
           ),
-          SizedBox(width: 8.w),
+          SizedBox(width: AppSpacing.sm),
           Expanded(
             child: _actionBtn(
               isActive ? LucideIcons.eyeOff : LucideIcons.eye,
-              isActive ? 'Nonaktif' : 'Aktifkan',
+              isActive ? 'marketplace.deactivate'.tr() : 'marketplace.activate'.tr(),
               isActive ? AppColors.warning : AppColors.success,
               () => _confirmToggleStatus(context, p),
             ),
@@ -489,26 +647,26 @@ class ProductManagementDetailPage extends StatelessWidget {
   ) {
     return Material(
       color: AppColors.surface,
-      borderRadius: BorderRadius.circular(12.r),
+      borderRadius: BorderRadius.circular(AppRadius.lg),
       elevation: 0,
-      shadowColor: Colors.transparent,
+      shadowColor: AppColors.transparent,
       child: InkWell(
         onTap: onTap,
-        borderRadius: BorderRadius.circular(12.r),
+        borderRadius: BorderRadius.circular(AppRadius.lg),
         child: Ink(
           decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(12.r),
+            borderRadius: BorderRadius.circular(AppRadius.lg),
             border: Border.all(color: color.withOpacity(0.2)),
             boxShadow: [
               BoxShadow(
-                color: Colors.black.withOpacity(0.03),
+                color: AppColors.black.withOpacity(0.03),
                 blurRadius: 8,
                 offset: const Offset(0, 2),
               ),
             ],
           ),
           child: Padding(
-            padding: EdgeInsets.symmetric(vertical: 10.h),
+            padding: EdgeInsets.symmetric(vertical: AppSpacing.sm10),
             child: Column(
               mainAxisSize: MainAxisSize.min,
               children: [
@@ -543,7 +701,7 @@ class ProductManagementDetailPage extends StatelessWidget {
   Widget _buildInfoGrid(BuildContext context, ProductEntity p) {
     final isOrganic = p.productMode == 'ORGANIC_PRODUCE';
     final typeLabel = (isOrganic
-            ? (p.cropType ?? 'Hasil Tani')
+            ? (p.cropType ?? 'marketplace.badge_mode_organic'.tr())
             : p.biomassaType)
         .toUpperCase();
 
@@ -561,13 +719,13 @@ class ProductManagementDetailPage extends StatelessWidget {
           maxLines: 2,
           overflow: TextOverflow.ellipsis,
         ),
-        SizedBox(height: 8.h),
+        SizedBox(height: AppSpacing.sm),
         Wrap(
           spacing: 6.w,
           runSpacing: 6.h,
           children: [
             Container(
-              padding: EdgeInsets.symmetric(horizontal: 8.w, vertical: 4.h),
+              padding: EdgeInsets.symmetric(horizontal: AppSpacing.sm, vertical: AppSpacing.xs),
               decoration: BoxDecoration(
                 color: isOrganic
                     ? AppColors.primaryLight.withOpacity(0.5)
@@ -585,7 +743,7 @@ class ProductManagementDetailPage extends StatelessWidget {
             ),
             _metaChip(
               LucideIcons.layers,
-              'Grade: ${p.grade ?? '-'}',
+              'marketplace.grade_line'.tr(namedArgs: {'grade': p.grade ?? '-'}),
               AppColors.grey500,
             ),
             _metaChip(
@@ -595,8 +753,10 @@ class ProductManagementDetailPage extends StatelessWidget {
             ),
           ],
         ),
-        SizedBox(height: 8.h),
-        _dotRow('Dibuat: ${_formatDate(p.createdAt)}'),
+        SizedBox(height: AppSpacing.sm),
+        _dotRow('marketplace.created_at'.tr(namedArgs: {
+          'date': context.formatDate(p.createdAt),
+        })),
       ],
     );
   }
@@ -643,12 +803,12 @@ class ProductManagementDetailPage extends StatelessWidget {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Wrap(
-          spacing: 8.w,
+          spacing: AppSpacing.sm,
           runSpacing: 6.h,
           crossAxisAlignment: WrapCrossAlignment.end,
           children: [
             Text(
-              pricing.pricePerUnit.toRupiah,
+              formatMoneyDisplay(pricing.pricePerUnit),
               style: TextStyle(
                 fontSize: 18.sp,
                 fontWeight: FontWeight.w900,
@@ -665,7 +825,7 @@ class ProductManagementDetailPage extends StatelessWidget {
             ),
             if (pricing.hasPromo) ...[
               Text(
-                pricing.originalPrice!.toRupiah,
+                formatMoneyDisplay(pricing.originalPrice!),
                 style: TextStyle(
                   fontSize: 12.sp,
                   color: AppColors.grey400,
@@ -694,19 +854,25 @@ class ProductManagementDetailPage extends StatelessWidget {
           SizedBox(height: 6.h),
           _buildPricingInfoBox(pricing),
         ],
-        SizedBox(height: 10.h),
+        SizedBox(height: AppSpacing.sm10),
         Wrap(
           spacing: 6.w,
           runSpacing: 6.h,
           children: [
             _metaChip(
               LucideIcons.package,
-              'Stok ${p.stock.toInt()} ${p.unit}',
+              'marketplace.stock_chip'.tr(namedArgs: {
+                'stock': '${p.stock.toInt()}',
+                'unit': p.unit,
+              }),
               AppColors.info,
             ),
             _metaChip(
               LucideIcons.shoppingCart,
-              'Min. beli ${ProductPricingInfo.formatQty(p.minOrder)} ${p.unit}',
+              'marketplace.min_buy'.tr(namedArgs: {
+                'qty': ProductPricingInfo.formatQty(p.minOrder),
+                'unit': p.unit,
+              }),
               AppColors.grey500,
             ),
           ],
@@ -718,17 +884,17 @@ class ProductManagementDetailPage extends StatelessWidget {
   Widget _buildPricingInfoBox(ProductPricingInfo pricing) {
     return Container(
       width: double.infinity,
-      padding: EdgeInsets.all(10.w),
+      padding: EdgeInsets.all(AppSpacing.sm10),
       decoration: BoxDecoration(
         color: AppColors.info.withValues(alpha: 0.06),
-        borderRadius: BorderRadius.circular(10.r),
+        borderRadius: BorderRadius.circular(AppRadius.md),
         border: Border.all(color: AppColors.info.withValues(alpha: 0.2)),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
-            'Aturan harga',
+            'marketplace.pricing_rules'.tr(),
             style: TextStyle(
               fontSize: 11.sp,
               fontWeight: FontWeight.w800,
@@ -762,13 +928,13 @@ class ProductManagementDetailPage extends StatelessWidget {
   Widget _dotRow(String text) {
     return Padding(
       padding: EdgeInsets.only(top: 5.h),
-      child: Row(children: [Container(width: 5.w, height: 5.w, decoration: BoxDecoration(color: AppColors.grey200, shape: BoxShape.circle)), SizedBox(width: 8.w), Text(text, style: TextStyle(fontSize: 12.sp, color: AppColors.textSecondary))]),
+      child: Row(children: [Container(width: 5.w, height: 5.w, decoration: BoxDecoration(color: AppColors.grey200, shape: BoxShape.circle)), SizedBox(width: AppSpacing.sm), Text(text, style: AppTextStyles.bodySecondary(color: AppColors.textSecondary))]),
     );
   }
 
   Widget _buildDescriptionBody(ProductEntity p) {
     return Text(
-      p.description?.isNotEmpty == true ? p.description! : 'Belum ada deskripsi',
+      p.description?.isNotEmpty == true ? p.description! : 'marketplace.no_description_short'.tr(),
       style: TextStyle(fontSize: 13.sp, color: p.description?.isNotEmpty == true ? AppColors.textSecondary : AppColors.textHint, height: 1.4),
     );
   }
@@ -795,7 +961,7 @@ class ProductManagementDetailPage extends StatelessWidget {
     Widget row(List<Widget> cards) => Row(
           children: [
             for (int i = 0; i < cards.length; i++) ...[
-              if (i > 0) SizedBox(width: 8.w),
+              if (i > 0) SizedBox(width: AppSpacing.sm),
               Expanded(child: cards[i]),
             ],
           ],
@@ -806,18 +972,18 @@ class ProductManagementDetailPage extends StatelessWidget {
       child: Column(
         children: [
           row([
-            _statCard(LucideIcons.eye, '${stats?.viewCount ?? 0}', 'Dilihat', AppColors.info),
-            _statCard(LucideIcons.shoppingBag, '${stats?.totalSold ?? p.totalSold}', 'Terjual', AppColors.success),
-            _statCard(LucideIcons.handshake, '${stats?.activeNegotiations ?? 0}', 'Nego Aktif', AppColors.warning),
+            _statCard(LucideIcons.eye, '${stats?.viewCount ?? 0}', 'marketplace.stat_views'.tr(), AppColors.info),
+            _statCard(LucideIcons.shoppingBag, '${stats?.totalSold ?? p.totalSold}', 'marketplace.stat_sold'.tr(), AppColors.success),
+            _statCard(LucideIcons.handshake, '${stats?.activeNegotiations ?? 0}', 'marketplace.stat_active_nego'.tr(), AppColors.warning),
           ]),
-          SizedBox(height: 8.h),
+          SizedBox(height: AppSpacing.sm),
           row([
-            _statCard(LucideIcons.star, '${p.averageRating}', 'Rating', AppColors.warning),
-            _statCard(LucideIcons.package, '${p.stock.toInt()}', 'Stok', AppColors.primary),
+            _statCard(LucideIcons.star, '${p.averageRating}', 'marketplace.stat_rating'.tr(), AppColors.warning),
+            _statCard(LucideIcons.package, '${p.stock.toInt()}', 'marketplace.stat_stock'.tr(), AppColors.primary),
             _statCard(
               p.isCertified ? LucideIcons.award : LucideIcons.shield,
-              p.isCertified ? 'Ya' : 'Tidak',
-              'Certified',
+              p.isCertified ? 'marketplace.yes'.tr() : 'marketplace.no'.tr(),
+              'marketplace.badge_certified'.tr(),
               p.isCertified ? AppColors.success : AppColors.grey500,
             ),
           ]),
@@ -832,7 +998,7 @@ class ProductManagementDetailPage extends StatelessWidget {
         return state.maybeWhen(
           loading: () => _section(
             child: Padding(
-              padding: EdgeInsets.symmetric(horizontal: 8.w, vertical: 8.h),
+              padding: EdgeInsets.symmetric(horizontal: AppSpacing.sm, vertical: AppSpacing.sm),
               child: const ShimmerListPlaceholder(itemCount: 2, itemHeight: 56),
             ),
           ),
@@ -846,13 +1012,15 @@ class ProductManagementDetailPage extends StatelessWidget {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  _rowHeader('Negosiasi Aktif (${active.length})'),
-                  SizedBox(height: 8.h),
+                  _rowHeader('marketplace.active_negotiations'.tr(namedArgs: {
+                    'count': '${active.length}',
+                  })),
+                  SizedBox(height: AppSpacing.sm),
                   if (active.isEmpty)
                     Padding(
-                      padding: EdgeInsets.symmetric(vertical: 12.h),
+                      padding: EdgeInsets.symmetric(vertical: AppSpacing.md12),
                       child: Text(
-                        'Belum ada negosiasi aktif untuk produk ini',
+                        'marketplace.no_active_negotiations'.tr(),
                         style: TextStyle(
                           fontSize: 13.sp,
                           color: AppColors.textHint,
@@ -873,21 +1041,21 @@ class ProductManagementDetailPage extends StatelessWidget {
 
   Widget _negotiationTile(BuildContext context, NegotiationEntity n) {
     return Padding(
-      padding: EdgeInsets.only(bottom: 8.h),
+      padding: EdgeInsets.only(bottom: AppSpacing.sm),
       child: InkWell(
         onTap: () => NegotiationStatusDisplay.openFromList(context, n),
-        borderRadius: BorderRadius.circular(10.r),
+        borderRadius: BorderRadius.circular(AppRadius.md),
         child: Container(
-          padding: EdgeInsets.all(10.w),
+          padding: EdgeInsets.all(AppSpacing.sm10),
           decoration: BoxDecoration(
             color: AppColors.grey50,
-            borderRadius: BorderRadius.circular(10.r),
+            borderRadius: BorderRadius.circular(AppRadius.md),
             border: Border.all(color: AppColors.grey100),
           ),
           child: Row(
             children: [
               CircleAvatar(
-                radius: 16.r,
+                radius: AppRadius.xl,
                 backgroundColor: AppColors.grey200,
                 backgroundImage:
                     resolveMediaImageProvider(n.buyer.avatarUrl),
@@ -895,7 +1063,7 @@ class ProductManagementDetailPage extends StatelessWidget {
                     ? Icon(LucideIcons.user, size: 14.sp, color: AppColors.grey500)
                     : null,
               ),
-              SizedBox(width: 10.w),
+              SizedBox(width: AppSpacing.sm10),
               Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
@@ -910,11 +1078,8 @@ class ProductManagementDetailPage extends StatelessWidget {
                       overflow: TextOverflow.ellipsis,
                     ),
                     Text(
-                      '${n.quantity.toInt()} ${n.product.unit} · ${n.pricePerUnit.toRupiah}',
-                      style: TextStyle(
-                        fontSize: 11.sp,
-                        color: AppColors.textSecondary,
-                      ),
+                      '${n.quantity.toInt()} ${n.product.unit} · ${formatMoneyDisplay(n.pricePerUnit)}',
+                      style: AppTextStyles.caption(color: AppColors.textSecondary),
                     ),
                   ],
                 ),
@@ -930,14 +1095,14 @@ class ProductManagementDetailPage extends StatelessWidget {
   Widget _statCard(IconData icon, String value, String label, Color color) {
     return Expanded(
       child: Container(
-        padding: EdgeInsets.symmetric(vertical: 12.h, horizontal: 4.w),
+        padding: EdgeInsets.symmetric(vertical: AppSpacing.md12, horizontal: AppSpacing.xs),
         decoration: BoxDecoration(
           color: AppColors.surface,
-          borderRadius: BorderRadius.circular(12.r),
+          borderRadius: BorderRadius.circular(AppRadius.lg),
           border: Border.all(color: color.withOpacity(0.15)),
           boxShadow: [
             BoxShadow(
-              color: Colors.black.withOpacity(0.03),
+              color: AppColors.black.withOpacity(0.03),
               blurRadius: 8,
               offset: const Offset(0, 2),
             ),
@@ -966,7 +1131,7 @@ class ProductManagementDetailPage extends StatelessWidget {
             ),
             Text(
               label,
-              style: TextStyle(fontSize: 9.sp, color: AppColors.textHint),
+              style: AppTextStyles.chip(fontSize: 9.sp, color: AppColors.textHint),
               maxLines: 1,
               overflow: TextOverflow.ellipsis,
             ),
@@ -986,11 +1151,11 @@ class ProductManagementDetailPage extends StatelessWidget {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    _rowHeader('Ulasan'),
-                    SizedBox(height: 8.h),
+                    _rowHeader('marketplace.reviews_section'.tr()),
+                    SizedBox(height: AppSpacing.sm),
                     Center(
                       child: Padding(
-                        padding: EdgeInsets.symmetric(vertical: 16.h),
+                        padding: EdgeInsets.symmetric(vertical: AppSpacing.md),
                         child: Column(
                           children: [
                             Icon(
@@ -998,9 +1163,9 @@ class ProductManagementDetailPage extends StatelessWidget {
                               size: 40.r,
                               color: AppColors.grey200,
                             ),
-                            SizedBox(height: 8.h),
+                            SizedBox(height: AppSpacing.sm),
                             Text(
-                              'Belum ada ulasan',
+                              'marketplace.no_reviews'.tr(),
                               style: TextStyle(
                                 fontSize: 13.sp,
                                 color: AppColors.textHint,
@@ -1023,13 +1188,13 @@ class ProductManagementDetailPage extends StatelessWidget {
           },
           loading: () => _section(
             child: Padding(
-              padding: EdgeInsets.symmetric(horizontal: 8.w, vertical: 8.h),
+              padding: EdgeInsets.symmetric(horizontal: AppSpacing.sm, vertical: AppSpacing.sm),
               child: const ShimmerListPlaceholder(itemCount: 2, itemHeight: 56),
             ),
           ),
           orElse: () => _section(
             child: Text(
-              'Gagal memuat ulasan',
+              'marketplace.reviews_load_failed'.tr(),
               style: TextStyle(fontSize: 13.sp, color: AppColors.error),
             ),
           ),
@@ -1042,10 +1207,10 @@ class ProductManagementDetailPage extends StatelessWidget {
     return Padding(
       padding: EdgeInsets.symmetric(horizontal: _hPad.w),
       child: Container(
-        padding: EdgeInsets.all(16.r),
+        padding: EdgeInsets.all(AppSpacing.md),
         decoration: BoxDecoration(
           color: AppColors.error.withOpacity(0.04),
-          borderRadius: BorderRadius.circular(14.r),
+          borderRadius: BorderRadius.circular(AppRadius.tile),
           border: Border.all(color: AppColors.error.withOpacity(0.15)),
         ),
         child: Column(
@@ -1058,9 +1223,9 @@ class ProductManagementDetailPage extends StatelessWidget {
                   size: 18.sp,
                   color: AppColors.error,
                 ),
-                SizedBox(width: 8.w),
+                SizedBox(width: AppSpacing.sm),
                 Text(
-                  'Zona Berbahaya',
+                  'marketplace.danger_zone'.tr(),
                   style: TextStyle(
                     fontSize: 14.sp,
                     fontWeight: FontWeight.w800,
@@ -1069,18 +1234,18 @@ class ProductManagementDetailPage extends StatelessWidget {
                 ),
               ],
             ),
-            SizedBox(height: 8.h),
+            SizedBox(height: AppSpacing.sm),
             Text(
-              'Menghapus produk bersifat permanen dan tidak dapat dibatalkan.',
+              'marketplace.delete_permanent_warning'.tr(),
               style: TextStyle(
                 fontSize: 12.sp,
                 color: AppColors.textSecondary,
                 height: 1.4,
               ),
             ),
-            SizedBox(height: 12.h),
+            SizedBox(height: AppSpacing.md12),
             CustomButton(
-              text: 'Hapus Produk',
+              text: 'marketplace.delete_product'.tr(),
               height: 48.h,
               backgroundColor: AppColors.error,
               onPressed: () => _showDeleteDialog(context, p),
@@ -1097,11 +1262,11 @@ class ProductManagementDetailPage extends StatelessWidget {
     final ctrl = TextEditingController(text: p.name);
     _showManagementEditDialog(
       context,
-      title: 'Edit Judul Produk',
+      title: 'marketplace.edit_product_title'.tr(),
       fields: [
         CustomTextField(
-          label: 'Nama Produk',
-          hint: 'Masukkan nama produk',
+          label: 'marketplace.product_name_label'.tr(),
+          hint: 'marketplace.product_name_hint'.tr(),
           controller: ctrl,
         ),
       ],
@@ -1111,13 +1276,7 @@ class ProductManagementDetailPage extends StatelessWidget {
               {'name': ctrl.text.trim()},
             );
         if (error != null && context.mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: Text(error),
-              backgroundColor: AppColors.error,
-              behavior: SnackBarBehavior.floating,
-            ),
-          );
+          showFailureSnackBarFromMessage(context, error);
           return false;
         }
         return true;
@@ -1134,46 +1293,45 @@ class ProductManagementDetailPage extends StatelessWidget {
     );
     _showManagementEditDialog(
       context,
-      title: 'Edit Stok & Harga',
+      title: 'marketplace.edit_stock_price'.tr(),
       scrollable: true,
       fields: [
         Container(
-          padding: EdgeInsets.all(10.w),
+          padding: EdgeInsets.all(AppSpacing.sm10),
           decoration: BoxDecoration(
             color: AppColors.grey50,
-            borderRadius: BorderRadius.circular(10.r),
+            borderRadius: BorderRadius.circular(AppRadius.md),
             border: Border.all(color: AppColors.grey200),
           ),
           child: Text(
-            'Diskon promo = per 1 ${p.unit}. Total order = qty × harga jual. '
-            'Min. order terpisah — bukan diskon bertingkat (2 ${p.unit} ≠ 20% + 20%).',
+            'marketplace.promo_edit_hint'.tr(namedArgs: {'unit': p.unit}),
             style: TextStyle(fontSize: 11.sp, color: AppColors.textSecondary, height: 1.35),
           ),
         ),
-        SizedBox(height: 12.h),
+        SizedBox(height: AppSpacing.md12),
         CustomTextField(
-          label: 'Harga jual per ${p.unit}',
+          label: 'marketplace.sell_price_per_unit'.tr(namedArgs: {'unit': p.unit}),
           hint: '0',
           controller: priceCtrl,
           keyboardType: TextInputType.number,
         ),
-        SizedBox(height: 12.h),
+        SizedBox(height: AppSpacing.md12),
         CustomTextField(
-          label: 'Harga coret per ${p.unit} (opsional)',
-          hint: 'Kosongkan jika tanpa promo',
+          label: 'marketplace.strikethrough_price'.tr(namedArgs: {'unit': p.unit}),
+          hint: 'marketplace.no_promo_hint'.tr(),
           controller: originalCtrl,
           keyboardType: TextInputType.number,
         ),
-        SizedBox(height: 12.h),
+        SizedBox(height: AppSpacing.md12),
         CustomTextField(
-          label: 'Stok (${p.unit})',
+          label: 'marketplace.stock_field'.tr(namedArgs: {'unit': p.unit}),
           hint: '0',
           controller: stockCtrl,
           keyboardType: TextInputType.number,
         ),
-        SizedBox(height: 12.h),
+        SizedBox(height: AppSpacing.md12),
         CustomTextField(
-          label: 'Minimal pembelian (${p.unit})',
+          label: 'marketplace.min_purchase_field'.tr(namedArgs: {'unit': p.unit}),
           hint: '0',
           controller: minCtrl,
           keyboardType: TextInputType.number,
@@ -1195,13 +1353,7 @@ class ProductManagementDetailPage extends StatelessWidget {
           final orig = double.tryParse(originalText);
           if (orig != null) {
             if (pr != null && orig <= pr) {
-              ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(
-                  content: Text('Harga coret harus lebih tinggi dari harga jual'),
-                  backgroundColor: AppColors.error,
-                  behavior: SnackBarBehavior.floating,
-                ),
-              );
+              showErrorSnackBar(context, 'marketplace.strikethrough_must_exceed'.tr());
               return false;
             }
             data['originalPrice'] = orig;
@@ -1212,13 +1364,7 @@ class ProductManagementDetailPage extends StatelessWidget {
 
         final error = await context.read<ProductManagementCubit>().updateField(p.id, data);
         if (error != null && context.mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: Text(error),
-              backgroundColor: AppColors.error,
-              behavior: SnackBarBehavior.floating,
-            ),
-          );
+          showFailureSnackBarFromMessage(context, error);
           return false;
         }
         return true;
@@ -1230,11 +1376,11 @@ class ProductManagementDetailPage extends StatelessWidget {
     final ctrl = TextEditingController(text: p.description ?? '');
     _showManagementEditDialog(
       context,
-      title: 'Edit Deskripsi',
+      title: 'marketplace.edit_description'.tr(),
       fields: [
         CustomTextField(
-          label: 'Deskripsi',
-          hint: 'Deskripsi produk',
+          label: 'marketplace.section_description'.tr(),
+          hint: 'marketplace.description_hint'.tr(),
           controller: ctrl,
           maxLines: 5,
         ),
@@ -1245,13 +1391,7 @@ class ProductManagementDetailPage extends StatelessWidget {
               {'description': ctrl.text.trim()},
             );
         if (error != null && context.mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: Text(error),
-              backgroundColor: AppColors.error,
-              behavior: SnackBarBehavior.floating,
-            ),
-          );
+          showFailureSnackBarFromMessage(context, error);
           return false;
         }
         return true;
@@ -1273,13 +1413,7 @@ class ProductManagementDetailPage extends StatelessWidget {
     if (data.isNotEmpty) {
       final error = await context.read<ProductManagementCubit>().updateField(p.id, data);
       if (error != null && context.mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(error),
-            backgroundColor: AppColors.error,
-            behavior: SnackBarBehavior.floating,
-          ),
-        );
+        showFailureSnackBarFromMessage(context, error);
       }
     }
   }
@@ -1288,17 +1422,17 @@ class ProductManagementDetailPage extends StatelessWidget {
     showDialog(
       context: context,
       builder: (ctx) => AlertDialog(
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16.r)),
-        title: const Text('Duplikat Produk?'),
-        content: Text('Salin "${p.name}" sebagai produk baru (status Draft)?'),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(AppRadius.xl)),
+        title: Text('marketplace.duplicate_confirm_title'.tr()),
+        content: Text('marketplace.duplicate_confirm_body'.tr(namedArgs: {'name': p.name})),
         actions: [
-          TextButton(onPressed: () => Navigator.pop(ctx), child: const Text('Batal')),
+          TextButton(onPressed: () => Navigator.pop(ctx), child: Text('batal'.tr())),
           TextButton(
             onPressed: () {
               Navigator.pop(ctx);
               context.read<ProductManagementCubit>().duplicateProduct(p.id);
             },
-            child: Text('Duplikat', style: TextStyle(color: AppColors.primary, fontWeight: FontWeight.w700)),
+            child: Text('marketplace.duplicate'.tr(), style: TextStyle(color: AppColors.primary, fontWeight: FontWeight.w700)),
           ),
         ],
       ),
@@ -1310,11 +1444,11 @@ class ProductManagementDetailPage extends StatelessWidget {
     showDialog(
       context: context,
       builder: (ctx) => AlertDialog(
-        title: Text(isActive ? 'Nonaktifkan Produk?' : 'Aktifkan Produk?'),
-        content: Text(isActive ? 'Produk tidak akan muncul di marketplace.' : 'Produk akan muncul kembali di marketplace.'),
+        title: Text(isActive ? 'marketplace.deactivate_confirm_title'.tr() : 'marketplace.activate_confirm_title'.tr()),
+        content: Text(isActive ? 'marketplace.deactivate_confirm_body'.tr() : 'marketplace.activate_confirm_body'.tr()),
         actions: [
-          TextButton(onPressed: () => Navigator.pop(ctx), child: const Text('Batal')),
-          TextButton(onPressed: () { Navigator.pop(ctx); context.read<ProductManagementCubit>().toggleStatus(p.id, p.status); }, child: Text(isActive ? 'Nonaktifkan' : 'Aktifkan', style: TextStyle(color: isActive ? AppColors.warning : AppColors.success, fontWeight: FontWeight.w700))),
+          TextButton(onPressed: () => Navigator.pop(ctx), child: Text('batal'.tr())),
+          TextButton(onPressed: () { Navigator.pop(ctx); context.read<ProductManagementCubit>().toggleStatus(p.id, p.status); }, child: Text(isActive ? 'marketplace.deactivate'.tr() : 'marketplace.activate'.tr(), style: TextStyle(color: isActive ? AppColors.warning : AppColors.success, fontWeight: FontWeight.w700))),
         ],
       ),
     );
@@ -1324,33 +1458,26 @@ class ProductManagementDetailPage extends StatelessWidget {
     showDialog(
       context: context,
       builder: (ctx) => AlertDialog(
-        title: const Text('Hapus Produk'),
-        content: Text('Hapus "${p.name}"? Tindakan ini tidak dapat dibatalkan.'),
+        title: Text('marketplace.delete_product'.tr()),
+        content: Text('marketplace.delete_confirm_body'.tr(namedArgs: {'name': p.name})),
         actions: [
-          TextButton(onPressed: () => Navigator.pop(ctx), child: const Text('Batal')),
+          TextButton(onPressed: () => Navigator.pop(ctx), child: Text('batal'.tr())),
           TextButton(
             onPressed: () async {
               Navigator.pop(ctx);
               final error = await context.read<ProductManagementCubit>().deleteProduct(p.id);
               if (error != null && context.mounted) {
-                ScaffoldMessenger.of(context).showSnackBar(
-                  SnackBar(
-                    content: Text(error),
-                    backgroundColor: AppColors.error,
-                    behavior: SnackBarBehavior.floating,
-                  ),
-                );
+                showFailureSnackBarFromMessage(context, error);
               }
             },
             style: TextButton.styleFrom(foregroundColor: AppColors.error),
-            child: const Text('Hapus', style: TextStyle(fontWeight: FontWeight.w700)),
+            child: Text('hapus'.tr(), style: const TextStyle(fontWeight: FontWeight.w700)),
           ),
         ],
       ),
     );
   }
 
-  String _formatDate(DateTime date) { const m = ['Jan','Feb','Mar','Apr','Mei','Jun','Jul','Agu','Sep','Okt','Nov','Des']; return '${date.day} ${m[date.month-1]} ${date.year}'; }
 }
 
 void _showManagementEditDialog(
@@ -1372,12 +1499,12 @@ void _showManagementEditDialog(
         duration: const Duration(milliseconds: 150),
         curve: Curves.easeOut,
         child: Dialog(
-          insetPadding: EdgeInsets.symmetric(horizontal: 20.w, vertical: 24.h),
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16.r)),
+          insetPadding: EdgeInsets.symmetric(horizontal: AppSpacing.lg, vertical: AppSpacing.xl),
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(AppRadius.xl)),
           child: ConstrainedBox(
             constraints: BoxConstraints(maxHeight: maxDialogH),
             child: Padding(
-              padding: EdgeInsets.fromLTRB(20.w, 20.h, 20.w, 16.h),
+              padding: EdgeInsets.fromLTRB(AppSpacing.lg, AppSpacing.lg, AppSpacing.lg, AppSpacing.md),
               child: Column(
                 mainAxisSize: MainAxisSize.min,
                 crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -1390,7 +1517,7 @@ void _showManagementEditDialog(
                       color: AppColors.textPrimary,
                     ),
                   ),
-                  SizedBox(height: 14.h),
+                  SizedBox(height: AppSpacing.section),
                   Flexible(
                     child: SingleChildScrollView(
                       physics: const BouncingScrollPhysics(),
@@ -1401,17 +1528,17 @@ void _showManagementEditDialog(
                       ),
                     ),
                   ),
-                  SizedBox(height: 16.h),
+                  SizedBox(height: AppSpacing.md),
                   CustomButton(
-                    text: 'Simpan',
+                    text: 'marketplace.save'.tr(),
                     height: 46.h,
                     onPressed: () async {
                       if (await onSave() && ctx.mounted) Navigator.pop(ctx);
                     },
                   ),
-                  SizedBox(height: 8.h),
+                  SizedBox(height: AppSpacing.sm),
                   CustomButton(
-                    text: 'Batal',
+                    text: 'batal'.tr(),
                     height: 46.h,
                     isOutlined: true,
                     onPressed: () => Navigator.pop(ctx),
@@ -1478,7 +1605,7 @@ class _ProductImageCarouselState extends State<_ProductImageCarousel> {
             Positioned(
               left: 0,
               right: 0,
-              bottom: 12.h,
+              bottom: AppSpacing.md12,
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: List.generate(
@@ -1490,8 +1617,8 @@ class _ProductImageCarouselState extends State<_ProductImageCarousel> {
                     height: 6.w,
                     decoration: BoxDecoration(
                       color: _current == i
-                          ? Colors.white
-                          : Colors.white.withOpacity(0.5),
+                          ? AppColors.white
+                          : AppColors.white.withOpacity(0.5),
                       borderRadius: BorderRadius.circular(3.r),
                     ),
                   ),
@@ -1500,18 +1627,18 @@ class _ProductImageCarouselState extends State<_ProductImageCarousel> {
             ),
           if (images.length > 1)
             Positioned(
-              top: 12.h,
-              left: 12.w,
+              top: AppSpacing.md12,
+              left: AppSpacing.md12,
               child: Container(
-                padding: EdgeInsets.symmetric(horizontal: 8.w, vertical: 3.h),
+                padding: EdgeInsets.symmetric(horizontal: AppSpacing.sm, vertical: 3.h),
                 decoration: BoxDecoration(
-                  color: Colors.black.withOpacity(0.45),
-                  borderRadius: BorderRadius.circular(20.r),
+                  color: AppColors.black.withOpacity(0.45),
+                  borderRadius: BorderRadius.circular(AppRadius.pill),
                 ),
                 child: Text(
                   '${_current + 1}/${images.length}',
                   style: TextStyle(
-                    color: Colors.white,
+                    color: AppColors.surface,
                     fontSize: 10.sp,
                     fontWeight: FontWeight.w700,
                   ),
@@ -1557,14 +1684,14 @@ class _ReviewFilterSectionState extends State<_ReviewFilterSection> {
 
     return Container(
       margin: EdgeInsets.symmetric(horizontal: ProductManagementDetailPage._hPad.w),
-      padding: EdgeInsets.all(12.r),
+      padding: EdgeInsets.all(AppSpacing.md12),
       decoration: BoxDecoration(
         color: AppColors.surface,
-        borderRadius: BorderRadius.circular(12.r),
+        borderRadius: BorderRadius.circular(AppRadius.lg),
         border: Border.all(color: AppColors.grey100),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.03),
+            color: AppColors.black.withOpacity(0.03),
             blurRadius: 12,
             offset: const Offset(0, 4),
           ),
@@ -1577,16 +1704,18 @@ class _ReviewFilterSectionState extends State<_ReviewFilterSection> {
             children: [
               Container(
                 width: 3.w,
-                height: 14.h,
+                height: AppSpacing.section,
                 decoration: BoxDecoration(
                   color: AppColors.primary,
                   borderRadius: BorderRadius.circular(2.r),
                 ),
               ),
-              SizedBox(width: 8.w),
+              SizedBox(width: AppSpacing.sm),
               Expanded(
                 child: Text(
-                  'Ulasan (${widget.totalReviews})',
+                  'marketplace.reviews_with_count'.tr(namedArgs: {
+                    'count': '${widget.totalReviews}',
+                  }),
                   style: TextStyle(
                     fontSize: 13.sp,
                     fontWeight: FontWeight.w700,
@@ -1595,10 +1724,10 @@ class _ReviewFilterSectionState extends State<_ReviewFilterSection> {
                 ),
               ),
               Container(
-                padding: EdgeInsets.symmetric(horizontal: 8.w, vertical: 4.h),
+                padding: EdgeInsets.symmetric(horizontal: AppSpacing.sm, vertical: AppSpacing.xs),
                 decoration: BoxDecoration(
                   color: AppColors.warning.withOpacity(0.1),
-                  borderRadius: BorderRadius.circular(8.r),
+                  borderRadius: BorderRadius.circular(AppRadius.button),
                 ),
                 child: Row(
                   mainAxisSize: MainAxisSize.min,
@@ -1622,7 +1751,7 @@ class _ReviewFilterSectionState extends State<_ReviewFilterSection> {
               ),
             ],
           ),
-          SizedBox(height: 14.h),
+          SizedBox(height: AppSpacing.section),
 
         // Rating bars
         ...starCounts.entries.map((e) => Padding(
@@ -1648,12 +1777,12 @@ class _ReviewFilterSectionState extends State<_ReviewFilterSection> {
                   ),
                 ),
               ),
-              SizedBox(width: 8.w),
+              SizedBox(width: AppSpacing.sm),
               Text('${e.value}', style: TextStyle(fontSize: 10.sp, color: AppColors.textHint)),
             ]),
           ),
         )),
-        SizedBox(height: 8.h),
+        SizedBox(height: AppSpacing.sm),
 
         // Filter chips
         Wrap(
@@ -1661,7 +1790,7 @@ class _ReviewFilterSectionState extends State<_ReviewFilterSection> {
           runSpacing: 6.h,
           children: [
             _reviewChip(
-              'Semua',
+              'marketplace.category_all'.tr(),
               _ratingFilter == null && !_hasImageOnly,
               () => setState(() {
                 _ratingFilter = null;
@@ -1680,22 +1809,22 @@ class _ReviewFilterSectionState extends State<_ReviewFilterSection> {
               ),
             ),
             _reviewChip(
-              'Ada Foto',
+              'marketplace.filter_with_photo'.tr(),
               _hasImageOnly,
               () => setState(() => _hasImageOnly = !_hasImageOnly),
               icon: LucideIcons.image,
             ),
           ],
         ),
-        SizedBox(height: 12.h),
+        SizedBox(height: AppSpacing.md12),
 
         if (filtered.isEmpty)
-          Padding(padding: EdgeInsets.symmetric(vertical: 20.h), child: Center(child: Text('Tidak ada ulasan dengan filter ini', style: TextStyle(fontSize: 12.sp, color: AppColors.textHint))))
+          Padding(padding: EdgeInsets.symmetric(vertical: AppSpacing.lg), child: Center(child: Text('marketplace.no_reviews_filter'.tr(), style: AppTextStyles.bodySecondary(color: AppColors.textHint))))
         else
           ...filtered.take(10).map((r) => _buildReviewCard(r)),
         if (filtered.length > 10)
           Padding(
-            padding: EdgeInsets.only(top: 8.h),
+            padding: EdgeInsets.only(top: AppSpacing.sm),
             child: Center(
               child: TextButton(
                 onPressed: () => context.push(
@@ -1703,7 +1832,9 @@ class _ReviewFilterSectionState extends State<_ReviewFilterSection> {
                   extra: {'name': ''},
                 ),
                 child: Text(
-                  'Lihat semua ${filtered.length} ulasan',
+                  'marketplace.view_all_reviews'.tr(namedArgs: {
+                    'count': '${filtered.length}',
+                  }),
                   style: TextStyle(
                     fontSize: 12.sp,
                     fontWeight: FontWeight.w700,
@@ -1727,10 +1858,10 @@ class _ReviewFilterSectionState extends State<_ReviewFilterSection> {
     return GestureDetector(
       onTap: onTap,
       child: Container(
-        padding: EdgeInsets.symmetric(horizontal: 12.w, vertical: 6.h),
+        padding: EdgeInsets.symmetric(horizontal: AppSpacing.md12, vertical: AppSpacing.xs6),
         decoration: BoxDecoration(
           color: selected ? AppColors.primary : AppColors.grey50,
-          borderRadius: BorderRadius.circular(20.r),
+          borderRadius: BorderRadius.circular(AppRadius.pill),
           border: Border.all(
             color: selected ? AppColors.primary : AppColors.grey200,
           ),
@@ -1762,11 +1893,11 @@ class _ReviewFilterSectionState extends State<_ReviewFilterSection> {
 
   Widget _buildReviewCard(ReviewModel r) {
     return Container(
-      margin: EdgeInsets.only(bottom: 10.h),
-      padding: EdgeInsets.all(12.r),
+      margin: EdgeInsets.only(bottom: AppSpacing.sm10),
+      padding: EdgeInsets.all(AppSpacing.md12),
       decoration: BoxDecoration(
         color: AppColors.grey50,
-        borderRadius: BorderRadius.circular(12.r),
+        borderRadius: BorderRadius.circular(AppRadius.lg),
         border: Border.all(color: AppColors.grey100),
       ),
       child: Column(
@@ -1775,7 +1906,7 @@ class _ReviewFilterSectionState extends State<_ReviewFilterSection> {
           Row(
             children: [
               CircleAvatar(
-                radius: 16.r,
+                radius: AppRadius.xl,
                 backgroundColor: AppColors.grey200,
                 backgroundImage:
                     resolveMediaImageProvider(r.userAvatar),
@@ -1783,7 +1914,7 @@ class _ReviewFilterSectionState extends State<_ReviewFilterSection> {
                     ? Icon(LucideIcons.user, size: 14.sp, color: AppColors.grey500)
                     : null,
               ),
-              SizedBox(width: 10.w),
+              SizedBox(width: AppSpacing.sm10),
               Expanded(
                 child: Text(
                   r.userName,
@@ -1812,10 +1943,10 @@ class _ReviewFilterSectionState extends State<_ReviewFilterSection> {
               ),
             ],
           ),
-        if (r.comment.isNotEmpty) ...[SizedBox(height: 6.h), Text(r.comment, style: TextStyle(fontSize: 12.sp, color: AppColors.textSecondary), maxLines: 3, overflow: TextOverflow.ellipsis)],
+        if (r.comment.isNotEmpty) ...[SizedBox(height: 6.h), Text(r.comment, style: AppTextStyles.bodySecondary(color: AppColors.textSecondary), maxLines: 3, overflow: TextOverflow.ellipsis)],
         if (r.images != null && r.images!.isNotEmpty) ...[SizedBox(height: 6.h), SizedBox(height: 50.h, child: ListView.separated(scrollDirection: Axis.horizontal, itemCount: r.images!.length, separatorBuilder: (_, __) => SizedBox(width: 6.w), itemBuilder: (_, i) => ClipRRect(borderRadius: BorderRadius.circular(6.r), child: BisaNetworkImage(imageUrl: r.images![i], width: 50.w, height: 50.h, fit: BoxFit.cover))))],
         SizedBox(height: 4.h),
-        Text(timeago.format(r.createdAt), style: TextStyle(fontSize: 9.sp, color: AppColors.textHint)),
+        Text(timeago.format(r.createdAt), style: AppTextStyles.chip(fontSize: 9.sp, color: AppColors.textHint)),
       ]),
     );
   }

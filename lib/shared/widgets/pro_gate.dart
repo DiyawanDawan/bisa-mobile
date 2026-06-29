@@ -1,3 +1,4 @@
+import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
@@ -18,8 +19,7 @@ class ProGate extends StatelessWidget {
     super.key,
     required this.child,
     this.icon = LucideIcons.lock,
-    this.lockedMessage =
-        'Fitur ini khusus langganan PRO. Upgrade untuk akses penuh.',
+    this.lockedMessage = 'shared.pro_gate_default_message',
     this.title,
   });
 
@@ -43,7 +43,7 @@ class ProGate extends StatelessWidget {
                 : null,
             body: SafeArea(
               child: ProRequiredPlaceholder(
-                message: lockedMessage,
+                message: lockedMessage.tr(),
                 icon: icon,
                 onActionPressed: () => context.push('/iot-subscription'),
               ),

@@ -1,7 +1,9 @@
+import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:mobile_bisa/core/constants/app_colors.dart';
+import 'package:mobile_bisa/core/utils/app_feedback.dart';
 import 'package:mobile_bisa/features/invoice/domain/entities/invoice_draft.dart';
 import 'package:mobile_bisa/features/invoice/presentation/bloc/create_invoice_cubit.dart';
 import 'package:mobile_bisa/shared/widgets/osm_location_picker_page.dart';
@@ -104,7 +106,7 @@ class _InvoiceBuyerShippingPanelState extends State<InvoiceBuyerShippingPanel> {
           options.add(
             _BuyerAddressOption(
               key: row['key']?.toString() ?? '',
-              label: row['label']?.toString() ?? 'Alamat',
+              label: row['label']?.toString() ?? 'invoice.address_unnamed'.tr(),
               snapshot: Map<String, dynamic>.from(snap),
               isPrimary: row['isPrimary'] == true,
               isDefault: row['isDefault'] == true,
@@ -137,7 +139,7 @@ class _InvoiceBuyerShippingPanelState extends State<InvoiceBuyerShippingPanel> {
       options.add(
         _BuyerAddressOption(
           key: 'profile',
-          label: 'Profil pembeli',
+          label: 'invoice.buyer_address_profile'.tr(),
           snapshot: Map<String, dynamic>.from(profile),
           isPrimary: false,
           isDefault: def is Map && _snapMatch(profile, def),
@@ -154,7 +156,7 @@ class _InvoiceBuyerShippingPanelState extends State<InvoiceBuyerShippingPanel> {
       options.add(
         _BuyerAddressOption(
           key: id,
-          label: row['label']?.toString() ?? 'Alamat',
+          label: row['label']?.toString() ?? 'invoice.address_unnamed'.tr(),
           snapshot: Map<String, dynamic>.from(snap),
           isPrimary: row['isPrimary'] == true,
           isDefault: def is Map && _snapMatch(snap, def),
@@ -191,13 +193,13 @@ class _InvoiceBuyerShippingPanelState extends State<InvoiceBuyerShippingPanel> {
     widget.onDraftChanged(next);
     await cubit.refreshPreview(widget.negotiationId);
     if (!mounted) return;
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text('Alamat "${opt.label}" dipilih'),
-        backgroundColor: AppColors.secondary,
-        behavior: SnackBarBehavior.floating,
-        duration: const Duration(seconds: 2),
+    showCustomSnackBar(
+      context,
+      content: Text(
+        'invoice.address_selected'.tr(namedArgs: {'label': opt.label}),
       ),
+      backgroundColor: AppColors.secondary,
+      duration: const Duration(seconds: 2),
     );
   }
 
@@ -207,20 +209,14 @@ class _InvoiceBuyerShippingPanelState extends State<InvoiceBuyerShippingPanel> {
     }
     if (!mounted) return;
     if (_options.isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text(
-            'Pembeli belum punya alamat tersimpan. Minta lengkapi di Profil.',
-          ),
-        ),
-      );
+      showWarningSnackBar(context, 'invoice.buyer_no_saved_address');
       return;
     }
 
     final picked = await showModalBottomSheet<_BuyerAddressOption>(
       context: context,
       isScrollControlled: true,
-      backgroundColor: Colors.white,
+      backgroundColor: AppColors.surface,
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(20.r)),
       ),
@@ -249,7 +245,7 @@ class _InvoiceBuyerShippingPanelState extends State<InvoiceBuyerShippingPanel> {
                   ),
                   SizedBox(height: 12.h),
                   Text(
-                    'Pilih alamat penerima',
+                    'invoice.buyer_pick_address'.tr(),
                     style: TextStyle(
                       fontSize: 16.sp,
                       fontWeight: FontWeight.w800,
@@ -257,7 +253,7 @@ class _InvoiceBuyerShippingPanelState extends State<InvoiceBuyerShippingPanel> {
                   ),
                   SizedBox(height: 4.h),
                   Text(
-                    'Utama = alamat default pembeli · Default = yang dipakai sistem saat ini',
+                    'invoice.buyer_address_legend'.tr(),
                     style: TextStyle(
                       fontSize: 11.sp,
                       color: AppColors.textHint,
@@ -323,8 +319,7 @@ class _InvoiceBuyerShippingPanelState extends State<InvoiceBuyerShippingPanel> {
           draft: widget.draft,
           readOnly: widget.readOnly,
           onChanged: widget.readOnly ? null : widget.onDraftChanged,
-          hintText:
-              'Anda masih bisa mengedit detail di bawah setelah memilih alamat.',
+          hintText: 'invoice.buyer_address_edit_hint'.tr(),
         ),
       ],
     );
@@ -335,7 +330,7 @@ class _InvoiceBuyerShippingPanelState extends State<InvoiceBuyerShippingPanel> {
       children: [
         Expanded(
           child: Text(
-            'Daftar alamat pembeli',
+            'invoice.buyer_address_list_title'.tr(),
             style: TextStyle(
               fontSize: 12.sp,
               fontWeight: FontWeight.w700,
@@ -347,7 +342,7 @@ class _InvoiceBuyerShippingPanelState extends State<InvoiceBuyerShippingPanel> {
           onPressed: _showAllAddressesSheet,
           icon: Icon(Icons.swap_horiz, size: 18.sp),
           label: Text(
-            'Ubah alamat',
+            'invoice.buyer_change_address'.tr(),
             style: TextStyle(fontWeight: FontWeight.w800, fontSize: 12.sp),
           ),
         ),
@@ -388,10 +383,10 @@ class _InvoiceBuyerShippingPanelState extends State<InvoiceBuyerShippingPanel> {
 
   Widget _buildSourceHint(InvoiceDraft draft) {
     final label = switch (draft.source) {
-      'buyer_saved_address' => 'Sumber: alamat tersimpan pembeli',
-      'buyer_profile' => 'Sumber: profil pembeli',
-      'custom' => 'Sumber: kustom (manual / peta)',
-      _ => 'Sumber: profil pembeli (default)',
+      'buyer_saved_address' => 'invoice.shipping_source_saved'.tr(),
+      'buyer_profile' => 'invoice.shipping_source_profile'.tr(),
+      'custom' => 'invoice.shipping_source_custom'.tr(),
+      _ => 'invoice.shipping_source_default'.tr(),
     };
     final hasGis = draft.latitude != null &&
         draft.longitude != null &&
@@ -411,7 +406,9 @@ class _InvoiceBuyerShippingPanelState extends State<InvoiceBuyerShippingPanel> {
           SizedBox(width: 8.w),
           Expanded(
             child: Text(
-              hasGis ? '$label · koordinat GIS tersimpan' : label,
+              hasGis
+                  ? 'invoice.shipping_source_gis'.tr(namedArgs: {'label': label})
+                  : label,
               style: TextStyle(
                 fontSize: 11.sp,
                 color: AppColors.info,
@@ -431,17 +428,17 @@ class _InvoiceBuyerShippingPanelState extends State<InvoiceBuyerShippingPanel> {
       children: [
         _actionChip(
           icon: Icons.refresh,
-          label: 'Muat ulang daftar',
+          label: 'invoice.action_reload_address_list'.tr(),
           onTap: _loadAddressOptions,
         ),
         _actionChip(
           icon: Icons.star_outline,
-          label: 'Pakai default',
+          label: 'invoice.action_use_default_address'.tr(),
           onTap: () => _onUseDefault(context),
         ),
         _actionChip(
           icon: Icons.map_outlined,
-          label: 'Peta (GIS)',
+          label: 'invoice.action_pick_map_gis'.tr(),
           onTap: () => _onPickMap(context),
         ),
       ],

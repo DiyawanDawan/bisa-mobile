@@ -1,3 +1,5 @@
+import 'package:easy_localization/easy_localization.dart';
+
 class RoleReadiness {
   const RoleReadiness({
     required this.ready,
@@ -22,9 +24,7 @@ class RoleReadiness {
     return RoleReadiness(
       ready: json['ready'] == true,
       missing: missing,
-      messages: messages.isNotEmpty
-          ? messages
-          : missing.map((key) => readinessLabelForKey(key)).toList(),
+      messages: messages,
     );
   }
 }
@@ -53,25 +53,25 @@ class UserReadiness {
   }
 }
 
-const storeReadinessLabels = <String, String>{
-  'companyName': 'Nama toko / perusahaan',
-  'phone': 'Nomor telepon',
-  'storeLocation': 'Provinsi & kabupaten/kota toko',
-  'businessAddress': 'Alamat bisnis (min. 10 karakter)',
-  'rajaongkirOriginId': 'Lokasi asal pengiriman RajaOngkir',
-  'kycVerified': 'Verifikasi KYC disetujui',
+const _storeReadinessLabelKeys = <String, String>{
+  'companyName': 'readiness.field_company_name',
+  'phone': 'readiness.field_phone',
+  'storeLocation': 'readiness.field_store_location',
+  'businessAddress': 'readiness.field_business_address',
+  'rajaongkirOriginId': 'readiness.field_rajaongkir_origin',
+  'kycVerified': 'readiness.field_kyc_verified',
 };
 
-const buyerReadinessLabels = <String, String>{
-  'shippingAddress': 'Alamat pengiriman (min. 10 karakter)',
-  'recipientPhone': 'Nomor telepon penerima',
-  'shippingRegion': 'Kabupaten/kota atau provinsi tujuan',
+const _buyerReadinessLabelKeys = <String, String>{
+  'shippingAddress': 'readiness.field_shipping_address',
+  'recipientPhone': 'readiness.field_recipient_phone',
+  'shippingRegion': 'readiness.field_shipping_region',
 };
 
 String readinessLabelForKey(String key) {
-  return storeReadinessLabels[key] ??
-      buyerReadinessLabels[key] ??
-      key;
+  final labelKey =
+      _storeReadinessLabelKeys[key] ?? _buyerReadinessLabelKeys[key];
+  return labelKey != null ? labelKey.tr() : key;
 }
 
 String? readinessRouteForStoreKey(String key) {

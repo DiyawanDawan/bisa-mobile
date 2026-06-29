@@ -4,6 +4,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
 import 'package:mobile_bisa/core/constants/app_colors.dart';
+import 'package:mobile_bisa/core/i18n/failure_messages.dart';
 import 'package:mobile_bisa/core/utils/safe_area_utils.dart';
 import 'package:mobile_bisa/features/wallet/domain/entities/payout_account_entity.dart';
 import 'package:mobile_bisa/features/wallet/domain/entities/wallet_entity.dart';
@@ -13,7 +14,7 @@ import 'package:mobile_bisa/injection_container.dart';
 import 'package:go_router/go_router.dart';
 import 'package:mobile_bisa/features/wallet/presentation/widgets/wallet_transaction_ui.dart';
 import '../../../../shared/widgets/bisa_app_bar.dart';
-import '../../../../core/utils/extensions.dart';
+import 'package:mobile_bisa/core/utils/money_format.dart';
 import 'package:mobile_bisa/shared/widgets/custom_button.dart';
 import 'package:mobile_bisa/shared/widgets/custom_text_field.dart';
 import 'payout_accounts_page.dart';
@@ -33,9 +34,9 @@ class _WalletPageState extends State<WalletPage> {
       create: (context) => sl<WalletCubit>()..getWalletData(),
       child: Scaffold(
         backgroundColor: AppColors.background,
-        appBar: const BisaAppBar(
+        appBar: BisaAppBar(
           backgroundColor: AppColors.surface,
-          title: 'Dompet BISA',
+          title: 'wallet.page_title'.tr(),
         ),
         body: BlocConsumer<WalletCubit, WalletState>(
           listener: (context, state) {
@@ -60,7 +61,7 @@ class _WalletPageState extends State<WalletPage> {
               payoutAccountSuccess: () {
                 showBisaSnackBarMessage(
                   context,
-                  'Rekening berhasil disimpan',
+                  'wallet.account_saved_success'.tr(),
                 );
               },
               error: (message) {
@@ -99,7 +100,7 @@ class _WalletPageState extends State<WalletPage> {
                 child: Column(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
-                    Text(message),
+                    Text(message.localizedFailure),
                     SizedBox(height: 16.h),
                     CustomButton(
                       text: 'coba_lagi'.tr(),
@@ -143,23 +144,23 @@ class _WalletPageState extends State<WalletPage> {
               Text(
                 'saldo_tersedia'.tr(),
                 style: TextStyle(
-                  color: Colors.white.withValues(alpha: 0.8),
+                  color: AppColors.textOnPrimary.withValues(alpha: 0.8),
                   fontSize: 14.sp,
                   fontWeight: FontWeight.w500,
                 ),
               ),
               Icon(
                 LucideIcons.wallet,
-                color: Colors.white.withValues(alpha: 0.5),
+                color: AppColors.white.withValues(alpha: 0.5),
                 size: 24.sp,
               ),
             ],
           ),
           SizedBox(height: 8.h),
           Text(
-            wallet.balance.toRupiah,
+            formatMoneyIdr(wallet.balance),
             style: TextStyle(
-              color: Colors.white,
+              color: AppColors.surface,
               fontSize: 32.sp,
               fontWeight: FontWeight.w900,
               letterSpacing: -1,
@@ -170,19 +171,19 @@ class _WalletPageState extends State<WalletPage> {
             children: [
               _buildBalanceDetail(
                 LucideIcons.trendingUp,
-                'Pemasukan',
-                wallet.totalEarned.toRupiah,
+                'wallet.income_label'.tr(),
+                formatMoneyIdr(wallet.totalEarned),
               ),
               Container(
                 width: 1,
                 height: 30,
-                color: Colors.white.withValues(alpha: 0.2),
+                color: AppColors.white.withValues(alpha: 0.2),
                 margin: EdgeInsets.symmetric(horizontal: 20.w),
               ),
               _buildBalanceDetail(
                 LucideIcons.trendingDown,
-                'Penarikan',
-                wallet.totalWithdrawn.toRupiah,
+                'wallet.withdrawn_label'.tr(),
+                formatMoneyIdr(wallet.totalWithdrawn),
               ),
             ],
           ),
@@ -198,12 +199,12 @@ class _WalletPageState extends State<WalletPage> {
         children: [
           Row(
             children: [
-              Icon(icon, size: 12.sp, color: Colors.white.withValues(alpha: 0.7)),
+              Icon(icon, size: 12.sp, color: AppColors.white.withValues(alpha: 0.7)),
               SizedBox(width: 4.w),
               Text(
                 label,
                 style: TextStyle(
-                  color: Colors.white.withValues(alpha: 0.7),
+                  color: AppColors.textOnPrimary.withValues(alpha: 0.7),
                   fontSize: 11.sp,
                   fontWeight: FontWeight.w600,
                 ),
@@ -214,7 +215,7 @@ class _WalletPageState extends State<WalletPage> {
           Text(
             value,
             style: TextStyle(
-              color: Colors.white,
+              color: AppColors.surface,
               fontSize: 14.sp,
               fontWeight: FontWeight.w800,
             ),
@@ -236,7 +237,7 @@ class _WalletPageState extends State<WalletPage> {
         children: [
           _buildQuickAction(
             LucideIcons.arrowUpRight,
-            'Tarik Dana',
+            'wallet.action_withdraw'.tr(),
             AppColors.primary,
             onTap: () =>
                 _showWithdrawDialog(context, wallet.balance, accounts),
@@ -244,7 +245,7 @@ class _WalletPageState extends State<WalletPage> {
           SizedBox(width: 16.w),
           _buildQuickAction(
             LucideIcons.landmark,
-            'Bank Saya',
+            'wallet.action_my_bank'.tr(),
             AppColors.info,
             onTap: () {
               final walletCubit = context.read<WalletCubit>();
@@ -262,7 +263,7 @@ class _WalletPageState extends State<WalletPage> {
           SizedBox(width: 16.w),
           _buildQuickAction(
             LucideIcons.chartColumn,
-            'Analitik',
+            'wallet.action_analytics'.tr(),
             AppColors.warning,
             onTap: () => context.push('/sales-analytics'),
           ),
@@ -283,11 +284,11 @@ class _WalletPageState extends State<WalletPage> {
         child: Container(
           padding: EdgeInsets.symmetric(vertical: 12.h),
           decoration: BoxDecoration(
-            color: AppColors.white,
+            color: AppColors.surface,
             borderRadius: BorderRadius.circular(20.r),
             boxShadow: [
               BoxShadow(
-                color: Colors.black.withValues(alpha: 0.02),
+                color: AppColors.black.withValues(alpha: 0.02),
                 blurRadius: 10,
                 offset: const Offset(0, 5),
               ),
@@ -329,11 +330,11 @@ class _WalletPageState extends State<WalletPage> {
       margin: EdgeInsets.only(top: 8.h),
       width: double.infinity,
       decoration: BoxDecoration(
-        color: AppColors.white,
+        color: AppColors.surface,
         borderRadius: BorderRadius.vertical(top: Radius.circular(32.r)),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withValues(alpha: 0.03),
+            color: AppColors.black.withValues(alpha: 0.03),
             blurRadius: 20,
             offset: const Offset(0, -10),
           ),
@@ -347,7 +348,7 @@ class _WalletPageState extends State<WalletPage> {
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
               Text(
-                'Riwayat Transaksi',
+                'wallet.history_title'.tr(),
                 style: TextStyle(
                   fontSize: 18.sp,
                   fontWeight: FontWeight.w800,
@@ -357,7 +358,7 @@ class _WalletPageState extends State<WalletPage> {
               GestureDetector(
                 onTap: () => context.push('/wallet/transactions'),
                 child: Text(
-                  'Lihat Semua',
+                  'wallet.view_all'.tr(),
                   style: TextStyle(
                     fontSize: 13.sp,
                     fontWeight: FontWeight.w700,
@@ -411,7 +412,7 @@ class _WalletPageState extends State<WalletPage> {
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
-      backgroundColor: Colors.transparent,
+      backgroundColor: AppColors.transparent,
       builder: (bContext) => BlocProvider.value(
         value: walletCubit,
         child: Builder(
@@ -443,7 +444,7 @@ class _WalletPageState extends State<WalletPage> {
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
                             Text(
-                              'Tarik Dana',
+                              'wallet.action_withdraw'.tr(),
                               style: TextStyle(
                                 fontSize: 18.sp,
                                 fontWeight: FontWeight.w900,
@@ -451,7 +452,11 @@ class _WalletPageState extends State<WalletPage> {
                             ),
                             SizedBox(height: 2.h),
                             Text(
-                              'Saldo tersedia: ${currentBalance.toRupiah}',
+                              'wallet.available_balance'.tr(
+                                namedArgs: {
+                                  'amount': formatMoneyIdr(currentBalance),
+                                },
+                              ),
                               style: TextStyle(
                                 fontSize: 12.sp,
                                 color: AppColors.textSecondary,
@@ -471,7 +476,7 @@ class _WalletPageState extends State<WalletPage> {
                                   ),
                                 ),
                                 child: Text(
-                                  'Atur rekening utama di Pengaturan Rekening Pencairan sebelum menarik dana.',
+                                  'wallet.no_main_account_warning'.tr(),
                                   style: TextStyle(
                                     fontSize: 12.sp,
                                     color: AppColors.textSecondary,
@@ -481,7 +486,7 @@ class _WalletPageState extends State<WalletPage> {
                               )
                             else ...[
                               Text(
-                                'Rekening Tujuan (Utama)',
+                                'wallet.destination_account_title'.tr(),
                                 style: TextStyle(
                                   fontSize: 13.sp,
                                   fontWeight: FontWeight.w600,
@@ -501,7 +506,7 @@ class _WalletPageState extends State<WalletPage> {
                                   crossAxisAlignment: CrossAxisAlignment.start,
                                   children: [
                                     Text(
-                                      mainAccount.bankName,
+                                      localizeFailureMessage(mainAccount.bankName),
                                       style: TextStyle(
                                         fontSize: 14.sp,
                                         fontWeight: FontWeight.w800,
@@ -529,8 +534,8 @@ class _WalletPageState extends State<WalletPage> {
                               ),
                               SizedBox(height: 12.h),
                               CustomTextField(
-                                label: 'Jumlah Penarikan',
-                                hint: 'Rp 0',
+                                label: 'wallet.withdraw_amount_label'.tr(),
+                                hint: 'wallet.withdraw_amount_hint'.tr(),
                                 controller: amountController,
                                 keyboardType: TextInputType.number,
                               ),
@@ -545,7 +550,7 @@ class _WalletPageState extends State<WalletPage> {
                         padding: EdgeInsets.fromLTRB(20.w, 8.h, 20.w, 12.h),
                         child: mainAccount == null
                             ? CustomButton(
-                                text: 'Atur Rekening Utama',
+                                text: 'wallet.setup_primary_account'.tr(),
                                 height: 50.h,
                                 onPressed: () {
                                   Navigator.pop(bContext);
@@ -558,7 +563,7 @@ class _WalletPageState extends State<WalletPage> {
                                 },
                               )
                             : CustomButton(
-                                text: 'Konfirmasi Penarikan',
+                                text: 'wallet.confirm_withdrawal'.tr(),
                                 height: 50.h,
                                 onPressed: () {
                                   final amount =

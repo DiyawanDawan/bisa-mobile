@@ -14,7 +14,7 @@ T _$identity<T>(T value) => value;
 /// @nodoc
 mixin _$UserEntity {
 
- String get id; String get name; String get email; String? get phone; String? get avatar; String? get companyName; String? get address; String get role; bool get isVerified; DateTime get createdAt; String get tier; DateTime? get subscriptionExpiresAt; bool get enableNotifications;
+ String get id; String get name; String get email; String? get phone; String? get avatar; String? get companyName; String? get address; String get role; bool get isVerified; String? get kycStatus; bool get isKycVerified; String? get kycRejectionReason; DateTime get createdAt; String get tier; DateTime? get subscriptionExpiresAt; bool get enableNotifications;
 /// Create a copy of UserEntity
 /// with the given fields replaced by the non-null parameter values.
 @JsonKey(includeFromJson: false, includeToJson: false)
@@ -25,16 +25,16 @@ $UserEntityCopyWith<UserEntity> get copyWith => _$UserEntityCopyWithImpl<UserEnt
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is UserEntity&&(identical(other.id, id) || other.id == id)&&(identical(other.name, name) || other.name == name)&&(identical(other.email, email) || other.email == email)&&(identical(other.phone, phone) || other.phone == phone)&&(identical(other.avatar, avatar) || other.avatar == avatar)&&(identical(other.companyName, companyName) || other.companyName == companyName)&&(identical(other.address, address) || other.address == address)&&(identical(other.role, role) || other.role == role)&&(identical(other.isVerified, isVerified) || other.isVerified == isVerified)&&(identical(other.createdAt, createdAt) || other.createdAt == createdAt)&&(identical(other.tier, tier) || other.tier == tier)&&(identical(other.subscriptionExpiresAt, subscriptionExpiresAt) || other.subscriptionExpiresAt == subscriptionExpiresAt)&&(identical(other.enableNotifications, enableNotifications) || other.enableNotifications == enableNotifications));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is UserEntity&&(identical(other.id, id) || other.id == id)&&(identical(other.name, name) || other.name == name)&&(identical(other.email, email) || other.email == email)&&(identical(other.phone, phone) || other.phone == phone)&&(identical(other.avatar, avatar) || other.avatar == avatar)&&(identical(other.companyName, companyName) || other.companyName == companyName)&&(identical(other.address, address) || other.address == address)&&(identical(other.role, role) || other.role == role)&&(identical(other.isVerified, isVerified) || other.isVerified == isVerified)&&(identical(other.kycStatus, kycStatus) || other.kycStatus == kycStatus)&&(identical(other.isKycVerified, isKycVerified) || other.isKycVerified == isKycVerified)&&(identical(other.kycRejectionReason, kycRejectionReason) || other.kycRejectionReason == kycRejectionReason)&&(identical(other.createdAt, createdAt) || other.createdAt == createdAt)&&(identical(other.tier, tier) || other.tier == tier)&&(identical(other.subscriptionExpiresAt, subscriptionExpiresAt) || other.subscriptionExpiresAt == subscriptionExpiresAt)&&(identical(other.enableNotifications, enableNotifications) || other.enableNotifications == enableNotifications));
 }
 
 
 @override
-int get hashCode => Object.hash(runtimeType,id,name,email,phone,avatar,companyName,address,role,isVerified,createdAt,tier,subscriptionExpiresAt,enableNotifications);
+int get hashCode => Object.hash(runtimeType,id,name,email,phone,avatar,companyName,address,role,isVerified,kycStatus,isKycVerified,kycRejectionReason,createdAt,tier,subscriptionExpiresAt,enableNotifications);
 
 @override
 String toString() {
-  return 'UserEntity(id: $id, name: $name, email: $email, phone: $phone, avatar: $avatar, companyName: $companyName, address: $address, role: $role, isVerified: $isVerified, createdAt: $createdAt, tier: $tier, subscriptionExpiresAt: $subscriptionExpiresAt, enableNotifications: $enableNotifications)';
+  return 'UserEntity(id: $id, name: $name, email: $email, phone: $phone, avatar: $avatar, companyName: $companyName, address: $address, role: $role, isVerified: $isVerified, kycStatus: $kycStatus, isKycVerified: $isKycVerified, kycRejectionReason: $kycRejectionReason, createdAt: $createdAt, tier: $tier, subscriptionExpiresAt: $subscriptionExpiresAt, enableNotifications: $enableNotifications)';
 }
 
 
@@ -45,7 +45,7 @@ abstract mixin class $UserEntityCopyWith<$Res>  {
   factory $UserEntityCopyWith(UserEntity value, $Res Function(UserEntity) _then) = _$UserEntityCopyWithImpl;
 @useResult
 $Res call({
- String id, String name, String email, String? phone, String? avatar, String? companyName, String? address, String role, bool isVerified, DateTime createdAt, String tier, DateTime? subscriptionExpiresAt, bool enableNotifications
+ String id, String name, String email, String? phone, String? avatar, String? companyName, String? address, String role, bool isVerified, String? kycStatus, bool isKycVerified, String? kycRejectionReason, DateTime createdAt, String tier, DateTime? subscriptionExpiresAt, bool enableNotifications
 });
 
 
@@ -62,7 +62,7 @@ class _$UserEntityCopyWithImpl<$Res>
 
 /// Create a copy of UserEntity
 /// with the given fields replaced by the non-null parameter values.
-@pragma('vm:prefer-inline') @override $Res call({Object? id = null,Object? name = null,Object? email = null,Object? phone = freezed,Object? avatar = freezed,Object? companyName = freezed,Object? address = freezed,Object? role = null,Object? isVerified = null,Object? createdAt = null,Object? tier = null,Object? subscriptionExpiresAt = freezed,Object? enableNotifications = null,}) {
+@pragma('vm:prefer-inline') @override $Res call({Object? id = null,Object? name = null,Object? email = null,Object? phone = freezed,Object? avatar = freezed,Object? companyName = freezed,Object? address = freezed,Object? role = null,Object? isVerified = null,Object? kycStatus = freezed,Object? isKycVerified = null,Object? kycRejectionReason = freezed,Object? createdAt = null,Object? tier = null,Object? subscriptionExpiresAt = freezed,Object? enableNotifications = null,}) {
   return _then(_self.copyWith(
 id: null == id ? _self.id : id // ignore: cast_nullable_to_non_nullable
 as String,name: null == name ? _self.name : name // ignore: cast_nullable_to_non_nullable
@@ -73,7 +73,10 @@ as String?,companyName: freezed == companyName ? _self.companyName : companyName
 as String?,address: freezed == address ? _self.address : address // ignore: cast_nullable_to_non_nullable
 as String?,role: null == role ? _self.role : role // ignore: cast_nullable_to_non_nullable
 as String,isVerified: null == isVerified ? _self.isVerified : isVerified // ignore: cast_nullable_to_non_nullable
-as bool,createdAt: null == createdAt ? _self.createdAt : createdAt // ignore: cast_nullable_to_non_nullable
+as bool,kycStatus: freezed == kycStatus ? _self.kycStatus : kycStatus // ignore: cast_nullable_to_non_nullable
+as String?,isKycVerified: null == isKycVerified ? _self.isKycVerified : isKycVerified // ignore: cast_nullable_to_non_nullable
+as bool,kycRejectionReason: freezed == kycRejectionReason ? _self.kycRejectionReason : kycRejectionReason // ignore: cast_nullable_to_non_nullable
+as String?,createdAt: null == createdAt ? _self.createdAt : createdAt // ignore: cast_nullable_to_non_nullable
 as DateTime,tier: null == tier ? _self.tier : tier // ignore: cast_nullable_to_non_nullable
 as String,subscriptionExpiresAt: freezed == subscriptionExpiresAt ? _self.subscriptionExpiresAt : subscriptionExpiresAt // ignore: cast_nullable_to_non_nullable
 as DateTime?,enableNotifications: null == enableNotifications ? _self.enableNotifications : enableNotifications // ignore: cast_nullable_to_non_nullable
@@ -162,10 +165,10 @@ return $default(_that);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( String id,  String name,  String email,  String? phone,  String? avatar,  String? companyName,  String? address,  String role,  bool isVerified,  DateTime createdAt,  String tier,  DateTime? subscriptionExpiresAt,  bool enableNotifications)?  $default,{required TResult orElse(),}) {final _that = this;
+@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( String id,  String name,  String email,  String? phone,  String? avatar,  String? companyName,  String? address,  String role,  bool isVerified,  String? kycStatus,  bool isKycVerified,  String? kycRejectionReason,  DateTime createdAt,  String tier,  DateTime? subscriptionExpiresAt,  bool enableNotifications)?  $default,{required TResult orElse(),}) {final _that = this;
 switch (_that) {
 case _UserEntity() when $default != null:
-return $default(_that.id,_that.name,_that.email,_that.phone,_that.avatar,_that.companyName,_that.address,_that.role,_that.isVerified,_that.createdAt,_that.tier,_that.subscriptionExpiresAt,_that.enableNotifications);case _:
+return $default(_that.id,_that.name,_that.email,_that.phone,_that.avatar,_that.companyName,_that.address,_that.role,_that.isVerified,_that.kycStatus,_that.isKycVerified,_that.kycRejectionReason,_that.createdAt,_that.tier,_that.subscriptionExpiresAt,_that.enableNotifications);case _:
   return orElse();
 
 }
@@ -183,10 +186,10 @@ return $default(_that.id,_that.name,_that.email,_that.phone,_that.avatar,_that.c
 /// }
 /// ```
 
-@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( String id,  String name,  String email,  String? phone,  String? avatar,  String? companyName,  String? address,  String role,  bool isVerified,  DateTime createdAt,  String tier,  DateTime? subscriptionExpiresAt,  bool enableNotifications)  $default,) {final _that = this;
+@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( String id,  String name,  String email,  String? phone,  String? avatar,  String? companyName,  String? address,  String role,  bool isVerified,  String? kycStatus,  bool isKycVerified,  String? kycRejectionReason,  DateTime createdAt,  String tier,  DateTime? subscriptionExpiresAt,  bool enableNotifications)  $default,) {final _that = this;
 switch (_that) {
 case _UserEntity():
-return $default(_that.id,_that.name,_that.email,_that.phone,_that.avatar,_that.companyName,_that.address,_that.role,_that.isVerified,_that.createdAt,_that.tier,_that.subscriptionExpiresAt,_that.enableNotifications);case _:
+return $default(_that.id,_that.name,_that.email,_that.phone,_that.avatar,_that.companyName,_that.address,_that.role,_that.isVerified,_that.kycStatus,_that.isKycVerified,_that.kycRejectionReason,_that.createdAt,_that.tier,_that.subscriptionExpiresAt,_that.enableNotifications);case _:
   throw StateError('Unexpected subclass');
 
 }
@@ -203,10 +206,10 @@ return $default(_that.id,_that.name,_that.email,_that.phone,_that.avatar,_that.c
 /// }
 /// ```
 
-@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( String id,  String name,  String email,  String? phone,  String? avatar,  String? companyName,  String? address,  String role,  bool isVerified,  DateTime createdAt,  String tier,  DateTime? subscriptionExpiresAt,  bool enableNotifications)?  $default,) {final _that = this;
+@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( String id,  String name,  String email,  String? phone,  String? avatar,  String? companyName,  String? address,  String role,  bool isVerified,  String? kycStatus,  bool isKycVerified,  String? kycRejectionReason,  DateTime createdAt,  String tier,  DateTime? subscriptionExpiresAt,  bool enableNotifications)?  $default,) {final _that = this;
 switch (_that) {
 case _UserEntity() when $default != null:
-return $default(_that.id,_that.name,_that.email,_that.phone,_that.avatar,_that.companyName,_that.address,_that.role,_that.isVerified,_that.createdAt,_that.tier,_that.subscriptionExpiresAt,_that.enableNotifications);case _:
+return $default(_that.id,_that.name,_that.email,_that.phone,_that.avatar,_that.companyName,_that.address,_that.role,_that.isVerified,_that.kycStatus,_that.isKycVerified,_that.kycRejectionReason,_that.createdAt,_that.tier,_that.subscriptionExpiresAt,_that.enableNotifications);case _:
   return null;
 
 }
@@ -218,7 +221,7 @@ return $default(_that.id,_that.name,_that.email,_that.phone,_that.avatar,_that.c
 
 
 class _UserEntity extends UserEntity {
-  const _UserEntity({required this.id, required this.name, required this.email, this.phone, this.avatar, this.companyName, this.address, this.role = 'user', this.isVerified = false, required this.createdAt, this.tier = 'FREE', this.subscriptionExpiresAt, this.enableNotifications = true}): super._();
+  const _UserEntity({required this.id, required this.name, required this.email, this.phone, this.avatar, this.companyName, this.address, this.role = 'user', this.isVerified = false, this.kycStatus, this.isKycVerified = false, this.kycRejectionReason, required this.createdAt, this.tier = 'FREE', this.subscriptionExpiresAt, this.enableNotifications = true}): super._();
   
 
 @override final  String id;
@@ -230,6 +233,9 @@ class _UserEntity extends UserEntity {
 @override final  String? address;
 @override@JsonKey() final  String role;
 @override@JsonKey() final  bool isVerified;
+@override final  String? kycStatus;
+@override@JsonKey() final  bool isKycVerified;
+@override final  String? kycRejectionReason;
 @override final  DateTime createdAt;
 @override@JsonKey() final  String tier;
 @override final  DateTime? subscriptionExpiresAt;
@@ -245,16 +251,16 @@ _$UserEntityCopyWith<_UserEntity> get copyWith => __$UserEntityCopyWithImpl<_Use
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is _UserEntity&&(identical(other.id, id) || other.id == id)&&(identical(other.name, name) || other.name == name)&&(identical(other.email, email) || other.email == email)&&(identical(other.phone, phone) || other.phone == phone)&&(identical(other.avatar, avatar) || other.avatar == avatar)&&(identical(other.companyName, companyName) || other.companyName == companyName)&&(identical(other.address, address) || other.address == address)&&(identical(other.role, role) || other.role == role)&&(identical(other.isVerified, isVerified) || other.isVerified == isVerified)&&(identical(other.createdAt, createdAt) || other.createdAt == createdAt)&&(identical(other.tier, tier) || other.tier == tier)&&(identical(other.subscriptionExpiresAt, subscriptionExpiresAt) || other.subscriptionExpiresAt == subscriptionExpiresAt)&&(identical(other.enableNotifications, enableNotifications) || other.enableNotifications == enableNotifications));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is _UserEntity&&(identical(other.id, id) || other.id == id)&&(identical(other.name, name) || other.name == name)&&(identical(other.email, email) || other.email == email)&&(identical(other.phone, phone) || other.phone == phone)&&(identical(other.avatar, avatar) || other.avatar == avatar)&&(identical(other.companyName, companyName) || other.companyName == companyName)&&(identical(other.address, address) || other.address == address)&&(identical(other.role, role) || other.role == role)&&(identical(other.isVerified, isVerified) || other.isVerified == isVerified)&&(identical(other.kycStatus, kycStatus) || other.kycStatus == kycStatus)&&(identical(other.isKycVerified, isKycVerified) || other.isKycVerified == isKycVerified)&&(identical(other.kycRejectionReason, kycRejectionReason) || other.kycRejectionReason == kycRejectionReason)&&(identical(other.createdAt, createdAt) || other.createdAt == createdAt)&&(identical(other.tier, tier) || other.tier == tier)&&(identical(other.subscriptionExpiresAt, subscriptionExpiresAt) || other.subscriptionExpiresAt == subscriptionExpiresAt)&&(identical(other.enableNotifications, enableNotifications) || other.enableNotifications == enableNotifications));
 }
 
 
 @override
-int get hashCode => Object.hash(runtimeType,id,name,email,phone,avatar,companyName,address,role,isVerified,createdAt,tier,subscriptionExpiresAt,enableNotifications);
+int get hashCode => Object.hash(runtimeType,id,name,email,phone,avatar,companyName,address,role,isVerified,kycStatus,isKycVerified,kycRejectionReason,createdAt,tier,subscriptionExpiresAt,enableNotifications);
 
 @override
 String toString() {
-  return 'UserEntity(id: $id, name: $name, email: $email, phone: $phone, avatar: $avatar, companyName: $companyName, address: $address, role: $role, isVerified: $isVerified, createdAt: $createdAt, tier: $tier, subscriptionExpiresAt: $subscriptionExpiresAt, enableNotifications: $enableNotifications)';
+  return 'UserEntity(id: $id, name: $name, email: $email, phone: $phone, avatar: $avatar, companyName: $companyName, address: $address, role: $role, isVerified: $isVerified, kycStatus: $kycStatus, isKycVerified: $isKycVerified, kycRejectionReason: $kycRejectionReason, createdAt: $createdAt, tier: $tier, subscriptionExpiresAt: $subscriptionExpiresAt, enableNotifications: $enableNotifications)';
 }
 
 
@@ -265,7 +271,7 @@ abstract mixin class _$UserEntityCopyWith<$Res> implements $UserEntityCopyWith<$
   factory _$UserEntityCopyWith(_UserEntity value, $Res Function(_UserEntity) _then) = __$UserEntityCopyWithImpl;
 @override @useResult
 $Res call({
- String id, String name, String email, String? phone, String? avatar, String? companyName, String? address, String role, bool isVerified, DateTime createdAt, String tier, DateTime? subscriptionExpiresAt, bool enableNotifications
+ String id, String name, String email, String? phone, String? avatar, String? companyName, String? address, String role, bool isVerified, String? kycStatus, bool isKycVerified, String? kycRejectionReason, DateTime createdAt, String tier, DateTime? subscriptionExpiresAt, bool enableNotifications
 });
 
 
@@ -282,7 +288,7 @@ class __$UserEntityCopyWithImpl<$Res>
 
 /// Create a copy of UserEntity
 /// with the given fields replaced by the non-null parameter values.
-@override @pragma('vm:prefer-inline') $Res call({Object? id = null,Object? name = null,Object? email = null,Object? phone = freezed,Object? avatar = freezed,Object? companyName = freezed,Object? address = freezed,Object? role = null,Object? isVerified = null,Object? createdAt = null,Object? tier = null,Object? subscriptionExpiresAt = freezed,Object? enableNotifications = null,}) {
+@override @pragma('vm:prefer-inline') $Res call({Object? id = null,Object? name = null,Object? email = null,Object? phone = freezed,Object? avatar = freezed,Object? companyName = freezed,Object? address = freezed,Object? role = null,Object? isVerified = null,Object? kycStatus = freezed,Object? isKycVerified = null,Object? kycRejectionReason = freezed,Object? createdAt = null,Object? tier = null,Object? subscriptionExpiresAt = freezed,Object? enableNotifications = null,}) {
   return _then(_UserEntity(
 id: null == id ? _self.id : id // ignore: cast_nullable_to_non_nullable
 as String,name: null == name ? _self.name : name // ignore: cast_nullable_to_non_nullable
@@ -293,7 +299,10 @@ as String?,companyName: freezed == companyName ? _self.companyName : companyName
 as String?,address: freezed == address ? _self.address : address // ignore: cast_nullable_to_non_nullable
 as String?,role: null == role ? _self.role : role // ignore: cast_nullable_to_non_nullable
 as String,isVerified: null == isVerified ? _self.isVerified : isVerified // ignore: cast_nullable_to_non_nullable
-as bool,createdAt: null == createdAt ? _self.createdAt : createdAt // ignore: cast_nullable_to_non_nullable
+as bool,kycStatus: freezed == kycStatus ? _self.kycStatus : kycStatus // ignore: cast_nullable_to_non_nullable
+as String?,isKycVerified: null == isKycVerified ? _self.isKycVerified : isKycVerified // ignore: cast_nullable_to_non_nullable
+as bool,kycRejectionReason: freezed == kycRejectionReason ? _self.kycRejectionReason : kycRejectionReason // ignore: cast_nullable_to_non_nullable
+as String?,createdAt: null == createdAt ? _self.createdAt : createdAt // ignore: cast_nullable_to_non_nullable
 as DateTime,tier: null == tier ? _self.tier : tier // ignore: cast_nullable_to_non_nullable
 as String,subscriptionExpiresAt: freezed == subscriptionExpiresAt ? _self.subscriptionExpiresAt : subscriptionExpiresAt // ignore: cast_nullable_to_non_nullable
 as DateTime?,enableNotifications: null == enableNotifications ? _self.enableNotifications : enableNotifications // ignore: cast_nullable_to_non_nullable

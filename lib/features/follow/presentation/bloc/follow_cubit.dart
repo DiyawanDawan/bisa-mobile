@@ -1,5 +1,6 @@
 import 'package:equatable/equatable.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:mobile_bisa/core/errors/failures.dart';
 import '../../domain/entities/follow_user_entity.dart';
 import '../../domain/repositories/follow_repository.dart';
 

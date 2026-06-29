@@ -1,15 +1,18 @@
+import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:go_router/go_router.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
-import 'package:timeago/timeago.dart' as timeago;
+import 'package:mobile_bisa/core/i18n/locale_formatters.dart';
+import '../../../../core/constants/app_layout.dart';
 import '../../../../core/constants/app_colors.dart';
-import '../../../../core/utils/extensions.dart';
+import '../../../../core/utils/money_format.dart';
 import '../../../../core/utils/media_url_utils.dart';
 import '../../../../shared/widgets/bisa_avatar.dart';
 import '../../../../shared/widgets/custom_button.dart';
 import '../../../../shared/widgets/bisa_network_image.dart';
 import '../../domain/entities/order_entity.dart';
+import '../utils/order_status_i18n.dart';
 
 class OrderCard extends StatelessWidget {
   const OrderCard({
@@ -21,17 +24,16 @@ class OrderCard extends StatelessWidget {
 
   final OrderEntity order;
   final bool isSupplierView;
-  /// True jika bagian dari checkout multi-supplier (nomor internal disembunyikan).
   final bool isMultiCheckout;
 
   static String? _trackingLabel(OrderEntity order) {
     final trk = order.shipment?.trackingNumber?.trim();
     if (trk != null && trk.isNotEmpty) {
-      return 'Tracking: $trk';
+      return 'orders.tracking_bisa_prefix'.tr(namedArgs: {'number': trk});
     }
     final awb = order.shipment?.awbNumber?.trim();
     if (awb != null && awb.isNotEmpty) {
-      return 'Resi: $awb';
+      return 'orders.tracking_awb_prefix'.tr(namedArgs: {'number': awb});
     }
     return null;
   }
@@ -48,21 +50,24 @@ class OrderCard extends StatelessWidget {
     final counterparty = isSupplierView ? order.buyer : order.seller;
 
     return Container(
-      margin: EdgeInsets.only(bottom: 12.h),
+      margin: EdgeInsets.only(bottom: AppSpacing.sm10),
       decoration: BoxDecoration(
-        color: AppColors.white,
-        borderRadius: BorderRadius.circular(16.r),
+        color: AppColors.surface,
+        borderRadius: BorderRadius.circular(AppRadius.lg),
         border: Border.all(color: AppColors.grey100),
         boxShadow: AppColors.softShadow,
       ),
       child: ClipRRect(
-        borderRadius: BorderRadius.circular(16.r),
+        borderRadius: BorderRadius.circular(AppRadius.lg),
         child: Material(
-          color: Colors.transparent,
+          color: AppColors.transparent,
           child: InkWell(
             onTap: () => context.push('/order/${order.id}'),
             child: Padding(
-              padding: EdgeInsets.all(14.w),
+              padding: EdgeInsets.symmetric(
+                horizontal: AppSpacing.sm10,
+                vertical: AppSpacing.sm10,
+              ),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
@@ -77,21 +82,20 @@ class OrderCard extends StatelessWidget {
                               Text(
                                 order.seller.name.isNotEmpty
                                     ? order.seller.name
-                                    : 'Supplier',
+                                    : 'orders.fallback_supplier'.tr(),
                                 style: TextStyle(
-                                  fontSize: 12.sp,
+                                  fontSize: 11.sp,
                                   fontWeight: FontWeight.w800,
                                   color: AppColors.textPrimary,
                                 ),
                                 maxLines: 1,
                                 overflow: TextOverflow.ellipsis,
                               ),
-                              SizedBox(height: 2.h),
                             ] else ...[
                               Text(
                                 order.displayOrderNumber,
                                 style: TextStyle(
-                                  fontSize: 11.sp,
+                                  fontSize: 10.sp,
                                   fontWeight: FontWeight.w700,
                                   color: AppColors.textHint,
                                   letterSpacing: 0.2,
@@ -99,12 +103,11 @@ class OrderCard extends StatelessWidget {
                                 maxLines: 1,
                                 overflow: TextOverflow.ellipsis,
                               ),
-                              SizedBox(height: 2.h),
                             ],
                             Text(
-                              timeago.format(order.createdAt, locale: 'id'),
+                              context.formatTimeAgo(order.createdAt),
                               style: TextStyle(
-                                fontSize: 10.sp,
+                                fontSize: 9.sp,
                                 color: AppColors.textSecondary,
                               ),
                             ),
@@ -114,149 +117,152 @@ class OrderCard extends StatelessWidget {
                       _StatusBadge(style: status),
                     ],
                   ),
-                          SizedBox(height: 12.h),
-                          Row(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              ClipRRect(
-                                borderRadius: BorderRadius.circular(12.r),
-                                child: Container(
-                                  width: 72.w,
-                                  height: 72.w,
-                                  color: AppColors.grey50,
-                                  child: hasResolvableMediaUrl(firstItem?.thumbnailUrl)
-                                      ? BisaNetworkImage(
-                                          imageUrl: firstItem!.thumbnailUrl!,
-                                          fit: BoxFit.cover,
-                                          errorWidget: (_, __, ___) => Icon(
-                                            LucideIcons.package,
-                                            color: AppColors.grey300,
-                                            size: 24.sp,
-                                          ),
-                                        )
-                                      : Icon(
-                                          LucideIcons.shoppingBag,
-                                          color: AppColors.grey300,
-                                          size: 24.sp,
-                                        ),
+                  SizedBox(height: AppSpacing.sm10),
+                  Row(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      ClipRRect(
+                        borderRadius: BorderRadius.circular(AppRadius.md),
+                        child: Container(
+                          width: 60.w,
+                          height: 60.w,
+                          color: AppColors.grey50,
+                          child: hasResolvableMediaUrl(firstItem?.thumbnailUrl)
+                              ? BisaNetworkImage(
+                                  imageUrl: firstItem!.thumbnailUrl!,
+                                  fit: BoxFit.cover,
+                                  errorWidget: (_, __, ___) => Icon(
+                                    LucideIcons.package,
+                                    color: AppColors.grey300,
+                                    size: 20.sp,
+                                  ),
+                                )
+                              : Icon(
+                                  LucideIcons.shoppingBag,
+                                  color: AppColors.grey300,
+                                  size: 20.sp,
                                 ),
+                        ),
+                      ),
+                      SizedBox(width: AppSpacing.sm10),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              firstItem?.productName ??
+                                  'orders.fallback_order_name'.tr(),
+                              style: TextStyle(
+                                fontSize: 13.sp,
+                                fontWeight: FontWeight.w800,
+                                color: AppColors.textPrimary,
+                                height: 1.2,
                               ),
-                              SizedBox(width: 12.w),
-                              Expanded(
-                                child: Column(
-                                  crossAxisAlignment: CrossAxisAlignment.start,
-                                  children: [
-                                    Text(
-                                      firstItem?.productName ?? 'Pesanan BISA',
-                                      style: TextStyle(
-                                        fontSize: 14.sp,
-                                        fontWeight: FontWeight.w800,
-                                        color: AppColors.textPrimary,
-                                        height: 1.25,
-                                      ),
-                                      maxLines: 2,
-                                      overflow: TextOverflow.ellipsis,
-                                    ),
-                                    if (_trackingLabel(order) != null) ...[
-                                      SizedBox(height: 4.h),
-                                      Text(
-                                        _trackingLabel(order)!,
-                                        style: TextStyle(
-                                          fontSize: isMultiCheckout ? 11.sp : 10.sp,
-                                          fontWeight: FontWeight.w700,
-                                          color: AppColors.info,
-                                        ),
-                                        maxLines: 1,
-                                        overflow: TextOverflow.ellipsis,
-                                      ),
-                                    ],
-                                    if (extraItems > 0) ...[
-                                      SizedBox(height: 4.h),
-                                      Text(
-                                        '+$extraItems produk lainnya',
-                                        style: TextStyle(
-                                          fontSize: 10.sp,
-                                          fontWeight: FontWeight.w600,
-                                          color: AppColors.primary,
-                                        ),
-                                      ),
-                                    ],
-                                    SizedBox(height: 6.h),
-                                    Wrap(
-                                      spacing: 6.w,
-                                      runSpacing: 4.h,
-                                      children: [
-                                        _MetaChip(
-                                          icon: LucideIcons.box,
-                                          label: '${order.totalQuantity.toStringAsFixed(0)} item',
-                                        ),
-                                        if (counterparty.name.isNotEmpty && !isMultiCheckout)
-                                          _CounterpartyChip(
-                                            name: counterparty.name,
-                                            avatarUrl: counterparty.avatarUrl,
-                                            isBuyer: isSupplierView,
-                                          ),
-                                      ],
-                                    ),
-                                  ],
+                              maxLines: 2,
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                            if (_trackingLabel(order) != null) ...[
+                              SizedBox(height: 2.h),
+                              Text(
+                                _trackingLabel(order)!,
+                                style: TextStyle(
+                                  fontSize: 9.sp,
+                                  fontWeight: FontWeight.w700,
+                                  color: AppColors.info,
+                                ),
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                              ),
+                            ],
+                            if (extraItems > 0) ...[
+                              SizedBox(height: 2.h),
+                              Text(
+                                'orders.more_products'.tr(
+                                  namedArgs: {'count': '$extraItems'},
+                                ),
+                                style: TextStyle(
+                                  fontSize: 9.sp,
+                                  fontWeight: FontWeight.w600,
+                                  color: AppColors.primary,
                                 ),
                               ),
                             ],
-                          ),
-                          SizedBox(height: 12.h),
-                          Row(
-                            children: [
-                              Expanded(
-                                child: Column(
-                                  crossAxisAlignment: CrossAxisAlignment.start,
-                                  children: [
-                                    Text(
-                                      'Total',
-                                      style: TextStyle(
-                                        fontSize: 10.sp,
-                                        color: AppColors.textSecondary,
-                                      ),
-                                    ),
-                                    Text(
-                                      order.totalAmount.toRupiah,
-                                      style: TextStyle(
-                                        fontSize: 16.sp,
-                                        fontWeight: FontWeight.w900,
-                                        color: AppColors.primary,
-                                      ),
-                                    ),
-                                  ],
+                            SizedBox(height: 4.h),
+                            Wrap(
+                              spacing: 4.w,
+                              runSpacing: 3.h,
+                              children: [
+                                _MetaChip(
+                                  icon: LucideIcons.box,
+                                  label: 'orders.item_count'.tr(namedArgs: {
+                                    'count':
+                                        order.totalQuantity.toStringAsFixed(0),
+                                  }),
                                 ),
-                              ),
-                              Icon(
-                                LucideIcons.chevronRight,
-                                size: 18.sp,
-                                color: AppColors.grey400,
-                              ),
-                            ],
+                                if (counterparty.name.isNotEmpty &&
+                                    !isMultiCheckout)
+                                  _CounterpartyChip(
+                                    name: counterparty.name,
+                                    avatarUrl: counterparty.avatarUrl,
+                                    isBuyer: isSupplierView,
+                                  ),
+                              ],
+                            ),
+                          ],
+                        ),
+                      ),
+                      SizedBox(width: AppSpacing.xs6),
+                      Column(
+                        crossAxisAlignment: CrossAxisAlignment.end,
+                        children: [
+                          Text(
+                            'orders.total_label'.tr(),
+                            style: TextStyle(
+                              fontSize: 9.sp,
+                              color: AppColors.textSecondary,
+                            ),
                           ),
-                          SizedBox(height: 12.h),
-                          Row(
-                            children: [
-                              Expanded(
-                                child: CustomButton(
-                                  text: 'Lacak',
-                                  height: 40.h,
-                                  isOutlined: true,
-                                  onPressed: () => context.push('/order/${order.id}'),
-                                ),
-                              ),
-                              SizedBox(width: 10.w),
-                              Expanded(
-                                child: CustomButton(
-                                  text: 'Detail',
-                                  height: 40.h,
-                                  useGradient: true,
-                                  onPressed: () => context.push('/order/${order.id}'),
-                                ),
-                              ),
-                            ],
+                          Text(
+                            formatMoneyIdr(order.totalAmount),
+                            style: TextStyle(
+                              fontSize: 13.sp,
+                              fontWeight: FontWeight.w900,
+                              color: AppColors.primary,
+                            ),
+                            textAlign: TextAlign.end,
                           ),
+                          SizedBox(height: 2.h),
+                          Icon(
+                            LucideIcons.chevronRight,
+                            size: 14.sp,
+                            color: AppColors.grey400,
+                          ),
+                        ],
+                      ),
+                    ],
+                  ),
+                  SizedBox(height: AppSpacing.sm10),
+                  Row(
+                    children: [
+                      Expanded(
+                        child: CustomButton(
+                          text: 'orders.action_track'.tr(),
+                          height: 34.h,
+                          isOutlined: true,
+                          onPressed: () => context.push('/order/${order.id}'),
+                        ),
+                      ),
+                      SizedBox(width: AppSpacing.sm),
+                      Expanded(
+                        child: CustomButton(
+                          text: 'orders.action_detail'.tr(),
+                          height: 34.h,
+                          useGradient: true,
+                          onPressed: () => context.push('/order/${order.id}'),
+                        ),
+                      ),
+                    ],
+                  ),
                 ],
               ),
             ),
@@ -281,10 +287,10 @@ class _CounterpartyChip extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding: EdgeInsets.symmetric(horizontal: 8.w, vertical: 4.h),
+      padding: EdgeInsets.symmetric(horizontal: 6.w, vertical: 2.h),
       decoration: BoxDecoration(
         color: AppColors.grey50,
-        borderRadius: BorderRadius.circular(20.r),
+        borderRadius: BorderRadius.circular(AppRadius.pill),
       ),
       child: Row(
         mainAxisSize: MainAxisSize.min,
@@ -294,12 +300,12 @@ class _CounterpartyChip extends StatelessWidget {
             radius: 8.r,
             fallbackIcon: isBuyer ? LucideIcons.user : LucideIcons.store,
           ),
-          SizedBox(width: 4.w),
+          SizedBox(width: 3.w),
           Flexible(
             child: Text(
               name,
               style: TextStyle(
-                fontSize: 10.sp,
+                fontSize: 9.sp,
                 fontWeight: FontWeight.w600,
                 color: AppColors.textSecondary,
               ),
@@ -322,21 +328,21 @@ class _MetaChip extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding: EdgeInsets.symmetric(horizontal: 8.w, vertical: 4.h),
+      padding: EdgeInsets.symmetric(horizontal: 6.w, vertical: 2.h),
       decoration: BoxDecoration(
         color: AppColors.grey50,
-        borderRadius: BorderRadius.circular(20.r),
+        borderRadius: BorderRadius.circular(AppRadius.pill),
       ),
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
-          Icon(icon, size: 11.sp, color: AppColors.textSecondary),
-          SizedBox(width: 4.w),
+          Icon(icon, size: 10.sp, color: AppColors.textSecondary),
+          SizedBox(width: 3.w),
           Flexible(
             child: Text(
               label,
               style: TextStyle(
-                fontSize: 10.sp,
+                fontSize: 9.sp,
                 fontWeight: FontWeight.w600,
                 color: AppColors.textSecondary,
               ),
@@ -358,21 +364,21 @@ class _StatusBadge extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding: EdgeInsets.symmetric(horizontal: 10.w, vertical: 5.h),
+      padding: EdgeInsets.symmetric(horizontal: 8.w, vertical: 3.h),
       decoration: BoxDecoration(
         color: style.color.withValues(alpha: 0.12),
-        borderRadius: BorderRadius.circular(20.r),
+        borderRadius: BorderRadius.circular(AppRadius.pill),
       ),
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
-          Icon(style.icon, size: 11.sp, color: style.color),
-          SizedBox(width: 4.w),
+          Icon(style.icon, size: 10.sp, color: style.color),
+          SizedBox(width: 3.w),
           Text(
             style.label,
             style: TextStyle(
               color: style.color,
-              fontSize: 10.sp,
+              fontSize: 9.sp,
               fontWeight: FontWeight.w800,
             ),
           ),
@@ -394,67 +400,68 @@ class _OrderStatusStyle {
   final IconData icon;
 
   factory _OrderStatusStyle.expired() {
-    return const _OrderStatusStyle(
-      label: 'Kedaluwarsa',
+    return _OrderStatusStyle(
+      label: orderStatusLabel('EXPIRED'),
       color: AppColors.error,
       icon: LucideIcons.circleX,
     );
   }
 
   factory _OrderStatusStyle.from(String status) {
-    switch (status.toUpperCase()) {
+    final upper = status.toUpperCase();
+    switch (upper) {
       case 'PENDING':
         return _OrderStatusStyle(
-          label: 'Menunggu',
+          label: orderStatusLabel(upper),
           color: AppColors.warning,
           icon: LucideIcons.clock3,
         );
       case 'CONFIRMED':
         return _OrderStatusStyle(
-          label: 'Dikonfirmasi',
+          label: orderStatusLabel(upper),
           color: AppColors.info,
           icon: LucideIcons.circleCheck,
         );
       case 'PAID':
       case 'PROCESSING':
         return _OrderStatusStyle(
-          label: 'Diproses',
+          label: orderStatusLabel('PROCESSING'),
           color: AppColors.info,
           icon: LucideIcons.loader,
         );
       case 'SHIPPED':
         return _OrderStatusStyle(
-          label: 'Dikirim',
+          label: orderStatusLabel(upper),
           color: AppColors.primary,
           icon: LucideIcons.truck,
         );
       case 'COMPLETED':
         return _OrderStatusStyle(
-          label: 'Selesai',
+          label: orderStatusLabel(upper),
           color: AppColors.success,
           icon: LucideIcons.circleCheck,
         );
       case 'CANCELLED':
         return _OrderStatusStyle(
-          label: 'Dibatalkan',
+          label: orderStatusLabel(upper),
           color: AppColors.error,
           icon: LucideIcons.circleX,
         );
       case 'DISPUTED':
         return _OrderStatusStyle(
-          label: 'Sengketa',
+          label: orderStatusLabel(upper),
           color: AppColors.error,
           icon: LucideIcons.triangleAlert,
         );
       case 'REFUNDED':
         return _OrderStatusStyle(
-          label: 'Refund',
+          label: orderStatusLabel(upper),
           color: AppColors.warning,
           icon: LucideIcons.rotateCcw,
         );
       default:
         return _OrderStatusStyle(
-          label: status,
+          label: orderStatusLabel(upper),
           color: AppColors.grey500,
           icon: LucideIcons.info,
         );

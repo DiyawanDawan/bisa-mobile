@@ -1,5 +1,6 @@
 import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
+import 'package:mobile_bisa/core/utils/app_feedback.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
 import 'package:mobile_bisa/shared/widgets/custom_button.dart';
@@ -33,25 +34,17 @@ class _ChangePasswordPageState extends State<ChangePasswordPage> {
     final confirmPassword = _confirmPasswordController.text;
 
     if (newPassword.isEmpty || confirmPassword.isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('harap_isi_semua_field'.tr())),
-      );
+      showErrorSnackBar(context, 'harap_isi_semua_field'.tr());
       return;
     }
 
     if (newPassword.length < 8) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Password minimal 8 karakter'),
-        ),
-      );
+      showErrorSnackBar(context, 'auth.password_min_8'.tr());
       return;
     }
 
     if (newPassword != confirmPassword) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('konfirmasi_password_tidak_coco'.tr())),
-      );
+      showErrorSnackBar(context, 'konfirmasi_password_tidak_coco'.tr());
       return;
     }
 
@@ -64,20 +57,10 @@ class _ChangePasswordPageState extends State<ChangePasswordPage> {
 
     result.fold(
       (failure) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(failure.message),
-            backgroundColor: AppColors.error,
-          ),
-        );
+        showFailureSnackBarFromMessage(context, failure.message);
       },
       (_) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('password_berhasil_diperbarui'.tr()),
-            backgroundColor: AppColors.success,
-          ),
-        );
+        showSuccessSnackBar(context, 'password_berhasil_diperbarui'.tr());
         Navigator.pop(context);
       },
     );
@@ -87,9 +70,9 @@ class _ChangePasswordPageState extends State<ChangePasswordPage> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: AppColors.background,
-      appBar: const BisaAppBar(
-        backgroundColor: AppColors.white,
-        title: 'Ubah Kata Sandi',
+      appBar: BisaAppBar(
+        backgroundColor: AppColors.surface,
+        title: 'profile.change_password_title'.tr(),
       ),
       body: SingleChildScrollView(
         padding: EdgeInsets.all(24.w),
@@ -97,7 +80,7 @@ class _ChangePasswordPageState extends State<ChangePasswordPage> {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text(
-              'Anda sudah login. Cukup tentukan kata sandi baru — tidak perlu memasukkan kata sandi lama.',
+              'profile.change_password_info'.tr(),
               style: TextStyle(
                 fontSize: 14.sp,
                 color: AppColors.textSecondary,
@@ -106,23 +89,23 @@ class _ChangePasswordPageState extends State<ChangePasswordPage> {
             ),
             SizedBox(height: 32.h),
             CustomTextField(
-              label: 'katasandibaru'.tr().tr(),
-              hint: 'masukkankatasandibaru'.tr().tr(),
+              label: 'kata_sandi_baru'.tr(),
+              hint: 'masukkan_kata_sandi_baru'.tr(),
               controller: _newPasswordController,
               isPassword: true,
               prefixIcon: LucideIcons.key,
             ),
             SizedBox(height: 20.h),
             CustomTextField(
-              label: 'konfirmasikatasandibaru'.tr().tr(),
-              hint: 'ulangikatasandibaru'.tr().tr(),
+              label: 'konfirmasi_kata_sandi_baru'.tr(),
+              hint: 'ulangi_kata_sandi_baru'.tr(),
               controller: _confirmPasswordController,
               isPassword: true,
               prefixIcon: LucideIcons.shieldCheck,
             ),
             SizedBox(height: 40.h),
             CustomButton(
-              text: 'simpanperubahan'.tr().tr(),
+              text: 'simpan_perubahan'.tr(),
               onPressed: _isLoading ? null : _submit,
               isLoading: _isLoading,
               useGradient: true,

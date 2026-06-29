@@ -4,12 +4,20 @@ import '../entities/forum_entity.dart';
 import '../entities/forum_media.dart';
 
 abstract class ForumRepository {
-  Future<Either<Failure, List<ForumPostEntity>>> getPosts({String? categoryId, String? keyword, String? tag, int page = 1, int limit = 10});
+  Future<Either<Failure, List<ForumPostEntity>>> getPosts({
+    String? categoryId,
+    String? keyword,
+    String? tag,
+    String? groupId,
+    int page = 1,
+    int limit = 10,
+  });
   Future<Either<Failure, ForumPostEntity>> getPostById(String id);
   Future<Either<Failure, void>> createPost(
     String title,
     String content,
     String? categoryId, {
+    String? groupId,
     List<ForumMediaItem>? mediaUrls,
     String? status,
     List<String>? tags,

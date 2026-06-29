@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:skeletonizer/skeletonizer.dart';
 
+import '../../core/constants/app_layout.dart';
 import '../../core/constants/app_colors.dart';
 import 'shimmer_loading.dart';
 
@@ -11,27 +12,31 @@ class FollowListTileSkeleton extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding: EdgeInsets.all(12.r),
+      padding: EdgeInsets.all(AppSpacing.md12),
       decoration: BoxDecoration(
-        color: AppColors.white,
-        borderRadius: BorderRadius.circular(14.r),
+        color: AppColors.surface,
+        borderRadius: BorderRadius.circular(AppRadius.tile),
         border: Border.all(color: AppColors.grey100),
       ),
       child: Row(
         children: [
           Bone.circle(size: 48.r),
-          SizedBox(width: 12.w),
+          SizedBox(width: AppSpacing.md12),
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Bone(width: 140.w, height: 14.h),
-                SizedBox(height: 6.h),
+                SizedBox(height: AppSpacing.xs6),
                 Bone(width: 100.w, height: 11.h),
               ],
             ),
           ),
-          Bone(width: 72.w, height: 32.h, borderRadius: BorderRadius.circular(16.r)),
+          Bone(
+            width: 72.w,
+            height: 32.h,
+            borderRadius: BorderRadius.circular(AppRadius.xl),
+          ),
         ],
       ),
     );
@@ -47,9 +52,9 @@ class ShimmerFollowListPlaceholder extends StatelessWidget {
   Widget build(BuildContext context) {
     return ShimmerLoading(
       child: ListView.separated(
-        padding: EdgeInsets.all(16.w),
+        padding: EdgeInsets.all(AppSpacing.md),
         itemCount: itemCount,
-        separatorBuilder: (_, __) => SizedBox(height: 10.h),
+        separatorBuilder: (_, __) => SizedBox(height: AppSpacing.sm10),
         itemBuilder: (_, __) => const FollowListTileSkeleton(),
       ),
     );

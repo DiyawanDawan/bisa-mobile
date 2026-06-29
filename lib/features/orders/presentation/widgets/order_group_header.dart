@@ -1,9 +1,12 @@
+import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
+import '../../../../core/constants/app_layout.dart';
 import '../../../../core/constants/app_colors.dart';
-import '../../../../core/utils/extensions.dart';
+import '../../../../core/utils/app_feedback.dart';
+import '../../../../core/utils/money_format.dart';
 import '../utils/order_list_grouping.dart';
 
 /// Header grup tanggal / prefix nomor order.
@@ -15,29 +18,31 @@ class OrderDateGroupHeader extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Padding(
-      padding: EdgeInsets.only(top: 12.h, bottom: 8.h),
+      padding: EdgeInsets.only(top: AppSpacing.sm10, bottom: AppSpacing.xs6),
       child: Row(
         children: [
-          Icon(LucideIcons.calendar, size: 16.sp, color: AppColors.primary),
-          SizedBox(width: 8.w),
+          Icon(LucideIcons.calendar, size: 14.sp, color: AppColors.primary),
+          SizedBox(width: AppSpacing.xs6),
           Expanded(
             child: Text(
               orderGroupTitle(group.groupKey, fallbackDate: group.sortDate),
               style: TextStyle(
-                fontSize: 14.sp,
+                fontSize: 13.sp,
                 fontWeight: FontWeight.w900,
                 color: AppColors.textPrimary,
               ),
             ),
           ),
           Container(
-            padding: EdgeInsets.symmetric(horizontal: 8.w, vertical: 4.h),
+            padding: EdgeInsets.symmetric(horizontal: 6.w, vertical: 2.h),
             decoration: BoxDecoration(
               color: AppColors.primary.withValues(alpha: 0.08),
-              borderRadius: BorderRadius.circular(8.r),
+              borderRadius: BorderRadius.circular(AppRadius.button),
             ),
             child: Text(
-              '${group.displayOrderCount} pesanan',
+              'orders.group_order_count'.tr(
+                namedArgs: {'count': '${group.displayOrderCount}'},
+              ),
               style: TextStyle(
                 fontSize: 10.sp,
                 fontWeight: FontWeight.w800,
@@ -60,12 +65,10 @@ class OrderCheckoutClusterHeader extends StatelessWidget {
   Future<void> _copyNumber(BuildContext context, String value) async {
     await Clipboard.setData(ClipboardData(text: value));
     if (!context.mounted) return;
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: const Text('No. pesanan disalin'),
-        behavior: SnackBarBehavior.floating,
-        duration: const Duration(seconds: 2),
-      ),
+    showSuccessSnackBar(
+      context,
+      'orders.order_number_copied',
+      duration: const Duration(seconds: 2),
     );
   }
 
@@ -86,11 +89,11 @@ class OrderCheckoutClusterHeader extends StatelessWidget {
 
     return Container(
       width: double.infinity,
-      margin: EdgeInsets.only(bottom: 10.h),
-      padding: EdgeInsets.all(12.w),
+      margin: EdgeInsets.only(bottom: AppSpacing.sm),
+      padding: EdgeInsets.all(AppSpacing.sm10),
       decoration: BoxDecoration(
         color: AppColors.primary.withValues(alpha: 0.04),
-        borderRadius: BorderRadius.circular(12.r),
+        borderRadius: BorderRadius.circular(AppRadius.lg),
         border: Border.all(color: AppColors.primary.withValues(alpha: 0.15)),
       ),
       child: Column(
@@ -106,7 +109,9 @@ class OrderCheckoutClusterHeader extends StatelessWidget {
               SizedBox(width: 6.w),
               Expanded(
                 child: Text(
-                  'Checkout ${cluster.length} supplier',
+                  'orders.batch_checkout_suppliers'.tr(
+                    namedArgs: {'count': '${cluster.length}'},
+                  ),
                   style: TextStyle(
                     fontSize: 12.sp,
                     fontWeight: FontWeight.w800,
@@ -115,7 +120,7 @@ class OrderCheckoutClusterHeader extends StatelessWidget {
                 ),
               ),
               Text(
-                cluster.totalAmount.toRupiah,
+                formatMoneyIdr(cluster.totalAmount),
                 style: TextStyle(
                   fontSize: 12.sp,
                   fontWeight: FontWeight.w900,
@@ -125,9 +130,9 @@ class OrderCheckoutClusterHeader extends StatelessWidget {
             ],
           ),
           if (batchNumber != null) ...[
-            SizedBox(height: 10.h),
+            SizedBox(height: AppSpacing.sm10),
             Text(
-              'No. Pesanan',
+              'orders.field_order_number'.tr(),
               style: TextStyle(
                 fontSize: 10.sp,
                 fontWeight: FontWeight.w700,
@@ -137,7 +142,7 @@ class OrderCheckoutClusterHeader extends StatelessWidget {
             SizedBox(height: 4.h),
             InkWell(
               onTap: () => _copyNumber(context, batchNumber),
-              borderRadius: BorderRadius.circular(8.r),
+              borderRadius: BorderRadius.circular(AppRadius.button),
               child: Row(
                 children: [
                   Expanded(
@@ -161,9 +166,11 @@ class OrderCheckoutClusterHeader extends StatelessWidget {
             ),
           ],
           if (trackings.isNotEmpty) ...[
-            SizedBox(height: 8.h),
+            SizedBox(height: AppSpacing.sm),
             Text(
-              'Tracking per supplier (${trackings.length})',
+              'orders.tracking_per_supplier'.tr(
+                namedArgs: {'count': '${trackings.length}'},
+              ),
               style: TextStyle(
                 fontSize: 10.sp,
                 fontWeight: FontWeight.w700,

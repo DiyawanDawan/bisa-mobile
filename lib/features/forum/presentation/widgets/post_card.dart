@@ -1,14 +1,16 @@
+import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:go_router/go_router.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
+import '../../../../core/constants/app_layout.dart';
 import '../../../../core/constants/app_colors.dart';
 import '../../../../core/utils/media_url_utils.dart';
 import '../../../follow/presentation/widgets/follow_button.dart';
 import '../../domain/entities/forum_entity.dart';
 import '../widgets/forum_media_widgets.dart';
 import '../widgets/forum_content_text.dart';
-import 'package:timeago/timeago.dart' as timeago;
+import 'package:mobile_bisa/core/i18n/locale_formatters.dart';
 
 class PostCard extends StatelessWidget {
   final ForumPostEntity post;
@@ -31,19 +33,19 @@ class PostCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      margin: EdgeInsets.only(bottom: 16.h),
+      margin: EdgeInsets.only(bottom: AppSpacing.md),
       decoration: BoxDecoration(
         color: AppColors.surface,
-        borderRadius: BorderRadius.circular(20.r),
+        borderRadius: BorderRadius.circular(AppRadius.pill),
         boxShadow: AppColors.softShadow,
       ),
       child: Material(
-        color: Colors.transparent,
+        color: AppColors.transparent,
         child: InkWell(
-          borderRadius: BorderRadius.circular(20.r),
+          borderRadius: BorderRadius.circular(AppRadius.pill),
           onTap: onTap,
           child: Padding(
-            padding: EdgeInsets.all(20.w),
+            padding: EdgeInsets.all(AppSpacing.lg),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
@@ -64,7 +66,7 @@ class PostCard extends StatelessWidget {
                           ),
                         ),
                         child: CircleAvatar(
-                          radius: 20.r,
+                          radius: AppRadius.pill,
                           backgroundColor: AppColors.primaryLight,
                           backgroundImage: resolveMediaImageProvider(post.user.avatarUrl),
                           child: post.user.avatarUrl == null
@@ -77,7 +79,7 @@ class PostCard extends StatelessWidget {
                         ),
                       ),
                     ),
-                    SizedBox(width: 12.w),
+                    SizedBox(width: AppSpacing.md12),
                     Expanded(
                       child: GestureDetector(
                         behavior: HitTestBehavior.opaque,
@@ -106,7 +108,7 @@ class PostCard extends StatelessWidget {
                             Row(
                               children: [
                                 Text(
-                                  timeago.format(post.createdAt, locale: 'id'),
+                                  context.formatTimeAgo(post.createdAt),
                                   style: TextStyle(
                                     fontSize: 12.sp,
                                     color: AppColors.textSecondary,
@@ -121,7 +123,7 @@ class PostCard extends StatelessWidget {
                                 ),
                                 Flexible(
                                   child: Text(
-                                    (post.category ?? 'Umum'),
+                                    (post.category ?? 'forum.category_default'.tr()),
                                     maxLines: 1,
                                     overflow: TextOverflow.ellipsis,
                                     style: TextStyle(
@@ -137,19 +139,19 @@ class PostCard extends StatelessWidget {
                         ),
                       ),
                     ),
-                    SizedBox(width: 8.w),
+                    SizedBox(width: AppSpacing.sm),
                     // Follow button untuk author post.
                     // Tidak tampil jika `userId == currentUser.id` (sudah
                     // dihandle di internal FollowButton).
                     FollowButton(userId: post.user.id),
                   ],
                 ),
-                SizedBox(height: 12.h),
+                SizedBox(height: AppSpacing.md12),
 
                 // Participants badge — "siapa saja yang terlibat di diskusi ini"
                 if (post.participants.isNotEmpty || post.commentCount > 0)
                   Padding(
-                    padding: EdgeInsets.only(bottom: 12.h),
+                    padding: EdgeInsets.only(bottom: AppSpacing.md12),
                     child: _buildParticipantsBadge(),
                   ),
 
@@ -163,7 +165,7 @@ class PostCard extends StatelessWidget {
                     height: 1.3,
                   ),
                 ),
-                SizedBox(height: 8.h),
+                SizedBox(height: AppSpacing.sm),
 
                 // Content Preview — render dengan rich text supaya
                 // #hashtag & @produk muncul sebagai highlight clickable.
@@ -180,10 +182,10 @@ class PostCard extends StatelessWidget {
                 ForumMediaGrid(media: post.mediaUrls, compact: true),
                 if (post.tags.isNotEmpty ||
                     post.productMentions.isNotEmpty) ...[
-                  SizedBox(height: 12.h),
+                  SizedBox(height: AppSpacing.md12),
                   _buildTagChipsRow(context),
                 ],
-                SizedBox(height: 20.h),
+                SizedBox(height: AppSpacing.lg),
 
                 // Footer Stats
                 Row(
@@ -198,7 +200,7 @@ class PostCard extends StatelessWidget {
                           : null,
                       onTap: onVoteUp,
                     ),
-                    SizedBox(width: 8.w),
+                    SizedBox(width: AppSpacing.sm),
                     _buildStat(
                       icon: LucideIcons.arrowBigDown,
                       label: post.downvotes.toString(),
@@ -209,14 +211,14 @@ class PostCard extends StatelessWidget {
                           : null,
                       onTap: onVoteDown,
                     ),
-                    SizedBox(width: 8.w),
+                    SizedBox(width: AppSpacing.sm),
                     _buildStat(
                       icon: LucideIcons.messageCircle,
                       label: post.commentCount.toString(),
                       color: AppColors.info,
                       onTap: onComment ?? onTap,
                     ),
-                    SizedBox(width: 8.w),
+                    SizedBox(width: AppSpacing.sm),
                     _buildStat(
                       icon: LucideIcons.share2,
                       label: '',
@@ -231,7 +233,7 @@ class PostCard extends StatelessWidget {
                       ),
                       decoration: BoxDecoration(
                         color: AppColors.grey50,
-                        borderRadius: BorderRadius.circular(10.r),
+                        borderRadius: BorderRadius.circular(AppRadius.md),
                       ),
                       child: Row(
                         children: [
@@ -303,13 +305,13 @@ class PostCard extends StatelessWidget {
         duration: const Duration(milliseconds: 300),
         height: 36.h,
         constraints: BoxConstraints(minWidth: label.isEmpty ? 36.h : 0),
-        padding: EdgeInsets.symmetric(horizontal: label.isEmpty ? 0 : 12.w),
+        padding: EdgeInsets.symmetric(horizontal: label.isEmpty ? 0 : AppSpacing.md12),
         decoration: BoxDecoration(
           color: gradient == null
               ? (backgroundColor ?? color.withOpacity(0.08))
               : null,
           gradient: gradient,
-          borderRadius: BorderRadius.circular(12.r),
+          borderRadius: BorderRadius.circular(AppRadius.lg),
           boxShadow: isActive
               ? [
                   BoxShadow(
@@ -324,14 +326,14 @@ class PostCard extends StatelessWidget {
           mainAxisSize: MainAxisSize.min,
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Icon(icon, size: 18.sp, color: isActive ? Colors.white : color),
+            Icon(icon, size: 18.sp, color: isActive ? AppColors.white : color),
             if (label.isNotEmpty) ...[
               SizedBox(width: 6.w),
               Text(
                 label,
                 style: TextStyle(
                   fontSize: 13.sp,
-                  color: isActive ? Colors.white : color,
+                  color: isActive ? AppColors.white : color,
                   fontWeight: isActive ? FontWeight.w900 : FontWeight.w700,
                 ),
               ),
@@ -363,7 +365,7 @@ class PostCard extends StatelessWidget {
         color: AppColors.secondary,
         shape: BoxShape.circle,
       ),
-      child: Icon(Icons.check, color: Colors.white, size: 8.sp),
+      child: Icon(Icons.check, color: AppColors.textOnPrimary, size: 8.sp),
     );
   }
 
@@ -380,16 +382,22 @@ class PostCard extends StatelessWidget {
     final extra = post.commentCount - shown;
 
     final label = participants.isEmpty
-        ? '${post.commentCount} balasan menunggu'
+        ? 'forum.replies_waiting'.tr(
+            namedArgs: {'count': '${post.commentCount}'},
+          )
         : (post.commentCount <= shown
-            ? '$shown orang berdiskusi'
-            : '$shown+ orang berdiskusi');
+            ? 'forum.people_discussing'.tr(
+                namedArgs: {'count': '$shown'},
+              )
+            : 'forum.people_discussing_plus'.tr(
+                namedArgs: {'shown': '$shown'},
+              ));
 
     return Container(
       padding: EdgeInsets.fromLTRB(8.w, 6.h, 12.w, 6.h),
       decoration: BoxDecoration(
         color: AppColors.primary.withOpacity(0.06),
-        borderRadius: BorderRadius.circular(20.r),
+        borderRadius: BorderRadius.circular(AppRadius.pill),
         border: Border.all(
           color: AppColors.primary.withOpacity(0.12),
           width: 1,
@@ -430,20 +438,20 @@ class PostCard extends StatelessWidget {
               decoration: BoxDecoration(
                 color: AppColors.primary,
                 borderRadius: BorderRadius.circular(avatarSize / 2),
-                border: Border.all(color: Colors.white, width: 2),
+                border: Border.all(color: AppColors.white, width: 2),
               ),
               alignment: Alignment.center,
               child: Text(
                 extra > 99 ? '99+' : '+$extra',
                 style: TextStyle(
-                  color: Colors.white,
+                  color: AppColors.surface,
                   fontSize: 9.sp,
                   fontWeight: FontWeight.w900,
                 ),
               ),
             ),
           ],
-          SizedBox(width: 8.w),
+          SizedBox(width: AppSpacing.sm),
           Flexible(
             child: Text(
               label,
@@ -476,7 +484,7 @@ class _AvatarBubble extends StatelessWidget {
       height: size,
       decoration: BoxDecoration(
         shape: BoxShape.circle,
-        border: Border.all(color: Colors.white, width: 2),
+        border: Border.all(color: AppColors.white, width: 2),
       ),
       child: CircleAvatar(
         radius: size / 2,
@@ -511,10 +519,10 @@ class _ForumChip extends StatelessWidget {
   Widget build(BuildContext context) {
     return Material(
       color: color.withValues(alpha: 0.08),
-      borderRadius: BorderRadius.circular(20.r),
+      borderRadius: BorderRadius.circular(AppRadius.pill),
       child: InkWell(
         onTap: onTap,
-        borderRadius: BorderRadius.circular(20.r),
+        borderRadius: BorderRadius.circular(AppRadius.pill),
         child: Padding(
           padding: EdgeInsets.symmetric(horizontal: 10.w, vertical: 6.h),
           child: Row(

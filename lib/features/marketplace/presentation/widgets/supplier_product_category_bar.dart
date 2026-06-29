@@ -1,6 +1,8 @@
+import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
+import '../../../../core/constants/app_layout.dart';
 import '../../../../core/constants/app_colors.dart';
 import '../../data/models/category_model.dart';
 import '../bloc/category_cubit.dart';
@@ -32,13 +34,13 @@ class SupplierProductCategoryBar extends StatelessWidget {
             child: ShimmerLoading(
               child: ListView.separated(
                 scrollDirection: Axis.horizontal,
-                padding: EdgeInsets.symmetric(horizontal: 16.w),
+                padding: EdgeInsets.symmetric(horizontal: AppSpacing.md),
                 itemCount: 5,
-                separatorBuilder: (_, __) => SizedBox(width: 8.w),
+                separatorBuilder: (_, __) => SizedBox(width: AppSpacing.sm),
                 itemBuilder: (_, __) => Bone(
                   width: 88.w,
                   height: 28.h,
-                  borderRadius: BorderRadius.circular(20.r),
+                  borderRadius: BorderRadius.circular(AppRadius.pill),
                 ),
               ),
             ),
@@ -53,7 +55,7 @@ class SupplierProductCategoryBar extends StatelessWidget {
             scrollDirection: Axis.horizontal,
             physics: const BouncingScrollPhysics(),
             itemCount: categories.length + 1,
-            separatorBuilder: (_, __) => SizedBox(width: 8.w),
+            separatorBuilder: (_, __) => SizedBox(width: AppSpacing.sm),
             itemBuilder: (context, index) {
               final isAll = index == 0;
               final category = isAll ? null : categories[index - 1];
@@ -65,18 +67,20 @@ class SupplierProductCategoryBar extends StatelessWidget {
                 onTap: () => onCategorySelected(category),
                 child: AnimatedContainer(
                   duration: const Duration(milliseconds: 200),
-                  padding: EdgeInsets.symmetric(horizontal: 14.w),
+                  padding: EdgeInsets.symmetric(horizontal: AppSpacing.section),
                   alignment: Alignment.center,
                   decoration: BoxDecoration(
                     color: isSelected ? AppColors.primary : AppColors.grey50,
-                    borderRadius: BorderRadius.circular(20.r),
+                    borderRadius: BorderRadius.circular(AppRadius.pill),
                     border: Border.all(
                       color:
                           isSelected ? AppColors.primary : AppColors.grey200,
                     ),
                   ),
                   child: Text(
-                    isAll ? 'Semua Kategori' : category!.name,
+                    isAll
+                        ? 'marketplace.category_all_products'.tr()
+                        : category!.name,
                     style: TextStyle(
                       color: isSelected
                           ? AppColors.textOnPrimary

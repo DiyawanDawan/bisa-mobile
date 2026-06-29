@@ -1,6 +1,8 @@
+import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
+import '../../../../core/constants/app_layout.dart';
 import '../../../../core/constants/app_colors.dart';
 import '../../domain/entities/iot_dashboard_entity.dart';
 
@@ -18,25 +20,25 @@ class IotMetricSummaryRow extends StatelessWidget {
           children: [
             Expanded(
               child: _MetricTile(
-                label: 'Min Suhu',
+                label: 'iot.metric_min_temp'.tr(),
                 value: '${stats.minTemp.toStringAsFixed(1)}°C',
                 icon: LucideIcons.thermometer,
                 color: AppColors.ocean,
               ),
             ),
-            SizedBox(width: 8.w),
+            SizedBox(width: AppSpacing.sm),
             Expanded(
               child: _MetricTile(
-                label: 'Rata-rata',
+                label: 'iot.metric_avg'.tr(),
                 value: '${stats.avgTemp.toStringAsFixed(1)}°C',
                 icon: LucideIcons.activity,
                 color: AppColors.primary,
               ),
             ),
-            SizedBox(width: 8.w),
+            SizedBox(width: AppSpacing.sm),
             Expanded(
               child: _MetricTile(
-                label: 'Max Suhu',
+                label: 'iot.metric_max_temp'.tr(),
                 value: '${stats.maxTemp.toStringAsFixed(1)}°C',
                 icon: LucideIcons.flame,
                 color: AppColors.error,
@@ -45,22 +47,22 @@ class IotMetricSummaryRow extends StatelessWidget {
           ],
         ),
         if (stats.maxHum > 0 || stats.avgHum > 0) ...[
-          SizedBox(height: 8.h),
+          SizedBox(height: AppSpacing.sm),
           Row(
             children: [
               Expanded(
                 child: _MetricTile(
-                  label: 'Kelembaban',
+                  label: 'iot.metric_humidity_avg'.tr(),
                   value: '${stats.avgHum.toStringAsFixed(1)}%',
                   icon: LucideIcons.droplets,
                   color: AppColors.ocean,
                 ),
               ),
               if (stats.avgCo2 > 0) ...[
-                SizedBox(width: 8.w),
+                SizedBox(width: AppSpacing.sm),
                 Expanded(
                   child: _MetricTile(
-                    label: 'CO₂ avg',
+                    label: 'iot.metric_co2_avg'.tr(),
                     value: '${stats.avgCo2.toStringAsFixed(0)} ppm',
                     icon: LucideIcons.cloud,
                     color: AppColors.warning,
@@ -71,9 +73,9 @@ class IotMetricSummaryRow extends StatelessWidget {
           ),
         ],
         if (uptimePercent != null) ...[
-          SizedBox(height: 8.h),
+          SizedBox(height: AppSpacing.sm),
           _MetricTile(
-            label: 'Uptime estimasi',
+            label: 'iot.metric_uptime'.tr(),
             value: '${uptimePercent!.toStringAsFixed(1)}%',
             icon: LucideIcons.signal,
             color: AppColors.success,
@@ -100,10 +102,10 @@ class _MetricTile extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding: EdgeInsets.all(10.w),
+      padding: EdgeInsets.all(AppSpacing.sm10),
       decoration: BoxDecoration(
-        color: AppColors.white,
-        borderRadius: BorderRadius.circular(12.r),
+        color: AppColors.surface,
+        borderRadius: BorderRadius.circular(AppRadius.lg),
         border: Border.all(color: AppColors.grey100),
       ),
       child: Column(

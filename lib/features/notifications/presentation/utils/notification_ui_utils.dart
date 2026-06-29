@@ -1,3 +1,5 @@
+import 'package:easy_localization/easy_localization.dart';
+import '../../../../core/i18n/notification_heuristics.dart';
 import 'package:flutter/material.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
 import '../../../../core/constants/app_colors.dart';
@@ -73,41 +75,41 @@ String notificationTypeLabel(String type) {
   switch (type.toUpperCase()) {
     case 'ORDER':
     case 'ORDER_STATUS':
-      return 'Pesanan';
+      return 'notifications.type_order'.tr();
     case 'DISPUTE':
     case 'ORDER_DISPUTE':
-      return 'Sengketa';
+      return 'notifications.type_dispute'.tr();
     case 'NEGOTIATION':
-      return 'Negosiasi';
+      return 'notifications.type_negotiation'.tr();
     case 'FORUM':
-      return 'Forum';
+      return 'notifications.type_forum'.tr();
     case 'WALLET':
-      return 'Dompet';
+      return 'notifications.type_wallet'.tr();
     case 'PAYMENT':
     case 'PAYMENT_RECEIVED':
-      return 'Pembayaran';
+      return 'notifications.type_payment'.tr();
     case 'IOT_ALERT':
-      return 'IoT Alert';
+      return 'notifications.type_iot_alert'.tr();
     case 'SYSTEM_ANNOUNCEMENT':
-      return 'Pengumuman';
+      return 'notifications.type_announcement'.tr();
     case 'MARKET':
     case 'MARKET_INSIGHT':
-      return 'Market Insight';
+      return 'notifications.type_market'.tr();
     default:
-      return 'Umum';
+      return 'notifications.type_general'.tr();
   }
 }
 
 String notificationPriorityLabel(String priority) {
   switch (priority.toUpperCase()) {
     case 'LOW':
-      return 'Rendah';
+      return 'notifications.priority_low'.tr();
     case 'HIGH':
-      return 'Tinggi';
+      return 'notifications.priority_high'.tr();
     case 'URGENT':
-      return 'Mendesak';
+      return 'notifications.priority_urgent'.tr();
     default:
-      return 'Normal';
+      return 'notifications.priority_normal'.tr();
   }
 }
 
@@ -134,12 +136,8 @@ bool notificationIsDisputeRelated(NotificationEntity notification) {
   );
 }
 
-bool notificationIsDisputeRelatedFromText(String title, String body) {
-  final haystack = '$title $body'.toLowerCase();
-  return haystack.contains('sengketa') ||
-      haystack.contains('dispute') ||
-      haystack.contains('komplain');
-}
+bool notificationIsDisputeRelatedFromText(String title, String body) =>
+    NotificationHeuristics.isDisputeRelated(title, body);
 
 NotificationAction? notificationAction(NotificationEntity notification) {
   final type = notification.type.toUpperCase();
@@ -147,7 +145,10 @@ NotificationAction? notificationAction(NotificationEntity notification) {
 
   if (refId != null && refId.isNotEmpty) {
     if (notificationIsDisputeRelated(notification)) {
-      return NotificationAction(label: 'Lihat Sengketa', route: '/order/$refId');
+      return NotificationAction(
+        label: 'notifications.action_view_dispute'.tr(),
+        route: '/order/$refId',
+      );
     }
 
     switch (type) {
@@ -155,21 +156,36 @@ NotificationAction? notificationAction(NotificationEntity notification) {
       case 'ORDER_STATUS':
         if (_needsPaymentAction(notification.title, notification.body)) {
           return NotificationAction(
-            label: 'Bayar Sekarang',
+            label: 'notifications.action_pay_now'.tr(),
             route: '/order/$refId?autoPay=1',
           );
         }
-        return NotificationAction(label: 'Lihat Pesanan', route: '/order/$refId');
+        return NotificationAction(
+          label: 'notifications.action_view_order'.tr(),
+          route: '/order/$refId',
+        );
       case 'DISPUTE':
       case 'ORDER_DISPUTE':
-        return NotificationAction(label: 'Lihat Sengketa', route: '/order/$refId');
+        return NotificationAction(
+          label: 'notifications.action_view_dispute'.tr(),
+          route: '/order/$refId',
+        );
       case 'NEGOTIATION':
-        return NotificationAction(label: 'Buka Negosiasi', route: '/negotiation/$refId');
+        return NotificationAction(
+          label: 'notifications.action_open_negotiation'.tr(),
+          route: '/negotiation/$refId',
+        );
       case 'FORUM':
-        return NotificationAction(label: 'Lihat Forum', route: '/forum-detail/$refId');
+        return NotificationAction(
+          label: 'notifications.action_view_forum'.tr(),
+          route: '/forum-detail/$refId',
+        );
       case 'MARKET':
       case 'MARKET_INSIGHT':
-        return NotificationAction(label: 'Lihat Insight', route: '/market-detail/$refId');
+        return NotificationAction(
+          label: 'notifications.action_view_insight'.tr(),
+          route: '/market-detail/$refId',
+        );
     }
   }
 
@@ -178,22 +194,29 @@ NotificationAction? notificationAction(NotificationEntity notification) {
     case 'PAYMENT':
     case 'PAYMENT_RECEIVED':
       if (refId != null && refId.isNotEmpty) {
-        return NotificationAction(label: 'Lihat Pesanan', route: '/order/$refId');
+        return NotificationAction(
+          label: 'notifications.action_view_order'.tr(),
+          route: '/order/$refId',
+        );
       }
-      return const NotificationAction(label: 'Buka Dompet', route: '/wallet');
+      return NotificationAction(
+        label: 'notifications.action_open_wallet'.tr(),
+        route: '/wallet',
+      );
     case 'IOT_ALERT':
-      return const NotificationAction(label: 'Dashboard IoT', route: '/iot-dashboard');
+      return NotificationAction(
+        label: 'notifications.action_iot_dashboard'.tr(),
+        route: '/iot-dashboard',
+      );
     case 'SYSTEM_ANNOUNCEMENT':
-      return const NotificationAction(label: 'Pusat Bantuan', route: '/help-center');
+      return NotificationAction(
+        label: 'notifications.action_help_center'.tr(),
+        route: '/help-center',
+      );
     default:
       return null;
   }
 }
 
-bool _needsPaymentAction(String title, String body) {
-  final hay = '$title $body'.toLowerCase();
-  return hay.contains('bayar') ||
-      hay.contains('tagihan') ||
-      hay.contains('pembayaran') ||
-      (hay.contains('menunggu') && hay.contains('bayar'));
-}
+bool _needsPaymentAction(String title, String body) =>
+    NotificationHeuristics.needsPaymentAction('', title, body);

@@ -1,3 +1,4 @@
+import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
@@ -138,7 +139,7 @@ class _MainScreenState extends State<MainScreen> {
               padding: EdgeInsets.only(bottom: bottomInset + 4.h),
               child: FloatingActionButton(
                 onPressed: () => context.push('/ai-chat'),
-                backgroundColor: Colors.transparent,
+                backgroundColor: AppColors.transparent,
                 elevation: 0,
                 child: Container(
                   height: 56.r,
@@ -156,7 +157,7 @@ class _MainScreenState extends State<MainScreen> {
                   ),
                   child: Icon(
                     LucideIcons.bot,
-                    color: Colors.white,
+                    color: AppColors.surface,
                     size: 28.sp,
                   ),
                 ),
@@ -170,23 +171,23 @@ class _MainScreenState extends State<MainScreen> {
               items: [
                 FloatingBottomNavItem(
                   icon: LucideIcons.store,
-                  label: isSupplier ? 'Toko' : 'Katalog',
+                  label: isSupplier ? 'nav.store'.tr() : 'nav.catalog'.tr(),
                 ),
-                const FloatingBottomNavItem(
+                FloatingBottomNavItem(
                   icon: LucideIcons.messageSquare,
-                  label: 'Chat',
+                  label: 'nav.chat'.tr(),
                 ),
-                const FloatingBottomNavItem(
+                FloatingBottomNavItem(
                   icon: LucideIcons.users,
-                  label: 'Forum',
+                  label: 'forum'.tr(),
                 ),
-                const FloatingBottomNavItem(
+                FloatingBottomNavItem(
                   icon: LucideIcons.shoppingBag,
-                  label: 'Orders',
+                  label: 'nav.orders'.tr(),
                 ),
-                const FloatingBottomNavItem(
+                FloatingBottomNavItem(
                   icon: LucideIcons.user,
-                  label: 'Profil',
+                  label: 'profil'.tr(),
                 ),
               ],
             ),

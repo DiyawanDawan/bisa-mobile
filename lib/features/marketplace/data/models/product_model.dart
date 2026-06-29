@@ -15,6 +15,9 @@ abstract class ProductModel with _$ProductModel {
     dynamic originalPrice,
     @Default(0) dynamic stock,
     @Default(1) dynamic minOrder,
+    @Default(true) bool allowsSample,
+    @Default(1) dynamic sampleMaxQty,
+    dynamic samplePricePerUnit,
     required String unit,
     String? thumbnailUrl,
     required String biomassaType,
@@ -38,6 +41,11 @@ abstract class ProductModel with _$ProductModel {
     String? cropType,
     String? categoryId,
     @Default([]) List<ProductSpecModel> specs,
+    String? videoUrl,
+    @Default(false) bool isPromoted,
+    String? promotedUntil,
+    @Default(0) int promoImpressions,
+    @Default(0) int promoClicks,
   }) = _ProductModel;
 
   factory ProductModel.fromJson(Map<String, dynamic> json) {
@@ -49,6 +57,9 @@ abstract class ProductModel with _$ProductModel {
       originalPrice: json['originalPrice'],
       stock: json['stock'] ?? 0,
       minOrder: json['minOrder'] ?? 1,
+      allowsSample: json['allowsSample'] as bool? ?? true,
+      sampleMaxQty: json['sampleMaxQty'] ?? 1,
+      samplePricePerUnit: json['samplePricePerUnit'],
       unit: json['unit'] as String,
       thumbnailUrl: json['thumbnailUrl'] as String?,
       biomassaType: json['biomassaType'] as String,
@@ -78,6 +89,11 @@ abstract class ProductModel with _$ProductModel {
       cropType: json['cropType'] as String?,
       categoryId: json['categoryId'] as String?,
       specs: parseSpecs(json['specs']),
+      videoUrl: json['videoUrl'] as String?,
+      isPromoted: json['isPromoted'] as bool? ?? false,
+      promotedUntil: json['promotedUntil'] as String?,
+      promoImpressions: int.tryParse(json['promoImpressions']?.toString() ?? '') ?? 0,
+      promoClicks: int.tryParse(json['promoClicks']?.toString() ?? '') ?? 0,
     );
   }
 
@@ -93,6 +109,11 @@ abstract class ProductModel with _$ProductModel {
         : null,
     stock: double.tryParse(stock.toString()) ?? 0.0,
     minOrder: double.tryParse(minOrder.toString()) ?? 0.0,
+    allowsSample: allowsSample,
+    sampleMaxQty: double.tryParse(sampleMaxQty.toString()) ?? 1,
+    samplePricePerUnit: samplePricePerUnit != null
+        ? double.tryParse(samplePricePerUnit.toString())
+        : null,
     unit: unit,
     thumbnailUrl: resolveMediaField(thumbnailUrl),
     biomassaType: biomassaType,
@@ -125,6 +146,11 @@ abstract class ProductModel with _$ProductModel {
           ),
         )
         .toList(),
+    videoUrl: resolveMediaField(videoUrl),
+    isPromoted: isPromoted,
+    promotedUntil: promotedUntil != null ? DateTime.tryParse(promotedUntil!) : null,
+    promoImpressions: promoImpressions,
+    promoClicks: promoClicks,
   );
 }
 

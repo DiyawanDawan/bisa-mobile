@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
+import '../../../../core/constants/app_layout.dart';
 import '../../../../core/constants/app_colors.dart';
+import '../utils/order_status_i18n.dart';
 
 class OrderStatusBadge extends StatelessWidget {
   const OrderStatusBadge({super.key, required this.status});
@@ -12,10 +14,10 @@ class OrderStatusBadge extends StatelessWidget {
   Widget build(BuildContext context) {
     final style = OrderStatusStyle.from(status);
     return Container(
-      padding: EdgeInsets.symmetric(horizontal: 10.w, vertical: 5.h),
+      padding: EdgeInsets.symmetric(horizontal: AppSpacing.sm10, vertical: 5.h),
       decoration: BoxDecoration(
         color: style.color.withValues(alpha: 0.12),
-        borderRadius: BorderRadius.circular(20.r),
+        borderRadius: BorderRadius.circular(AppRadius.pill),
       ),
       child: Row(
         mainAxisSize: MainAxisSize.min,
@@ -48,59 +50,66 @@ class OrderStatusStyle {
   final IconData icon;
 
   factory OrderStatusStyle.from(String status) {
-    switch (status.toUpperCase()) {
+    final upper = status.toUpperCase();
+    switch (upper) {
       case 'PENDING':
         return OrderStatusStyle(
-          label: 'Menunggu',
+          label: orderStatusLabel(upper),
           color: AppColors.warning,
           icon: LucideIcons.clock3,
         );
       case 'CONFIRMED':
         return OrderStatusStyle(
-          label: 'Dikonfirmasi',
+          label: orderStatusLabel(upper),
           color: AppColors.info,
           icon: LucideIcons.circleCheck,
         );
       case 'PAID':
       case 'PROCESSING':
         return OrderStatusStyle(
-          label: 'Diproses',
+          label: orderStatusLabel('PROCESSING'),
           color: AppColors.info,
           icon: LucideIcons.loader,
         );
       case 'SHIPPED':
         return OrderStatusStyle(
-          label: 'Dikirim',
+          label: orderStatusLabel(upper),
           color: AppColors.primary,
           icon: LucideIcons.truck,
         );
       case 'COMPLETED':
         return OrderStatusStyle(
-          label: 'Selesai',
+          label: orderStatusLabel(upper),
           color: AppColors.success,
           icon: LucideIcons.circleCheck,
         );
       case 'CANCELLED':
         return OrderStatusStyle(
-          label: 'Dibatalkan',
+          label: orderStatusLabel(upper),
           color: AppColors.error,
           icon: LucideIcons.circleX,
         );
       case 'DISPUTED':
         return OrderStatusStyle(
-          label: 'Sengketa',
+          label: orderStatusLabel(upper),
           color: AppColors.error,
           icon: LucideIcons.triangleAlert,
         );
       case 'REFUNDED':
         return OrderStatusStyle(
-          label: 'Refund',
+          label: orderStatusLabel(upper),
           color: AppColors.warning,
           icon: LucideIcons.rotateCcw,
         );
+      case 'EXPIRED':
+        return OrderStatusStyle(
+          label: orderStatusLabel(upper),
+          color: AppColors.error,
+          icon: LucideIcons.circleX,
+        );
       default:
         return OrderStatusStyle(
-          label: status,
+          label: orderStatusLabel(upper),
           color: AppColors.grey500,
           icon: LucideIcons.info,
         );

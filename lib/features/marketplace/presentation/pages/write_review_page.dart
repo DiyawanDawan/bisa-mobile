@@ -4,7 +4,9 @@ import 'package:go_router/go_router.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
+import '../../../../core/constants/app_layout.dart';
 import '../../../../core/constants/app_colors.dart';
+import '../../../../core/utils/app_feedback.dart';
 import '../bloc/review_cubit.dart';
 import '../bloc/review_state.dart';
 import '../../../../shared/widgets/bisa_avatar.dart';
@@ -70,36 +72,27 @@ class _WriteReviewPageState extends State<WriteReviewPage> {
       create: (context) => sl<ReviewCubit>(),
       child: Scaffold(
         backgroundColor: AppColors.background,
-        appBar: const BisaAppBar(
-          title: 'Tulis Ulasan',
-          backgroundColor: Colors.white,
+        appBar: BisaAppBar(
+          title: 'marketplace.write_review_title'.tr(),
+          backgroundColor: AppColors.surface,
         ),
         body: BlocConsumer<ReviewCubit, ReviewState>(
           listener: (context, state) {
             state.maybeWhen(
               success: () {
-                ScaffoldMessenger.of(context).showSnackBar(
-                   SnackBar(content: Text('ulasan_berhasil_disimpan'.tr())),
-                );
+                showSuccessSnackBar(context, 'marketplace.review_saved');
                 Navigator.pop(context, {
                   'rating': _rating,
                   'comment': _commentController.text,
                 });
               },
-              error: (message) {
-                ScaffoldMessenger.of(context).showSnackBar(
-                  SnackBar(
-                    content: Text(message),
-                    backgroundColor: AppColors.error,
-                  ),
-                );
-              },
+              error: (message) => showErrorSnackBar(context, message),
               orElse: () {},
             );
           },
           builder: (context, state) {
             return SingleChildScrollView(
-              padding: EdgeInsets.symmetric(horizontal: 12.w, vertical: 12.h),
+              padding: EdgeInsets.symmetric(horizontal: AppSpacing.md12, vertical: AppSpacing.md12),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
@@ -108,13 +101,13 @@ class _WriteReviewPageState extends State<WriteReviewPage> {
                       '/supplier/${widget.orderId}',
                     ),
                     child: Container(
-                      padding: EdgeInsets.all(12.w),
+                      padding: EdgeInsets.all(AppSpacing.md12),
                       decoration: BoxDecoration(
-                        color: Colors.white,
-                        borderRadius: BorderRadius.circular(16.r),
+                        color: AppColors.surface,
+                        borderRadius: BorderRadius.circular(AppRadius.xl),
                         boxShadow: [
                           BoxShadow(
-                            color: Colors.black.withValues(alpha: 0.04),
+                            color: AppColors.black.withValues(alpha: 0.04),
                             blurRadius: 10,
                             offset: const Offset(0, 4),
                           ),
@@ -127,7 +120,7 @@ class _WriteReviewPageState extends State<WriteReviewPage> {
                             radius: 22.r,
                             fallbackIcon: LucideIcons.store,
                           ),
-                          SizedBox(width: 12.w),
+                          SizedBox(width: AppSpacing.md12),
                           Expanded(
                             child: Column(
                               crossAxisAlignment: CrossAxisAlignment.start,
@@ -135,7 +128,7 @@ class _WriteReviewPageState extends State<WriteReviewPage> {
                                 Row(
                                   children: [
                                     Text(
-                                      widget.shopName ?? 'Supplier',
+                                      widget.shopName ?? 'marketplace.supplier_fallback'.tr(),
                                       style: TextStyle(
                                         fontSize: 14.sp,
                                         fontWeight: FontWeight.w900,
@@ -169,7 +162,7 @@ class _WriteReviewPageState extends State<WriteReviewPage> {
                                           size: 12.sp),
                                       SizedBox(width: 4.w),
                                       Text(
-                                        'Supplier Terverifikasi',
+                                        'marketplace.verified_supplier'.tr(),
                                         style: TextStyle(
                                           fontSize: 11.sp,
                                           color: AppColors.primary,
@@ -187,20 +180,20 @@ class _WriteReviewPageState extends State<WriteReviewPage> {
                       ),
                     ),
                   ),
-                  SizedBox(height: 12.h),
+                  SizedBox(height: AppSpacing.md12),
                   // Product Info Card (Compact)
                   GestureDetector(
                     onTap: () => context.push('/product/${widget.productId}'),
                     child: Container(
-                      padding: EdgeInsets.all(10.w),
+                      padding: EdgeInsets.all(AppSpacing.sm10),
                       decoration: BoxDecoration(
                         color: AppColors.grey50,
-                        borderRadius: BorderRadius.circular(12.r),
+                        borderRadius: BorderRadius.circular(AppRadius.lg),
                       ),
                       child: Row(
                         children: [
                           ClipRRect(
-                            borderRadius: BorderRadius.circular(8.r),
+                            borderRadius: BorderRadius.circular(AppRadius.button),
                             child: widget.thumbnailUrl != null
                                 ? BisaNetworkImage(
                                     imageUrl: widget.thumbnailUrl,
@@ -216,7 +209,7 @@ class _WriteReviewPageState extends State<WriteReviewPage> {
                                         color: AppColors.grey400, size: 18.sp),
                                   ),
                           ),
-                          SizedBox(width: 10.w),
+                          SizedBox(width: AppSpacing.sm10),
                           Expanded(
                             child: Text(
                               widget.productName,
@@ -233,18 +226,18 @@ class _WriteReviewPageState extends State<WriteReviewPage> {
                       ),
                     ),
                   ),
-                  SizedBox(height: 16.h),
+                  SizedBox(height: AppSpacing.md),
                   Container(
                     width: double.infinity,
-                    padding: EdgeInsets.symmetric(vertical: 16.h),
+                    padding: EdgeInsets.symmetric(vertical: AppSpacing.md),
                     decoration: BoxDecoration(
-                      color: Colors.white,
-                      borderRadius: BorderRadius.circular(20.r),
+                      color: AppColors.surface,
+                      borderRadius: BorderRadius.circular(AppRadius.pill),
                     ),
                     child: Column(
                       children: [
                         Text(
-                          'Berikan Rating',
+                          'marketplace.give_rating'.tr(),
                           style: TextStyle(
                             fontSize: 15.sp,
                             fontWeight: FontWeight.w700,
@@ -253,13 +246,13 @@ class _WriteReviewPageState extends State<WriteReviewPage> {
                         ),
                         SizedBox(height: 4.h),
                         Text(
-                          'Ketuk bintang untuk menilai kualitas',
+                          'marketplace.tap_stars_hint'.tr(),
                           style: TextStyle(
                             fontSize: 12.sp,
                             color: AppColors.textSecondary,
                           ),
                         ),
-                        SizedBox(height: 12.h),
+                        SizedBox(height: AppSpacing.md12),
                         Row(
                           mainAxisAlignment: MainAxisAlignment.center,
                           children: List.generate(5, (index) {
@@ -273,7 +266,7 @@ class _WriteReviewPageState extends State<WriteReviewPage> {
                                 child: Icon(
                                   LucideIcons.star,
                                   color: isSelected
-                                      ? Colors.amber
+                                      ? AppColors.warning
                                       : AppColors.grey200,
                                   fill: isSelected ? 1 : 0,
                                   size: 38.sp,
@@ -282,7 +275,7 @@ class _WriteReviewPageState extends State<WriteReviewPage> {
                             );
                           }),
                         ),
-                        SizedBox(height: 8.h),
+                        SizedBox(height: AppSpacing.sm),
                         Text(
                           _getRatingLabel(_rating.toInt()),
                           style: TextStyle(
@@ -294,11 +287,10 @@ class _WriteReviewPageState extends State<WriteReviewPage> {
                       ],
                     ),
                   ),
-                  SizedBox(height: 16.h),
+                  SizedBox(height: AppSpacing.md),
                   CustomTextField(
-                    label: 'Ulasan Anda',
-                    hint:
-                        'Bagikan pengalaman Anda menggunakan produk ini...',
+                    label: 'marketplace.your_review'.tr(),
+                    hint: 'marketplace.review_hint'.tr(),
                     controller: _commentController,
                     maxLines: 4,
                   ),
@@ -308,16 +300,18 @@ class _WriteReviewPageState extends State<WriteReviewPage> {
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
                         Text(
-                          'Minimal 10 karakter',
+                          'marketplace.min_10_chars'.tr(),
                           style: TextStyle(
                             fontSize: 10.sp,
                             color: _commentController.text.length < 10
-                                ? Colors.orange
+                                ? AppColors.warning
                                 : AppColors.success,
                           ),
                         ),
                         Text(
-                          '${_commentController.text.length} karakter',
+                          'marketplace.char_count'.tr(namedArgs: {
+                            'count': '${_commentController.text.length}',
+                          }),
                           style: TextStyle(
                             fontSize: 10.sp,
                             color: AppColors.textSecondary,
@@ -326,11 +320,11 @@ class _WriteReviewPageState extends State<WriteReviewPage> {
                       ],
                     ),
                   ),
-                  SizedBox(height: 24.h),
+                  SizedBox(height: AppSpacing.xl),
                   CustomButton(
                     text: widget.reviewId != null
-                        ? 'Perbarui Ulasan'
-                        : 'Kirim Ulasan',
+                        ? 'marketplace.update_review'.tr()
+                        : 'marketplace.submit_review'.tr(),
                     useGradient: true,
                     isLoading: state.maybeWhen(
                       loading: () => true,
@@ -340,13 +334,9 @@ class _WriteReviewPageState extends State<WriteReviewPage> {
                       loading: () => null,
                       orElse: () => () {
                         if (_commentController.text.length < 10) {
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            SnackBar(
-                              content:
-                                  Text('ulasan_minimal_10_karakter_ya'.tr()),
-                              behavior: SnackBarBehavior.floating,
-                              backgroundColor: Colors.orange,
-                            ),
+                          showWarningSnackBar(
+                            context,
+                            'marketplace.review_min_chars',
                           );
                           return;
                         }
@@ -367,7 +357,7 @@ class _WriteReviewPageState extends State<WriteReviewPage> {
                       },
                     ),
                   ),
-                  SizedBox(height: 16.h),
+                  SizedBox(height: AppSpacing.md),
                 ],
               ),
             );
@@ -380,15 +370,15 @@ class _WriteReviewPageState extends State<WriteReviewPage> {
   String _getRatingLabel(int rating) {
     switch (rating) {
       case 1:
-        return 'Sangat Buruk';
+        return 'marketplace.rating_terrible'.tr();
       case 2:
-        return 'Buruk';
+        return 'marketplace.rating_bad'.tr();
       case 3:
-        return 'Cukup Baik';
+        return 'marketplace.rating_ok'.tr();
       case 4:
-        return 'Sangat Baik';
+        return 'marketplace.rating_good'.tr();
       case 5:
-        return 'Luar Biasa!';
+        return 'marketplace.rating_excellent'.tr();
       default:
         return '';
     }
@@ -398,9 +388,9 @@ class _WriteReviewPageState extends State<WriteReviewPage> {
     switch (rating) {
       case 1:
       case 2:
-        return Colors.red;
+        return AppColors.error;
       case 3:
-        return Colors.orange;
+        return AppColors.warning;
       case 4:
       case 5:
         return AppColors.primary;

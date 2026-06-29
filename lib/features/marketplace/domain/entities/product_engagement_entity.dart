@@ -24,7 +24,7 @@ class ProductEngagementItem {
   factory ProductEngagementItem.fromJson(Map<String, dynamic> json) {
     return ProductEngagementItem(
       productId: json['productId']?.toString() ?? '',
-      name: json['name']?.toString() ?? 'Produk',
+      name: json['name']?.toString() ?? 'marketplace.unnamed_product',
       thumbnailUrl: json['thumbnailUrl']?.toString(),
       pricePerUnit: double.tryParse(json['pricePerUnit']?.toString() ?? '') ?? 0,
       unit: json['unit']?.toString() ?? 'unit',

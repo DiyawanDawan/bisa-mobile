@@ -1,3 +1,5 @@
+import 'package:easy_localization/easy_localization.dart';
+
 import '../../../../core/utils/product_pricing.dart';
 
 /// Validasi jumlah penawaran negosiasi terhadap min order & stok.
@@ -16,15 +18,20 @@ class NegotiationQuantityRules {
     required double stock,
     required String unit,
   }) {
-    if (quantity == null) return 'Angka tidak valid';
+    if (quantity == null) return 'negotiation.qty_number_invalid'.tr();
     if (isOutOfStock(stock)) {
-      return 'Stok habis. Penawaran jumlah tidak dapat diproses.';
+      return 'negotiation.qty_stock_blocked'.tr();
     }
     if (quantity < minOrder) {
-      return 'Min. order ${ProductPricingInfo.formatQty(minOrder)} $unit';
+      return 'negotiation.min_order_hint'.tr(namedArgs: {
+        'qty': ProductPricingInfo.formatQty(minOrder),
+        'unit': unit,
+      });
     }
     if (quantity > stock) {
-      return 'Maks. ${formatStock(stock, unit)} (stok tersedia)';
+      return 'negotiation.qty_max_available'.tr(namedArgs: {
+        'stock': formatStock(stock, unit),
+      });
     }
     return null;
   }

@@ -17,5 +17,12 @@ abstract class GisRepository {
     bool forceRefresh = false,
   });
   Future<Either<Failure, List<WastePointEntity>>> getWastePoints();
-  Future<Either<Failure, Map<String, dynamic>>> matchSupplyDemand(double lat, double lng, double radius);
+  Future<Either<Failure, Map<String, dynamic>>> matchSupplyDemand(
+    double lat,
+    double lng,
+    double radius, {
+    String? biomassaType,
+    String? regency,
+    String? province,
+  });
 }

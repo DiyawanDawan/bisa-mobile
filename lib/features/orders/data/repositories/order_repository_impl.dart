@@ -19,6 +19,7 @@ class OrderRepositoryImpl implements OrderRepository {
     int limit = 20,
     String? search,
     String? status,
+    String? orderType,
   }) async {
     try {
       final models = await remoteDataSource.getMyPurchases(
@@ -26,6 +27,7 @@ class OrderRepositoryImpl implements OrderRepository {
         limit: limit,
         search: search,
         status: status,
+        orderType: orderType,
       );
       return Right(models.map((e) => e.toEntity()).toList());
     } on DioException catch (e) {
@@ -41,6 +43,7 @@ class OrderRepositoryImpl implements OrderRepository {
     int limit = 20,
     String? search,
     String? status,
+    String? orderType,
   }) async {
     try {
       final models = await remoteDataSource.getMySales(
@@ -48,8 +51,45 @@ class OrderRepositoryImpl implements OrderRepository {
         limit: limit,
         search: search,
         status: status,
+        orderType: orderType,
       );
       return Right(models.map((e) => e.toEntity()).toList());
+    } on DioException catch (e) {
+      return Left(_mapDioExceptionToFailure(e));
+    } catch (e) {
+      return const Left(UnexpectedFailure());
+    }
+  }
+
+  @override
+  Future<Either<Failure, Map<String, int>>> getMyPurchasesStatusCounts({
+    String? search,
+    String? orderType,
+  }) async {
+    try {
+      final counts = await remoteDataSource.getMyPurchasesStatusCounts(
+        search: search,
+        orderType: orderType,
+      );
+      return Right(counts);
+    } on DioException catch (e) {
+      return Left(_mapDioExceptionToFailure(e));
+    } catch (e) {
+      return const Left(UnexpectedFailure());
+    }
+  }
+
+  @override
+  Future<Either<Failure, Map<String, int>>> getMySalesStatusCounts({
+    String? search,
+    String? orderType,
+  }) async {
+    try {
+      final counts = await remoteDataSource.getMySalesStatusCounts(
+        search: search,
+        orderType: orderType,
+      );
+      return Right(counts);
     } on DioException catch (e) {
       return Left(_mapDioExceptionToFailure(e));
     } catch (e) {
@@ -293,6 +333,8 @@ class OrderRepositoryImpl implements OrderRepository {
     Map<String, dynamic>? shippingSnapshot,
     List<Map<String, dynamic>>? shippingSelections,
     String? notes,
+    String? orderType,
+    String? voucherCode,
   }) async {
     try {
       final data = await remoteDataSource.createDirectOrder(
@@ -301,6 +343,8 @@ class OrderRepositoryImpl implements OrderRepository {
         shippingSnapshot: shippingSnapshot,
         shippingSelections: shippingSelections,
         notes: notes,
+        orderType: orderType,
+        voucherCode: voucherCode,
       );
       return Right(data);
     } on DioException catch (e) {
@@ -317,6 +361,7 @@ class OrderRepositoryImpl implements OrderRepository {
     Map<String, dynamic>? shippingSnapshot,
     List<Map<String, dynamic>>? shippingSelections,
     String? notes,
+    String? voucherCode,
   }) async {
     try {
       final data = await remoteDataSource.previewDirectOrder(
@@ -325,6 +370,27 @@ class OrderRepositoryImpl implements OrderRepository {
         shippingSnapshot: shippingSnapshot,
         shippingSelections: shippingSelections,
         notes: notes,
+        voucherCode: voucherCode,
+      );
+      return Right(data);
+    } on DioException catch (e) {
+      return Left(_mapDioExceptionToFailure(e));
+    } catch (e) {
+      return const Left(UnexpectedFailure());
+    }
+  }
+
+  @override
+  Future<Either<Failure, Map<String, dynamic>>> validateVoucher({
+    required String code,
+    required double subtotal,
+    List<String>? sellerIds,
+  }) async {
+    try {
+      final data = await remoteDataSource.validateVoucher(
+        code: code,
+        subtotal: subtotal,
+        sellerIds: sellerIds,
       );
       return Right(data);
     } on DioException catch (e) {
@@ -483,7 +549,7 @@ class OrderRepositoryImpl implements OrderRepository {
       final statusCode = e.response?.statusCode;
       final rawData = e.response?.data;
       final data = rawData is Map<String, dynamic> ? rawData : null;
-      final message = data?['meta']?['message'] ?? data?['message'] ?? 'Terjadi kesalahan';
+      final message = data?['meta']?['message'] ?? data?['message'] ?? 'errors.generic';
 
       switch (statusCode) {
         case 401:
@@ -510,17 +576,17 @@ class OrderRepositoryImpl implements OrderRepository {
           if (message.toLowerCase().contains('daily limit') ||
               message.toLowerCase().contains('limit exceeded')) {
             return const ServerFailure(
-              message:
-                  'Kuota harian API ongkir sudah habis. Coba lagi besok atau hubungi admin.',
+              message: 'cart.api_quota_exhausted',
               statusCode: 429,
             );
           }
           return ServerFailure(message: message, statusCode: statusCode);
         case 429:
           return ServerFailure(
-            message: message.contains('Kuota')
-                ? message
-                : 'Kuota harian API ongkir sudah habis. Coba lagi besok.',
+            message: message.contains('Kuota') ||
+                    message.toLowerCase().contains('quota')
+                ? 'cart.api_quota_exhausted'
+                : message,
             statusCode: 429,
           );
         default:

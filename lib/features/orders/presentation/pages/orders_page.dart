@@ -6,6 +6,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
 import 'package:mobile_bisa/features/marketplace/presentation/widgets/horizontal_product_section.dart';
+import '../../../../core/constants/app_layout.dart';
 import '../../../../core/constants/app_colors.dart';
 import '../../../../core/utils/safe_area_utils.dart';
 import '../bloc/order_cubit.dart';
@@ -20,6 +21,7 @@ import 'package:mobile_bisa/features/marketplace/presentation/widgets/vertical_p
 import '../../../../shared/widgets/bisa_filter_chip.dart';
 import '../../../../shared/widgets/custom_button.dart';
 import '../widgets/order_card_skeleton.dart';
+import '../utils/order_status_i18n.dart';
 
 class OrdersPage extends StatefulWidget {
   final String activeProductMode;
@@ -35,22 +37,15 @@ class OrdersPage extends StatefulWidget {
 
 class _OrdersPageState extends State<OrdersPage> {
   String _selectedStatus = 'ALL';
+  String _selectedOrderType = 'ALL';
   String _searchQuery = '';
   final _searchController = TextEditingController();
   bool _isSearching = false;
   String? _lastLoadedProductMode;
   Timer? _searchDebounce;
+  Map<String, int> _statusCounts = const {};
 
-  final List<Map<String, String>> _statuses = [
-    {'label': 'Semua', 'value': 'ALL'},
-    {'label': 'Menunggu', 'value': 'PENDING'},
-    {'label': 'Diproses', 'value': 'PROCESSING'},
-    {'label': 'Dikirim', 'value': 'SHIPPED'},
-    {'label': 'Selesai', 'value': 'COMPLETED'},
-    {'label': 'Dibatalkan', 'value': 'CANCELLED'},
-    {'label': 'Sengketa', 'value': 'DISPUTED'},
-    {'label': 'Refund', 'value': 'REFUNDED'},
-  ];
+  List<Map<String, String>> get _statuses => orderStatusFilters();
 
   @override
   void initState() {
@@ -90,17 +85,39 @@ class _OrdersPageState extends State<OrdersPage> {
     final apiStatus = _selectedStatus != 'ALL' && _selectedStatus != 'REFUNDED'
         ? _selectedStatus
         : null;
+    final apiOrderType =
+        _selectedOrderType != 'ALL' ? _selectedOrderType : null;
     if (user.role == 'SUPPLIER') {
       context.read<OrderCubit>().getMySales(
             search: apiSearch,
             status: apiStatus,
+            orderType: apiOrderType,
           );
     } else {
       context.read<OrderCubit>().getMyPurchases(
             search: apiSearch,
             status: apiStatus,
+            orderType: apiOrderType,
           );
     }
+    _fetchStatusCounts(search: search);
+  }
+
+  Future<void> _fetchStatusCounts({String? search}) async {
+    if (!mounted) return;
+    final user = context.read<AuthCubit>().state.maybeWhen(
+          authenticated: (u) => u,
+          orElse: () => null,
+        );
+    if (user == null) return;
+
+    final counts = await context.read<OrderCubit>().fetchOrderStatusCounts(
+          isSupplier: user.role == 'SUPPLIER',
+          search: search,
+          orderType: _selectedOrderType,
+        );
+    if (!mounted) return;
+    setState(() => _statusCounts = counts);
   }
 
   void _onSearchChanged(String val) {
@@ -133,6 +150,7 @@ class _OrdersPageState extends State<OrdersPage> {
 
   bool get _hasActiveFilters =>
       _selectedStatus != 'ALL' ||
+      _selectedOrderType != 'ALL' ||
       _selectedDateFilter != 'ALL' ||
       _searchQuery.isNotEmpty;
 
@@ -140,6 +158,7 @@ class _OrdersPageState extends State<OrdersPage> {
     _searchDebounce?.cancel();
     setState(() {
       _selectedStatus = 'ALL';
+      _selectedOrderType = 'ALL';
       _selectedDateFilter = 'ALL';
       _searchQuery = '';
       _searchController.clear();
@@ -153,21 +172,21 @@ class _OrdersPageState extends State<OrdersPage> {
       context: context,
       isScrollControlled: true,
       useSafeArea: true,
-      backgroundColor: Colors.transparent,
+      backgroundColor: AppColors.transparent,
       builder: (context) {
         return Padding(
           padding: sheetBottomPadding(context),
           child: StatefulBuilder(
             builder: (context, setModalState) => Container(
             padding: EdgeInsets.fromLTRB(
-              24.w,
-              12.h,
-              24.w,
-              20.h + MediaQuery.of(context).viewInsets.bottom,
+              AppSpacing.xl,
+              AppSpacing.md12,
+              AppSpacing.xl,
+              AppSpacing.lg + MediaQuery.of(context).viewInsets.bottom,
             ),
             decoration: BoxDecoration(
-              color: Colors.white,
-              borderRadius: BorderRadius.vertical(top: Radius.circular(32.r)),
+              color: AppColors.surface,
+              borderRadius: BorderRadius.vertical(top: Radius.circular(AppSpacing.xxlPx.r)),
             ),
             child: Column(
               mainAxisSize: MainAxisSize.min,
@@ -183,27 +202,27 @@ class _OrdersPageState extends State<OrdersPage> {
                     ),
                   ),
                 ),
-                SizedBox(height: 24.h),
+                SizedBox(height: AppSpacing.xl),
                 Text(
-                  'Filter Pesanan',
+                  'orders.filter_sheet_title'.tr(),
                   style: TextStyle(
                     fontSize: 20.sp,
                     fontWeight: FontWeight.w900,
                     color: AppColors.textPrimary,
                   ),
                 ),
-                SizedBox(height: 24.h),
+                SizedBox(height: AppSpacing.xl),
                 Text(
-                  'Status Pesanan',
+                  'orders.filter_status_label'.tr(),
                   style: TextStyle(
                     fontSize: 14.sp,
                     fontWeight: FontWeight.w700,
                     color: AppColors.textPrimary,
                   ),
                 ),
-                SizedBox(height: 12.h),
+                SizedBox(height: AppSpacing.md12),
                 Wrap(
-                  spacing: 8.w,
+                  spacing: AppSpacing.sm,
                   runSpacing: 4.h,
                   children: _statuses.map((status) {
                     return _buildStatusChipInSheet(
@@ -213,28 +232,53 @@ class _OrdersPageState extends State<OrdersPage> {
                     );
                   }).toList(),
                 ),
-                SizedBox(height: 24.h),
+                SizedBox(height: AppSpacing.xl),
                 Text(
-                  'Rentang Waktu',
+                  'orders.filter_order_type_label'.tr(),
                   style: TextStyle(
                     fontSize: 14.sp,
                     fontWeight: FontWeight.w700,
                     color: AppColors.textPrimary,
                   ),
                 ),
-                SizedBox(height: 12.h),
+                SizedBox(height: AppSpacing.md12),
                 Wrap(
-                  spacing: 8.w,
+                  spacing: AppSpacing.sm,
                   children: [
-                    _buildDateChip('Semua', 'ALL', setModalState),
-                    _buildDateChip('Hari Ini', 'TODAY', setModalState),
-                    _buildDateChip('Minggu Ini', 'WEEK', setModalState),
-                    _buildDateChip('Bulan Ini', 'MONTH', setModalState),
+                    _buildOrderTypeChip(
+                      'orders.filter_order_type_all'.tr(),
+                      'ALL',
+                      setModalState,
+                    ),
+                    _buildOrderTypeChip(
+                      'orders.filter_order_type_sample'.tr(),
+                      'SAMPLE',
+                      setModalState,
+                    ),
                   ],
                 ),
-                SizedBox(height: 24.h),
+                SizedBox(height: AppSpacing.xl),
+                Text(
+                  'orders.filter_date_range_label'.tr(),
+                  style: TextStyle(
+                    fontSize: 14.sp,
+                    fontWeight: FontWeight.w700,
+                    color: AppColors.textPrimary,
+                  ),
+                ),
+                SizedBox(height: AppSpacing.md12),
+                Wrap(
+                  spacing: AppSpacing.sm,
+                  children: [
+                    _buildDateChip('orders.filter_date_all'.tr(), 'ALL', setModalState),
+                    _buildDateChip('orders.filter_date_today'.tr(), 'TODAY', setModalState),
+                    _buildDateChip('orders.filter_date_week'.tr(), 'WEEK', setModalState),
+                    _buildDateChip('orders.filter_date_month'.tr(), 'MONTH', setModalState),
+                  ],
+                ),
+                SizedBox(height: AppSpacing.xl),
                 CustomButton(
-                  text: 'Terapkan Filter',
+                  text: 'orders.filter_apply'.tr(),
                   height: 44.h,
                   onPressed: () => Navigator.pop(context),
                 ),
@@ -264,6 +308,23 @@ class _OrdersPageState extends State<OrdersPage> {
     );
   }
 
+  Widget _buildOrderTypeChip(
+    String label,
+    String value,
+    StateSetter setModalState,
+  ) {
+    final isSelected = _selectedOrderType == value;
+    return BisaFilterChip(
+      label: label,
+      isSelected: isSelected,
+      onTap: () {
+        setModalState(() => _selectedOrderType = value);
+        setState(() => _selectedOrderType = value);
+        _fetchOrders();
+      },
+    );
+  }
+
   Widget _buildDateChip(String label, String value, StateSetter setModalState) {
     final isSelected = _selectedDateFilter == value;
     return BisaFilterChip(
@@ -288,7 +349,7 @@ class _OrdersPageState extends State<OrdersPage> {
     return Scaffold(
         backgroundColor: AppColors.background,
         appBar: BisaAppBar(
-          backgroundColor: AppColors.white,
+          backgroundColor: AppColors.surface,
           showBackButton: false,
           centerTitle: false,
           actions: [
@@ -325,7 +386,7 @@ class _OrdersPageState extends State<OrdersPage> {
                       color: AppColors.textPrimary,
                     ),
                     decoration: InputDecoration(
-                      hintText: 'No. pesanan, produk, toko, tracking...',
+                      hintText: 'orders.search_hint'.tr(),
                       hintStyle: TextStyle(
                         color: AppColors.textHint,
                         fontSize: 13.sp,
@@ -347,7 +408,9 @@ class _OrdersPageState extends State<OrdersPage> {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      isSupplier ? 'Penjualan Saya' : 'Pesanan Saya',
+                      isSupplier
+                          ? 'orders.title_supplier'.tr()
+                          : 'orders.title_buyer'.tr(),
                       style: TextStyle(
                         fontSize: 24.sp,
                         fontWeight: FontWeight.w900,
@@ -357,8 +420,8 @@ class _OrdersPageState extends State<OrdersPage> {
                     ),
                     Text(
                       isSupplier
-                          ? 'Kelola transaksi sebagai Supplier'
-                          : 'Pantau status belanja Anda',
+                          ? 'orders.subtitle_supplier'.tr()
+                          : 'orders.subtitle_buyer'.tr(),
                       style: TextStyle(
                         color: AppColors.textSecondary,
                         fontSize: 12.sp,
@@ -373,17 +436,16 @@ class _OrdersPageState extends State<OrdersPage> {
                 physics: const BouncingScrollPhysics(),
                 child: Column(
                   children: [
-                    const GuestPlaceholder(
-                      title: 'Pesanan Tidak Ditemukan',
-                      subtitle:
-                          'Silakan masuk untuk melihat list pesanan Anda.',
+                    GuestPlaceholder(
+                      title: 'orders.not_found_title'.tr(),
+                      subtitle: 'orders.guest_subtitle'.tr(),
                       icon: LucideIcons.shoppingBag,
                     ),
-                    SizedBox(height: 20.h),
+                    SizedBox(height: AppSpacing.lg),
                     HorizontalProductSection(
                       title: widget.activeProductMode == 'ORGANIC_PRODUCE'
-                          ? 'Hasil Tani Rekomendasi'
-                          : 'Produk Rekomendasi',
+                          ? 'orders.guest_recommend_organic'.tr()
+                          : 'orders.guest_recommend_products'.tr(),
                       sortBy: 'createdAt',
                       sortOrder: 'desc',
                       limit: 10,
@@ -392,8 +454,8 @@ class _OrdersPageState extends State<OrdersPage> {
                     ),
                     HorizontalProductSection(
                       title: widget.activeProductMode == 'ORGANIC_PRODUCE'
-                          ? 'Hasil Tani Terlaris'
-                          : 'Produk Terlaris',
+                          ? 'orders.guest_bestseller_organic'.tr()
+                          : 'orders.guest_bestseller_products'.tr(),
                       sortBy: 'averageRating',
                       sortOrder: 'desc',
                       limit: 10,
@@ -402,8 +464,8 @@ class _OrdersPageState extends State<OrdersPage> {
                     ),
                     VerticalProductGridSection(
                       title: widget.activeProductMode == 'ORGANIC_PRODUCE'
-                          ? 'Semua Hasil Tani'
-                          : 'Semua Produk',
+                          ? 'orders.guest_all_organic'.tr()
+                          : 'orders.guest_all_products'.tr(),
                       sortBy: 'createdAt',
                       sortOrder: 'desc',
                       productMode: widget.activeProductMode,
@@ -412,129 +474,159 @@ class _OrdersPageState extends State<OrdersPage> {
                   ],
                 ),
               )
-            : BlocBuilder<OrderCubit, OrderState>(
-                builder: (context, state) {
-                  return state.maybeWhen(
-                    initial: () => const SizedBox.shrink(),
-                    loading: () => _buildOrdersLoadingSkeleton(),
-                    error: (message) => Center(
-                      child: Padding(
-                        padding: EdgeInsets.all(32.w),
-                        child: Column(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: [
-                            Icon(
-                              LucideIcons.circleAlert,
-                              color: AppColors.error,
-                              size: 48.sp,
-                            ),
-                            SizedBox(height: 16.h),
-                            Text(
-                              message,
-                              textAlign: TextAlign.center,
-                              style: TextStyle(
-                                color: AppColors.textSecondary,
-                                fontSize: 14.sp,
-                              ),
-                            ),
-                            SizedBox(height: 20.h),
-                            CustomButton(
-                              text: 'coba_lagi'.tr(),
-                              width: 160.w,
-                              onPressed: () => _fetchOrders(
-                                search: _searchQuery.trim().isEmpty
-                                    ? null
-                                    : _searchQuery,
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                    ),
-                    loaded: (orders) {
-                      final filteredOrders = _filterOrders(orders);
-
-                      return RefreshIndicator(
-                        color: AppColors.primary,
-                        onRefresh: () async {
-                          _fetchOrders(
-                            search: _searchQuery.trim().isEmpty
-                                ? null
-                                : _searchQuery,
-                          );
-                          await Future<void>.delayed(
-                            const Duration(milliseconds: 300),
-                          );
-                        },
-                        child: SingleChildScrollView(
-                          physics: const AlwaysScrollableScrollPhysics(
-                            parent: BouncingScrollPhysics(),
-                          ),
-                          child: Column(
-                            children: [
-                              _buildStatusFilter(),
-                              if (filteredOrders.isNotEmpty)
-                                _buildOrdersSummary(filteredOrders.length),
-                              if (filteredOrders.isEmpty)
-                                _buildEmptyState()
-                              else ...[
-                                GroupedOrdersList(
-                                  orders: filteredOrders,
-                                  isSupplierView: isSupplier,
-                                ),
-                                if (context.read<OrderCubit>().hasMoreOrders) ...[
-                                  SizedBox(height: 16.h),
-                                  Padding(
-                                    padding: EdgeInsets.symmetric(horizontal: 16.w),
-                                    child: CustomButton(
-                                      text: 'Muat lebih',
-                                      useGradient: false,
-                                      isLoading:
-                                          context.read<OrderCubit>().isLoadingMore,
-                                      onPressed: () {
-                                        context.read<OrderCubit>().loadMoreOrders(
-                                              search: _searchQuery.trim().isEmpty
-                                                  ? null
-                                                  : _searchQuery,
-                                              status: _selectedStatus,
-                                              isSupplier: isSupplier,
-                                            );
-                                      },
+            : Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  _buildStatusFilter(),
+                  Expanded(
+                    child: BlocBuilder<OrderCubit, OrderState>(
+                      builder: (context, state) {
+                        return state.maybeWhen(
+                          initial: () => const SizedBox.shrink(),
+                          loading: () => _buildOrdersLoadingSkeleton(),
+                          error: (message) => Center(
+                            child: Padding(
+                              padding: EdgeInsets.all(AppSpacing.xxl),
+                              child: Column(
+                                mainAxisAlignment: MainAxisAlignment.center,
+                                children: [
+                                  Icon(
+                                    LucideIcons.circleAlert,
+                                    color: AppColors.error,
+                                    size: 48.sp,
+                                  ),
+                                  SizedBox(height: AppSpacing.md),
+                                  Text(
+                                    message,
+                                    textAlign: TextAlign.center,
+                                    style: TextStyle(
+                                      color: AppColors.textSecondary,
+                                      fontSize: 14.sp,
+                                    ),
+                                  ),
+                                  SizedBox(height: AppSpacing.lg),
+                                  CustomButton(
+                                    text: 'orders.retry'.tr(),
+                                    width: 160.w,
+                                    onPressed: () => _fetchOrders(
+                                      search: _searchQuery.trim().isEmpty
+                                          ? null
+                                          : _searchQuery,
                                     ),
                                   ),
                                 ],
-                              ],
-                              if (user.role == 'BUYER') ...[
-                                SizedBox(height: 32.h),
-                                const Divider(),
-                                SizedBox(height: 24.h),
-                                VerticalProductGridSection(
-                                  title: widget.activeProductMode == 'ORGANIC_PRODUCE'
-                                      ? 'Hasil Tani Untuk Anda'
-                                      : 'Mungkin Anda Tertarik',
-                                  sortBy: 'averageRating',
-                                  sortOrder: 'desc',
-                                  productMode: widget.activeProductMode,
-                                ),
-                              ],
-                              SizedBox(
-                                height: mainShellBottomPadding(
-                                  context,
-                                  kind: MainShellScrollKind.orders,
-                                ),
                               ),
-                            ],
+                            ),
                           ),
-                        ),
-                      );
-                    },
-                    orElse: () => const Center(
-                      child: CircularProgressIndicator(
-                        color: AppColors.primary,
-                      ),
+                          loaded: (orders) {
+                            final filteredOrders = _filterOrders(orders);
+
+                            return Column(
+                              crossAxisAlignment: CrossAxisAlignment.stretch,
+                              children: [
+                                if (filteredOrders.isNotEmpty)
+                                  _buildOrdersSummary(filteredOrders.length),
+                                Expanded(
+                                  child: RefreshIndicator(
+                                    color: AppColors.primary,
+                                    onRefresh: () async {
+                                      _fetchOrders(
+                                        search: _searchQuery.trim().isEmpty
+                                            ? null
+                                            : _searchQuery,
+                                      );
+                                      await Future<void>.delayed(
+                                        const Duration(milliseconds: 300),
+                                      );
+                                    },
+                                    child: SingleChildScrollView(
+                                      physics:
+                                          const AlwaysScrollableScrollPhysics(
+                                        parent: BouncingScrollPhysics(),
+                                      ),
+                                      child: Column(
+                                        children: [
+                                          if (filteredOrders.isEmpty)
+                                            _buildEmptyState()
+                                          else ...[
+                                            GroupedOrdersList(
+                                              orders: filteredOrders,
+                                              isSupplierView: isSupplier,
+                                            ),
+                                            if (context
+                                                .read<OrderCubit>()
+                                                .hasMoreOrders) ...[
+                                              SizedBox(height: AppSpacing.md),
+                                              Padding(
+                                                padding: EdgeInsets.symmetric(
+                                                  horizontal: AppSpacing.md,
+                                                ),
+                                                child: CustomButton(
+                                                  text: 'orders.load_more'.tr(),
+                                                  useGradient: false,
+                                                  isLoading: context
+                                                      .read<OrderCubit>()
+                                                      .isLoadingMore,
+                                                  onPressed: () {
+                                                    context
+                                                        .read<OrderCubit>()
+                                                        .loadMoreOrders(
+                                                          search: _searchQuery
+                                                                  .trim()
+                                                                  .isEmpty
+                                                              ? null
+                                                              : _searchQuery,
+                                                          status: _selectedStatus,
+                                                          orderType:
+                                                              _selectedOrderType,
+                                                          isSupplier: isSupplier,
+                                                        );
+                                                  },
+                                                ),
+                                              ),
+                                            ],
+                                          ],
+                                          if (user.role == 'BUYER') ...[
+                                            SizedBox(height: AppSpacing.xxl),
+                                            const Divider(),
+                                            SizedBox(height: AppSpacing.xl),
+                                            VerticalProductGridSection(
+                                              title: widget.activeProductMode ==
+                                                      'ORGANIC_PRODUCE'
+                                                  ? 'orders.buyer_grid_organic'
+                                                      .tr()
+                                                  : 'orders.buyer_grid_products'
+                                                      .tr(),
+                                              sortBy: 'averageRating',
+                                              sortOrder: 'desc',
+                                              productMode:
+                                                  widget.activeProductMode,
+                                            ),
+                                          ],
+                                          SizedBox(
+                                            height: mainShellBottomPadding(
+                                              context,
+                                              kind: MainShellScrollKind.orders,
+                                            ),
+                                          ),
+                                        ],
+                                      ),
+                                    ),
+                                  ),
+                                ),
+                              ],
+                            );
+                          },
+                          orElse: () => const Center(
+                            child: CircularProgressIndicator(
+                              color: AppColors.primary,
+                            ),
+                          ),
+                        );
+                      },
                     ),
-                  );
-                },
+                  ),
+                ],
               ),
     );
   }
@@ -555,9 +647,13 @@ class _OrdersPageState extends State<OrdersPage> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            _buildStatusFilter(),
             Padding(
-              padding: EdgeInsets.fromLTRB(16.w, 12.h, 16.w, 0),
+              padding: EdgeInsets.fromLTRB(
+                AppSpacing.md,
+                AppSpacing.md12,
+                AppSpacing.md,
+                0,
+              ),
               child: const ShimmerOrderListPlaceholder(itemCount: 4),
             ),
             SizedBox(
@@ -574,17 +670,25 @@ class _OrdersPageState extends State<OrdersPage> {
 
   Widget _buildOrdersSummary(int count) {
     return Padding(
-      padding: EdgeInsets.fromLTRB(20.w, 10.h, 20.w, 4.h),
+      padding: EdgeInsets.fromLTRB(
+        AppSpacing.lg,
+        AppSpacing.sm10,
+        AppSpacing.lg,
+        AppSpacing.xs,
+      ),
       child: Row(
         children: [
           Container(
-            padding: EdgeInsets.symmetric(horizontal: 10.w, vertical: 5.h),
+            padding: EdgeInsets.symmetric(
+              horizontal: AppSpacing.sm10,
+              vertical: 5.h,
+            ),
             decoration: BoxDecoration(
               color: AppColors.primary.withValues(alpha: 0.08),
-              borderRadius: BorderRadius.circular(20.r),
+              borderRadius: BorderRadius.circular(AppRadius.pill),
             ),
             child: Text(
-              '$count pesanan',
+              'orders.summary_count'.tr(namedArgs: {'count': '$count'}),
               style: TextStyle(
                 fontSize: 11.sp,
                 fontWeight: FontWeight.w800,
@@ -593,15 +697,18 @@ class _OrdersPageState extends State<OrdersPage> {
             ),
           ),
           if (_hasActiveFilters) ...[
-            SizedBox(width: 8.w),
+            SizedBox(width: AppSpacing.sm),
             InkWell(
               onTap: _resetFilters,
-              borderRadius: BorderRadius.circular(20.r),
+              borderRadius: BorderRadius.circular(AppRadius.pill),
               child: Container(
-                padding: EdgeInsets.symmetric(horizontal: 10.w, vertical: 5.h),
+                padding: EdgeInsets.symmetric(
+              horizontal: AppSpacing.sm10,
+              vertical: 5.h,
+            ),
                 decoration: BoxDecoration(
                   color: AppColors.grey50,
-                  borderRadius: BorderRadius.circular(20.r),
+                  borderRadius: BorderRadius.circular(AppRadius.pill),
                   border: Border.all(color: AppColors.grey100),
                 ),
                 child: Row(
@@ -610,7 +717,7 @@ class _OrdersPageState extends State<OrdersPage> {
                     Icon(LucideIcons.x, size: 12.sp, color: AppColors.textSecondary),
                     SizedBox(width: 4.w),
                     Text(
-                      'Reset filter',
+                      'orders.reset_filter'.tr(),
                       style: TextStyle(
                         fontSize: 11.sp,
                         fontWeight: FontWeight.w700,
@@ -636,11 +743,11 @@ class _OrdersPageState extends State<OrdersPage> {
   String _dateFilterLabel(String value) {
     switch (value) {
       case 'TODAY':
-        return 'Hari ini';
+        return 'orders.date_filter_today_short'.tr();
       case 'WEEK':
-        return '7 hari';
+        return 'orders.date_filter_week_short'.tr();
       case 'MONTH':
-        return '30 hari';
+        return 'orders.date_filter_month_short'.tr();
       default:
         return '';
     }
@@ -650,10 +757,14 @@ class _OrdersPageState extends State<OrdersPage> {
     final filterActive = _hasActiveFilters;
     return Container(
       decoration: BoxDecoration(
-        color: AppColors.white,
+        color: AppColors.surface,
         boxShadow: AppColors.softShadow,
       ),
-      padding: EdgeInsets.only(top: 8.h, bottom: 8.h, right: 8.w),
+      padding: EdgeInsets.only(
+        top: AppSpacing.sm,
+        bottom: AppSpacing.sm,
+        right: AppSpacing.sm,
+      ),
       child: Row(
         children: [
           Expanded(
@@ -661,17 +772,18 @@ class _OrdersPageState extends State<OrdersPage> {
               height: 36.h,
               child: ListView.builder(
                 scrollDirection: Axis.horizontal,
-                padding: EdgeInsets.symmetric(horizontal: 20.w),
+                padding: EdgeInsets.symmetric(horizontal: AppSpacing.lg),
                 itemCount: _statuses.length,
                 itemBuilder: (context, index) {
                   final status = _statuses[index];
                   final isSelected = _selectedStatus == status['value'];
                   return Padding(
-                    padding: EdgeInsets.only(right: 8.w),
+                    padding: EdgeInsets.only(right: AppSpacing.sm),
                     child: Center(
                       child: BisaFilterChip(
                         label: status['label']!,
                         isSelected: isSelected,
+                        badgeCount: _statusCounts[status['value']],
                         onTap: () {
                           setState(() => _selectedStatus = status['value']!);
                           _fetchOrders();
@@ -685,7 +797,7 @@ class _OrdersPageState extends State<OrdersPage> {
           ),
           Container(
             width: 1,
-            height: 24.h,
+            height: AppSpacing.xl,
             color: AppColors.grey200,
             margin: EdgeInsets.symmetric(horizontal: 4.w),
           ),
@@ -698,7 +810,7 @@ class _OrdersPageState extends State<OrdersPage> {
               onTap: _showSearchSheet,
               customBorder: const CircleBorder(),
               child: Padding(
-                padding: EdgeInsets.all(10.r),
+                padding: EdgeInsets.all(AppSpacing.sm10),
                 child: Icon(
                   LucideIcons.slidersHorizontal,
                   size: 18.sp,
@@ -798,14 +910,17 @@ class _OrdersPageState extends State<OrdersPage> {
 
   Widget _buildEmptyState() {
     return Padding(
-      padding: EdgeInsets.symmetric(horizontal: 32.w, vertical: 48.h),
+      padding: EdgeInsets.symmetric(
+        horizontal: AppSpacing.xxl,
+        vertical: 48.h,
+      ),
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
           Container(
             padding: EdgeInsets.all(28.r),
             decoration: BoxDecoration(
-              color: AppColors.white,
+              color: AppColors.surface,
               shape: BoxShape.circle,
               boxShadow: AppColors.softShadow,
             ),
@@ -815,9 +930,11 @@ class _OrdersPageState extends State<OrdersPage> {
               color: AppColors.grey200,
             ),
           ),
-          SizedBox(height: 24.h),
+          SizedBox(height: AppSpacing.xl),
           Text(
-            _hasActiveFilters ? 'Pesanan tidak ditemukan' : 'Belum ada pesanan',
+            _hasActiveFilters
+                ? 'orders.empty_filtered_title'.tr()
+                : 'orders.empty_default_title'.tr(),
             style: TextStyle(
               color: AppColors.textPrimary,
               fontSize: 17.sp,
@@ -825,11 +942,11 @@ class _OrdersPageState extends State<OrdersPage> {
             ),
             textAlign: TextAlign.center,
           ),
-          SizedBox(height: 8.h),
+          SizedBox(height: AppSpacing.sm),
           Text(
             _hasActiveFilters
-                ? 'Coba ubah filter atau kata kunci pencarian Anda.'
-                : 'Transaksi yang Anda lakukan akan muncul di sini.',
+                ? 'orders.empty_filtered_subtitle'.tr()
+                : 'orders.empty_default_subtitle'.tr(),
             style: TextStyle(
               color: AppColors.textSecondary,
               fontSize: 13.sp,
@@ -838,9 +955,9 @@ class _OrdersPageState extends State<OrdersPage> {
             textAlign: TextAlign.center,
           ),
           if (_hasActiveFilters) ...[
-            SizedBox(height: 20.h),
+            SizedBox(height: AppSpacing.lg),
             CustomButton(
-              text: 'Reset Filter',
+              text: 'orders.empty_reset_button'.tr(),
               width: 180.w,
               isOutlined: true,
               onPressed: _resetFilters,

@@ -41,8 +41,8 @@ class _MarketInsightPageState extends State<MarketInsightPage> {
       create: (context) => sl<MarketCubit>()..getMarketTrends(),
       child: Scaffold(
         backgroundColor: AppColors.background,
-        appBar: const BisaAppBar(
-          title: 'Market Intelligence',
+        appBar: BisaAppBar(
+          title: 'market.insight_title'.tr(),
           backgroundColor: AppColors.surface,
         ),
         body: BlocBuilder<MarketCubit, MarketState>(
@@ -76,7 +76,7 @@ class _MarketInsightPageState extends State<MarketInsightPage> {
                       TextButton(
                         onPressed: () =>
                             context.read<MarketCubit>().getMarketTrends(),
-                        child: const Text('Coba lagi'),
+                        child: Text('market.retry'.tr()),
                       ),
                     ],
                   ),
@@ -100,7 +100,7 @@ class _MarketInsightPageState extends State<MarketInsightPage> {
                       ],
                       SizedBox(height: 24.h),
                       Text(
-                        'Harga Pasar Hari Ini',
+                        'market.section_today_prices'.tr(),
                         style: TextStyle(
                           fontSize: 16.sp,
                           fontWeight: FontWeight.bold,
@@ -163,7 +163,7 @@ class _MarketInsightPageState extends State<MarketInsightPage> {
               Icon(LucideIcons.trendingUp, color: AppColors.textOnPrimary, size: 20.sp),
               SizedBox(width: 8.w),
               Text(
-                'Gratis untuk Semua',
+                'market.hero_free_badge'.tr(),
                 style: TextStyle(
                   color: AppColors.textOnPrimary.withValues(alpha: 0.9),
                   fontWeight: FontWeight.bold,
@@ -174,7 +174,7 @@ class _MarketInsightPageState extends State<MarketInsightPage> {
           ),
           SizedBox(height: 12.h),
           Text(
-            'Pantau Tren Harga\nKomoditas Biomassa',
+            'market.hero_title'.tr(),
             style: TextStyle(
               color: AppColors.textOnPrimary,
               fontSize: 22.sp,
@@ -233,7 +233,7 @@ class _MarketInsightPageState extends State<MarketInsightPage> {
                   Row(
                     children: [
                       Text(
-                        'Analitik Mendalam',
+                        'market.pro_card_title'.tr(),
                         style: TextStyle(
                           color: AppColors.textOnPrimary,
                           fontWeight: FontWeight.bold,
@@ -264,8 +264,8 @@ class _MarketInsightPageState extends State<MarketInsightPage> {
                   SizedBox(height: 4.h),
                   Text(
                     isPro
-                        ? 'Prediksi AI, proyeksi harga & insight bisnis'
-                        : 'Upgrade PRO untuk prediksi AI & proyeksi harga',
+                        ? 'market.pro_card_active_subtitle'.tr()
+                        : 'market.pro_card_locked_subtitle'.tr(),
                     style: TextStyle(
                       color: AppColors.textOnPrimary.withValues(alpha: 0.9),
                       fontSize: 12.sp,

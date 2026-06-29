@@ -6,6 +6,19 @@ part 'user_model.freezed.dart';
 part 'user_model.g.dart';
 
 @freezed
+abstract class UserVerificationModel with _$UserVerificationModel {
+  const factory UserVerificationModel({
+    String? verificationStatus,
+    @Default(false) bool isVerified,
+    String? rejectionReason,
+    DateTime? reviewedAt,
+  }) = _UserVerificationModel;
+
+  factory UserVerificationModel.fromJson(Map<String, dynamic> json) =>
+      _$UserVerificationModelFromJson(json);
+}
+
+@freezed
 abstract class UserProfileModel with _$UserProfileModel {
   const factory UserProfileModel({
     String? companyName,
@@ -33,6 +46,7 @@ abstract class UserModel with _$UserModel {
     @Default('FREE') String tier,
     @JsonKey(name: 'subscriptionExpiresAt') DateTime? subscriptionExpiresAt,
     @JsonKey(name: 'enableNotifications') @Default(true) bool enableNotifications,
+    UserVerificationModel? verification,
   }) = _UserModel;
 
   factory UserModel.fromJson(Map<String, dynamic> json) => _$UserModelFromJson(json);
@@ -49,6 +63,9 @@ abstract class UserModel with _$UserModel {
         address: address,
         role: role,
         isVerified: isVerified,
+        kycStatus: verification?.verificationStatus,
+        isKycVerified: verification?.isVerified ?? false,
+        kycRejectionReason: verification?.rejectionReason,
         createdAt: createdAt,
         tier: tier,
         subscriptionExpiresAt: subscriptionExpiresAt,

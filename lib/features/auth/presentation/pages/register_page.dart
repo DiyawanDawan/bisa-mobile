@@ -1,5 +1,6 @@
 import 'dart:async';
 
+import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
@@ -11,7 +12,9 @@ import 'package:mobile_bisa/features/gis/domain/repositories/gis_repository.dart
 import 'package:mobile_bisa/features/gis/presentation/bloc/gis_cubit.dart';
 import 'package:mobile_bisa/injection_container.dart';
 import '../../../../core/constants/app_assets.dart';
+import '../../../../core/constants/app_layout.dart';
 import '../../../../core/constants/app_colors.dart';
+import '../../../../core/utils/app_feedback.dart';
 import '../../../../shared/widgets/custom_button.dart';
 import '../../../../shared/widgets/custom_text_field.dart';
 import '../../../../shared/widgets/bisa_logo.dart';
@@ -31,6 +34,7 @@ class _RegisterPageState extends State<RegisterPage> {
   final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
   final _phoneController = TextEditingController();
+  final _referralCodeController = TextEditingController();
   final _formKey = GlobalKey<FormState>();
 
   RegionEntity? _indonesiaCountry;
@@ -129,14 +133,17 @@ class _RegisterPageState extends State<RegisterPage> {
     _emailController.dispose();
     _passwordController.dispose();
     _phoneController.dispose();
+    _referralCodeController.dispose();
     super.dispose();
   }
 
   void _onAuthState(BuildContext context, AuthState state) {
     state.maybeWhen(
       success: (message) {
-        final lower = message.toLowerCase();
-        if (!lower.contains('terdaftar') && !lower.contains('otp')) return;
+        if (message != 'auth.register_buyer_success' &&
+            message != 'auth.register_supplier_success') {
+          return;
+        }
         context.push(
           '/otp-verification',
           extra: {
@@ -146,14 +153,7 @@ class _RegisterPageState extends State<RegisterPage> {
         );
       },
       error: (message) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(message),
-            backgroundColor: AppColors.error,
-            behavior: SnackBarBehavior.floating,
-            margin: EdgeInsets.all(16.r),
-          ),
-        );
+        showErrorSnackBar(context, message);
       },
       orElse: () {},
     );
@@ -164,33 +164,18 @@ class _RegisterPageState extends State<RegisterPage> {
 
     final email = _emailController.text.trim();
     if (_emailAvailable == false && email == _lastCheckedEmail) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: const Text(
-            'Email sudah digunakan. Gunakan email lain atau masuk ke akun Anda.',
-          ),
-          backgroundColor: AppColors.error,
-          behavior: SnackBarBehavior.floating,
-          margin: EdgeInsets.all(16.r),
-        ),
-      );
+      showErrorSnackBar(context, 'auth.email_in_use_long'.tr());
       return;
     }
 
     if (_isSupplier) {
       if (_selectedProvince == null || _selectedRegency == null) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: const Text('Provinsi dan kota/kabupaten wajib dipilih'),
-            backgroundColor: AppColors.error,
-            behavior: SnackBarBehavior.floating,
-            margin: EdgeInsets.all(16.r),
-          ),
-        );
+        showErrorSnackBar(context, 'auth.region_required'.tr());
         return;
       }
     }
 
+    final referralCode = _referralCodeController.text.trim();
     final auth = context.read<AuthCubit>();
     if (_isSupplier) {
       auth.registerSupplier(
@@ -200,6 +185,7 @@ class _RegisterPageState extends State<RegisterPage> {
         phone: _phoneController.text.trim(),
         province: _selectedProvince?.name,
         regency: _selectedRegency?.name,
+        referralCode: referralCode.isEmpty ? null : referralCode,
       );
     } else {
       auth.registerBuyer(
@@ -207,6 +193,7 @@ class _RegisterPageState extends State<RegisterPage> {
         email: _emailController.text.trim(),
         password: _passwordController.text,
         phone: _phoneController.text.trim(),
+        referralCode: referralCode.isEmpty ? null : referralCode,
       );
     }
   }
@@ -226,13 +213,13 @@ class _RegisterPageState extends State<RegisterPage> {
             SafeArea(
               child: SingleChildScrollView(
                 physics: const BouncingScrollPhysics(),
-                padding: EdgeInsets.symmetric(horizontal: 24.w),
+                padding: EdgeInsets.symmetric(horizontal: AppSpacing.xl),
                 child: Form(
                   key: _formKey,
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      SizedBox(height: 24.h),
+                      SizedBox(height: AppSpacing.xl),
                       Row(
                         mainAxisAlignment: MainAxisAlignment.spaceBetween,
                         children: [
@@ -242,7 +229,7 @@ class _RegisterPageState extends State<RegisterPage> {
                       ),
                       SizedBox(height: 40.h),
                       Text(
-                        'Buat Akun Baru',
+                        'auth.register_title'.tr(),
                         style: TextStyle(
                           fontSize: 32.sp,
                           fontWeight: FontWeight.w900,
@@ -251,9 +238,9 @@ class _RegisterPageState extends State<RegisterPage> {
                           height: 1.1,
                         ),
                       ),
-                      SizedBox(height: 10.h),
+                      SizedBox(height: AppSpacing.sm10),
                       Text(
-                        'Daftar untuk mulai bertransaksi dan nikmati layanan terbaik kami.',
+                        'auth.register_subtitle'.tr(),
                         style: TextStyle(
                           fontSize: 15.sp,
                           color: AppColors.textSecondary,
@@ -264,15 +251,15 @@ class _RegisterPageState extends State<RegisterPage> {
                       SizedBox(height: 28.h),
                       Container(
                         padding: EdgeInsets.symmetric(
-                          horizontal: 12.w,
+                          horizontal: AppSpacing.md12,
                           vertical: 6.h,
                         ),
                         decoration: BoxDecoration(
                           color: AppColors.primaryLight.withValues(alpha: 0.5),
-                          borderRadius: BorderRadius.circular(20.r),
+                          borderRadius: BorderRadius.circular(AppRadius.pill),
                         ),
                         child: Text(
-                          'Langkah 1 · Buat akun',
+                          'auth.register_step'.tr(),
                           style: TextStyle(
                             fontSize: 11.sp,
                             fontWeight: FontWeight.w800,
@@ -281,21 +268,21 @@ class _RegisterPageState extends State<RegisterPage> {
                           ),
                         ),
                       ),
-                      SizedBox(height: 16.h),
+                      SizedBox(height: AppSpacing.md),
                       Text(
-                        'Daftar Sebagai',
+                        'auth.register_as'.tr(),
                         style: TextStyle(
                           fontSize: 14.sp,
                           fontWeight: FontWeight.w600,
                           color: AppColors.textSecondary,
                         ),
                       ),
-                      SizedBox(height: 12.h),
+                      SizedBox(height: AppSpacing.md12),
                       Row(
                         children: [
                           Expanded(
                             child: _roleCard(
-                              title: 'Pembeli',
+                              title: 'auth.role_buyer'.tr(),
                             icon: LucideIcons.shoppingBag,
                             isSelected: !_isSupplier,
                             onTap: () => setState(() {
@@ -305,10 +292,10 @@ class _RegisterPageState extends State<RegisterPage> {
                             }),
                           ),
                         ),
-                        SizedBox(width: 12.w),
+                        SizedBox(width: AppSpacing.md12),
                         Expanded(
                           child: _roleCard(
-                            title: 'Supplier',
+                            title: 'auth.role_supplier'.tr(),
                             icon: LucideIcons.store,
                             isSelected: _isSupplier,
                             onTap: () {
@@ -321,15 +308,15 @@ class _RegisterPageState extends State<RegisterPage> {
                         ),
                       ],
                     ),
-                    SizedBox(height: 24.h),
+                    SizedBox(height: AppSpacing.xl),
                     Container(
-                        padding: EdgeInsets.all(24.w),
+                        padding: EdgeInsets.all(AppSpacing.xl),
                         decoration: BoxDecoration(
-                          color: AppColors.white,
-                          borderRadius: BorderRadius.circular(24.r),
+                          color: AppColors.surface,
+                          borderRadius: BorderRadius.circular(AppSpacing.xlPx.r),
                           boxShadow: [
                             BoxShadow(
-                              color: Colors.black.withValues(alpha: 0.04),
+                              color: AppColors.black.withValues(alpha: 0.04),
                               blurRadius: 24,
                               offset: const Offset(0, 8),
                             ),
@@ -338,28 +325,28 @@ class _RegisterPageState extends State<RegisterPage> {
                         child: Column(
                           children: [
                             CustomTextField(
-                              label: 'Nama Lengkap',
-                              hint: 'Masukkan nama lengkap',
+                              label: 'nama_lengkap'.tr(),
+                              hint: 'masukkan_nama_lengkap'.tr(),
                               controller: _fullNameController,
                               prefixIcon: Icons.person_outline_rounded,
                               validator: (v) =>
-                                  v == null || v.isEmpty ? 'Nama wajib diisi' : null,
+                                  v == null || v.isEmpty ? 'auth.name_required'.tr() : null,
                             ),
                             SizedBox(height: 18.h),
                             CustomTextField(
-                              label: 'Email',
-                              hint: 'nama@email.com',
+                              label: 'email'.tr(),
+                              hint: 'email_hint'.tr(),
                               controller: _emailController,
                               keyboardType: TextInputType.emailAddress,
                               prefixIcon: Icons.alternate_email_rounded,
                               validator: (v) {
-                                if (v == null || v.isEmpty) return 'Email wajib diisi';
+                                if (v == null || v.isEmpty) return 'email_required'.tr();
                                 if (!_emailFormat.hasMatch(v)) {
-                                  return 'Format email tidak valid';
+                                  return 'email_invalid'.tr();
                                 }
                                 if (_emailAvailable == false &&
                                     v.trim() == _lastCheckedEmail) {
-                                  return 'Email sudah digunakan';
+                                  return 'auth.email_in_use'.tr();
                                 }
                                 return null;
                               },
@@ -368,7 +355,7 @@ class _RegisterPageState extends State<RegisterPage> {
                               Padding(
                                 padding: EdgeInsets.only(top: 6.h),
                                 child: Text(
-                                  'Memeriksa ketersediaan email…',
+                                  'auth.checking_email'.tr(),
                                   style: TextStyle(
                                     fontSize: 12.sp,
                                     color: AppColors.textSecondary,
@@ -380,7 +367,7 @@ class _RegisterPageState extends State<RegisterPage> {
                               Padding(
                                 padding: EdgeInsets.only(top: 6.h),
                                 child: Text(
-                                  'Email tersedia',
+                                  'auth.email_available_msg'.tr(),
                                   style: TextStyle(
                                     fontSize: 12.sp,
                                     color: AppColors.success,
@@ -389,22 +376,22 @@ class _RegisterPageState extends State<RegisterPage> {
                               ),
                             SizedBox(height: 18.h),
                             CustomTextField(
-                              label: 'Nomor Telepon',
-                              hint: '0812xxxxxxxx',
+                              label: 'nomor_telepon'.tr(),
+                              hint: '0812xxxxxxxx'.tr(),
                               controller: _phoneController,
                               keyboardType: TextInputType.phone,
                               prefixIcon: Icons.phone_android_rounded,
                             ),
                             SizedBox(height: 18.h),
                             CustomTextField(
-                              label: 'Kata Sandi',
-                              hint: 'Min. 8 karakter',
+                              label: 'kata_sandi'.tr(),
+                              hint: 'auth.password_hint_register'.tr(),
                               controller: _passwordController,
                               isPassword: true,
                               prefixIcon: Icons.lock_outline_rounded,
                               validator: (v) {
-                                if (v == null || v.isEmpty) return 'Kata sandi wajib diisi';
-                                if (v.length < 8) return 'Minimal 8 karakter';
+                                if (v == null || v.isEmpty) return 'password_required'.tr();
+                                if (v.length < 8) return 'auth.password_min_8'.tr();
                                 return null;
                               },
                             ),
@@ -412,6 +399,13 @@ class _RegisterPageState extends State<RegisterPage> {
                               SizedBox(height: 22.h),
                               _buildSupplierLocationSection(),
                             ],
+                            SizedBox(height: 18.h),
+                            CustomTextField(
+                              label: 'auth.referral_code_label'.tr(),
+                              hint: 'auth.referral_code_hint'.tr(),
+                              controller: _referralCodeController,
+                              prefixIcon: Icons.card_giftcard_outlined,
+                            ),
                             SizedBox(height: 28.h),
                             BlocBuilder<AuthCubit, AuthState>(
                               builder: (context, state) {
@@ -420,7 +414,7 @@ class _RegisterPageState extends State<RegisterPage> {
                                   orElse: () => false,
                                 );
                                 return CustomButton(
-                                  text: 'Daftar Sekarang',
+                                  text: 'daftar_sekarang'.tr(),
                                   useGradient: true,
                                   isLoading: loading,
                                   onPressed: loading ? null : _submit,
@@ -432,7 +426,7 @@ class _RegisterPageState extends State<RegisterPage> {
                       ),
                       SizedBox(height: 28.h),
                       _buildLoginFooter(),
-                      SizedBox(height: 32.h),
+                      SizedBox(height: AppSpacing.xxl),
                     ],
                   ),
                 ),
@@ -479,7 +473,7 @@ class _RegisterPageState extends State<RegisterPage> {
 
   Widget _buildBackButton() {
     return Material(
-      color: AppColors.white,
+      color: AppColors.surface,
       shape: const CircleBorder(),
       child: InkWell(
         onTap: () {
@@ -491,7 +485,7 @@ class _RegisterPageState extends State<RegisterPage> {
         },
         customBorder: const CircleBorder(),
         child: Padding(
-          padding: EdgeInsets.all(10.r),
+          padding: EdgeInsets.all(AppSpacing.sm10),
           child: Icon(
             LucideIcons.arrowLeft,
             size: 20.sp,
@@ -504,9 +498,12 @@ class _RegisterPageState extends State<RegisterPage> {
 
   Widget _buildBrandLogo() {
     return Container(
-      padding: EdgeInsets.symmetric(horizontal: 14.w, vertical: 8.h),
+      padding: EdgeInsets.symmetric(
+        horizontal: AppSpacing.section,
+        vertical: AppSpacing.sm,
+      ),
       decoration: BoxDecoration(
-        color: AppColors.white,
+        color: AppColors.surface,
         borderRadius: BorderRadius.circular(50.r),
         boxShadow: AppColors.softShadow,
       ),
@@ -527,10 +524,10 @@ class _RegisterPageState extends State<RegisterPage> {
         child: RichText(
           text: TextSpan(
             style: TextStyle(fontSize: 14.sp, color: AppColors.textSecondary),
-            children: const [
-              TextSpan(text: 'Sudah punya akun? '),
+            children: [
+              TextSpan(text: 'auth.have_account'.tr()),
               TextSpan(
-                text: 'Masuk',
+                text: 'auth.sign_in_link'.tr(),
                 style: TextStyle(
                   color: AppColors.primary,
                   fontWeight: FontWeight.w800,
@@ -550,16 +547,16 @@ class _RegisterPageState extends State<RegisterPage> {
     required VoidCallback onTap,
   }) {
     return Material(
-      color: Colors.transparent,
+      color: AppColors.transparent,
       child: InkWell(
         onTap: onTap,
-        borderRadius: BorderRadius.circular(20.r),
+        borderRadius: BorderRadius.circular(AppRadius.pill),
         child: AnimatedContainer(
           duration: const Duration(milliseconds: 220),
-          padding: EdgeInsets.symmetric(vertical: 20.h),
+          padding: EdgeInsets.symmetric(vertical: AppSpacing.lg),
           decoration: BoxDecoration(
-            color: isSelected ? AppColors.white : AppColors.grey50,
-            borderRadius: BorderRadius.circular(20.r),
+            color: isSelected ? AppColors.textOnPrimary : AppColors.grey50,
+            borderRadius: BorderRadius.circular(AppRadius.pill),
             border: Border.all(
               color: isSelected ? AppColors.primary : AppColors.grey200,
               width: isSelected ? 2 : 1,
@@ -569,7 +566,7 @@ class _RegisterPageState extends State<RegisterPage> {
           child: Column(
             children: [
               Container(
-                padding: EdgeInsets.all(10.r),
+                padding: EdgeInsets.all(AppSpacing.sm10),
                 decoration: BoxDecoration(
                   color: isSelected
                       ? AppColors.primary.withValues(alpha: 0.12)
@@ -582,7 +579,7 @@ class _RegisterPageState extends State<RegisterPage> {
                   size: 24.sp,
                 ),
               ),
-              SizedBox(height: 10.h),
+              SizedBox(height: AppSpacing.sm10),
               Text(
                 title,
                 style: TextStyle(
@@ -602,7 +599,7 @@ class _RegisterPageState extends State<RegisterPage> {
 
   Widget _buildSupplierLocationSection() {
     return Container(
-      padding: EdgeInsets.all(16.w),
+      padding: EdgeInsets.all(AppSpacing.md),
       decoration: BoxDecoration(
         color: AppColors.primaryLight.withValues(alpha: 0.35),
         borderRadius: BorderRadius.circular(18.r),
@@ -616,10 +613,10 @@ class _RegisterPageState extends State<RegisterPage> {
           Row(
             children: [
               Icon(LucideIcons.mapPin, size: 18.sp, color: AppColors.primary),
-              SizedBox(width: 8.w),
+              SizedBox(width: AppSpacing.sm),
               Expanded(
                 child: Text(
-                  'Lokasi operasional',
+                  'auth.operational_location'.tr(),
                   style: TextStyle(
                     fontSize: 14.sp,
                     fontWeight: FontWeight.w800,
@@ -631,18 +628,18 @@ class _RegisterPageState extends State<RegisterPage> {
           ),
           SizedBox(height: 6.h),
           Text(
-            'Pilih provinsi dan kota/kabupaten dari daftar. Wajib untuk akun supplier.',
+            'auth.region_hint'.tr(),
             style: TextStyle(
               fontSize: 12.sp,
               color: AppColors.textSecondary,
               height: 1.4,
             ),
           ),
-          SizedBox(height: 14.h),
+          SizedBox(height: AppSpacing.section),
           _buildIndonesiaCountryRow(),
-          SizedBox(height: 14.h),
+          SizedBox(height: AppSpacing.section),
           _buildRegionDropdown(
-            label: 'Provinsi',
+            label: 'provinsi'.tr(),
             value: _selectedProvince,
             level: 'province',
             enabled: _indonesiaCountry != null && !_loadingCountry,
@@ -653,9 +650,9 @@ class _RegisterPageState extends State<RegisterPage> {
               });
             },
           ),
-          SizedBox(height: 14.h),
+          SizedBox(height: AppSpacing.section),
           _buildRegionDropdown(
-            label: 'Kota/Kabupaten',
+            label: 'kota_kabupaten'.tr(),
             value: _selectedRegency,
             level: 'regency',
             enabled: _selectedProvince != null,
@@ -668,10 +665,13 @@ class _RegisterPageState extends State<RegisterPage> {
 
   Widget _buildIndonesiaCountryRow() {
     return Container(
-      padding: EdgeInsets.symmetric(horizontal: 14.w, vertical: 12.h),
+      padding: EdgeInsets.symmetric(
+        horizontal: AppSpacing.section,
+        vertical: AppSpacing.md12,
+      ),
       decoration: BoxDecoration(
-        color: AppColors.white,
-        borderRadius: BorderRadius.circular(14.r),
+        color: AppColors.surface,
+        borderRadius: BorderRadius.circular(AppRadius.tile),
         border: Border.all(color: AppColors.grey200),
       ),
       child: Row(
@@ -680,7 +680,7 @@ class _RegisterPageState extends State<RegisterPage> {
             borderRadius: BorderRadius.circular(6.r),
             child: Image.asset(
               AppAssets.flagIndonesia,
-              width: 32.w,
+              width: AppSpacing.xxl,
               height: 22.h,
               fit: BoxFit.cover,
               errorBuilder: (_, __, ___) => Icon(
@@ -690,7 +690,7 @@ class _RegisterPageState extends State<RegisterPage> {
               ),
             ),
           ),
-          SizedBox(width: 12.w),
+          SizedBox(width: AppSpacing.md12),
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -705,10 +705,10 @@ class _RegisterPageState extends State<RegisterPage> {
                 ),
                 Text(
                   _loadingCountry
-                      ? 'Memuat wilayah...'
+                      ? 'auth.loading_regions'.tr()
                       : (_indonesiaCountry == null
-                          ? 'Gagal memuat — ketuk Muat ulang'
-                          : 'Wilayah operasional Indonesia'),
+                          ? 'auth.region_load_failed'.tr()
+                          : 'auth.region_indonesia'.tr()),
                   style: TextStyle(
                     fontSize: 11.sp,
                     color: AppColors.textHint,
@@ -719,8 +719,8 @@ class _RegisterPageState extends State<RegisterPage> {
           ),
           if (_loadingCountry)
             SizedBox(
-              width: 20.r,
-              height: 20.r,
+              width: AppSpacing.lg,
+              height: AppSpacing.lg,
               child: const CircularProgressIndicator(
                 strokeWidth: 2,
                 color: AppColors.primary,
@@ -730,7 +730,7 @@ class _RegisterPageState extends State<RegisterPage> {
             TextButton(
               onPressed: _resolveIndonesiaCountry,
               child: Text(
-                'Muat ulang',
+                'auth.reload'.tr(),
                 style: TextStyle(
                   fontSize: 12.sp,
                   fontWeight: FontWeight.w700,
@@ -760,22 +760,25 @@ class _RegisterPageState extends State<RegisterPage> {
             color: AppColors.textSecondary,
           ),
         ),
-        SizedBox(height: 8.h),
+        SizedBox(height: AppSpacing.sm),
         GestureDetector(
           onTap: enabled ? () => _openRegionPicker(label, level, onChanged) : null,
           child: Container(
             width: double.infinity,
-            padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 14.h),
+            padding: EdgeInsets.symmetric(
+              horizontal: AppSpacing.md,
+              vertical: AppSpacing.section,
+            ),
             decoration: BoxDecoration(
-              color: enabled ? AppColors.white : AppColors.grey100,
-              borderRadius: BorderRadius.circular(14.r),
+              color: enabled ? AppColors.surface : AppColors.grey100,
+              borderRadius: BorderRadius.circular(AppRadius.tile),
               border: Border.all(color: AppColors.grey300),
             ),
             child: Row(
               children: [
                 Expanded(
                   child: Text(
-                    value?.name ?? 'Pilih $label',
+                    value?.name ?? 'auth.select_label'.tr(namedArgs: {'label': label}),
                     style: TextStyle(
                       fontSize: 15.sp,
                       color: value != null
@@ -805,16 +808,7 @@ class _RegisterPageState extends State<RegisterPage> {
       }
       if (_indonesiaCountry == null) {
         if (!mounted) return;
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: const Text(
-              'Daftar wilayah belum tersedia. Periksa koneksi internet lalu coba lagi.',
-            ),
-            backgroundColor: AppColors.error,
-            behavior: SnackBarBehavior.floating,
-            margin: EdgeInsets.all(16.r),
-          ),
-        );
+        showErrorSnackBar(context, 'auth.regions_unavailable'.tr());
         return;
       }
     }
@@ -836,7 +830,7 @@ class _RegisterPageState extends State<RegisterPage> {
       isScrollControlled: true,
       useSafeArea: true,
       shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(20.r)),
+        borderRadius: BorderRadius.vertical(top: Radius.circular(AppRadius.pill)),
       ),
       builder: (sheetContext) => BlocProvider.value(
         value: gisCubit,
@@ -865,7 +859,12 @@ class _RegionPickerSheet extends StatelessWidget {
     return SizedBox(
       height: MediaQuery.sizeOf(context).height * 0.65,
       child: Padding(
-        padding: EdgeInsets.fromLTRB(20.w, 16.h, 20.w, 20.h),
+        padding: EdgeInsets.fromLTRB(
+          AppSpacing.lg,
+          AppSpacing.md,
+          AppSpacing.lg,
+          AppSpacing.lg,
+        ),
         child: Column(
           children: [
             Container(
@@ -876,12 +875,12 @@ class _RegionPickerSheet extends StatelessWidget {
                 borderRadius: BorderRadius.circular(2.r),
               ),
             ),
-            SizedBox(height: 16.h),
+            SizedBox(height: AppSpacing.md),
             Row(
               children: [
                 Expanded(
                   child: Text(
-                    'Pilih $title',
+                    'auth.select_title'.tr(namedArgs: {'title': title}),
                     style: TextStyle(
                       fontSize: 18.sp,
                       fontWeight: FontWeight.w800,
@@ -894,7 +893,7 @@ class _RegionPickerSheet extends StatelessWidget {
                 ),
               ],
             ),
-            SizedBox(height: 12.h),
+            SizedBox(height: AppSpacing.md12),
             Expanded(
               child: BlocBuilder<GisCubit, GisState>(
                 builder: (context, state) {
@@ -912,7 +911,7 @@ class _RegionPickerSheet extends StatelessWidget {
                       if (regions.isEmpty) {
                         return _RegionEmptyState(
                           message:
-                              'Belum ada daftar wilayah untuk dipilih.\nSilakan muat ulang atau coba beberapa saat lagi.',
+                              'auth.no_regions_list'.tr(),
                           onRetry: onRetry,
                         );
                       }
@@ -935,7 +934,7 @@ class _RegionPickerSheet extends StatelessWidget {
                       );
                     },
                     orElse: () => _RegionEmptyState(
-                      message: 'Memuat...',
+                      message: 'loading'.tr(),
                       onRetry: onRetry,
                     ),
                   );
@@ -959,12 +958,12 @@ class _RegionEmptyState extends StatelessWidget {
   Widget build(BuildContext context) {
     return Center(
       child: Padding(
-        padding: EdgeInsets.all(24.w),
+        padding: EdgeInsets.all(AppSpacing.xl),
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
             Icon(LucideIcons.mapPinOff, size: 40.sp, color: AppColors.grey400),
-            SizedBox(height: 12.h),
+            SizedBox(height: AppSpacing.md12),
             Text(
               message,
               textAlign: TextAlign.center,
@@ -975,10 +974,10 @@ class _RegionEmptyState extends StatelessWidget {
               ),
             ),
             if (onRetry != null) ...[
-              SizedBox(height: 16.h),
+              SizedBox(height: AppSpacing.md),
               TextButton(
                 onPressed: onRetry,
-                child: const Text('Muat ulang'),
+                child: Text('auth.reload'.tr()),
               ),
             ],
           ],

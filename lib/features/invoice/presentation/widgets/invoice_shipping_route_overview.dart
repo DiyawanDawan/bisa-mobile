@@ -1,3 +1,4 @@
+import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:mobile_bisa/core/constants/app_colors.dart';
@@ -21,11 +22,13 @@ class InvoiceShippingRouteOverview extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final destReady = CreateInvoiceCubit.isDestinationReady(buyerDraft);
+
     return Container(
       width: double.infinity,
       padding: EdgeInsets.all(14.w),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: AppColors.surface,
         borderRadius: BorderRadius.circular(14.r),
         border: Border.all(color: AppColors.grey200),
       ),
@@ -33,7 +36,7 @@ class InvoiceShippingRouteOverview extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
-            'Rute Pengiriman',
+            'invoice.route_title'.tr(),
             style: TextStyle(
               fontWeight: FontWeight.w800,
               fontSize: 14.sp,
@@ -42,18 +45,15 @@ class InvoiceShippingRouteOverview extends StatelessWidget {
           SizedBox(height: 12.h),
           _routeStop(
             icon: Icons.storefront_outlined,
-            title: 'Asal — Toko / Supplier',
-            name: sellerSnapshot?['recipient']?.toString() ?? 'Toko supplier',
+            title: 'invoice.route_origin_store'.tr(),
+            name: sellerSnapshot?['recipient']?.toString() ??
+                'invoice.supplier_store_fallback'.tr(),
             address: _formatAddress(
               sellerSnapshot?['address']?.toString(),
               sellerSnapshot?['regency']?.toString(),
               sellerSnapshot?['province']?.toString(),
             ),
-            footer: sellerOriginResolved == true
-                ? 'Lokasi ongkir: ${sellerOriginLabel ?? 'terdeteksi otomatis'}'
-                : sellerOriginLabel != null && sellerOriginLabel!.isNotEmpty
-                    ? 'Lokasi ongkir: $sellerOriginLabel (belum terhubung ID)'
-                    : 'Lokasi ongkir akan dicari dari alamat toko di profil bisnis',
+            footer: _sellerOriginFooter(),
             footerColor: sellerOriginResolved == true
                 ? AppColors.success
                 : AppColors.warning,
@@ -72,25 +72,38 @@ class InvoiceShippingRouteOverview extends StatelessWidget {
           ),
           _routeStop(
             icon: Icons.local_shipping_outlined,
-            title: 'Tujuan — Pembeli',
+            title: 'invoice.shipping_dest_title'.tr(),
             name: buyerDraft.recipient.isNotEmpty
                 ? buyerDraft.recipient
-                : 'Pembeli',
+                : 'invoice.buyer_label'.tr(),
             address: _formatAddress(
               buyerDraft.address,
               buyerDraft.regency,
               buyerDraft.province,
             ),
-            footer: CreateInvoiceCubit.isDestinationReady(buyerDraft)
-                ? 'Alamat tujuan siap untuk hitung ongkir'
-                : 'Lengkapi alamat tujuan di bawah',
-            footerColor: CreateInvoiceCubit.isDestinationReady(buyerDraft)
-                ? AppColors.success
-                : AppColors.warning,
+            footer: destReady
+                ? 'invoice.dest_ready'.tr()
+                : 'invoice.dest_incomplete'.tr(),
+            footerColor:
+                destReady ? AppColors.success : AppColors.warning,
           ),
         ],
       ),
     );
+  }
+
+  String _sellerOriginFooter() {
+    if (sellerOriginResolved == true) {
+      return 'invoice.shipping_origin_label'.tr(namedArgs: {
+        'label': sellerOriginLabel ?? 'invoice.shipping_origin_auto'.tr(),
+      });
+    }
+    if (sellerOriginLabel != null && sellerOriginLabel!.isNotEmpty) {
+      return 'invoice.shipping_origin_unlinked'.tr(namedArgs: {
+        'label': sellerOriginLabel!,
+      });
+    }
+    return 'invoice.shipping_origin_pending'.tr();
   }
 
   String _formatAddress(String? street, String? regency, String? province) {

@@ -1,8 +1,10 @@
+import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:go_router/go_router.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
+import '../../../../core/constants/app_layout.dart';
 import '../../../../core/constants/app_colors.dart';
 import '../../../../shared/widgets/auth_sheet.dart';
 import '../../../../shared/widgets/bisa_logo.dart';
@@ -30,17 +32,21 @@ class MarketplaceHeader extends StatelessWidget {
     this.productMode = 'BIOMASS_MATERIAL',
   });
 
+  static const double _guestBarHeight = 44;
+
   @override
   Widget build(BuildContext context) {
     final bool hasUser = userName != null;
+    final guestBarHeight = _guestBarHeight.h;
+
     return Container(
       padding: EdgeInsets.fromLTRB(20.w, 50.h, 20.w, 16.h),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: AppColors.surface,
         borderRadius: BorderRadius.vertical(bottom: Radius.circular(24.r)),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.06),
+            color: AppColors.black.withOpacity(0.06),
             blurRadius: 20,
             offset: const Offset(0, 4),
           ),
@@ -48,64 +54,80 @@ class MarketplaceHeader extends StatelessWidget {
       ),
       child: Column(
         children: [
-          Row(
-            children: [
-              if (!hasUser) ...[
-                BisaLogo(size: 36.w),
-                SizedBox(width: 10.w),
+          if (!hasUser)
+            Row(
+              crossAxisAlignment: CrossAxisAlignment.center,
+              children: [
+                BisaLogo(size: guestBarHeight - 4.h),
+                SizedBox(width: AppSpacing.sm10),
+                Expanded(
+                  child: _buildSearchBar(
+                    height: guestBarHeight,
+                    compact: true,
+                  ),
+                ),
+                SizedBox(width: AppSpacing.sm10),
+                _buildLoginCTA(context, height: guestBarHeight),
               ],
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    if (hasUser)
+            )
+          else ...[
+            Row(
+              children: [
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
                       Text(
-                        'Selamat Datang,',
+                        'marketplace.welcome'.tr(),
                         style: TextStyle(
                           color: AppColors.textSecondary,
                           fontSize: 13.sp,
                           fontWeight: FontWeight.w600,
                         ),
                       ),
-                    Text(
-                      hasUser ? userName! : 'Marketplace',
-                      style: TextStyle(
-                        color: AppColors.textPrimary,
-                        fontSize: 20.sp,
-                        fontWeight: FontWeight.w800,
-                        letterSpacing: -0.5,
+                      Text(
+                        userName!,
+                        style: TextStyle(
+                          color: AppColors.textPrimary,
+                          fontSize: 20.sp,
+                          fontWeight: FontWeight.w800,
+                          letterSpacing: -0.5,
+                        ),
                       ),
-                    ),
-                  ],
+                    ],
+                  ),
                 ),
-              ),
-              if (!hasUser) ...[
-                _buildLoginCTA(context),
-              ] else
                 _buildActionIcons(context),
-            ],
-          ),
-          SizedBox(height: 16.h),
-          _buildSearchBar(),
+              ],
+            ),
+            SizedBox(height: AppSpacing.md),
+            _buildSearchBar(),
+          ],
         ],
       ),
     );
   }
 
-  Widget _buildLoginCTA(BuildContext context) {
-    return TextButton(
-      onPressed: () => AuthSheet.show(context),
-      style: TextButton.styleFrom(
-        foregroundColor: AppColors.primary,
-        padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 8.h),
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(50.r),
+  Widget _buildLoginCTA(BuildContext context, {required double height}) {
+    return SizedBox(
+      height: height,
+      child: OutlinedButton(
+        onPressed: () => AuthSheet.show(context),
+        style: OutlinedButton.styleFrom(
+          foregroundColor: AppColors.primary,
+          backgroundColor: AppColors.surface,
+          padding: EdgeInsets.symmetric(horizontal: 14.w),
+          minimumSize: Size(0, height),
+          tapTargetSize: MaterialTapTargetSize.shrinkWrap,
           side: const BorderSide(color: AppColors.primary, width: 1.5),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(AppRadius.lg),
+          ),
         ),
-      ),
-      child: Text(
-        'Masuk',
-        style: TextStyle(fontWeight: FontWeight.w700, fontSize: 13.sp),
+        child: Text(
+          'login'.tr(),
+          style: TextStyle(fontWeight: FontWeight.w700, fontSize: 13.sp),
+        ),
       ),
     );
   }
@@ -122,12 +144,12 @@ class MarketplaceHeader extends StatelessWidget {
           children: [
             const NotificationBellButton(useAppBarStyle: false),
             if (isBuyer) ...[
-              SizedBox(width: 8.w),
+              SizedBox(width: AppSpacing.sm),
               _iconBtn(
                 LucideIcons.heart,
                 () => context.push('/wishlist'),
               ),
-              SizedBox(width: 8.w),
+              SizedBox(width: AppSpacing.sm),
               Stack(
                 clipBehavior: Clip.none,
                 children: [
@@ -145,7 +167,7 @@ class MarketplaceHeader extends StatelessWidget {
                         child: Text(
                           '${commerce.cartCount}',
                           style: TextStyle(
-                            color: Colors.white,
+                            color: AppColors.surface,
                             fontSize: 9.sp,
                             fontWeight: FontWeight.w900,
                           ),
@@ -174,53 +196,73 @@ class MarketplaceHeader extends StatelessWidget {
     );
   }
 
-  Widget _buildSearchBar() {
-    return Container(
-      height: 52.h,
-      padding: EdgeInsets.symmetric(horizontal: 16.w),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(16.r),
-        border: Border.all(color: AppColors.grey100, width: 1.5),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.03),
-            blurRadius: 10,
-            offset: const Offset(0, 4),
-          ),
-        ],
-      ),
-      child: TextField(
-        controller: searchController,
-        focusNode: searchFocusNode,
-        onChanged: onSearchChanged,
-        textInputAction: TextInputAction.search,
-        onSubmitted: onSearchSubmitted,
-        style: TextStyle(
-          fontSize: 14.sp,
-          fontWeight: FontWeight.w600,
-          color: AppColors.textPrimary,
+  Widget _buildSearchBar({bool compact = false, double? height}) {
+    final fieldHeight = height ?? (compact ? 44.h : 52.h);
+    final radius = AppRadius.lg;
+    final hint = productMode == 'ORGANIC_PRODUCE'
+        ? 'marketplace.search_organic'.tr()
+        : 'marketplace.search_biochar'.tr();
+
+    return SizedBox(
+      height: fieldHeight,
+      child: DecoratedBox(
+        decoration: BoxDecoration(
+          color: AppColors.surface,
+          borderRadius: BorderRadius.circular(radius),
+          border: Border.all(color: AppColors.grey100, width: 1.5),
+          boxShadow: compact
+              ? null
+              : [
+                  BoxShadow(
+                    color: AppColors.black.withOpacity(0.03),
+                    blurRadius: 10,
+                    offset: const Offset(0, 4),
+                  ),
+                ],
         ),
-        decoration: InputDecoration(
-          hintText: productMode == 'ORGANIC_PRODUCE'
-              ? 'Cari hasil tani organik...'
-              : 'Cari produk biomass...',
-          hintStyle: TextStyle(
-            color: AppColors.textHint,
-            fontSize: 14.sp,
-            fontWeight: FontWeight.w400,
+        child: Padding(
+          padding: EdgeInsets.symmetric(horizontal: compact ? AppSpacing.sm10 : AppSpacing.md),
+          child: Row(
+            crossAxisAlignment: CrossAxisAlignment.center,
+            children: [
+              Icon(
+                LucideIcons.search,
+                size: compact ? 18.sp : 20.sp,
+                color: AppColors.textSecondary,
+              ),
+              SizedBox(width: compact ? 6.w : 8.w),
+              Expanded(
+                child: TextField(
+                  controller: searchController,
+                  focusNode: searchFocusNode,
+                  onChanged: onSearchChanged,
+                  textInputAction: TextInputAction.search,
+                  onSubmitted: onSearchSubmitted,
+                  textAlignVertical: TextAlignVertical.center,
+                  style: TextStyle(
+                    fontSize: compact ? 13.sp : 14.sp,
+                    fontWeight: FontWeight.w600,
+                    color: AppColors.textPrimary,
+                    height: 1.0,
+                  ),
+                  decoration: InputDecoration(
+                    hintText: hint,
+                    hintStyle: TextStyle(
+                      color: AppColors.textHint,
+                      fontSize: compact ? 12.sp : 14.sp,
+                      fontWeight: FontWeight.w400,
+                      height: 1.0,
+                    ),
+                    border: InputBorder.none,
+                    enabledBorder: InputBorder.none,
+                    focusedBorder: InputBorder.none,
+                    isDense: true,
+                    contentPadding: EdgeInsets.zero,
+                  ),
+                ),
+              ),
+            ],
           ),
-          prefixIcon: Icon(
-            LucideIcons.search,
-            size: 20.sp,
-            color: AppColors.textSecondary,
-          ),
-          prefixIconConstraints: BoxConstraints(
-            minWidth: 32.w,
-          ),
-          border: InputBorder.none,
-          isDense: true,
-          contentPadding: EdgeInsets.symmetric(vertical: 16.h),
         ),
       ),
     );

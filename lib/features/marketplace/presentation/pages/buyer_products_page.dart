@@ -1,3 +1,4 @@
+import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
@@ -5,8 +6,10 @@ import 'package:flutter_staggered_grid_view/flutter_staggered_grid_view.dart';
 import 'package:go_router/go_router.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
 
+import '../../../../core/constants/app_layout.dart';
 import '../../../../core/constants/app_colors.dart';
 import '../../../../core/utils/extensions.dart';
+import '../../../../core/utils/money_format.dart';
 import '../../../../injection_container.dart';
 import '../../../../shared/widgets/bisa_app_bar.dart';
 import '../../../../shared/widgets/guest_placeholder.dart';
@@ -60,14 +63,13 @@ class _BuyerProductsPageState extends State<BuyerProductsPage>
     if (user == null) {
       return Scaffold(
         backgroundColor: AppColors.background,
-        appBar: const BisaAppBar(
-          title: 'Produk Saya',
+        appBar: BisaAppBar(
+          title: 'marketplace.buyer_products_title'.tr(),
           backgroundColor: AppColors.surface,
         ),
-        body: const GuestPlaceholder(
-          title: 'Akses Terbatas',
-          subtitle:
-              'Silakan masuk untuk melihat produk yang Anda beli, nego, dan simpan.',
+        body: GuestPlaceholder(
+          title: 'marketplace.buyer_limited_access'.tr(),
+          subtitle: 'marketplace.buyer_login_hint'.tr(),
           icon: LucideIcons.package,
         ),
       );
@@ -81,7 +83,7 @@ class _BuyerProductsPageState extends State<BuyerProductsPage>
       child: Scaffold(
         backgroundColor: AppColors.background,
         appBar: BisaAppBar(
-          title: 'Produk Saya',
+          title: 'marketplace.buyer_products_title'.tr(),
           backgroundColor: AppColors.surface,
           showShadow: false,
           bottom: PreferredSize(
@@ -102,10 +104,10 @@ class _BuyerProductsPageState extends State<BuyerProductsPage>
                   fontSize: 13.sp,
                   fontWeight: FontWeight.w500,
                 ),
-                tabs: const [
-                  Tab(text: 'Dibeli'),
-                  Tab(text: 'Negosiasi'),
-                  Tab(text: 'Wishlist'),
+                tabs: [
+                  Tab(text: 'marketplace.tab_purchased'.tr()),
+                  Tab(text: 'marketplace.tab_negotiation'.tr()),
+                  Tab(text: 'marketplace.tab_wishlist'.tr()),
                 ],
               ),
             ),
@@ -131,7 +133,7 @@ class _BuyerProductsPageState extends State<BuyerProductsPage>
         return state.maybeWhen(
           loading: () => SingleChildScrollView(
             physics: const AlwaysScrollableScrollPhysics(),
-            padding: EdgeInsets.all(16.w),
+            padding: EdgeInsets.all(AppSpacing.md),
             child: const ShimmerListPlaceholder(itemCount: 4, itemHeight: 96),
           ),
           error: (message) => _errorState(
@@ -143,8 +145,8 @@ class _BuyerProductsPageState extends State<BuyerProductsPage>
             if (purchased.isEmpty) {
               return _emptyState(
                 LucideIcons.shoppingBag,
-                'Belum ada produk dibeli',
-                'Produk dari pesanan yang dibayar akan muncul di sini.',
+                'marketplace.no_purchased'.tr(),
+                'marketplace.no_purchased_hint'.tr(),
               );
             }
             return RefreshIndicator(
@@ -154,7 +156,7 @@ class _BuyerProductsPageState extends State<BuyerProductsPage>
                 physics: const AlwaysScrollableScrollPhysics(),
                 padding: EdgeInsets.fromLTRB(16.w, 12.h, 16.w, 32.h),
                 itemCount: purchased.length,
-                separatorBuilder: (_, __) => SizedBox(height: 10.h),
+                separatorBuilder: (_, __) => SizedBox(height: AppSpacing.sm10),
                 itemBuilder: (context, index) =>
                     _purchasedProductTile(context, purchased[index]),
               ),
@@ -196,19 +198,19 @@ class _BuyerProductsPageState extends State<BuyerProductsPage>
   Widget _purchasedProductTile(BuildContext context, PurchasedProductItem item) {
     return InkWell(
       onTap: () => context.push('/product/${item.productId}'),
-      borderRadius: BorderRadius.circular(14.r),
+      borderRadius: BorderRadius.circular(AppRadius.tile),
       child: Container(
-        padding: EdgeInsets.all(10.w),
+        padding: EdgeInsets.all(AppSpacing.sm10),
         decoration: BoxDecoration(
           color: AppColors.surface,
-          borderRadius: BorderRadius.circular(14.r),
+          borderRadius: BorderRadius.circular(AppRadius.tile),
           border: Border.all(color: AppColors.grey100),
           boxShadow: AppColors.softShadow,
         ),
         child: Row(
           children: [
             ClipRRect(
-              borderRadius: BorderRadius.circular(10.r),
+              borderRadius: BorderRadius.circular(AppRadius.md),
               child: hasResolvableMediaUrl(item.thumbnailUrl)
                   ? BisaNetworkImage(
                       imageUrl: item.thumbnailUrl!,
@@ -219,7 +221,7 @@ class _BuyerProductsPageState extends State<BuyerProductsPage>
                     )
                   : _thumbPlaceholder(),
             ),
-            SizedBox(width: 12.w),
+            SizedBox(width: AppSpacing.md12),
             Expanded(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -236,7 +238,9 @@ class _BuyerProductsPageState extends State<BuyerProductsPage>
                   ),
                   SizedBox(height: 4.h),
                   Text(
-                    'Terakhir dibeli ${item.lastOrderDate.timeAgo}',
+                    'marketplace.last_purchased'.tr(namedArgs: {
+                      'time': item.lastOrderDate.timeAgo,
+                    }),
                     style: TextStyle(
                       fontSize: 11.sp,
                       color: AppColors.textSecondary,
@@ -244,7 +248,9 @@ class _BuyerProductsPageState extends State<BuyerProductsPage>
                   ),
                   SizedBox(height: 4.h),
                   Text(
-                    'Qty ${item.totalQuantity.toInt()}',
+                    'marketplace.qty_label_short'.tr(namedArgs: {
+                      'qty': '${item.totalQuantity.toInt()}',
+                    }),
                     style: TextStyle(
                       fontSize: 11.sp,
                       fontWeight: FontWeight.w600,
@@ -257,7 +263,7 @@ class _BuyerProductsPageState extends State<BuyerProductsPage>
             IconButton(
               icon: Icon(LucideIcons.receipt, size: 18.sp, color: AppColors.textHint),
               onPressed: () => context.push('/order/${item.lastOrderId}'),
-              tooltip: 'Lihat pesanan',
+              tooltip: 'marketplace.view_order'.tr(),
             ),
           ],
         ),
@@ -273,7 +279,7 @@ class _BuyerProductsPageState extends State<BuyerProductsPage>
         return state.maybeWhen(
           loading: () => SingleChildScrollView(
             physics: const AlwaysScrollableScrollPhysics(),
-            padding: EdgeInsets.all(16.w),
+            padding: EdgeInsets.all(AppSpacing.md),
             child: const ShimmerListPlaceholder(itemCount: 4, itemHeight: 96),
           ),
           error: (message) => _errorState(
@@ -284,8 +290,8 @@ class _BuyerProductsPageState extends State<BuyerProductsPage>
             if (negotiations.isEmpty) {
               return _emptyState(
                 LucideIcons.handshake,
-                'Belum ada negosiasi',
-                'Produk yang sedang Anda nego akan muncul di sini.',
+                'marketplace.no_negotiations'.tr(),
+                'marketplace.no_negotiations_hint'.tr(),
               );
             }
             return RefreshIndicator(
@@ -295,7 +301,7 @@ class _BuyerProductsPageState extends State<BuyerProductsPage>
                 physics: const AlwaysScrollableScrollPhysics(),
                 padding: EdgeInsets.fromLTRB(16.w, 12.h, 16.w, 32.h),
                 itemCount: negotiations.length,
-                separatorBuilder: (_, __) => SizedBox(height: 10.h),
+                separatorBuilder: (_, __) => SizedBox(height: AppSpacing.sm10),
                 itemBuilder: (context, index) =>
                     _negotiationCard(negotiations[index]),
               ),
@@ -311,12 +317,12 @@ class _BuyerProductsPageState extends State<BuyerProductsPage>
     final statusColor = _negotiationStatusColor(n.status);
     return InkWell(
       onTap: () => NegotiationStatusDisplay.openFromList(context, n),
-      borderRadius: BorderRadius.circular(14.r),
+      borderRadius: BorderRadius.circular(AppRadius.tile),
       child: Container(
-        padding: EdgeInsets.all(10.w),
+        padding: EdgeInsets.all(AppSpacing.sm10),
         decoration: BoxDecoration(
           color: AppColors.surface,
-          borderRadius: BorderRadius.circular(14.r),
+          borderRadius: BorderRadius.circular(AppRadius.tile),
           border: Border.all(color: AppColors.grey100),
           boxShadow: AppColors.softShadow,
         ),
@@ -324,7 +330,7 @@ class _BuyerProductsPageState extends State<BuyerProductsPage>
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             ClipRRect(
-              borderRadius: BorderRadius.circular(10.r),
+              borderRadius: BorderRadius.circular(AppRadius.md),
               child: hasResolvableMediaUrl(n.product.thumbnailUrl)
                   ? BisaNetworkImage(
                       imageUrl: n.product.thumbnailUrl!,
@@ -335,7 +341,7 @@ class _BuyerProductsPageState extends State<BuyerProductsPage>
                     )
                   : _thumbPlaceholder(),
             ),
-            SizedBox(width: 12.w),
+            SizedBox(width: AppSpacing.md12),
             Expanded(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -356,7 +362,7 @@ class _BuyerProductsPageState extends State<BuyerProductsPage>
                     children: [
                       BisaAvatar(
                         imageUrl: n.seller.avatarUrl,
-                        radius: 8.r,
+                        radius: AppRadius.button,
                         fallbackIcon: LucideIcons.store,
                       ),
                       SizedBox(width: 6.w),
@@ -380,7 +386,7 @@ class _BuyerProductsPageState extends State<BuyerProductsPage>
                     crossAxisAlignment: WrapCrossAlignment.center,
                     children: [
                       Text(
-                        n.pricePerUnit.toRupiah,
+                        formatMoneyDisplay(n.pricePerUnit),
                         style: TextStyle(
                           fontSize: 14.sp,
                           fontWeight: FontWeight.w800,
@@ -444,8 +450,8 @@ class _BuyerProductsPageState extends State<BuyerProductsPage>
         if (products.isEmpty) {
           return _emptyState(
             LucideIcons.heart,
-            'Belum ada favorit',
-            'Produk yang Anda sukai akan muncul di sini.',
+            'marketplace.no_wishlist'.tr(),
+            'marketplace.no_wishlist_hint'.tr(),
           );
         }
         return RefreshIndicator(
@@ -455,8 +461,8 @@ class _BuyerProductsPageState extends State<BuyerProductsPage>
             physics: const AlwaysScrollableScrollPhysics(),
             padding: EdgeInsets.fromLTRB(16.w, 16.h, 16.w, 32.h),
             crossAxisCount: 2,
-            mainAxisSpacing: 16.h,
-            crossAxisSpacing: 12.w,
+            mainAxisSpacing: AppSpacing.md,
+            crossAxisSpacing: AppSpacing.md12,
             itemCount: products.length,
             itemBuilder: (context, index) =>
                 ProductCard(product: products[index]),
@@ -487,7 +493,7 @@ class _BuyerProductsPageState extends State<BuyerProductsPage>
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
                 Icon(icon, size: 64.r, color: AppColors.grey200),
-                SizedBox(height: 16.h),
+                SizedBox(height: AppSpacing.md),
                 Text(
                   title,
                   style: TextStyle(
@@ -497,7 +503,7 @@ class _BuyerProductsPageState extends State<BuyerProductsPage>
                   ),
                   textAlign: TextAlign.center,
                 ),
-                SizedBox(height: 8.h),
+                SizedBox(height: AppSpacing.sm),
                 Text(
                   subtitle,
                   style: TextStyle(
@@ -518,19 +524,19 @@ class _BuyerProductsPageState extends State<BuyerProductsPage>
   Widget _errorState(String message, VoidCallback onRetry) {
     return Center(
       child: Padding(
-        padding: EdgeInsets.symmetric(horizontal: 32.w),
+        padding: EdgeInsets.symmetric(horizontal: AppSpacing.xxl),
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
             Icon(LucideIcons.triangleAlert, size: 48.r, color: AppColors.error),
-            SizedBox(height: 12.h),
+            SizedBox(height: AppSpacing.md12),
             Text(
               message,
               textAlign: TextAlign.center,
               style: TextStyle(fontSize: 13.sp, color: AppColors.textSecondary),
             ),
-            SizedBox(height: 12.h),
-            TextButton(onPressed: onRetry, child: const Text('Coba Lagi')),
+            SizedBox(height: AppSpacing.md12),
+            TextButton(onPressed: onRetry, child: Text('marketplace.try_again'.tr())),
           ],
         ),
       ),
@@ -554,13 +560,13 @@ class _BuyerProductsPageState extends State<BuyerProductsPage>
   String _negotiationStatusLabel(String status) {
     switch (status.toUpperCase()) {
       case 'OPEN_NEGOTIATION':
-        return 'Aktif';
+        return 'marketplace.nego_status_active'.tr();
       case 'OFFER_ACCEPTED':
-        return 'Diterima';
+        return 'marketplace.nego_status_accepted'.tr();
       case 'OFFER_REJECTED':
-        return 'Ditolak';
+        return 'marketplace.nego_status_rejected'.tr();
       case 'CONTRACT_CREATED':
-        return 'Selesai';
+        return 'marketplace.nego_status_done'.tr();
       default:
         return status;
     }

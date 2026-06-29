@@ -3,6 +3,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:go_router/go_router.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
+import '../../core/constants/app_layout.dart';
 import '../../core/constants/app_colors.dart';
 import '../../features/auth/presentation/bloc/auth_cubit.dart';
 import '../../features/notifications/presentation/bloc/notification_cubit.dart';
@@ -73,7 +74,7 @@ class NotificationBellButton extends StatelessWidget {
                     horizontal: unread > 9 ? 4.w : 5.w,
                     vertical: 2.h,
                   ),
-                  constraints: BoxConstraints(minWidth: 16.w),
+                  constraints: BoxConstraints(minWidth: AppSpacing.md),
                   decoration: const BoxDecoration(
                     color: AppColors.error,
                     shape: BoxShape.circle,
@@ -82,7 +83,7 @@ class NotificationBellButton extends StatelessWidget {
                     unread > 99 ? '99+' : '$unread',
                     textAlign: TextAlign.center,
                     style: TextStyle(
-                      color: Colors.white,
+                      color: AppColors.surface,
                       fontSize: 9.sp,
                       fontWeight: FontWeight.w900,
                       height: 1.1,

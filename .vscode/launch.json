@@ -1,0 +1,50 @@
+{
+  "version": "0.2.0",
+  "configurations": [
+    {
+      "name": "BISA — ngrok (HP / emulator) ★",
+      "request": "launch",
+      "type": "dart",
+      "program": "lib/main.dart",
+      "toolArgs": [
+        "--dart-define-from-file=dart_define.ngrok.json"
+      ]
+    },
+    {
+      "name": "BISA — HP Fisik (USB + adb reverse)",
+      "request": "launch",
+      "type": "dart",
+      "program": "lib/main.dart",
+      "toolArgs": [
+        "--dart-define-from-file=dart_define.device.json"
+      ]
+    },
+    {
+      "name": "BISA — HP Fisik (WiFi / LAN)",
+      "request": "launch",
+      "type": "dart",
+      "program": "lib/main.dart",
+      "toolArgs": [
+        "--dart-define-from-file=dart_define.device-wifi.json"
+      ]
+    },
+    {
+      "name": "BISA — Android Emulator",
+      "request": "launch",
+      "type": "dart",
+      "program": "lib/main.dart",
+      "toolArgs": [
+        "--dart-define-from-file=dart_define.emulator.json"
+      ]
+    },
+    {
+      "name": "BISA — Windows / Chrome (localhost)",
+      "request": "launch",
+      "type": "dart",
+      "program": "lib/main.dart",
+      "toolArgs": [
+        "--dart-define-from-file=dart_define.dev.json"
+      ]
+    },
+  ]
+}

@@ -20,6 +20,7 @@ abstract class AuthRepository {
     required String email,
     required String password,
     String? phone,
+    String? referralCode,
   });
   Future<Either<Failure, UserEntity>> registerSupplier({
     required String fullName,
@@ -28,6 +29,7 @@ abstract class AuthRepository {
     String? phone,
     String? province,
     String? regency,
+    String? referralCode,
   });
   Future<Either<Failure, void>> verifyRegistration(String email, String code);
   Future<Either<Failure, void>> resendOtp(String email, String type);
@@ -43,6 +45,7 @@ abstract class AuthRepository {
     String? nibPath,
     String? selfiePath,
     String? siupPath,
+    void Function(String status)? onUploadStatus,
   });
   Future<Either<Failure, List<AddressEntity>>> getAddresses();
   Future<Either<Failure, AddressEntity>> createAddress(Map<String, dynamic> data);

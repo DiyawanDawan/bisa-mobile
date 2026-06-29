@@ -1,11 +1,22 @@
+import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
+import 'package:mobile_bisa/core/constants/app_layout.dart';
 import 'package:mobile_bisa/core/constants/app_colors.dart';
 import 'package:mobile_bisa/core/utils/safe_area_utils.dart';
 import 'package:mobile_bisa/shared/widgets/custom_button.dart';
 import 'package:mobile_bisa/shared/widgets/custom_text_field.dart';
 
 enum NegotiationClosureAction { rejectBySupplier, cancelByBuyer }
+
+class _ClosurePreset {
+  const _ClosurePreset({required this.id, required this.labelKey});
+
+  final String id;
+  final String labelKey;
+}
+
+const _kOtherPresetId = 'other';
 
 class NegotiationClosureDialog {
   static Future<String?> show(
@@ -15,7 +26,7 @@ class NegotiationClosureDialog {
     return showModalBottomSheet<String>(
       context: context,
       isScrollControlled: true,
-      backgroundColor: Colors.transparent,
+      backgroundColor: AppColors.transparent,
       builder: (ctx) => _NegotiationClosureSheet(action: action),
     );
   }
@@ -33,24 +44,48 @@ class _NegotiationClosureSheet extends StatefulWidget {
 
 class _NegotiationClosureSheetState extends State<_NegotiationClosureSheet> {
   final _customController = TextEditingController();
-  String? _selectedPreset;
+  String? _selectedPresetId;
   String? _error;
 
   bool get _isSupplierReject =>
       widget.action == NegotiationClosureAction.rejectBySupplier;
 
-  List<String> get _presets => _isSupplierReject
+  List<_ClosurePreset> get _presets => _isSupplierReject
       ? const [
-          'Harga penawaran terlalu rendah',
-          'Stok tidak mencukupi',
-          'Spesifikasi tidak sesuai',
-          'Jadwal pengiriman tidak cocok',
+          _ClosurePreset(
+            id: 'price_low',
+            labelKey: 'negotiation.closure_preset_price_low',
+          ),
+          _ClosurePreset(
+            id: 'stock',
+            labelKey: 'negotiation.closure_preset_stock',
+          ),
+          _ClosurePreset(
+            id: 'spec',
+            labelKey: 'negotiation.closure_preset_spec',
+          ),
+          _ClosurePreset(
+            id: 'schedule',
+            labelKey: 'negotiation.closure_preset_schedule',
+          ),
         ]
       : const [
-          'Kebutuhan berubah',
-          'Menemukan penawaran lain',
-          'Kesalahan jumlah/harga penawaran',
-          'Ingin negosiasi ulang nanti',
+          _ClosurePreset(
+            id: 'needs_change',
+            labelKey: 'negotiation.closure_preset_needs_change',
+          ),
+          _ClosurePreset(
+            id: 'other_offer',
+            labelKey: 'negotiation.closure_preset_other_offer',
+          ),
+          _ClosurePreset(
+            id: 'mistake',
+            labelKey: 'negotiation.closure_preset_mistake',
+          ),
+          _ClosurePreset(
+            id: 'renegotiate',
+            labelKey: 'negotiation.closure_preset_renegotiate',
+          ),
         ];
 
   @override
@@ -60,19 +95,20 @@ class _NegotiationClosureSheetState extends State<_NegotiationClosureSheet> {
   }
 
   String? _resolveReason() {
-    if (_selectedPreset == 'Lainnya') {
+    if (_selectedPresetId == _kOtherPresetId) {
       final custom = _customController.text.trim();
       if (custom.length < 5) {
-        setState(() => _error = 'Alasan custom minimal 5 karakter');
+        setState(() => _error = 'negotiation.closure_custom_min'.tr());
         return null;
       }
       return custom;
     }
-    if (_selectedPreset == null) {
-      setState(() => _error = 'Pilih alasan terlebih dahulu');
+    if (_selectedPresetId == null) {
+      setState(() => _error = 'negotiation.closure_select_reason'.tr());
       return null;
     }
-    return _selectedPreset;
+    final preset = _presets.firstWhere((p) => p.id == _selectedPresetId);
+    return preset.labelKey.tr();
   }
 
   @override
@@ -80,18 +116,20 @@ class _NegotiationClosureSheetState extends State<_NegotiationClosureSheet> {
     return Padding(
       padding: sheetBottomPadding(context),
       child: Container(
-        margin: EdgeInsets.fromLTRB(12.w, 0, 12.w, 12.h),
+        margin: EdgeInsets.fromLTRB(AppSpacing.md12, 0, AppSpacing.md12, AppSpacing.md12),
         padding: EdgeInsets.fromLTRB(20.w, 20.h, 20.w, 24.h),
         decoration: BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.circular(24.r),
+          color: AppColors.surface,
+          borderRadius: BorderRadius.circular(AppSpacing.xlPx.r),
         ),
         child: Column(
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text(
-              _isSupplierReject ? 'Tolak Penawaran' : 'Batalkan Negosiasi',
+              _isSupplierReject
+                  ? 'negotiation.closure_title_reject'.tr()
+                  : 'negotiation.closure_title_cancel'.tr(),
               style: TextStyle(
                 fontSize: 18.sp,
                 fontWeight: FontWeight.w900,
@@ -101,47 +139,47 @@ class _NegotiationClosureSheetState extends State<_NegotiationClosureSheet> {
             SizedBox(height: 6.h),
             Text(
               _isSupplierReject
-                  ? 'Berikan alasan agar pembeli memahami keputusan Anda.'
-                  : 'Berikan alasan pembatalan agar supplier mengetahui keputusan Anda.',
+                  ? 'negotiation.closure_subtitle_reject'.tr()
+                  : 'negotiation.closure_subtitle_cancel'.tr(),
               style: TextStyle(
                 fontSize: 13.sp,
                 color: AppColors.textSecondary,
                 height: 1.4,
               ),
             ),
-            SizedBox(height: 16.h),
+            SizedBox(height: AppSpacing.md),
             ..._presets.map(
               (preset) => Padding(
-                padding: EdgeInsets.only(bottom: 8.h),
+                padding: EdgeInsets.only(bottom: AppSpacing.sm),
                 child: _ReasonTile(
-                  label: preset,
-                  selected: _selectedPreset == preset,
+                  label: preset.labelKey.tr(),
+                  selected: _selectedPresetId == preset.id,
                   onTap: () => setState(() {
-                    _selectedPreset = preset;
+                    _selectedPresetId = preset.id;
                     _error = null;
                   }),
                 ),
               ),
             ),
             _ReasonTile(
-              label: 'Lainnya',
-              selected: _selectedPreset == 'Lainnya',
+              label: 'negotiation.closure_other'.tr(),
+              selected: _selectedPresetId == _kOtherPresetId,
               onTap: () => setState(() {
-                _selectedPreset = 'Lainnya';
+                _selectedPresetId = _kOtherPresetId;
                 _error = null;
               }),
             ),
-            if (_selectedPreset == 'Lainnya') ...[
-              SizedBox(height: 8.h),
+            if (_selectedPresetId == _kOtherPresetId) ...[
+              SizedBox(height: AppSpacing.sm),
               CustomTextField(
-                label: 'Alasan lain',
+                label: 'negotiation.closure_custom_label'.tr(),
                 controller: _customController,
-                hint: 'Tulis alasan...',
+                hint: 'negotiation.closure_custom_hint'.tr(),
                 maxLines: 3,
               ),
             ],
             if (_error != null) ...[
-              SizedBox(height: 8.h),
+              SizedBox(height: AppSpacing.sm),
               Text(
                 _error!,
                 style: TextStyle(
@@ -151,21 +189,23 @@ class _NegotiationClosureSheetState extends State<_NegotiationClosureSheet> {
                 ),
               ),
             ],
-            SizedBox(height: 20.h),
+            SizedBox(height: AppSpacing.lg),
             Row(
               children: [
                 Expanded(
                   child: CustomButton(
-                    text: 'Batal',
+                    text: 'batal'.tr(),
                     isOutlined: true,
                     height: 48.h,
                     onPressed: () => Navigator.pop(context),
                   ),
                 ),
-                SizedBox(width: 12.w),
+                SizedBox(width: AppSpacing.md12),
                 Expanded(
                   child: CustomButton(
-                    text: _isSupplierReject ? 'Tolak' : 'Batalkan',
+                    text: _isSupplierReject
+                        ? 'negotiation.closure_action_reject'.tr()
+                        : 'negotiation.closure_action_cancel'.tr(),
                     height: 48.h,
                     backgroundColor: AppColors.error,
                     onPressed: () {
@@ -200,15 +240,15 @@ class _ReasonTile extends StatelessWidget {
       color: selected
           ? AppColors.primary.withValues(alpha: 0.08)
           : AppColors.grey50,
-      borderRadius: BorderRadius.circular(12.r),
+      borderRadius: BorderRadius.circular(AppRadius.lg),
       child: InkWell(
         onTap: onTap,
-        borderRadius: BorderRadius.circular(12.r),
+        borderRadius: BorderRadius.circular(AppRadius.lg),
         child: Container(
           width: double.infinity,
-          padding: EdgeInsets.symmetric(horizontal: 14.w, vertical: 12.h),
+          padding: EdgeInsets.symmetric(horizontal: AppSpacing.section, vertical: AppSpacing.md12),
           decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(12.r),
+            borderRadius: BorderRadius.circular(AppRadius.lg),
             border: Border.all(
               color: selected ? AppColors.primary : AppColors.grey200,
             ),
@@ -222,7 +262,7 @@ class _ReasonTile extends StatelessWidget {
                 size: 18.sp,
                 color: selected ? AppColors.primary : AppColors.grey400,
               ),
-              SizedBox(width: 10.w),
+              SizedBox(width: AppSpacing.sm10),
               Expanded(
                 child: Text(
                   label,

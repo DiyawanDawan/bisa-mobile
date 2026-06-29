@@ -6,6 +6,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:go_router/go_router.dart';
 import 'package:image_picker/image_picker.dart';
+import 'package:mobile_bisa/core/constants/app_text_styles.dart';
 import 'package:mobile_bisa/core/core.dart';
 import 'package:mobile_bisa/core/utils/media_url_utils.dart';
 import 'package:mobile_bisa/core/utils/product_pricing.dart';
@@ -87,7 +88,7 @@ class _NegotiationRoomPageState extends State<NegotiationRoomPage> {
       child: Scaffold(
         backgroundColor: AppColors.background,
         appBar: BisaAppBar(
-          backgroundColor: Colors.white,
+          backgroundColor: AppColors.surface,
           centerTitle: false,
           titleWidget: BlocBuilder<NegotiationCubit, NegotiationState>(
             builder: (context, state) {
@@ -103,12 +104,12 @@ class _NegotiationRoomPageState extends State<NegotiationRoomPage> {
               if (n == null) {
                 return Text(
                   widget.chatMode == 'inquiry'
-                      ? 'Chat dengan toko'
-                      : 'Negosiasi'.tr(),
+                      ? 'negotiation.room_title_inquiry'.tr()
+                      : 'negosiasi'.tr(),
                 );
               }
               if (_isInquiryMode(n)) {
-                return Text('Chat dengan toko');
+                return Text('negotiation.room_title_inquiry'.tr());
               }
 
               final userState = context.watch<AuthCubit>().state;
@@ -142,7 +143,7 @@ class _NegotiationRoomPageState extends State<NegotiationRoomPage> {
                           : null,
                     ),
                   ),
-                  SizedBox(width: 12.w),
+                  SizedBox(width: AppSpacing.md12),
                   Expanded(
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
@@ -171,7 +172,7 @@ class _NegotiationRoomPageState extends State<NegotiationRoomPage> {
                             ),
                             SizedBox(width: 4.w),
                             Text(
-                              'Online',
+                              'negotiation.room_online'.tr(),
                               style: TextStyle(
                                 color: AppColors.secondary,
                                 fontSize: 10.sp,
@@ -179,9 +180,9 @@ class _NegotiationRoomPageState extends State<NegotiationRoomPage> {
                               ),
                             ),
                             if (isTyping) ...[
-                              SizedBox(width: 8.w),
+                              SizedBox(width: AppSpacing.sm),
                               Text(
-                                'sedang mengetik...',
+                                'negotiation.room_typing'.tr(),
                                 style: TextStyle(
                                   color: AppColors.textHint,
                                   fontSize: 10.sp,
@@ -214,24 +215,9 @@ class _NegotiationRoomPageState extends State<NegotiationRoomPage> {
                 _scrollToBottom();
               },
               success: (msg) {
-                ScaffoldMessenger.of(context).showSnackBar(
-                  SnackBar(
-                    content: Text(msg),
-                    backgroundColor: AppColors.success,
-                    behavior: SnackBarBehavior.floating,
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(12.r),
-                    ),
-                  ),
-                );
+                showSuccessSnackBar(context, msg);
               },
-              error: (msg) => ScaffoldMessenger.of(context).showSnackBar(
-                SnackBar(
-                  content: Text(msg),
-                  backgroundColor: AppColors.error,
-                  behavior: SnackBarBehavior.floating,
-                ),
-              ),
+              error: (msg) => showErrorSnackBar(context, msg),
               orElse: () {},
             );
           },
@@ -283,8 +269,8 @@ class _NegotiationRoomPageState extends State<NegotiationRoomPage> {
                               child: ListView.builder(
                                 controller: _scrollController,
                                 padding: EdgeInsets.symmetric(
-                                  horizontal: 16.w,
-                                  vertical: 20.h,
+                                  horizontal: AppSpacing.md,
+                                  vertical: AppSpacing.lg,
                                 ),
                                 physics: const BouncingScrollPhysics(),
                                 itemCount: n.messages!.length +
@@ -292,12 +278,12 @@ class _NegotiationRoomPageState extends State<NegotiationRoomPage> {
                                 itemBuilder: (context, index) {
                                   if (hasOlderMessages && index == 0) {
                                     return Padding(
-                                      padding: EdgeInsets.only(bottom: 12.h),
+                                      padding: EdgeInsets.only(bottom: AppSpacing.md12),
                                       child: Center(
                                         child: isLoadingOlder
                                             ? SizedBox(
-                                                width: 24.r,
-                                                height: 24.r,
+                                                width: AppSpacing.xlPx.r,
+                                                height: AppSpacing.xlPx.r,
                                                 child: const CircularProgressIndicator(
                                                   strokeWidth: 2,
                                                   color: AppColors.primary,
@@ -372,20 +358,20 @@ class _NegotiationRoomPageState extends State<NegotiationRoomPage> {
     final yesterday = DateTime.now().subtract(const Duration(days: 1));
 
     if (_isSameDay(date, now)) {
-      dateText = 'Hari Ini';
+      dateText = 'negotiation.date_today'.tr();
     } else if (_isSameDay(date, yesterday)) {
-      dateText = 'Kemarin';
+      dateText = 'negotiation.date_yesterday'.tr();
     } else {
       dateText = DateFormat('d MMMM yyyy').format(date);
     }
 
     return Center(
       child: Container(
-        margin: EdgeInsets.symmetric(vertical: 20.h),
-        padding: EdgeInsets.symmetric(horizontal: 12.w, vertical: 4.h),
+        margin: EdgeInsets.symmetric(vertical: AppSpacing.lg),
+        padding: EdgeInsets.symmetric(horizontal: AppSpacing.md12, vertical: AppSpacing.xs),
         decoration: BoxDecoration(
           color: AppColors.grey200.withValues(alpha: 0.5),
-          borderRadius: BorderRadius.circular(8.r),
+          borderRadius: BorderRadius.circular(AppRadius.button),
         ),
         child: Text(
           dateText,
@@ -401,13 +387,7 @@ class _NegotiationRoomPageState extends State<NegotiationRoomPage> {
 
   void _openProductContext(NegotiationEntity n, String? userId) {
     if (userId == null || !n.isParticipant(userId)) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text(
-            'Data negosiasi tidak sesuai akun. Buka ulang dari daftar chat.',
-          ),
-        ),
-      );
+      showErrorSnackBar(context, 'negotiation.data_mismatch_reload'.tr());
       return;
     }
     if (n.isSellerParticipant(userId)) {
@@ -432,17 +412,17 @@ class _NegotiationRoomPageState extends State<NegotiationRoomPage> {
     return Container(
       width: double.infinity,
       decoration: const BoxDecoration(
-        color: Colors.white,
+        color: AppColors.surface,
         border: Border(bottom: BorderSide(color: AppColors.grey200, width: 1)),
       ),
       child: Column(
         children: [
           Padding(
-            padding: EdgeInsets.fromLTRB(16.w, 12.h, 16.w, 12.h),
+            padding: EdgeInsets.fromLTRB(AppSpacing.md, AppSpacing.md12, AppSpacing.md, AppSpacing.md12),
             child: Row(
               children: [
                 ClipRRect(
-                  borderRadius: BorderRadius.circular(12.r),
+                  borderRadius: BorderRadius.circular(AppRadius.lg),
                   child: n.product.thumbnailUrl != null &&
                           n.product.thumbnailUrl!.isNotEmpty
                       ? BisaNetworkImage(
@@ -462,7 +442,7 @@ class _NegotiationRoomPageState extends State<NegotiationRoomPage> {
                           ),
                         ),
                 ),
-                SizedBox(width: 12.w),
+                SizedBox(width: AppSpacing.md12),
                 Expanded(
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
@@ -495,7 +475,7 @@ class _NegotiationRoomPageState extends State<NegotiationRoomPage> {
                   crossAxisAlignment: CrossAxisAlignment.end,
                   children: [
                     Text(
-                      (n.product.pricePerUnit * n.quantity).toRupiah,
+                      formatMoneyIdr(n.product.pricePerUnit * n.quantity),
                       style: TextStyle(
                         fontSize: 12.sp,
                         fontWeight: FontWeight.w700,
@@ -505,7 +485,7 @@ class _NegotiationRoomPageState extends State<NegotiationRoomPage> {
                     SizedBox(height: 4.h),
                     Container(
                       padding: EdgeInsets.symmetric(
-                        horizontal: 8.w,
+                        horizontal: AppSpacing.sm,
                         vertical: 2.h,
                       ),
                       decoration: BoxDecoration(
@@ -513,7 +493,7 @@ class _NegotiationRoomPageState extends State<NegotiationRoomPage> {
                         borderRadius: BorderRadius.circular(6.r),
                       ),
                       child: Text(
-                        'Chat tanya produk',
+                        'negotiation.inquiry_badge'.tr(),
                         style: TextStyle(
                           fontSize: 10.sp,
                           color: AppColors.info,
@@ -528,17 +508,17 @@ class _NegotiationRoomPageState extends State<NegotiationRoomPage> {
           ),
           Container(
             width: double.infinity,
-            padding: EdgeInsets.symmetric(vertical: 6.h, horizontal: 16.w),
+            padding: EdgeInsets.symmetric(vertical: AppSpacing.xs6, horizontal: AppSpacing.md),
             color: AppColors.info.withValues(alpha: 0.05),
             child: Row(
               children: [
                 Icon(Icons.info_outline, size: 12.sp, color: AppColors.info),
-                SizedBox(width: 8.w),
+                SizedBox(width: AppSpacing.sm),
                 Expanded(
                   child: Text(
                     isSupplier
-                        ? 'Pembeli bertanya — balas seperti chat biasa. Tawar harga ada di ruang negosiasi terpisah.'
-                        : 'Untuk tawar harga gunakan tombol Nego Harga di halaman produk.',
+                        ? 'negotiation.inquiry_banner_supplier'.tr()
+                        : 'negotiation.inquiry_banner_buyer'.tr(),
                     style: TextStyle(
                       fontSize: 10.sp,
                       color: AppColors.info,
@@ -572,20 +552,20 @@ class _NegotiationRoomPageState extends State<NegotiationRoomPage> {
     return Container(
       width: double.infinity,
       decoration: const BoxDecoration(
-        color: Colors.white,
+        color: AppColors.surface,
         border: Border(bottom: BorderSide(color: AppColors.grey200, width: 1)),
       ),
       child: Column(
         children: [
           Padding(
-            padding: EdgeInsets.fromLTRB(16.w, 12.h, 16.w, 16.h),
+            padding: EdgeInsets.fromLTRB(AppSpacing.md, AppSpacing.md12, AppSpacing.md, AppSpacing.md),
             child: Row(
               children: [
                 // Product Image
                 GestureDetector(
                   onTap: () => _openProductContext(n, userId),
                   child: ClipRRect(
-                    borderRadius: BorderRadius.circular(12.r),
+                    borderRadius: BorderRadius.circular(AppRadius.lg),
                     child:
                         n.product.thumbnailUrl != null &&
                             n.product.thumbnailUrl!.isNotEmpty
@@ -597,7 +577,7 @@ class _NegotiationRoomPageState extends State<NegotiationRoomPage> {
                             placeholder: (context, url) => BisaMediaSkeleton(
                               width: 48.w,
                               height: 48.w,
-                              borderRadius: BorderRadius.circular(12.r),
+                              borderRadius: BorderRadius.circular(AppRadius.lg),
                             ),
                             errorWidget: (context, url, error) => Container(
                               width: 48.w,
@@ -622,7 +602,7 @@ class _NegotiationRoomPageState extends State<NegotiationRoomPage> {
                           ),
                   ),
                 ),
-                SizedBox(width: 12.w),
+                SizedBox(width: AppSpacing.md12),
                 // Product & Seller Details
                 Expanded(
                   child: Column(
@@ -646,8 +626,8 @@ class _NegotiationRoomPageState extends State<NegotiationRoomPage> {
                         onTap: () => _openProductContext(n, userId),
                         child: Text(
                           isSellerInRoom
-                              ? 'Info produk negosiasi →'
-                              : 'Lihat detail produk →',
+                              ? 'negotiation.product_link_seller'.tr()
+                              : 'negotiation.product_link_buyer'.tr(),
                           style: TextStyle(
                             fontSize: 10.sp,
                             fontWeight: FontWeight.w700,
@@ -690,10 +670,7 @@ class _NegotiationRoomPageState extends State<NegotiationRoomPage> {
                       SizedBox(height: 4.h),
                       Text(
                         '${n.quantity} ${n.product.unit}',
-                        style: TextStyle(
-                          fontSize: 11.sp,
-                          color: AppColors.textSecondary,
-                        ),
+                        style: AppTextStyles.caption(color: AppColors.textSecondary),
                       ),
                     ],
                   ),
@@ -714,7 +691,7 @@ class _NegotiationRoomPageState extends State<NegotiationRoomPage> {
                           borderRadius: BorderRadius.circular(4.r),
                         ),
                         child: Text(
-                          (n.product.pricePerUnit * n.quantity).toRupiah,
+                          formatMoneyIdr(n.product.pricePerUnit * n.quantity),
                           style: TextStyle(
                             fontSize: 10.sp,
                             fontWeight: FontWeight.w700,
@@ -728,7 +705,7 @@ class _NegotiationRoomPageState extends State<NegotiationRoomPage> {
                     if (n.product.pricePerUnit > n.pricePerUnit)
                       SizedBox(height: 4.h),
                     Text(
-                      (n.totalEstimate as num).toRupiah,
+                      formatMoneyIdr(n.totalEstimate as num),
                       style: TextStyle(
                         fontSize: 14.sp,
                         fontWeight: FontWeight.w900,
@@ -737,7 +714,7 @@ class _NegotiationRoomPageState extends State<NegotiationRoomPage> {
                     ),
                     Container(
                       padding: EdgeInsets.symmetric(
-                        horizontal: 8.w,
+                        horizontal: AppSpacing.sm,
                         vertical: 2.h,
                       ),
                       decoration: BoxDecoration(
@@ -762,7 +739,7 @@ class _NegotiationRoomPageState extends State<NegotiationRoomPage> {
           if (n.status == 'OPEN_NEGOTIATION')
             Container(
               width: double.infinity,
-              padding: EdgeInsets.symmetric(vertical: 6.h, horizontal: 16.w),
+              padding: EdgeInsets.symmetric(vertical: AppSpacing.xs6, horizontal: AppSpacing.md),
               color: AppColors.warning.withValues(alpha: 0.05),
               child: Row(
                 children: [
@@ -771,9 +748,9 @@ class _NegotiationRoomPageState extends State<NegotiationRoomPage> {
                     size: 12.sp,
                     color: AppColors.warning,
                   ),
-                  SizedBox(width: 8.w),
+                  SizedBox(width: AppSpacing.sm),
                   Text(
-                    'Menunggu respon tawar-menawar',
+                    'negotiation.status_waiting_bargain'.tr(),
                     style: TextStyle(
                       fontSize: 10.sp,
                       color: AppColors.warning,
@@ -797,9 +774,9 @@ class _NegotiationRoomPageState extends State<NegotiationRoomPage> {
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
           Container(
-            padding: EdgeInsets.all(20.r),
+            padding: EdgeInsets.all(AppSpacing.lg),
             decoration: BoxDecoration(
-              color: Colors.white,
+              color: AppColors.surface,
               shape: BoxShape.circle,
               boxShadow: AppColors.softShadow,
             ),
@@ -809,9 +786,9 @@ class _NegotiationRoomPageState extends State<NegotiationRoomPage> {
               color: AppColors.grey300,
             ),
           ),
-          SizedBox(height: 16.h),
+          SizedBox(height: AppSpacing.md),
           Text(
-            'Belum ada percakapan',
+            'negotiation.empty_chat_title'.tr(),
             style: TextStyle(
               color: AppColors.textPrimary,
               fontSize: 15.sp,
@@ -821,8 +798,8 @@ class _NegotiationRoomPageState extends State<NegotiationRoomPage> {
           SizedBox(height: 4.h),
           Text(
             inquiry
-                ? 'Kirim pesan untuk bertanya ke penjual'
-                : 'Mulai negosiasi dengan mengirim pesan',
+                ? 'negotiation.empty_chat_inquiry_subtitle'.tr()
+                : 'negotiation.empty_chat_negotiation_subtitle'.tr(),
             style: TextStyle(color: AppColors.textHint, fontSize: 12.sp),
           ),
         ],
@@ -841,11 +818,11 @@ class _NegotiationRoomPageState extends State<NegotiationRoomPage> {
       final body = stripAdminMediationPrefix(msg.content);
       return Center(
         child: Container(
-          margin: EdgeInsets.symmetric(vertical: 12.h, horizontal: 12.w),
-          padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 10.h),
+          margin: EdgeInsets.symmetric(vertical: AppSpacing.md12, horizontal: AppSpacing.md12),
+          padding: EdgeInsets.symmetric(horizontal: AppSpacing.md, vertical: AppSpacing.sm10),
           decoration: BoxDecoration(
             color: AppColors.primary.withValues(alpha: 0.08),
-            borderRadius: BorderRadius.circular(16.r),
+            borderRadius: BorderRadius.circular(AppRadius.xl),
             border: Border.all(
               color: AppColors.primary.withValues(alpha: 0.35),
               width: 1,
@@ -864,7 +841,7 @@ class _NegotiationRoomPageState extends State<NegotiationRoomPage> {
                   ),
                   SizedBox(width: 6.w),
                   Text(
-                    'Hakim BISA',
+                    'negotiation.admin_mediator_label'.tr(),
                     style: TextStyle(
                       fontSize: 11.sp,
                       fontWeight: FontWeight.w800,
@@ -893,17 +870,17 @@ class _NegotiationRoomPageState extends State<NegotiationRoomPage> {
     if (msg.isSystemMessage) {
       return Center(
         child: Container(
-          margin: EdgeInsets.symmetric(vertical: 16.h),
-          padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 6.h),
+          margin: EdgeInsets.symmetric(vertical: AppSpacing.md),
+          padding: EdgeInsets.symmetric(horizontal: AppSpacing.md, vertical: AppSpacing.xs6),
           decoration: BoxDecoration(
             color: AppColors.grey200.withValues(alpha: 0.5),
-            borderRadius: BorderRadius.circular(20.r),
+            borderRadius: BorderRadius.circular(AppRadius.pill),
           ),
           child: Row(
             mainAxisSize: MainAxisSize.min,
             children: [
               Icon(Icons.info_outline, size: 12.sp, color: AppColors.textHint),
-              SizedBox(width: 8.w),
+              SizedBox(width: AppSpacing.sm),
               Flexible(
                 child: Text(
                   msg.content,
@@ -923,19 +900,19 @@ class _NegotiationRoomPageState extends State<NegotiationRoomPage> {
 
     if (msg.isDeleted) {
       return Padding(
-        padding: EdgeInsets.only(bottom: 16.h),
+        padding: EdgeInsets.only(bottom: AppSpacing.md),
         child: Row(
           mainAxisAlignment:
               isMe ? MainAxisAlignment.end : MainAxisAlignment.start,
           children: [
             Container(
-              padding: EdgeInsets.symmetric(horizontal: 14.w, vertical: 8.h),
+              padding: EdgeInsets.symmetric(horizontal: AppSpacing.section, vertical: AppSpacing.sm),
               decoration: BoxDecoration(
                 color: AppColors.grey200.withValues(alpha: 0.6),
-                borderRadius: BorderRadius.circular(12.r),
+                borderRadius: BorderRadius.circular(AppRadius.lg),
               ),
               child: Text(
-                'Pesan dihapus',
+                'negotiation.message_deleted'.tr(),
                 style: TextStyle(
                   fontSize: 12.sp,
                   color: AppColors.textHint,
@@ -951,7 +928,7 @@ class _NegotiationRoomPageState extends State<NegotiationRoomPage> {
     final canManage = isMe && !msg.id.startsWith('temp-');
 
     return Padding(
-      padding: EdgeInsets.only(bottom: 16.h),
+      padding: EdgeInsets.only(bottom: AppSpacing.md),
       child: Row(
         mainAxisAlignment: isMe
             ? MainAxisAlignment.end
@@ -960,11 +937,11 @@ class _NegotiationRoomPageState extends State<NegotiationRoomPage> {
         children: [
           if (!isMe) ...[
             CircleAvatar(
-              radius: 14.r,
+              radius: AppRadius.tile,
               backgroundColor: AppColors.grey200,
               child: Icon(Icons.person, size: 14.sp, color: AppColors.grey400),
             ),
-            SizedBox(width: 8.w),
+            SizedBox(width: AppSpacing.sm),
           ],
           Flexible(
             child: GestureDetector(
@@ -978,16 +955,16 @@ class _NegotiationRoomPageState extends State<NegotiationRoomPage> {
               children: [
                 Container(
                   padding: EdgeInsets.symmetric(
-                    horizontal: 16.w,
-                    vertical: 12.h,
+                    horizontal: AppSpacing.md,
+                    vertical: AppSpacing.md12,
                   ),
                   decoration: BoxDecoration(
-                    color: isMe ? AppColors.primary : Colors.white,
+                    color: isMe ? AppColors.primary : AppColors.white,
                     borderRadius: BorderRadius.only(
-                      topLeft: Radius.circular(16.r),
-                      topRight: Radius.circular(16.r),
-                      bottomLeft: isMe ? Radius.circular(16.r) : Radius.zero,
-                      bottomRight: isMe ? Radius.zero : Radius.circular(16.r),
+                      topLeft: Radius.circular(AppRadius.xl),
+                      topRight: Radius.circular(AppRadius.xl),
+                      bottomLeft: isMe ? Radius.circular(AppRadius.xl) : Radius.zero,
+                      bottomRight: isMe ? Radius.zero : Radius.circular(AppRadius.xl),
                     ),
                     boxShadow: isMe
                         ? [
@@ -999,7 +976,7 @@ class _NegotiationRoomPageState extends State<NegotiationRoomPage> {
                           ]
                         : [
                             BoxShadow(
-                              color: Colors.black.withValues(alpha: 0.04),
+                              color: AppColors.black.withValues(alpha: 0.04),
                               blurRadius: 4,
                               offset: const Offset(0, 2),
                             ),
@@ -1012,7 +989,7 @@ class _NegotiationRoomPageState extends State<NegotiationRoomPage> {
                         Text(
                           msg.content,
                           style: TextStyle(
-                            color: isMe ? Colors.white : AppColors.textPrimary,
+                            color: isMe ? AppColors.white : AppColors.textPrimary,
                             fontSize: 14.sp,
                             fontWeight: FontWeight.w500,
                             height: 1.4,
@@ -1020,7 +997,7 @@ class _NegotiationRoomPageState extends State<NegotiationRoomPage> {
                         ),
                       if (msg.attachmentUrl != null &&
                           msg.attachmentUrl!.isNotEmpty) ...[
-                        if (msg.content.trim().isNotEmpty) SizedBox(height: 8.h),
+                        if (msg.content.trim().isNotEmpty) SizedBox(height: AppSpacing.sm),
                         _buildMessageAttachment(msg, isMe),
                       ],
                       if (isMe) ...[
@@ -1079,7 +1056,7 @@ class _NegotiationRoomPageState extends State<NegotiationRoomPage> {
 
     if (!isPdf) {
       return ClipRRect(
-        borderRadius: BorderRadius.circular(10.r),
+        borderRadius: BorderRadius.circular(AppRadius.md),
         child: BisaNetworkImage(
           imageUrl: url,
           width: 180.w,
@@ -1089,20 +1066,20 @@ class _NegotiationRoomPageState extends State<NegotiationRoomPage> {
       );
     }
 
-    final linkColor = isMe ? Colors.white : AppColors.primary;
+    final linkColor = isMe ? AppColors.white : AppColors.primary;
     return InkWell(
       onTap: () => _openAttachment(url),
-      borderRadius: BorderRadius.circular(10.r),
+      borderRadius: BorderRadius.circular(AppRadius.md),
       child: Container(
-        padding: EdgeInsets.symmetric(horizontal: 12.w, vertical: 10.h),
+        padding: EdgeInsets.symmetric(horizontal: AppSpacing.md12, vertical: AppSpacing.sm10),
         decoration: BoxDecoration(
           color: isMe
-              ? Colors.white.withValues(alpha: 0.15)
+              ? AppColors.white.withValues(alpha: 0.15)
               : AppColors.primary.withValues(alpha: 0.08),
-          borderRadius: BorderRadius.circular(10.r),
+          borderRadius: BorderRadius.circular(AppRadius.md),
           border: Border.all(
             color: isMe
-                ? Colors.white.withValues(alpha: 0.35)
+                ? AppColors.white.withValues(alpha: 0.35)
                 : AppColors.primary.withValues(alpha: 0.25),
           ),
         ),
@@ -1110,9 +1087,9 @@ class _NegotiationRoomPageState extends State<NegotiationRoomPage> {
           mainAxisSize: MainAxisSize.min,
           children: [
             Icon(Icons.picture_as_pdf, color: linkColor, size: 22.sp),
-            SizedBox(width: 8.w),
+            SizedBox(width: AppSpacing.sm),
             Text(
-              'Buka PDF Tagihan',
+              'negotiation.action_open_invoice_pdf'.tr(),
               style: TextStyle(
                 color: linkColor,
                 fontSize: 12.sp,
@@ -1130,12 +1107,7 @@ class _NegotiationRoomPageState extends State<NegotiationRoomPage> {
     if (uri == null) return;
     if (!await launchUrl(uri, mode: LaunchMode.externalApplication)) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Tidak bisa membuka lampiran'),
-            backgroundColor: AppColors.error,
-          ),
-        );
+        showErrorSnackBar(context, 'negotiation.attachment_open_failed'.tr());
       }
     }
   }
@@ -1172,24 +1144,24 @@ class _NegotiationRoomPageState extends State<NegotiationRoomPage> {
     final orderRoute = NegotiationStatusDisplay.disputeOrderRoute(n);
     return Container(
       width: double.infinity,
-      margin: EdgeInsets.fromLTRB(16.w, 8.h, 16.w, 0),
-      padding: EdgeInsets.symmetric(horizontal: 14.w, vertical: 10.h),
+      margin: EdgeInsets.fromLTRB(AppSpacing.md, AppSpacing.sm, AppSpacing.md, 0),
+      padding: EdgeInsets.symmetric(horizontal: AppSpacing.section, vertical: AppSpacing.sm10),
       decoration: BoxDecoration(
         color: AppColors.warning.withValues(alpha: 0.12),
-        borderRadius: BorderRadius.circular(12.r),
+        borderRadius: BorderRadius.circular(AppRadius.lg),
         border: Border.all(color: AppColors.warning.withValues(alpha: 0.35)),
       ),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Icon(Icons.gavel_outlined, size: 18.sp, color: AppColors.warning),
-          SizedBox(width: 10.w),
+          SizedBox(width: AppSpacing.sm10),
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  'Mediasi sengketa aktif',
+                  'negotiation.dispute_mediation_active'.tr(),
                   style: TextStyle(
                     fontSize: 13.sp,
                     fontWeight: FontWeight.w800,
@@ -1198,7 +1170,7 @@ class _NegotiationRoomPageState extends State<NegotiationRoomPage> {
                 ),
                 SizedBox(height: 4.h),
                 Text(
-                  'Diskusikan masalah di chat ini seperti grup — pembeli, supplier, dan Admin BISA bisa saling balas.',
+                  'negotiation.dispute_mediation_subtitle'.tr(),
                   style: TextStyle(
                     fontSize: 11.sp,
                     color: AppColors.textSecondary,
@@ -1209,16 +1181,16 @@ class _NegotiationRoomPageState extends State<NegotiationRoomPage> {
             ),
           ),
           if (orderRoute != null) ...[
-            SizedBox(width: 8.w),
+            SizedBox(width: AppSpacing.sm),
             TextButton(
               onPressed: () => context.push(orderRoute),
               style: TextButton.styleFrom(
-                padding: EdgeInsets.symmetric(horizontal: 8.w),
+                padding: EdgeInsets.symmetric(horizontal: AppSpacing.sm),
                 minimumSize: Size.zero,
                 tapTargetSize: MaterialTapTargetSize.shrinkWrap,
               ),
               child: Text(
-                'Detail',
+                'detail'.tr(),
                 style: TextStyle(
                   fontSize: 12.sp,
                   fontWeight: FontWeight.w700,
@@ -1241,12 +1213,7 @@ class _NegotiationRoomPageState extends State<NegotiationRoomPage> {
     if (!context.mounted) return;
     await result.fold(
       (failure) async {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(failure.message),
-            backgroundColor: AppColors.error,
-          ),
-        );
+        showFailureSnackBarFromMessage(context, failure.message);
       },
       (order) async {
         await InvoiceExportHelper.sendOrderToChat(context, n.id, order);
@@ -1269,18 +1236,18 @@ class _NegotiationRoomPageState extends State<NegotiationRoomPage> {
     await showModalBottomSheet<void>(
       context: context,
       shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(16.r)),
+        borderRadius: BorderRadius.vertical(top: Radius.circular(AppRadius.xl)),
       ),
       builder: (sheetContext) {
         return SafeArea(
           child: Padding(
-            padding: EdgeInsets.fromLTRB(16.w, 12.h, 16.w, 16.h),
+            padding: EdgeInsets.fromLTRB(AppSpacing.md, AppSpacing.md12, AppSpacing.md, AppSpacing.md),
             child: Column(
               mainAxisSize: MainAxisSize.min,
               children: [
                 ListTile(
                   leading: const Icon(Icons.photo_outlined, color: AppColors.primary),
-                  title: const Text('Kirim Foto'),
+                  title: Text('negotiation.send_photo'.tr()),
                   onTap: () async {
                     Navigator.pop(sheetContext);
                     final picker = ImagePicker();
@@ -1301,7 +1268,7 @@ class _NegotiationRoomPageState extends State<NegotiationRoomPage> {
                 if (canSendInvoicePdf)
                   ListTile(
                     leading: const Icon(Icons.picture_as_pdf, color: AppColors.primary),
-                    title: const Text('Kirim PDF Tagihan'),
+                    title: Text('negotiation.send_invoice_pdf'.tr()),
                     onTap: () async {
                       Navigator.pop(sheetContext);
                       if (_hasIssuedInvoice(n)) {
@@ -1312,12 +1279,7 @@ class _NegotiationRoomPageState extends State<NegotiationRoomPage> {
                         if (!context.mounted) return;
                         await previewResult.fold(
                           (failure) async {
-                            ScaffoldMessenger.of(context).showSnackBar(
-                              SnackBar(
-                                content: Text(failure.message),
-                                backgroundColor: AppColors.error,
-                              ),
-                            );
+                            showFailureSnackBarFromMessage(context, failure.message);
                           },
                           (preview) async {
                             await InvoiceExportHelper.sendPreviewToChat(
@@ -1349,12 +1311,7 @@ class _NegotiationRoomPageState extends State<NegotiationRoomPage> {
     if (!context.mounted) return;
     result.fold(
       (failure) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(failure.message),
-            backgroundColor: AppColors.error,
-          ),
-        );
+        showFailureSnackBarFromMessage(context, failure.message);
       },
       (order) => InvoiceExportHelper.exportOrder(context, order),
     );
@@ -1406,7 +1363,7 @@ class _NegotiationRoomPageState extends State<NegotiationRoomPage> {
 
     return Container(
       width: double.infinity,
-      padding: EdgeInsets.symmetric(vertical: 10.h, horizontal: 16.w),
+      padding: EdgeInsets.symmetric(vertical: AppSpacing.sm10, horizontal: AppSpacing.md),
       color: color.withValues(alpha: 0.08),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -1416,7 +1373,7 @@ class _NegotiationRoomPageState extends State<NegotiationRoomPage> {
             size: 14.sp,
             color: color,
           ),
-          SizedBox(width: 8.w),
+          SizedBox(width: AppSpacing.sm),
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -1464,13 +1421,13 @@ class _NegotiationRoomPageState extends State<NegotiationRoomPage> {
     return SafeArea(
       top: false,
       child: Container(
-      padding: EdgeInsets.fromLTRB(16.w, 12.h, 16.w, 12.h),
+      padding: EdgeInsets.fromLTRB(AppSpacing.md, AppSpacing.md12, AppSpacing.md, AppSpacing.md12),
       decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.vertical(top: Radius.circular(24.r)),
+        color: AppColors.surface,
+        borderRadius: BorderRadius.vertical(top: Radius.circular(AppSpacing.xlPx.r)),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withValues(alpha: 0.05),
+            color: AppColors.black.withValues(alpha: 0.05),
             blurRadius: 20,
             offset: const Offset(0, -5),
           ),
@@ -1486,25 +1443,25 @@ class _NegotiationRoomPageState extends State<NegotiationRoomPage> {
                 children: [
                   Expanded(
                     child: _buildActionButton(
-                      label: 'tolak_1'.tr().tr(),
+                      label: 'tolak'.tr(),
                       icon: Icons.cancel_outlined,
                       color: AppColors.error,
                       onTap: () => _handleSupplierReject(context, n),
                     ),
                   ),
-                  SizedBox(width: 12.w),
+                  SizedBox(width: AppSpacing.md12),
                   Expanded(
                     child: _buildActionButton(
-                      label: 'negoulang'.tr().tr(),
+                      label: 'nego_ulang'.tr(),
                       icon: Icons.refresh_rounded,
                       color: AppColors.primary,
                       onTap: () => _showCounterOfferDialog(context, n),
                     ),
                   ),
-                  SizedBox(width: 12.w),
+                  SizedBox(width: AppSpacing.md12),
                   Expanded(
                     child: _buildActionButton(
-                      label: 'terima_1'.tr().tr(),
+                      label: 'terima'.tr(),
                       icon: Icons.check_circle_outline,
                       color: AppColors.secondary,
                       isFilled: true,
@@ -1515,32 +1472,31 @@ class _NegotiationRoomPageState extends State<NegotiationRoomPage> {
               )
             else ...[
               _buildInvoiceWaitingBanner(
-                title: 'Menunggu Konfirmasi Supplier',
-                subtitle:
-                    'Tawaran Anda sedang ditinjau. Supplier akan merespons segera.',
+                title: 'negotiation.banner_waiting_supplier'.tr(),
+                subtitle: 'negotiation.banner_waiting_review_subtitle'.tr(),
               ),
-              SizedBox(height: 12.h),
+              SizedBox(height: AppSpacing.md12),
               _buildActionButton(
-                label: 'batalkannegosiasi'.tr().tr(),
+                label: 'batalkan_negosiasi'.tr(),
                 icon: Icons.cancel_outlined,
                 color: AppColors.error,
                 isHorizontal: true,
                 onTap: () => _handleBuyerCancel(context, n),
               ),
             ],
-            SizedBox(height: 16.h),
+            SizedBox(height: AppSpacing.md),
           ],
 
           // Supplier: nego ulang setelah tawaran diterima (sebelum tagihan)
           if (!_isInquiryMode(n) && isSupplier && _canRenegotiateAfterAccept(n)) ...[
             _buildActionButton(
-              label: 'negoulang'.tr().tr(),
+              label: 'nego_ulang'.tr(),
               icon: Icons.refresh_rounded,
               color: AppColors.primary,
               isHorizontal: true,
               onTap: () => _showCounterOfferDialog(context, n),
             ),
-            SizedBox(height: 16.h),
+            SizedBox(height: AppSpacing.md),
           ],
 
           // Supplier: terbitkan tagihan setelah tawaran diterima
@@ -1549,20 +1505,20 @@ class _NegotiationRoomPageState extends State<NegotiationRoomPage> {
               n.status == 'OFFER_ACCEPTED' &&
               !n.isLocked) ...[
             _buildActionButton(
-              label: 'Terbitkan Tagihan',
+              label: 'invoice.issue_button'.tr(),
               icon: Icons.receipt_long_outlined,
               color: AppColors.primary,
               isFilled: true,
               isHorizontal: true,
               onTap: () => _openCreateInvoicePage(context, n),
             ),
-            SizedBox(height: 16.h),
+            SizedBox(height: AppSpacing.md),
           ],
 
           // Supplier: tagihan sudah diterbitkan
           if (!_isInquiryMode(n) && isSupplier && _hasIssuedInvoice(n)) ...[
             _buildIssuedInvoiceActions(context, n),
-            SizedBox(height: 16.h),
+            SizedBox(height: AppSpacing.md),
           ],
 
           // Buyer: review tagihan dari supplier
@@ -1572,12 +1528,12 @@ class _NegotiationRoomPageState extends State<NegotiationRoomPage> {
               showPaymentPrompt: _orderNeedsPayment(n),
             ),
             if (_orderNeedsPayment(n)) ...[
-              SizedBox(height: 12.h),
+              SizedBox(height: AppSpacing.md12),
               Row(
                 children: [
                   Expanded(
                     child: CustomButton(
-                      text: 'Review & Bayar',
+                      text: 'negotiation.action_review_pay'.tr(),
                       useGradient: true,
                       height: 48.h,
                       onPressed: () => _navigateToReviewInvoice(context, n),
@@ -1585,37 +1541,38 @@ class _NegotiationRoomPageState extends State<NegotiationRoomPage> {
                   ),
                 ],
               ),
-              SizedBox(height: 8.h),
+              SizedBox(height: AppSpacing.sm),
             ] else ...[
-              SizedBox(height: 12.h),
+              SizedBox(height: AppSpacing.md12),
               _buildInvoiceWaitingBanner(
-                title: 'Pembayaran Diterima',
-                subtitle:
-                    'Pesanan ${n.order?.orderNumber ?? ''} sedang diproses. Pantau progres di detail pesanan.',
+                title: 'negotiation.banner_payment_received'.tr(),
+                subtitle: 'negotiation.banner_order_processing'.tr(namedArgs: {
+                  'orderNumber': n.order?.orderNumber ?? '',
+                }),
               ),
-              SizedBox(height: 10.h),
+              SizedBox(height: AppSpacing.sm10),
               CustomButton(
-                text: 'Lihat Pesanan',
+                text: 'negotiation.action_view_order'.tr(),
                 useGradient: true,
                 height: 48.h,
                 onPressed: () => context.push(_orderDetailRoute(n)),
               ),
-              SizedBox(height: 8.h),
+              SizedBox(height: AppSpacing.sm),
             ],
             Row(
               children: [
                 Expanded(
                   child: CustomButton(
-                    text: 'Lihat Tagihan',
+                    text: 'negotiation.action_view_invoice'.tr(),
                     height: 44.h,
                     isOutlined: true,
                     onPressed: () => _navigateToReviewInvoice(context, n),
                   ),
                 ),
-                SizedBox(width: 10.w),
+                SizedBox(width: AppSpacing.sm10),
                 Expanded(
                   child: CustomButton(
-                    text: 'Download PDF',
+                    text: 'invoice.action_download_pdf'.tr(),
                     height: 44.h,
                     isOutlined: true,
                     onPressed: () => _downloadInvoice(context, n.orderId!),
@@ -1623,7 +1580,7 @@ class _NegotiationRoomPageState extends State<NegotiationRoomPage> {
                 ),
               ],
             ),
-            SizedBox(height: 12.h),
+            SizedBox(height: AppSpacing.md12),
           ],
 
           // Input Field — chat tetap aktif setelah tagihan diterbitkan
@@ -1631,19 +1588,19 @@ class _NegotiationRoomPageState extends State<NegotiationRoomPage> {
             if (_editingMessageId != null) ...[
               Container(
                 width: double.infinity,
-                margin: EdgeInsets.only(bottom: 8.h),
-                padding: EdgeInsets.symmetric(horizontal: 12.w, vertical: 8.h),
+                margin: EdgeInsets.only(bottom: AppSpacing.sm),
+                padding: EdgeInsets.symmetric(horizontal: AppSpacing.md12, vertical: AppSpacing.sm),
                 decoration: BoxDecoration(
                   color: AppColors.warning.withValues(alpha: 0.1),
-                  borderRadius: BorderRadius.circular(12.r),
+                  borderRadius: BorderRadius.circular(AppRadius.lg),
                 ),
                 child: Row(
                   children: [
                     Icon(Icons.edit_outlined, size: 16.sp, color: AppColors.warning),
-                    SizedBox(width: 8.w),
+                    SizedBox(width: AppSpacing.sm),
                     Expanded(
                       child: Text(
-                        'Mengedit pesan',
+                        'negotiation.editing_message'.tr(),
                         style: TextStyle(
                           fontSize: 12.sp,
                           fontWeight: FontWeight.w700,
@@ -1654,7 +1611,7 @@ class _NegotiationRoomPageState extends State<NegotiationRoomPage> {
                     GestureDetector(
                       onTap: _cancelEditMessage,
                       child: Text(
-                        'Batal',
+                        'batal'.tr(),
                         style: TextStyle(
                           fontSize: 12.sp,
                           fontWeight: FontWeight.w700,
@@ -1672,11 +1629,11 @@ class _NegotiationRoomPageState extends State<NegotiationRoomPage> {
                   child: Container(
                     decoration: BoxDecoration(
                       color: AppColors.grey100,
-                      borderRadius: BorderRadius.circular(16.r),
+                      borderRadius: BorderRadius.circular(AppRadius.xl),
                     ),
                     child: Row(
                       children: [
-                        SizedBox(width: 12.w),
+                        SizedBox(width: AppSpacing.md12),
                         Icon(
                           Icons.emoji_emotions_outlined,
                           size: 20.sp,
@@ -1715,13 +1672,13 @@ class _NegotiationRoomPageState extends State<NegotiationRoomPage> {
                             },
                             decoration: InputDecoration(
                               hintText: _editingMessageId != null
-                                  ? 'Ubah pesan...'
-                                  : 'Tulis pesan... (/bantuan)',
+                                  ? 'negotiation.hint_edit_message'.tr()
+                                  : 'negotiation.hint_write_message'.tr(),
                               hintStyle: TextStyle(color: AppColors.textHint),
                               border: InputBorder.none,
                               contentPadding: EdgeInsets.symmetric(
-                                horizontal: 12.w,
-                                vertical: 12.h,
+                                horizontal: AppSpacing.md12,
+                                vertical: AppSpacing.md12,
                               ),
                             ),
                           ),
@@ -1739,7 +1696,7 @@ class _NegotiationRoomPageState extends State<NegotiationRoomPage> {
                     ),
                   ),
                 ),
-                SizedBox(width: 12.w),
+                SizedBox(width: AppSpacing.md12),
                 GestureDetector(
                   onTap: () => _handleSendMessage(context, n, currentUser?.id),
                   child: Container(
@@ -1754,7 +1711,7 @@ class _NegotiationRoomPageState extends State<NegotiationRoomPage> {
                         _editingMessageId != null
                             ? Icons.check_rounded
                             : Icons.send_rounded,
-                        color: Colors.white,
+                        color: AppColors.surface,
                         size: 20.sp,
                       ),
                     ),
@@ -1782,12 +1739,12 @@ class _NegotiationRoomPageState extends State<NegotiationRoomPage> {
       child: Container(
         width: isHorizontal ? double.infinity : null,
         padding: EdgeInsets.symmetric(
-          vertical: isHorizontal ? 14.h : 10.h,
-          horizontal: 8.w,
+          vertical: isHorizontal ? AppSpacing.section : AppSpacing.sm10,
+          horizontal: AppSpacing.sm,
         ),
         decoration: BoxDecoration(
-          color: isFilled ? color : Colors.transparent,
-          borderRadius: BorderRadius.circular(12.r),
+          color: isFilled ? color : AppColors.transparent,
+          borderRadius: BorderRadius.circular(AppRadius.lg),
           border: Border.all(color: color, width: 1.5),
         ),
         child: isHorizontal
@@ -1797,15 +1754,15 @@ class _NegotiationRoomPageState extends State<NegotiationRoomPage> {
                   Icon(
                     icon,
                     size: 20.sp,
-                    color: isFilled ? Colors.white : color,
+                    color: isFilled ? AppColors.white : color,
                   ),
-                  SizedBox(width: 8.w),
+                  SizedBox(width: AppSpacing.sm),
                   Text(
                     label,
                     style: TextStyle(
                       fontSize: 14.sp,
                       fontWeight: FontWeight.w800,
-                      color: isFilled ? Colors.white : color,
+                      color: isFilled ? AppColors.white : color,
                     ),
                   ),
                 ],
@@ -1815,7 +1772,7 @@ class _NegotiationRoomPageState extends State<NegotiationRoomPage> {
                   Icon(
                     icon,
                     size: 18.sp,
-                    color: isFilled ? Colors.white : color,
+                    color: isFilled ? AppColors.white : color,
                   ),
                   SizedBox(height: 4.h),
                   Text(
@@ -1823,7 +1780,7 @@ class _NegotiationRoomPageState extends State<NegotiationRoomPage> {
                     style: TextStyle(
                       fontSize: 10.sp,
                       fontWeight: FontWeight.w800,
-                      color: isFilled ? Colors.white : color,
+                      color: isFilled ? AppColors.white : color,
                     ),
                     textAlign: TextAlign.center,
                     maxLines: 1,
@@ -1843,19 +1800,19 @@ class _NegotiationRoomPageState extends State<NegotiationRoomPage> {
 
     showBisaFormDialog(
       context,
-      title: 'Terima Tawaran',
+      title: 'negotiation.action_accept_offer'.tr(),
       submitText: 'terima_1'.tr(),
       fields: [
         CustomTextField(
-          label: 'Jumlah (${n.product.unit})',
-          hint: 'Sesuaikan jumlah jika perlu',
+          label: 'negotiation.qty_label_unit'.tr(namedArgs: {'unit': n.product.unit}),
+          hint: 'negotiation.adjust_qty_hint'.tr(),
           controller: qtyController,
           keyboardType: TextInputType.number,
         ),
-        SizedBox(height: 16.h),
+        SizedBox(height: AppSpacing.md),
         CustomTextField(
-          label: 'Harga per Unit',
-          hint: 'Sesuaikan harga jika perlu',
+          label: 'harga_per_unit'.tr(),
+          hint: 'negotiation.adjust_price_hint'.tr(),
           controller: priceController,
           keyboardType: TextInputType.number,
         ),
@@ -1865,13 +1822,12 @@ class _NegotiationRoomPageState extends State<NegotiationRoomPage> {
         final newPrice = double.tryParse(priceController.text);
         if (newQty == null || newPrice == null) return false;
         if (newQty < n.product.minOrder) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: Text(
-                'Min. order ${ProductPricingInfo.formatQty(n.product.minOrder)} ${n.product.unit}',
-              ),
-              backgroundColor: AppColors.error,
-            ),
+          showErrorSnackBar(
+            context,
+            'negotiation.min_order_hint'.tr(namedArgs: {
+              'qty': ProductPricingInfo.formatQty(n.product.minOrder),
+              'unit': n.product.unit,
+            }),
           );
           return false;
         }
@@ -1893,19 +1849,19 @@ class _NegotiationRoomPageState extends State<NegotiationRoomPage> {
 
     showBisaFormDialog(
       context,
-      title: 'Nego Ulang',
+      title: 'nego_ulang'.tr(),
       submitText: 'kirim_tawaran'.tr(),
       fields: [
         CustomTextField(
-          label: 'Jumlah (${n.product.unit})',
-          hint: 'Masukkan jumlah',
+          label: 'negotiation.qty_label_unit'.tr(namedArgs: {'unit': n.product.unit}),
+          hint: 'masukkan_jumlah'.tr(),
           controller: qtyController,
           keyboardType: TextInputType.number,
         ),
-        SizedBox(height: 16.h),
+        SizedBox(height: AppSpacing.md),
         CustomTextField(
-          label: 'Harga per Unit',
-          hint: 'Masukkan harga',
+          label: 'harga_per_unit'.tr(),
+          hint: 'masukkan_harga'.tr(),
           controller: priceController,
           keyboardType: TextInputType.number,
         ),
@@ -1915,13 +1871,12 @@ class _NegotiationRoomPageState extends State<NegotiationRoomPage> {
         final newPrice = double.tryParse(priceController.text);
         if (newQty == null || newPrice == null) return false;
         if (newQty < n.product.minOrder) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: Text(
-                'Min. order ${ProductPricingInfo.formatQty(n.product.minOrder)} ${n.product.unit}',
-              ),
-              backgroundColor: AppColors.error,
-            ),
+          showErrorSnackBar(
+            context,
+            'negotiation.min_order_hint'.tr(namedArgs: {
+              'qty': ProductPricingInfo.formatQty(n.product.minOrder),
+              'unit': n.product.unit,
+            }),
           );
           return false;
         }
@@ -1983,35 +1938,37 @@ class _NegotiationRoomPageState extends State<NegotiationRoomPage> {
     return Column(
       children: [
         _buildInvoiceWaitingBanner(
-          title: waitingPayment ? 'Tagihan Terkirim' : 'Pembayaran Diterima',
+          title: waitingPayment
+              ? 'negotiation.invoice_sent_title'.tr()
+              : 'negotiation.invoice_paid_title'.tr(),
           subtitle: waitingPayment
-              ? 'Pembeli sedang meninjau tagihan. Anda masih bisa chat untuk koordinasi.'
-              : 'Pembeli sudah membayar. Koordinasi pengiriman tetap bisa via chat.',
+              ? 'negotiation.invoice_sent_subtitle'.tr()
+              : 'negotiation.invoice_paid_subtitle'.tr(),
         ),
         if (!waitingPayment) ...[
-          SizedBox(height: 10.h),
+          SizedBox(height: AppSpacing.sm10),
           CustomButton(
-            text: 'Lihat Pesanan',
+            text: 'negotiation.action_view_order'.tr(),
             height: 44.h,
             isOutlined: true,
             onPressed: () => context.push(_orderDetailRoute(n)),
           ),
         ],
-        SizedBox(height: 10.h),
+        SizedBox(height: AppSpacing.sm10),
         Row(
           children: [
             Expanded(
               child: CustomButton(
-                text: 'Lihat Tagihan',
+                text: 'negotiation.action_view_invoice'.tr(),
                 height: 44.h,
                 isOutlined: true,
                 onPressed: () => _navigateToReviewInvoice(context, n),
               ),
             ),
-            SizedBox(width: 10.w),
+            SizedBox(width: AppSpacing.sm10),
             Expanded(
               child: CustomButton(
-                text: 'Edit Tagihan',
+                text: 'invoice.action_edit'.tr(),
                 height: 44.h,
                 isOutlined: true,
                 onPressed: () => _openEditInvoicePage(context, n),
@@ -2019,16 +1976,16 @@ class _NegotiationRoomPageState extends State<NegotiationRoomPage> {
             ),
           ],
         ),
-        SizedBox(height: 8.h),
+        SizedBox(height: AppSpacing.sm),
         CustomButton(
-          text: 'Download PDF',
+          text: 'invoice.action_download_pdf'.tr(),
           height: 44.h,
           isOutlined: true,
           onPressed: () => _downloadInvoice(context, n.orderId!),
         ),
-        SizedBox(height: 8.h),
+        SizedBox(height: AppSpacing.sm),
         CustomButton(
-          text: 'Kirim PDF ke Chat',
+          text: 'negotiation.send_pdf_to_chat'.tr(),
           height: 44.h,
           isOutlined: true,
           onPressed: () => _sendInvoicePdfToChat(context, n),
@@ -2043,17 +2000,17 @@ class _NegotiationRoomPageState extends State<NegotiationRoomPage> {
   }) {
     return Container(
       width: double.infinity,
-      padding: EdgeInsets.all(14.w),
+      padding: EdgeInsets.all(AppSpacing.section),
       decoration: BoxDecoration(
         color: AppColors.primary.withValues(alpha: 0.08),
-        borderRadius: BorderRadius.circular(12.r),
+        borderRadius: BorderRadius.circular(AppRadius.lg),
         border: Border.all(color: AppColors.primary.withValues(alpha: 0.2)),
       ),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Icon(Icons.hourglass_top_rounded, color: AppColors.primary, size: 22.sp),
-          SizedBox(width: 10.w),
+          SizedBox(width: AppSpacing.sm10),
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -2089,10 +2046,10 @@ class _NegotiationRoomPageState extends State<NegotiationRoomPage> {
   }) {
     return Container(
       width: double.infinity,
-      padding: EdgeInsets.all(14.w),
+      padding: EdgeInsets.all(AppSpacing.section),
       decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(12.r),
+        color: AppColors.surface,
+        borderRadius: BorderRadius.circular(AppRadius.lg),
         border: Border.all(color: AppColors.grey200),
       ),
       child: Column(
@@ -2101,9 +2058,9 @@ class _NegotiationRoomPageState extends State<NegotiationRoomPage> {
           Row(
             children: [
               Icon(Icons.receipt_long_outlined, color: AppColors.primary, size: 20.sp),
-              SizedBox(width: 8.w),
+              SizedBox(width: AppSpacing.sm),
               Text(
-                'Tagihan dari Supplier',
+                'negotiation.invoice_from_supplier'.tr(),
                 style: TextStyle(
                   fontWeight: FontWeight.w800,
                   fontSize: 14.sp,
@@ -2112,20 +2069,24 @@ class _NegotiationRoomPageState extends State<NegotiationRoomPage> {
               ),
             ],
           ),
-          SizedBox(height: 12.h),
-          _invoiceRow('Produk', n.product.name),
+          SizedBox(height: AppSpacing.md12),
+          _invoiceRow('invoice.label_product'.tr(), n.product.name),
           _invoiceRow(
-            'Jumlah',
+            'invoice.label_qty'.tr(),
             '${n.quantity.toStringAsFixed(0)} ${n.product.unit}',
           ),
-          _invoiceRow('Harga/Unit', n.pricePerUnit.toRupiah),
-          Divider(height: 20.h, color: AppColors.grey200),
-          _invoiceRow('Total Tagihan', n.totalEstimate.toRupiah, isBold: true),
-          SizedBox(height: 8.h),
+          _invoiceRow('invoice.label_price_unit'.tr(), formatMoneyIdr(n.pricePerUnit)),
+          Divider(height: AppSpacing.lg, color: AppColors.grey200),
+          _invoiceRow(
+            'invoice.breakdown_total'.tr(),
+            formatMoneyIdr(n.totalEstimate),
+            isBold: true,
+          ),
+          SizedBox(height: AppSpacing.sm),
           Text(
             showPaymentPrompt
-                ? 'Periksa detail tagihan. Jika sesuai, lanjutkan ke pembayaran.'
-                : 'Tagihan sudah dibayar. Anda bisa melihat detail pesanan atau unduh PDF tagihan.',
+                ? 'negotiation.invoice_review_buyer'.tr()
+                : 'negotiation.invoice_paid_buyer'.tr(),
             style: TextStyle(
               fontSize: 11.sp,
               color: AppColors.textSecondary,
@@ -2145,10 +2106,7 @@ class _NegotiationRoomPageState extends State<NegotiationRoomPage> {
         children: [
           Text(
             label,
-            style: TextStyle(
-              fontSize: 12.sp,
-              color: AppColors.textSecondary,
-            ),
+            style: AppTextStyles.bodySecondary(color: AppColors.textSecondary),
           ),
           Flexible(
             child: Text(
@@ -2177,7 +2135,7 @@ class _NegotiationRoomPageState extends State<NegotiationRoomPage> {
       return Icon(
         Icons.done_rounded,
         size: 14.sp,
-        color: Colors.white.withValues(alpha: 0.5),
+        color: AppColors.white.withValues(alpha: 0.5),
       );
     }
   }
@@ -2244,50 +2202,59 @@ class _NegotiationRoomPageState extends State<NegotiationRoomPage> {
       isSupplier: false,
       orderStatus: n.order?.status,
     ).label;
-    return '📋 Ringkasan Negosiasi\n'
-        'Produk: ${n.product.name}\n'
-        'Jumlah: ${n.quantity.toStringAsFixed(0)} ${n.product.unit}\n'
-        'Harga/Unit: ${n.pricePerUnit.toRupiah}\n'
-        'Total Estimasi: ${n.totalEstimate.toRupiah}\n'
-        'Status: $statusLabel';
+    return '📋 ${'negotiation.summary_title'.tr()}\n'
+        '${'negotiation.summary_product'.tr()}: ${n.product.name}\n'
+        '${'negotiation.summary_qty'.tr()}: ${n.quantity.toStringAsFixed(0)} ${n.product.unit}\n'
+        '${'negotiation.summary_price_unit'.tr()}: ${formatMoneyIdr(n.pricePerUnit)}\n'
+        '${'negotiation.summary_total'.tr()}: ${formatMoneyIdr(n.totalEstimate)}\n'
+        '${'negotiation.summary_status'.tr()}: $statusLabel';
   }
 
   void _showChatCommandsHelp(BuildContext context) {
     showDialog(
       context: context,
       builder: (ctx) => Dialog(
-        insetPadding: EdgeInsets.symmetric(horizontal: 24.w),
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16.r)),
+        insetPadding: EdgeInsets.symmetric(horizontal: AppSpacing.xl),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(AppRadius.xl)),
         child: Padding(
-          padding: EdgeInsets.all(20.w),
+          padding: EdgeInsets.all(AppSpacing.lg),
           child: Column(
             mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Text(
-                'Perintah Chat',
+                'negotiation.chat_commands_title'.tr(),
                 style: TextStyle(
                   fontSize: 16.sp,
                   fontWeight: FontWeight.w800,
                   color: AppColors.textPrimary,
                 ),
               ),
-              SizedBox(height: 12.h),
-              _commandHelpRow('/negosiasi', 'Kirim ringkasan negosiasi'),
-              _commandHelpRow('/bersihkan', 'Hapus semua pesan chat (sistem tetap)'),
-              _commandHelpRow('/bantuan', 'Tampilkan daftar perintah'),
-              SizedBox(height: 8.h),
+              SizedBox(height: AppSpacing.md12),
+              _commandHelpRow(
+                '/negosiasi',
+                'negotiation.command_help_negosiasi'.tr(),
+              ),
+              _commandHelpRow(
+                '/bersihkan',
+                'negotiation.command_help_bersihkan'.tr(),
+              ),
+              _commandHelpRow(
+                '/bantuan',
+                'negotiation.command_help_bantuan'.tr(),
+              ),
+              SizedBox(height: AppSpacing.sm),
               Text(
-                'Tekan lama pesan Anda untuk edit atau hapus (maks 24 jam).',
+                'negotiation.command_long_press_hint'.tr(),
                 style: TextStyle(
                   fontSize: 12.sp,
                   color: AppColors.textSecondary,
                   height: 1.45,
                 ),
               ),
-              SizedBox(height: 16.h),
+              SizedBox(height: AppSpacing.md),
               CustomButton(
-                text: 'Mengerti',
+                text: 'negotiation.understood'.tr(),
                 height: 44.h,
                 onPressed: () => Navigator.pop(ctx),
               ),
@@ -2300,7 +2267,7 @@ class _NegotiationRoomPageState extends State<NegotiationRoomPage> {
 
   Widget _commandHelpRow(String command, String description) {
     return Padding(
-      padding: EdgeInsets.only(bottom: 8.h),
+      padding: EdgeInsets.only(bottom: AppSpacing.sm),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -2312,7 +2279,7 @@ class _NegotiationRoomPageState extends State<NegotiationRoomPage> {
               color: AppColors.primary,
             ),
           ),
-          SizedBox(width: 8.w),
+          SizedBox(width: AppSpacing.sm),
           Expanded(
             child: Text(
               description,
@@ -2329,28 +2296,59 @@ class _NegotiationRoomPageState extends State<NegotiationRoomPage> {
   }
 
   void _showRoomMenu(BuildContext context) {
+    final n = _cachedNegotiation;
+    final canClear =
+        n != null && NegotiationStatusDisplay.canClearChat(n);
+    final blockedReason = n != null
+        ? NegotiationStatusDisplay.clearChatBlockedReason(n)
+        : '';
+
     showModalBottomSheet<void>(
       context: context,
       shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(16.r)),
+        borderRadius: BorderRadius.vertical(top: Radius.circular(AppRadius.xl)),
       ),
       builder: (ctx) => SafeArea(
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
             ListTile(
-              leading: const Icon(Icons.cleaning_services_outlined),
-              title: const Text('Bersihkan Chat'),
-              subtitle: const Text('Hapus pesan user, simpan pesan sistem'),
-              onTap: () {
-                Navigator.pop(ctx);
-                _confirmClearChat(context);
-              },
+              enabled: canClear,
+              leading: Icon(
+                Icons.cleaning_services_outlined,
+                color: canClear ? null : AppColors.textHint,
+              ),
+              title: Text(
+                'negotiation.clear_chat_title'.tr(),
+                style: TextStyle(
+                  color: canClear ? null : AppColors.textHint,
+                ),
+              ),
+              subtitle: Text(
+                canClear
+                    ? 'negotiation.clear_chat_subtitle'.tr()
+                    : blockedReason,
+                style: TextStyle(
+                  color: canClear
+                      ? AppColors.textSecondary
+                      : AppColors.warning,
+                  fontSize: 11.sp,
+                ),
+              ),
+              onTap: canClear
+                  ? () {
+                      Navigator.pop(ctx);
+                      _confirmClearChat(context);
+                    }
+                  : () {
+                      Navigator.pop(ctx);
+                      showWarningSnackBar(context, blockedReason);
+                    },
             ),
             ListTile(
               leading: const Icon(Icons.terminal_outlined),
-              title: const Text('Perintah Chat'),
-              subtitle: const Text('/negosiasi · /bersihkan · /bantuan'),
+              title: Text('negotiation.chat_commands_title'.tr()),
+              subtitle: Text('negotiation.chat_commands_subtitle'.tr()),
               onTap: () {
                 Navigator.pop(ctx);
                 _showChatCommandsHelp(context);
@@ -2365,10 +2363,9 @@ class _NegotiationRoomPageState extends State<NegotiationRoomPage> {
   Future<void> _confirmClearChat(BuildContext context) async {
     final confirmed = await showBisaConfirmDialog(
       context,
-      title: 'Bersihkan Chat?',
-      message:
-          'Semua pesan chat akan dihapus. Pesan sistem (tagihan, sengketa, dll) tetap disimpan.',
-      confirmText: 'Bersihkan',
+      title: 'negotiation.clear_chat_confirm_title'.tr(),
+      message: 'negotiation.clear_chat_confirm_body'.tr(),
+      confirmText: 'negotiation.confirm_clear'.tr(),
       destructive: true,
     );
     if (confirmed == true && context.mounted) {
@@ -2387,7 +2384,7 @@ class _NegotiationRoomPageState extends State<NegotiationRoomPage> {
     showModalBottomSheet<void>(
       context: context,
       shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(16.r)),
+        borderRadius: BorderRadius.vertical(top: Radius.circular(AppRadius.xl)),
       ),
       builder: (ctx) => SafeArea(
         child: Column(
@@ -2396,7 +2393,7 @@ class _NegotiationRoomPageState extends State<NegotiationRoomPage> {
             if (canEdit)
               ListTile(
                 leading: const Icon(Icons.edit_outlined),
-                title: const Text('Edit Pesan'),
+                title: Text('negotiation.edit_message'.tr()),
                 onTap: () {
                   Navigator.pop(ctx);
                   setState(() {
@@ -2411,16 +2408,16 @@ class _NegotiationRoomPageState extends State<NegotiationRoomPage> {
             ListTile(
               leading: Icon(Icons.delete_outline, color: AppColors.error),
               title: Text(
-                'Hapus Pesan',
+                'negotiation.delete_message_title'.tr(),
                 style: TextStyle(color: AppColors.error),
               ),
               onTap: () async {
                 Navigator.pop(ctx);
                 final confirmed = await showBisaConfirmDialog(
                   context,
-                  title: 'Hapus Pesan?',
-                  message: 'Pesan ini akan ditandai sebagai dihapus.',
-                  confirmText: 'Hapus',
+                  title: 'negotiation.delete_message_confirm_title'.tr(),
+                  message: 'negotiation.delete_message_confirm_body'.tr(),
+                  confirmText: 'hapus'.tr(),
                   destructive: true,
                 );
                 if (confirmed == true && context.mounted) {

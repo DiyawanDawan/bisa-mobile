@@ -7,11 +7,13 @@ import 'package:image_picker/image_picker.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
 import 'package:mobile_bisa/features/auth/domain/entities/user_entity.dart';
 import '../../../../core/constants/app_colors.dart';
+import '../../../../core/utils/app_feedback.dart';
 import '../../../../core/utils/media_url_utils.dart';
 import '../../../../shared/widgets/custom_button.dart';
 import '../../../../shared/widgets/custom_text_field.dart';
 import '../../../../shared/widgets/bisa_app_bar.dart';
 import '../bloc/profile_cubit.dart';
+import '../../../auth/presentation/bloc/auth_cubit.dart';
 import '../../../../injection_container.dart';
 
 class EditProfilePage extends StatefulWidget {
@@ -29,15 +31,17 @@ class _EditProfilePageState extends State<EditProfilePage> {
   late TextEditingController _phoneController;
   File? _imageFile;
   final _formKey = GlobalKey<FormState>();
+  bool _awaitingSaveResult = false;
 
   bool get _isSupplier => widget.user.role == 'SUPPLIER';
 
-  String get _companyLabel =>
-      _isSupplier ? 'Nama Toko' : 'Nama Perusahaan';
+  String get _companyLabel => _isSupplier
+      ? 'profile.edit_store_name_label'.tr()
+      : 'profile.edit_company_name_label'.tr();
 
   String get _companyHint => _isSupplier
-      ? 'Masukkan nama toko Anda'
-      : 'Masukkan nama perusahaan Anda';
+      ? 'profile.edit_store_name_hint'.tr()
+      : 'profile.edit_company_name_hint'.tr();
 
   @override
   void initState() {
@@ -73,26 +77,23 @@ class _EditProfilePageState extends State<EditProfilePage> {
       create: (context) => sl<ProfileCubit>(),
       child: Scaffold(
         backgroundColor: AppColors.background,
-        appBar: const BisaAppBar(
-          backgroundColor: Colors.white,
-          title: 'Ubah Profil',
+        appBar: BisaAppBar(
+          backgroundColor: AppColors.surface,
+          title: 'profile.menu_edit_profile'.tr(),
         ),
         body: BlocListener<ProfileCubit, ProfileState>(
           listener: (context, state) {
             state.maybeWhen(
-              success: (_) {
-                ScaffoldMessenger.of(context).showSnackBar(
-                  SnackBar(content: Text('profil_berhasil_diperbarui'.tr())),
-                );
+              loaded: (user) {
+                if (!_awaitingSaveResult) return;
+                _awaitingSaveResult = false;
+                context.read<AuthCubit>().applyUser(user);
+                showSuccessSnackBar(context, 'profile.edit_success');
                 Navigator.pop(context);
               },
               error: (message) {
-                ScaffoldMessenger.of(context).showSnackBar(
-                  SnackBar(
-                    content: Text(message),
-                    backgroundColor: AppColors.error,
-                  ),
-                );
+                if (_awaitingSaveResult) _awaitingSaveResult = false;
+                showErrorSnackBar(context, message);
               },
               orElse: () {},
             );
@@ -116,7 +117,7 @@ class _EditProfilePageState extends State<EditProfilePage> {
                               ? Icon(
                                   LucideIcons.user,
                                   size: 60.sp,
-                                  color: Colors.white,
+                                  color: AppColors.surface,
                                 )
                               : null,
                         ),
@@ -131,14 +132,14 @@ class _EditProfilePageState extends State<EditProfilePage> {
                                 color: AppColors.primary,
                                 shape: BoxShape.circle,
                                 border: Border.all(
-                                  color: Colors.white,
+                                  color: AppColors.surface,
                                   width: 2,
                                 ),
                               ),
                               child: Icon(
                                 LucideIcons.camera,
                                 size: 20.sp,
-                                color: Colors.white,
+                                color: AppColors.surface,
                               ),
                             ),
                           ),
@@ -148,13 +149,13 @@ class _EditProfilePageState extends State<EditProfilePage> {
                   ),
                   SizedBox(height: 32.h),
                   CustomTextField(
-                    label: 'namalengkap_1'.tr(),
-                    hint: 'masukkannamalengkapanda_1'.tr(),
+                    label: 'profile.edit_full_name_label'.tr(),
+                    hint: 'profile.edit_full_name_hint'.tr(),
                     controller: _nameController,
                     prefixIcon: LucideIcons.user,
                     validator: (value) {
                       if (value == null || value.isEmpty) {
-                        return 'Nama tidak boleh kosong';
+                        return 'profile.edit_name_required'.tr();
                       }
                       return null;
                     },
@@ -168,15 +169,17 @@ class _EditProfilePageState extends State<EditProfilePage> {
                         _isSupplier ? LucideIcons.store : LucideIcons.building2,
                     validator: (value) {
                       if (value == null || value.trim().isEmpty) {
-                        return '$_companyLabel tidak boleh kosong';
+                        return 'profile.edit_field_required'.tr(
+                          namedArgs: {'label': _companyLabel},
+                        );
                       }
                       return null;
                     },
                   ),
                   SizedBox(height: 20.h),
                   CustomTextField(
-                    label: 'nomortelepon_1'.tr(),
-                    hint: 'contoh081234567890_1'.tr(),
+                    label: 'profile.edit_phone_label'.tr(),
+                    hint: 'profile.edit_phone_hint'.tr(),
                     controller: _phoneController,
                     prefixIcon: LucideIcons.phone,
                     keyboardType: TextInputType.phone,
@@ -185,13 +188,14 @@ class _EditProfilePageState extends State<EditProfilePage> {
                   BlocBuilder<ProfileCubit, ProfileState>(
                     builder: (context, state) {
                       return CustomButton(
-                        text: 'simpanperubahan_1'.tr(),
+                        text: 'profile.edit_save_button'.tr(),
                         isLoading: state.maybeWhen(
                           loading: () => true,
                           orElse: () => false,
                         ),
                         onPressed: () {
                           if (_formKey.currentState!.validate()) {
+                            _awaitingSaveResult = true;
                             context.read<ProfileCubit>().updateProfile(
                                   fullName: _nameController.text.trim(),
                                   companyName: _companyController.text.trim(),

@@ -1,4 +1,6 @@
+import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/widgets.dart';
+import '../constants/app_colors.dart';
 import 'package:go_router/go_router.dart';
 import '../../features/auth/presentation/pages/login_page.dart';
 import '../../features/auth/presentation/pages/register_page.dart';
@@ -8,6 +10,12 @@ import '../../features/auth/presentation/pages/reset_password_page.dart';
 import '../../features/home/presentation/pages/main_screen.dart';
 import '../../features/marketplace/presentation/pages/product_detail_page.dart';
 import '../../features/marketplace/presentation/pages/supplier_profile_page.dart';
+import '../../features/marketplace/presentation/pages/supplier_directory_page.dart';
+import '../../features/marketplace/presentation/pages/compare_products_page.dart';
+import '../../features/marketplace/presentation/pages/bulk_product_upload_page.dart';
+import '../../features/rfq/presentation/pages/rfq_create_page.dart';
+import '../../features/rfq/presentation/pages/rfq_inbox_page.dart';
+import '../../features/rfq/presentation/pages/rfq_list_page.dart';
 import '../../features/negotiation/presentation/pages/negotiation_room_page.dart';
 import '../../features/negotiation/presentation/pages/negotiation_product_page.dart';
 import '../../features/negotiation/presentation/pages/negotiation_offer_preview_page.dart';
@@ -19,6 +27,9 @@ import '../../features/forum/presentation/pages/forum_detail_page.dart';
 import '../../features/forum/presentation/pages/my_forum_posts_page.dart';
 import '../../features/forum/presentation/pages/forum_page.dart';
 import '../../features/forum/presentation/pages/add_post_page.dart';
+import '../../features/forum/presentation/pages/forum_groups_page.dart';
+import '../../features/forum/presentation/pages/create_forum_group_page.dart';
+import '../../features/forum/presentation/pages/forum_group_detail_page.dart';
 import '../../features/orders/presentation/pages/direct_checkout_result_page.dart';
 import '../../features/orders/presentation/pages/order_detail_page.dart';
 import '../../features/orders/presentation/pages/order_batch_detail_page.dart';
@@ -33,6 +44,7 @@ import '../../features/marketplace/presentation/pages/collection_products_page.d
 import '../../features/marketplace/presentation/pages/marketplace_page.dart';
 import '../../features/marketplace/presentation/pages/product_management_detail_page.dart';
 import '../../features/marketplace/presentation/pages/add_edit_product_page.dart';
+import '../../features/marketplace/presentation/widgets/iot_prediction_import_sheet.dart';
 import '../../features/marketplace/presentation/pages/buyer_products_page.dart';
 import '../../features/marketplace/domain/entities/product_entity.dart';
 import '../../features/profile/presentation/pages/profile_all_menu_page.dart';
@@ -44,6 +56,10 @@ import '../../features/profile/presentation/pages/payment_methods_page.dart';
 import '../../features/profile/presentation/pages/help_center_page.dart';
 import '../../features/profile/presentation/pages/settings_page.dart';
 import '../../features/profile/presentation/pages/important_features_page.dart';
+import '../../features/stretch/presentation/pages/referral_program_page.dart';
+import '../../features/stretch/presentation/pages/erp_integration_page.dart';
+import '../../features/stretch/presentation/pages/live_commerce_page.dart';
+import '../../features/stretch/presentation/pages/live_room_page.dart';
 import '../../features/public_orders/presentation/pages/public_verify_page.dart';
 import '../../features/public_orders/presentation/pages/public_track_page.dart';
 import '../../features/profile/presentation/pages/change_password_page.dart';
@@ -69,7 +85,6 @@ import '../../features/onboarding/presentation/pages/onboarding_page.dart';
 import '../../shared/pages/payment_web_view_page.dart';
 import '../../features/orders/presentation/pages/payment_instruction_page.dart';
 import '../../features/auth/domain/entities/user_entity.dart';
-import '../../features/marketplace/domain/entities/product_entity.dart';
 import '../../injection_container.dart';
 import '../network/token_repository.dart';
 
@@ -175,7 +190,7 @@ final goRouter = GoRouter(
             final extra = state.extra as Map<String, dynamic>?;
             return SupplierProfilePage(
               supplierId: state.pathParameters['id']!,
-              supplierName: extra?['name'] ?? 'Supplier',
+              supplierName: extra?['name'] ?? 'marketplace.supplier_fallback'.tr(),
               previewAsOwner: extra?['preview'] == true,
             );
           },
@@ -203,7 +218,7 @@ final goRouter = GoRouter(
             final extra = state.extra as Map<String, dynamic>?;
             return ProductReviewsPage(
               productId: state.pathParameters['id']!,
-              productName: extra?['name'] ?? 'Ulasan Produk',
+              productName: extra?['name'] ?? 'marketplace.product_reviews_title'.tr(),
             );
           },
         ),
@@ -266,6 +281,19 @@ final goRouter = GoRouter(
           builder: (context, state) => const MyForumPostsPage(),
         ),
         GoRoute(
+          path: 'forum-groups',
+          builder: (context, state) => const ForumGroupsPage(),
+        ),
+        GoRoute(
+          path: 'forum-groups/create',
+          builder: (context, state) => const CreateForumGroupPage(),
+        ),
+        GoRoute(
+          path: 'forum-groups/:id',
+          builder: (context, state) =>
+              ForumGroupDetailPage(groupId: state.pathParameters['id']!),
+        ),
+        GoRoute(
           // Buka ForumPage stand-alone dengan filter tag awal. Dipakai dari
           // chip #tag di post card / rich text content. Kalau user buka dari
           // tab bar (`/main`), filter ini tidak aktif.
@@ -297,13 +325,7 @@ final goRouter = GoRouter(
         ),
         GoRoute(
           path: 'sales-analytics',
-          builder: (context, state) => ProGate(
-            title: 'Analitik Penjualan',
-            icon: LucideIcons.chartBar,
-            lockedMessage:
-                'Analitik penjualan mendalam — rekomendasi bisnis, funnel minat, dan insight performa — khusus langganan PRO.',
-            child: const SalesAnalyticsPage(),
-          ),
+          builder: (context, state) => const SalesAnalyticsPage(),
         ),
         GoRoute(
           path: 'product-engagement',
@@ -352,16 +374,16 @@ final goRouter = GoRouter(
         ),
         GoRoute(
           path: 'terms',
-          builder: (context, state) => const LegalPage(
+          builder: (context, state) => LegalPage(
             policyKey: 'terms',
-            fallbackTitle: 'Syarat & Ketentuan',
+            fallbackTitle: 'profile.menu_terms'.tr(),
           ),
         ),
         GoRoute(
           path: 'privacy',
-          builder: (context, state) => const LegalPage(
+          builder: (context, state) => LegalPage(
             policyKey: 'privacy',
-            fallbackTitle: 'Kebijakan Privasi',
+            fallbackTitle: 'profile.menu_privacy'.tr(),
           ),
         ),
         GoRoute(
@@ -406,7 +428,11 @@ final goRouter = GoRouter(
         ),
         GoRoute(
           path: 'add-product',
-          builder: (context, state) => const AddEditProductPage(),
+          builder: (context, state) => AddEditProductPage(
+            predictionSeed: state.extra is IotPredictionImportResult
+                ? state.extra as IotPredictionImportResult
+                : null,
+          ),
         ),
         GoRoute(
           path: 'edit-product',
@@ -419,7 +445,7 @@ final goRouter = GoRouter(
             final extra = state.extra as Map<String, dynamic>;
             return PaymentWebViewPage(
               url: extra['url'],
-              title: extra['title'] ?? 'Pembayaran',
+              title: extra['title'] ?? 'orders.payment_fallback',
             );
           },
         ),
@@ -501,16 +527,35 @@ final goRouter = GoRouter(
       builder: (context, state) => const IotSubscriptionPage(),
     ),
     GoRoute(
+      path: '/referral',
+      builder: (context, state) => const ReferralProgramPage(),
+    ),
+    GoRoute(
+      path: '/erp-integration',
+      builder: (context, state) => const ErpIntegrationPage(),
+    ),
+    GoRoute(
+      path: '/live',
+      builder: (context, state) => const LiveCommercePage(),
+      routes: [
+        GoRoute(
+          path: ':sessionId',
+          builder: (context, state) => LiveRoomPage(
+            sessionId: state.pathParameters['sessionId']!,
+          ),
+        ),
+      ],
+    ),
+    GoRoute(
       path: '/market-insight',
       builder: (context, state) => const MarketInsightPage(),
     ),
     GoRoute(
       path: '/market-deep-analytics',
       builder: (context, state) => ProGate(
-        title: 'Analitik Mendalam',
+        title: 'market.deep_analytics_title'.tr(),
         icon: LucideIcons.sparkles,
-        lockedMessage:
-            'Prediksi harga AI, proyeksi 3 bulan, dan insight bisnis pasar biomassa khusus langganan PRO.',
+        lockedMessage: 'market.deep_analytics_pro_locked',
         child: const MarketDeepAnalyticsPage(),
       ),
     ),
@@ -531,7 +576,7 @@ final goRouter = GoRouter(
         final extra = state.extra as Map<String, dynamic>;
         return PaymentWebViewPage(
           url: extra['url'],
-          title: extra['title'] ?? 'Pembayaran',
+          title: extra['title'] ?? 'orders.payment_fallback',
         );
       },
     ),
@@ -565,6 +610,30 @@ final goRouter = GoRouter(
       path: '/wishlist',
       builder: (context, state) => const WishlistPage(),
     ),
+    GoRoute(
+      path: '/supplier-directory',
+      builder: (context, state) => const SupplierDirectoryPage(),
+    ),
+    GoRoute(
+      path: '/compare-products',
+      builder: (context, state) => const CompareProductsPage(),
+    ),
+    GoRoute(
+      path: '/bulk-product-upload',
+      builder: (context, state) => const BulkProductUploadPage(),
+    ),
+    GoRoute(
+      path: '/rfq',
+      builder: (context, state) => const RfqListPage(),
+    ),
+    GoRoute(
+      path: '/rfq/create',
+      builder: (context, state) => const RfqCreatePage(),
+    ),
+    GoRoute(
+      path: '/rfq/inbox',
+      builder: (context, state) => const RfqInboxPage(),
+    ),
   ],
 );
 
@@ -573,9 +642,9 @@ class _InvalidNegotiationDraftPage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return const ColoredBox(
-      color: Color(0xFFFFFFFF),
-      child: Center(child: Text('Data penawaran tidak valid')),
+    return ColoredBox(
+      color: AppColors.surface,
+      child: Center(child: Text('router.invalid_offer_data'.tr())),
     );
   }
 }

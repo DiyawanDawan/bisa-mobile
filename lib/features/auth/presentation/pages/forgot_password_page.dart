@@ -2,8 +2,8 @@ import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
-import 'package:go_router/go_router.dart';
 import '../../../../core/constants/app_colors.dart';
+import '../../../../core/utils/app_feedback.dart';
 import '../../../../shared/widgets/custom_button.dart';
 import '../../../../shared/widgets/custom_text_field.dart';
 import '../../../../shared/widgets/bisa_app_bar.dart';
@@ -31,31 +31,14 @@ class _ForgotPasswordPageState extends State<ForgotPasswordPage> {
     return Scaffold(
       backgroundColor: AppColors.background,
       appBar: const BisaAppBar(
-        backgroundColor: Colors.transparent,
+        backgroundColor: AppColors.transparent,
         showShadow: false,
       ),
       body: BlocListener<AuthCubit, AuthState>(
         listener: (context, state) {
           state.maybeWhen(
-            success: (message) {
-              ScaffoldMessenger.of(context).showSnackBar(
-                SnackBar(
-                  content: Text(message),
-                  backgroundColor: AppColors.success,
-                  behavior: SnackBarBehavior.floating,
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                ),
-              );
-              // In real flow, usually navigate to OTP or Reset Password
-            },
-            error: (message) => ScaffoldMessenger.of(context).showSnackBar(
-              SnackBar(
-                content: Text(message),
-                backgroundColor: AppColors.error,
-                behavior: SnackBarBehavior.floating,
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-              ),
-            ),
+            success: (message) => showSuccessSnackBar(context, message),
+            error: (message) => showErrorSnackBar(context, message),
             orElse: () {},
           );
         },
@@ -82,7 +65,7 @@ class _ForgotPasswordPageState extends State<ForgotPasswordPage> {
                   ),
                   SizedBox(height: 24.h),
                   Text(
-                    'Lupa Kata Sandi?',
+                    'auth.forgot_password_title'.tr(),
                     style: TextStyle(
                       fontSize: 28.sp,
                       fontWeight: FontWeight.w800,
@@ -92,7 +75,7 @@ class _ForgotPasswordPageState extends State<ForgotPasswordPage> {
                   ),
                   SizedBox(height: 12.h),
                   Text(
-                    'Masukkan email terdaftar Anda. Kami akan mengirimkan instruksi untuk mengatur ulang kata sandi Anda.',
+                    'auth.forgot_password_desc'.tr(),
                     style: TextStyle(
                       fontSize: 16.sp,
                       color: AppColors.textSecondary,
@@ -101,14 +84,14 @@ class _ForgotPasswordPageState extends State<ForgotPasswordPage> {
                   ),
                   SizedBox(height: 40.h),
                   CustomTextField(
-                    label: 'email1'.tr().tr().tr(),
-                    hint: 'namaemailcom_1'.tr().tr().tr(),
+                    label: 'email'.tr(),
+                    hint: 'email_hint'.tr(),
                     controller: _emailController,
                     keyboardType: TextInputType.emailAddress,
                     prefixIcon: Icons.alternate_email_rounded,
                     validator: (value) {
-                      if (value == null || value.isEmpty) return 'Email wajib diisi';
-                      if (!value.contains('@')) return 'Format email tidak valid';
+                      if (value == null || value.isEmpty) return 'email_required'.tr();
+                      if (!value.contains('@')) return 'email_invalid'.tr();
                       return null;
                     },
                   ),
@@ -116,7 +99,7 @@ class _ForgotPasswordPageState extends State<ForgotPasswordPage> {
                   BlocBuilder<AuthCubit, AuthState>(
                     builder: (context, state) {
                       return CustomButton(
-                        text: 'kiriminstruksi'.tr().tr(),
+                        text: 'kirim_instruksi'.tr(),
                         useGradient: true,
                         isLoading: state.maybeWhen(loading: () => true, orElse: () => false),
                         onPressed: () {

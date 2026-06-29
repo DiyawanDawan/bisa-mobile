@@ -1,5 +1,6 @@
 import 'dart:async';
 
+import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
@@ -7,11 +8,16 @@ import 'package:flutter_staggered_grid_view/flutter_staggered_grid_view.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:go_router/go_router.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
+import '../../../../core/constants/app_layout.dart';
 import '../../../../core/constants/app_colors.dart';
+import '../../../../core/constants/app_text_styles.dart';
 import '../../../../core/readiness/readiness_gate.dart';
 import '../../../../core/services/location_service.dart';
-import '../../../../core/utils/extensions.dart';
+import '../../../../core/utils/app_feedback.dart';
+import '../../../../core/utils/money_format.dart';
+import '../../../../core/utils/safe_area_utils.dart' show clearBisaSnackBars;
 import '../../../../core/utils/safe_navigator.dart';
+import '../../../../core/network/api_client.dart';
 import '../../../../injection_container.dart';
 import '../../../auth/domain/repositories/auth_repository.dart';
 import '../../../profile/domain/entities/address_entity.dart';
@@ -82,6 +88,7 @@ class _CartPageState extends State<CartPage> {
   bool _checkoutPreviewLoading = false;
   String? _checkoutPreviewError;
   String? _lastCheckoutPreviewKey;
+  int _checkoutPreviewRequestId = 0;
   Timer? _checkoutPreviewDebounce;
   String? _lastCommerceErrorSnack;
 
@@ -94,6 +101,11 @@ class _CartPageState extends State<CartPage> {
   String? _cachedBuyerDestinationQuery;
 
   PaymentMethodChoice? _selectedPayment;
+  final _voucherCtrl = TextEditingController();
+  String? _appliedVoucherCode;
+  String? _voucherError;
+  bool _voucherApplying = false;
+  PaymentMethodChoice? _savedPaymentPref;
 
   bool get _isCheckoutFlow => widget.checkoutMode;
 
@@ -107,13 +119,82 @@ class _CartPageState extends State<CartPage> {
         _selectedItemIds.addAll(widget.initialSelectedIds!);
       }
       _loadPrimaryProfileAddress();
+      _loadSavedPaymentPreference();
     }
   }
 
   @override
   void dispose() {
     _checkoutPreviewDebounce?.cancel();
+    _voucherCtrl.dispose();
     super.dispose();
+  }
+
+  Future<void> _loadSavedPaymentPreference() async {
+    try {
+      final res = await sl<ApiClient>().dio.get('/users/me/saved-payments');
+      final list = res.data['data'] as List? ?? [];
+      if (list.isEmpty || !mounted) return;
+      final def = list.cast<Map>().firstWhere(
+            (e) => e['isDefault'] == true,
+            orElse: () => list.first,
+          );
+      setState(() {
+        _savedPaymentPref = PaymentMethodChoice(
+          code: '${def['channelCode']}',
+          name: '${def['channelName']}',
+        );
+        _selectedPayment ??= _savedPaymentPref;
+      });
+    } catch (_) {}
+  }
+
+  Future<void> _applyVoucher(CartSummary cart) async {
+    final code = _voucherCtrl.text.trim();
+    if (code.isEmpty) {
+      setState(() {
+        _appliedVoucherCode = null;
+        _voucherError = null;
+        _lastCheckoutPreviewKey = null;
+      });
+      _scheduleCheckoutPreviewRefresh(cart);
+      return;
+    }
+    final selected = cart.items.where((it) => _selectedItemIds.contains(it.id));
+    final subtotal = selected.fold<double>(
+      0,
+      (sum, it) => sum + (it.product.toEntity().pricePerUnit * it.quantity),
+    );
+    final sellerIds = selected
+        .map((it) => it.product.toEntity().seller.id)
+        .toSet()
+        .toList();
+    setState(() {
+      _voucherApplying = true;
+      _voucherError = null;
+    });
+    final result = await context.read<OrderCubit>().validateVoucher(
+          code: code,
+          subtotal: subtotal,
+          sellerIds: sellerIds,
+        );
+    if (!mounted) return;
+    if (result == null) {
+      setState(() {
+        _voucherApplying = false;
+        _voucherError = 'cart.voucher_invalid'.tr();
+        _appliedVoucherCode = null;
+        _lastCheckoutPreviewKey = null;
+      });
+      return;
+    }
+    setState(() {
+      _voucherApplying = false;
+      _appliedVoucherCode = code.toUpperCase();
+      _voucherError = null;
+      _lastCheckoutPreviewKey = null;
+    });
+    _scheduleCheckoutPreviewRefresh(cart);
   }
 
   String _fullAddressLineFromEntity(AddressEntity a) {
@@ -249,8 +330,12 @@ class _CartPageState extends State<CartPage> {
   }
 
   void _applyProfileAddress(AddressEntity a, {bool silent = false}) {
-    final label = a.name.trim().isNotEmpty ? a.name.trim() : 'Alamat';
-    final displayLabel = a.isPrimary ? '$label (Utama)' : label;
+    final label = a.name.trim().isNotEmpty
+        ? a.name.trim()
+        : 'cart.address_fallback'.tr();
+    final displayLabel = a.isPrimary
+        ? 'cart.address_primary_suffix'.tr(namedArgs: {'label': label})
+        : label;
     setState(() {
       _selectedProfileAddress = a;
       _usingPrimaryProfile = a.isPrimary;
@@ -258,25 +343,19 @@ class _CartPageState extends State<CartPage> {
       _shippingAddressQuery = _rajaOngkirQueryFromEntity(a);
       _shippingFullAddress = _fullAddressLineFromEntity(a);
       if (_shippingAddressQuery == null || _shippingAddressQuery!.isEmpty) {
-        _locationError =
-            'Wilayah (kota & provinsi) alamat belum lengkap untuk hitung ongkir.';
+        _locationError = 'cart.address_incomplete_region'.tr();
       }
       _shippingFix = null;
       _locationError = null;
       _clearShippingSelections();
     });
     if (!silent && mounted) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(
-            a.isPrimary
-                ? 'Alamat utama profil dipakai untuk pengiriman.'
-                : 'Alamat profil dipilih untuk pengiriman.',
-          ),
-          backgroundColor: AppColors.success,
-          behavior: SnackBarBehavior.floating,
-          duration: const Duration(seconds: 2),
-        ),
+      showSuccessSnackBar(
+        context,
+        a.isPrimary
+            ? 'cart.snack_primary_used'.tr()
+            : 'cart.snack_profile_selected'.tr(),
+        duration: const Duration(seconds: 2),
       );
     }
   }
@@ -349,13 +428,7 @@ class _CartPageState extends State<CartPage> {
         .toList();
 
     if (selectedItems.isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Pilih minimal 1 produk untuk di-checkout'),
-          backgroundColor: AppColors.warning,
-          behavior: SnackBarBehavior.floating,
-        ),
-      );
+      showWarningSnackBar(context, 'cart.snack_select_min_one'.tr());
       return;
     }
 
@@ -364,13 +437,7 @@ class _CartPageState extends State<CartPage> {
       (it) => it.product.toEntity().stock <= 0,
     );
     if (outOfStockSelected) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Ada produk habis di seleksi. Hapus dulu.'),
-          backgroundColor: AppColors.error,
-          behavior: SnackBarBehavior.floating,
-        ),
-      );
+      showErrorSnackBar(context, 'cart.snack_out_of_stock_selection'.tr());
       return;
     }
 
@@ -395,13 +462,7 @@ class _CartPageState extends State<CartPage> {
             .toSet()
             .length) {
       setState(() => _isCheckingOut = false);
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Atur ongkir RajaOngkir untuk setiap supplier dulu.'),
-          backgroundColor: AppColors.warning,
-          behavior: SnackBarBehavior.floating,
-        ),
-      );
+      showWarningSnackBar(context, 'cart.snack_setup_shipping_all'.tr());
       return;
     }
 
@@ -409,15 +470,7 @@ class _CartPageState extends State<CartPage> {
     if (shippingPayload.shippingAddress == null ||
         shippingPayload.shippingAddress!.length < 10) {
       setState(() => _isCheckingOut = false);
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text(
-            'Alamat pengiriman belum lengkap. Pilih alamat utama dari profil atau tambahkan alamat.',
-          ),
-          backgroundColor: AppColors.warning,
-          behavior: SnackBarBehavior.floating,
-        ),
-      );
+      showWarningSnackBar(context, 'cart.snack_shipping_incomplete'.tr());
       return;
     }
 
@@ -451,25 +504,18 @@ class _CartPageState extends State<CartPage> {
       shippingAddress: shippingPayload.shippingAddress,
       shippingSnapshot: shippingPayload.shippingSnapshot,
       shippingSelections: shippingSelections.isEmpty ? null : shippingSelections,
+      voucherCode: _appliedVoucherCode,
     );
 
     if (!context.mounted) return;
 
     if (!result.isSuccess) {
       setState(() => _isCheckingOut = false);
-      final message = result.errorMessage ?? 'Gagal membuat pesanan';
-      if (message.contains('alamat') ||
-          message.contains('pengiriman') ||
-          message.contains('telepon')) {
+      final message = result.errorMessage ?? 'cart.order_create_failed';
+      if (result.isBuyerReadiness) {
         await ReadinessGate.ensureBuyerReady(context);
       } else {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(message),
-            backgroundColor: AppColors.error,
-            behavior: SnackBarBehavior.floating,
-          ),
-        );
+        showFailureSnackBarFromMessage(context, message);
       }
       return;
     }
@@ -509,19 +555,13 @@ class _CartPageState extends State<CartPage> {
             }
           });
         }
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(
-              context.read<OrderCubit>().state.maybeWhen(
-                    error: (msg) => msg,
-                    orElse: () =>
-                        'Pesanan dibuat tetapi pembayaran gagal diinisialisasi. Silakan bayar dari detail pesanan.',
-                  ),
-            ),
-            backgroundColor: AppColors.error,
-            behavior: SnackBarBehavior.floating,
-            duration: const Duration(seconds: 5),
-          ),
+        showErrorSnackBar(
+          context,
+          context.read<OrderCubit>().state.maybeWhen(
+                error: (msg) => msg,
+                orElse: () => 'cart.payment_init_failed'.tr(),
+              ),
+          duration: const Duration(seconds: 5),
         );
         final failureRoute = paymentInitFailureRoute(orderIds.firstOrNull);
         if (failureRoute != null) {
@@ -542,10 +582,13 @@ class _CartPageState extends State<CartPage> {
       final orderLabel = checkoutBatchNumber?.isNotEmpty == true
           ? checkoutBatchNumber!
           : (orderNumbers.length > 1
-              ? '${orderNumbers.length} pesanan checkout'
+              ? 'cart.batch_checkout_label'.tr(
+                  namedArgs: {'count': '${orderNumbers.length}'},
+                )
               : (orderNumbers.isNotEmpty
                   ? orderNumbers.first
-                  : (orders.first['orderNumber']?.toString() ?? 'Checkout')));
+                  : (orders.first['orderNumber']?.toString() ??
+                      'cart.checkout_label'.tr())));
 
       if (!context.mounted) return;
       context.pushReplacement(
@@ -574,17 +617,12 @@ class _CartPageState extends State<CartPage> {
     if (!context.mounted) return;
 
     final count = orders.length;
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text(
-          count > 1
-              ? '$count pesanan dibuat. Lanjutkan pembayaran gabungan.'
-              : 'Pesanan dibuat. Lanjutkan pembayaran.',
-        ),
-        backgroundColor: AppColors.success,
-        behavior: SnackBarBehavior.floating,
-        duration: const Duration(seconds: 3),
-      ),
+    showSuccessSnackBar(
+      context,
+      count > 1
+          ? 'cart.orders_created_batch'.tr(namedArgs: {'count': '$count'})
+          : 'cart.order_created_continue'.tr(),
+      duration: const Duration(seconds: 3),
     );
 
     context.push(
@@ -598,23 +636,11 @@ class _CartPageState extends State<CartPage> {
         .where((it) => _selectedItemIds.contains(it.id))
         .toList();
     if (selectedItems.isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Pilih minimal 1 produk untuk checkout'),
-          backgroundColor: AppColors.warning,
-          behavior: SnackBarBehavior.floating,
-        ),
-      );
+      showWarningSnackBar(context, 'cart.snack_select_min_one'.tr());
       return;
     }
     if (_anySelectedOutOfStock(cart)) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Ada produk habis di seleksi. Hapus dulu.'),
-          backgroundColor: AppColors.error,
-          behavior: SnackBarBehavior.floating,
-        ),
-      );
+      showErrorSnackBar(context, 'cart.snack_out_of_stock_selection'.tr());
       return;
     }
     context.push(
@@ -644,6 +670,38 @@ class _CartPageState extends State<CartPage> {
         })
         .whereType<Map<String, dynamic>>()
         .toList();
+  }
+
+  String _cartContentKey(CartSummary cart) {
+    final parts = cart.items.map((it) => '${it.id}:${it.quantity}').toList()
+      ..sort();
+    return parts.join('|');
+  }
+
+  bool _shouldScheduleCheckoutPreview(CartSummary cart) {
+    if (!_isCheckoutFlow || _isCheckingOut || _checkoutPreviewLoading) {
+      return false;
+    }
+    final selectedItems = cart.items
+        .where((it) => _selectedItemIds.contains(it.id))
+        .toList();
+    if (selectedItems.isEmpty) return false;
+
+    final requiredSellerCount = selectedItems
+        .map((it) => it.product.toEntity().seller.id)
+        .toSet()
+        .length;
+    if (_buildShippingSelectionsForCheckout(selectedItems).length !=
+        requiredSellerCount) {
+      return false;
+    }
+
+    final shippingPayload = _checkoutShippingPayload();
+    if ((shippingPayload.shippingAddress?.length ?? 0) < 10) return false;
+
+    final key = _buildCheckoutPreviewInputKey(cart);
+    if (key == _lastCheckoutPreviewKey) return false;
+    return true;
   }
 
   String _buildCheckoutPreviewInputKey(CartSummary cart) {
@@ -762,7 +820,7 @@ class _CartPageState extends State<CartPage> {
           setState(() {
             _shippingSelectionBySeller.remove(sellerId);
             _shippingErrorBySeller[sellerId] =
-                'Berat berubah — pilih ulang layanan ongkir.';
+                'cart.weight_changed_reselect'.tr();
             _checkoutPreview = null;
             _lastCheckoutPreviewKey = null;
           });
@@ -789,7 +847,7 @@ class _CartPageState extends State<CartPage> {
         if (!mounted) return;
         setState(() {
           _shippingErrorBySeller[sellerId] =
-              'Gagal hitung ulang ongkir setelah perubahan jumlah.';
+              'cart.recalc_shipping_failed'.tr();
           _checkoutPreview = null;
           _lastCheckoutPreviewKey = null;
         });
@@ -797,7 +855,10 @@ class _CartPageState extends State<CartPage> {
     }
   }
 
-  Future<void> _refreshCheckoutPreview(CartSummary cart) async {
+  Future<void> _refreshCheckoutPreview(
+    CartSummary cart, {
+    bool force = false,
+  }) async {
     final selectedItems = cart.items
         .where((it) => _selectedItemIds.contains(it.id))
         .toList();
@@ -840,10 +901,19 @@ class _CartPageState extends State<CartPage> {
         _checkoutPreview = null;
         _checkoutPreviewError = null;
         _checkoutPreviewLoading = false;
+        _lastCheckoutPreviewKey = null;
       });
       return;
     }
 
+    final key = _buildCheckoutPreviewInputKey(cart);
+    if (!force &&
+        key == _lastCheckoutPreviewKey &&
+        (_checkoutPreview != null || _checkoutPreviewError != null)) {
+      return;
+    }
+
+    final requestId = ++_checkoutPreviewRequestId;
     setState(() {
       _checkoutPreviewLoading = true;
       _checkoutPreviewError = null;
@@ -853,30 +923,26 @@ class _CartPageState extends State<CartPage> {
           shippingAddress: shippingPayload.shippingAddress,
           shippingSnapshot: shippingPayload.shippingSnapshot,
           shippingSelections: shippingSelections,
+          voucherCode: _appliedVoucherCode,
         );
-    if (!mounted) return;
+    if (!mounted || requestId != _checkoutPreviewRequestId) return;
     setState(() {
       _checkoutPreviewLoading = false;
-      _checkoutPreview = preview;
-      _checkoutPreviewError =
-          preview == null ? 'Gagal memuat breakdown biaya checkout.' : null;
+      _lastCheckoutPreviewKey = key;
       if (preview != null) {
-        _lastCheckoutPreviewKey = _buildCheckoutPreviewInputKey(cart);
+        _checkoutPreview = preview;
+        _checkoutPreviewError = null;
+      } else {
+        _checkoutPreviewError = 'cart.preview_load_failed'.tr();
       }
     });
   }
 
   Future<void> _calculateSellerShipping(_SellerGroup group) async {
     if (_shippingAddressQuery == null || _shippingAddressQuery!.isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(
-            _locationError ??
-                'Lengkapi kota & provinsi alamat (Profil / Map / Deteksi) untuk hitung ongkir.',
-          ),
-          backgroundColor: AppColors.warning,
-          behavior: SnackBarBehavior.floating,
-        ),
+      showWarningSnackBar(
+        context,
+        _locationError ?? 'cart.complete_address_for_shipping'.tr(),
       );
       return;
     }
@@ -914,7 +980,9 @@ class _CartPageState extends State<CartPage> {
             ? group.seller.companyName!
             : group.seller.name;
         throw Exception(
-          'Lokasi asal/tujuan ongkir tidak ditemukan untuk toko $sellerName. Pastikan origin RajaOngkir toko terisi.',
+          'cart.shipping_origin_not_found'.tr(
+            namedArgs: {'seller': sellerName},
+          ),
         );
       }
 
@@ -929,7 +997,7 @@ class _CartPageState extends State<CartPage> {
 
       if (!mounted) return;
       if (options.isEmpty) {
-        throw Exception('Opsi kurir tidak tersedia untuk rute ini.');
+        throw Exception('cart.courier_unavailable'.tr());
       }
 
       final selected = await _pickShippingOptionSheet(
@@ -1082,7 +1150,7 @@ class _CartPageState extends State<CartPage> {
     if (_shippingQuotaExceeded) {
       throw Exception(
         _shippingQuotaMessage ??
-            'Kuota harian API ongkir habis. Coba lagi besok.',
+            'cart.api_quota_exhausted'.tr(),
       );
     }
 
@@ -1158,20 +1226,14 @@ class _CartPageState extends State<CartPage> {
     if (!mounted) return;
     final addresses = result.fold((_) => const [], (items) => items);
     if (addresses.isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Alamat profil belum tersedia. Tambahkan alamat dulu.'),
-          backgroundColor: AppColors.warning,
-          behavior: SnackBarBehavior.floating,
-        ),
-      );
+      showWarningSnackBar(context, 'cart.no_profile_address'.tr());
       return;
     }
 
     final selected = await showModalBottomSheet<AddressEntity>(
       context: context,
       shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(16.r)),
+        borderRadius: BorderRadius.vertical(top: Radius.circular(AppRadius.xl)),
       ),
       builder: (ctx) => SafeArea(
         child: ListView.separated(
@@ -1184,7 +1246,11 @@ class _CartPageState extends State<CartPage> {
           itemBuilder: (_, i) {
             final a = addresses[i];
             final label =
-                a.name.isNotEmpty ? a.name : (a.city.isNotEmpty ? a.city : 'Alamat');
+                a.name.isNotEmpty
+                    ? a.name
+                    : (a.city.isNotEmpty
+                        ? a.city
+                        : 'cart.address_fallback'.tr());
             return ListTile(
               title: Text(label),
               subtitle: Text(
@@ -1194,7 +1260,7 @@ class _CartPageState extends State<CartPage> {
               ),
               trailing: a.isPrimary
                   ? Text(
-                      'Utama',
+                      'cart.primary_badge'.tr(),
                       style: TextStyle(
                         color: AppColors.primary,
                         fontWeight: FontWeight.w700,
@@ -1235,27 +1301,21 @@ class _CartPageState extends State<CartPage> {
     final couriers = await cubit.getActiveCouriers();
     if (!mounted) return;
     if (couriers.isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Daftar kurir aktif belum tersedia.'),
-          backgroundColor: AppColors.warning,
-          behavior: SnackBarBehavior.floating,
-        ),
-      );
+      showWarningSnackBar(context, 'cart.no_couriers'.tr());
       return;
     }
     final selected = await showModalBottomSheet<String>(
       context: context,
       shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(16.r)),
+        borderRadius: BorderRadius.vertical(top: Radius.circular(AppRadius.xl)),
       ),
       builder: (ctx) => SafeArea(
         child: ListView(
           shrinkWrap: true,
           children: [
             ListTile(
-              title: const Text('Semua Kurir Aktif'),
-              subtitle: const Text('Gunakan seluruh kurir aktif dari backend'),
+              title: Text('cart.all_couriers_active'.tr()),
+              subtitle: Text('cart.all_couriers_hint'.tr()),
               onTap: () => safeNavigatorPop(ctx, ''),
             ),
             ...couriers.map(
@@ -1304,22 +1364,29 @@ class _CartPageState extends State<CartPage> {
       ),
       builder: (ctx) => SafeArea(
         child: Padding(
-          padding: EdgeInsets.fromLTRB(16.w, 16.h, 16.w, 24.h),
+          padding: EdgeInsets.fromLTRB(
+            AppSpacing.md,
+            AppSpacing.md,
+            AppSpacing.md,
+            AppSpacing.xl,
+          ),
           child: Column(
             mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Text(
-                'Pilih Kurir - $sellerName',
-                style: TextStyle(fontSize: 15.sp, fontWeight: FontWeight.w800),
+                'cart.pick_courier_title'.tr(
+                  namedArgs: {'seller': sellerName},
+                ),
+                style: AppTextStyles.sectionTitle(fontWeight: FontWeight.w800),
               ),
-              SizedBox(height: 10.h),
+              SizedBox(height: AppSpacing.sm10),
               ConstrainedBox(
                 constraints: BoxConstraints(maxHeight: 360.h),
                 child: ListView.separated(
                   shrinkWrap: true,
                   itemCount: options.length,
-                  separatorBuilder: (_, __) => SizedBox(height: 8.h),
+                  separatorBuilder: (_, __) => SizedBox(height: AppSpacing.sm),
                   itemBuilder: (_, idx) {
                     final option = options[idx];
                     final cost = (option['cost'] as num?)?.toDouble() ??
@@ -1332,12 +1399,12 @@ class _CartPageState extends State<CartPage> {
 
                     return InkWell(
                       onTap: () => safeNavigatorPop(ctx, option),
-                      borderRadius: BorderRadius.circular(12.r),
+                      borderRadius: BorderRadius.circular(AppRadius.lg),
                       child: Container(
-                        padding: EdgeInsets.all(12.w),
+                        padding: EdgeInsets.all(AppSpacing.md12),
                         decoration: BoxDecoration(
                           border: Border.all(color: AppColors.grey200),
-                          borderRadius: BorderRadius.circular(12.r),
+                          borderRadius: BorderRadius.circular(AppRadius.lg),
                         ),
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
@@ -1352,17 +1419,14 @@ class _CartPageState extends State<CartPage> {
                             SizedBox(height: 2.h),
                             Text(
                               description,
-                              style: TextStyle(
-                                fontSize: 12.sp,
-                                color: AppColors.textSecondary,
-                              ),
+                              style: AppTextStyles.bodySecondary(color: AppColors.textSecondary),
                             ),
                             SizedBox(height: 6.h),
                             Row(
                               mainAxisAlignment: MainAxisAlignment.spaceBetween,
                               children: [
                                 Text(
-                                  cost.toRupiah,
+                                  formatMoneyIdr(cost),
                                   style: TextStyle(
                                     fontSize: 13.sp,
                                     color: AppColors.primary,
@@ -1370,11 +1434,8 @@ class _CartPageState extends State<CartPage> {
                                   ),
                                 ),
                                 Text(
-                                  'ETD $etd hari',
-                                  style: TextStyle(
-                                    fontSize: 11.sp,
-                                    color: AppColors.textSecondary,
-                                  ),
+                                  'cart.etd_days'.tr(namedArgs: {'etd': etd}),
+                                  style: AppTextStyles.caption(color: AppColors.textSecondary),
                                 ),
                               ],
                             ),
@@ -1406,19 +1467,13 @@ class _CartPageState extends State<CartPage> {
         _detectingLocation = false;
         _locationError = switch (perm) {
           LocationPermissionResult.deniedForever =>
-            'Izin lokasi diblokir permanen. Aktifkan dari Pengaturan aplikasi.',
+            'cart.location_denied_forever'.tr(),
           LocationPermissionResult.serviceDisabled =>
-            'GPS perangkat sedang mati. Nyalakan layanan lokasi.',
-          _ => 'Izin lokasi ditolak. Tidak dapat mendeteksi alamat.',
+            'cart.location_gps_off'.tr(),
+          _ => 'cart.location_denied'.tr(),
         };
       });
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(_locationError!),
-          backgroundColor: AppColors.warning,
-          behavior: SnackBarBehavior.floating,
-        ),
-      );
+      showWarningSnackBar(context, _locationError!);
       if (perm == LocationPermissionResult.deniedForever) {
         await Geolocator.openAppSettings();
       } else if (perm == LocationPermissionResult.serviceDisabled) {
@@ -1445,25 +1500,18 @@ class _CartPageState extends State<CartPage> {
         _shippingAddressQuery = fix.address;
       } else {
         _shippingAddressQuery = null;
-        _locationError =
-            'Lokasi GPS belum terbaca kota/provinsi. Pilih alamat profil atau peta.';
+        _locationError = 'cart.gps_no_city'.tr();
       }
       _shippingFullAddress = (fix?.address?.trim().isNotEmpty ?? false)
           ? fix!.address!.trim()
           : _shippingAddressQuery;
       _locationError = fix == null
-          ? 'Gagal mengambil posisi GPS. Coba lagi sebentar.'
+          ? 'cart.gps_failed'.tr()
           : null;
       _clearShippingSelections();
     });
     if (fix == null) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(_locationError!),
-          backgroundColor: AppColors.error,
-          behavior: SnackBarBehavior.floating,
-        ),
-      );
+      showErrorSnackBar(context, _locationError!);
     }
   }
 
@@ -1472,40 +1520,38 @@ class _CartPageState extends State<CartPage> {
     if (_stockToastShown.contains(p.id)) return;
     _stockToastShown.add(p.id);
 
-    final messenger = ScaffoldMessenger.of(context);
-    messenger.clearSnackBars();
+    clearBisaSnackBars(context);
     final isEmpty = p.stock <= 0;
-    messenger.showSnackBar(
-      SnackBar(
-        backgroundColor: isEmpty ? AppColors.error : AppColors.warning,
-        behavior: SnackBarBehavior.floating,
-        margin: EdgeInsets.all(16.w),
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(12.r),
-        ),
-        duration: const Duration(milliseconds: 2200),
-        content: Row(
-          children: [
-            Icon(
-              isEmpty ? LucideIcons.packageX : LucideIcons.triangleAlert,
-              color: Colors.white,
-              size: 20.sp,
-            ),
-            SizedBox(width: 10.w),
-            Expanded(
-              child: Text(
-                isEmpty
-                    ? 'Stok untuk "${p.name}" sudah habis'
-                    : 'Stok maksimal ${_formatQty(p.stock)} ${p.unit}',
-                style: TextStyle(
-                  color: Colors.white,
-                  fontWeight: FontWeight.w700,
-                  fontSize: 13.sp,
-                ),
+    showCustomSnackBar(
+      context,
+      backgroundColor: isEmpty ? AppColors.error : AppColors.warning,
+      duration: const Duration(milliseconds: 2200),
+      content: Row(
+        children: [
+          Icon(
+            isEmpty ? LucideIcons.packageX : LucideIcons.triangleAlert,
+            color: AppColors.surface,
+            size: 20.sp,
+          ),
+          SizedBox(width: AppSpacing.sm10),
+          Expanded(
+            child: Text(
+              isEmpty
+                  ? 'cart.stock_empty'.tr(namedArgs: {'name': p.name})
+                  : 'cart.stock_max'.tr(
+                      namedArgs: {
+                        'qty': _formatQty(p.stock),
+                        'unit': p.unit,
+                      },
+                    ),
+              style: TextStyle(
+                color: AppColors.surface,
+                fontWeight: FontWeight.w700,
+                fontSize: 13.sp,
               ),
             ),
-          ],
-        ),
+          ),
+        ],
       ),
     );
     Future.delayed(const Duration(seconds: 2), () {
@@ -1520,30 +1566,35 @@ class _CartPageState extends State<CartPage> {
 
   Widget _buildCartLoadingSkeleton() {
     return ListView(
-      padding: EdgeInsets.fromLTRB(16.w, 12.h, 16.w, 24.h),
+      padding: EdgeInsets.fromLTRB(
+        AppSpacing.md,
+        AppSpacing.md12,
+        AppSpacing.md,
+        AppSpacing.xl,
+      ),
       children: [
         ShimmerLoading(
           child: Column(
             children: List.generate(4, (i) {
               return Padding(
-                padding: EdgeInsets.only(bottom: i < 3 ? 16.h : 0),
+                padding: EdgeInsets.only(bottom: i < 3 ? AppSpacing.md : 0),
                 child: Row(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Bone(
                       width: 76.w,
                       height: 76.w,
-                      borderRadius: BorderRadius.circular(12.r),
+                      borderRadius: BorderRadius.circular(AppRadius.lg),
                     ),
-                    SizedBox(width: 12.w),
+                    SizedBox(width: AppSpacing.md12),
                     Expanded(
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           Bone(width: double.infinity, height: 14.h),
-                          SizedBox(height: 8.h),
+                          SizedBox(height: AppSpacing.sm),
                           Bone(width: 120.w, height: 12.h),
-                          SizedBox(height: 8.h),
+                          SizedBox(height: AppSpacing.sm),
                           Bone(width: 80.w, height: 16.h),
                         ],
                       ),
@@ -1563,8 +1614,10 @@ class _CartPageState extends State<CartPage> {
     return Scaffold(
       backgroundColor: AppColors.background,
       appBar: BisaAppBar(
-        title: _isCheckoutFlow ? 'Checkout' : 'Keranjang',
-        backgroundColor: Colors.white,
+        title: _isCheckoutFlow
+            ? 'cart.checkout_title'.tr()
+            : 'cart.title'.tr(),
+        backgroundColor: AppColors.surface,
         onBackTap: _isCheckoutFlow
             ? () {
                 if (context.canPop()) {
@@ -1581,25 +1634,19 @@ class _CartPageState extends State<CartPage> {
           BlocConsumer<CommerceCubit, CommerceState>(
         listenWhen: (prev, curr) {
           if (curr.error != null && curr.error != prev.error) return true;
-          if (_isCheckoutFlow && !_isCheckingOut && prev.cart != curr.cart) {
-            return true;
-          }
-          return false;
+          if (!_isCheckoutFlow || _isCheckingOut) return false;
+          if (curr.cart == null) return false;
+          if (prev.cart == null) return true;
+          return _cartContentKey(prev.cart!) != _cartContentKey(curr.cart!);
         },
         listener: (context, state) {
           if (state.error != null && state.error != _lastCommerceErrorSnack) {
             _lastCommerceErrorSnack = state.error;
-            ScaffoldMessenger.of(context).showSnackBar(
-              SnackBar(
-                content: Text(state.error!),
-                backgroundColor: AppColors.error,
-                behavior: SnackBarBehavior.floating,
-              ),
-            );
+            showFailureSnackBarFromMessage(context, state.error!);
           } else if (state.error == null) {
             _lastCommerceErrorSnack = null;
           }
-          if (_isCheckoutFlow && state.cart != null && !_isCheckingOut) {
+          if (state.cart != null && _shouldScheduleCheckoutPreview(state.cart!)) {
             _scheduleCheckoutPreviewRefresh(state.cart!);
           }
         },
@@ -1649,39 +1696,28 @@ class _CartPageState extends State<CartPage> {
                 .where((g) => g.items.isNotEmpty)
                 .toList();
 
-            final selectedSellerCount = selectedItems
-                .map((it) => it.product.toEntity().seller.id)
-                .toSet()
-                .length;
-            final hasCompleteShippingForPreview = selectedItems.isNotEmpty &&
-                _buildShippingSelectionsForCheckout(selectedItems).length ==
-                    selectedSellerCount;
-            final previewKey = _buildCheckoutPreviewInputKey(cart);
-            if (hasCompleteShippingForPreview &&
-                previewKey != _lastCheckoutPreviewKey &&
-                !_checkoutPreviewLoading) {
-              WidgetsBinding.instance.addPostFrameCallback((_) {
-                if (mounted) _scheduleCheckoutPreviewRefresh(cart);
-              });
-            }
-
             return Column(
               children: [
                 if (hasOutOfStock && _anySelectedOutOfStock(cart))
                   _buildOutOfStockBanner(),
                 Expanded(
                   child: ListView(
-                    padding: EdgeInsets.fromLTRB(16.w, 12.h, 16.w, 16.h),
+                    padding: EdgeInsets.fromLTRB(
+                      AppSpacing.md,
+                      AppSpacing.md12,
+                      AppSpacing.md,
+                      AppSpacing.md,
+                    ),
                     physics: const AlwaysScrollableScrollPhysics(
                       parent: BouncingScrollPhysics(),
                     ),
                     children: [
                       _buildShippingLocationCard(),
-                      SizedBox(height: 12.h),
+                      SizedBox(height: AppSpacing.md12),
                       _buildPaymentMethodCard(),
-                      SizedBox(height: 12.h),
+                      SizedBox(height: AppSpacing.md12),
                       for (var i = 0; i < checkoutGroups.length; i++) ...[
-                        if (i > 0) SizedBox(height: 14.h),
+                        if (i > 0) SizedBox(height: AppSpacing.section),
                         _buildSellerCard(context, checkoutGroups[i],
                             showShipping: true),
                       ],
@@ -1711,22 +1747,27 @@ class _CartPageState extends State<CartPage> {
               if (hasOutOfStock) _buildOutOfStockBanner(),
               Expanded(
                 child: ListView(
-                  padding: EdgeInsets.fromLTRB(16.w, 16.h, 16.w, 16.h),
+                  padding: EdgeInsets.fromLTRB(
+                    AppSpacing.md,
+                    AppSpacing.md,
+                    AppSpacing.md,
+                    AppSpacing.md,
+                  ),
                   physics: const AlwaysScrollableScrollPhysics(
                     parent: BouncingScrollPhysics(),
                   ),
                   children: [
                     for (var i = 0; i < groupList.length; i++) ...[
-                      if (i > 0) SizedBox(height: 14.h),
+                      if (i > 0) SizedBox(height: AppSpacing.section),
                       _buildSellerCard(context, groupList[i],
                           showShipping: false),
                     ],
-                    SizedBox(height: 16.h),
+                    SizedBox(height: AppSpacing.md),
                     _CartRecommendationSection(
                       productMode: dominantMode,
                       excludeIds: excludeIds,
                     ),
-                    SizedBox(height: 8.h),
+                    SizedBox(height: AppSpacing.sm),
                     DualModeProductCatalog(
                       excludeIds: excludeIds,
                       limitPerMode: 20,
@@ -1752,7 +1793,7 @@ class _CartPageState extends State<CartPage> {
       color: AppColors.background.withValues(alpha: 0.96),
       child: Center(
         child: Padding(
-          padding: EdgeInsets.symmetric(horizontal: 32.w),
+          padding: EdgeInsets.symmetric(horizontal: AppSpacing.xxl),
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
@@ -1764,9 +1805,9 @@ class _CartPageState extends State<CartPage> {
                   color: AppColors.primary,
                 ),
               ),
-              SizedBox(height: 20.h),
+              SizedBox(height: AppSpacing.lg),
               Text(
-                'Menyiapkan pembayaran…',
+                'cart.processing_payment'.tr(),
                 textAlign: TextAlign.center,
                 style: TextStyle(
                   fontSize: 16.sp,
@@ -1774,9 +1815,9 @@ class _CartPageState extends State<CartPage> {
                   color: AppColors.textPrimary,
                 ),
               ),
-              SizedBox(height: 8.h),
+              SizedBox(height: AppSpacing.sm),
               Text(
-                'Pesanan sudah dibuat. Mohon tunggu, jangan tutup aplikasi.',
+                'cart.processing_wait'.tr(),
                 textAlign: TextAlign.center,
                 style: TextStyle(
                   fontSize: 13.sp,
@@ -1797,15 +1838,15 @@ class _CartPageState extends State<CartPage> {
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
           Icon(LucideIcons.shoppingCart, size: 64.sp, color: AppColors.grey300),
-          SizedBox(height: 16.h),
+          SizedBox(height: AppSpacing.md),
           Text(
-            'Keranjang masih kosong',
-            style: TextStyle(fontSize: 16.sp, fontWeight: FontWeight.w700),
+            'cart.empty_title'.tr(),
+            style: AppTextStyles.sectionTitle(),
           ),
-          SizedBox(height: 8.h),
+          SizedBox(height: AppSpacing.sm),
           TextButton(
             onPressed: () => context.go('/'),
-            child: const Text('Jelajahi Produk'),
+            child: Text('cart.empty_cta'.tr()),
           ),
         ],
       ),
@@ -1816,14 +1857,17 @@ class _CartPageState extends State<CartPage> {
     return Container(
       width: double.infinity,
       color: AppColors.error.withValues(alpha: 0.08),
-      padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 10.h),
+      padding: EdgeInsets.symmetric(
+        horizontal: AppSpacing.md,
+        vertical: AppSpacing.sm10,
+      ),
       child: Row(
         children: [
           Icon(LucideIcons.packageX, color: AppColors.error, size: 18.sp),
-          SizedBox(width: 8.w),
+          SizedBox(width: AppSpacing.sm),
           Expanded(
             child: Text(
-              'Beberapa produk di keranjang sudah habis. Hapus dulu sebelum checkout.',
+              'cart.out_of_stock_banner'.tr(),
               style: TextStyle(
                 color: AppColors.error,
                 fontSize: 12.sp,
@@ -1843,7 +1887,7 @@ class _CartPageState extends State<CartPage> {
   }) {
     return Container(
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: AppColors.surface,
         borderRadius: BorderRadius.circular(18.r),
         boxShadow: AppColors.softShadow,
       ),
@@ -1864,8 +1908,8 @@ class _CartPageState extends State<CartPage> {
                   Divider(
                     height: 1.h,
                     color: AppColors.grey100,
-                    indent: 16.w,
-                    endIndent: 16.w,
+                    indent: AppSpacing.md,
+                    endIndent: AppSpacing.md,
                   ),
               ],
             );
@@ -1890,13 +1934,18 @@ class _CartPageState extends State<CartPage> {
     final selectedCourier = _courierBySeller[group.seller.id];
 
     return Padding(
-      padding: EdgeInsets.fromLTRB(14.w, 10.h, 14.w, 10.h),
+      padding: EdgeInsets.fromLTRB(
+        AppSpacing.section,
+        AppSpacing.sm10,
+        AppSpacing.section,
+        AppSpacing.sm10,
+      ),
       child: Container(
         width: double.infinity,
-        padding: EdgeInsets.all(12.w),
+        padding: EdgeInsets.all(AppSpacing.md12),
         decoration: BoxDecoration(
           color: AppColors.primary.withValues(alpha: 0.04),
-          borderRadius: BorderRadius.circular(10.r),
+          borderRadius: BorderRadius.circular(AppRadius.md),
           border: Border.all(color: AppColors.primary.withValues(alpha: 0.12)),
         ),
         child: Column(
@@ -1908,7 +1957,7 @@ class _CartPageState extends State<CartPage> {
                 SizedBox(width: 6.w),
                 Expanded(
                   child: Text(
-                    'Ongkir dari Supplier (Asal)',
+                    'cart.shipping_from_supplier'.tr(),
                     style: TextStyle(
                       fontSize: 12.sp,
                       fontWeight: FontWeight.w800,
@@ -1919,13 +1968,17 @@ class _CartPageState extends State<CartPage> {
                 TextButton(
                   onPressed: isLoading ? null : () => _calculateSellerShipping(group),
                   style: TextButton.styleFrom(
-                    padding: EdgeInsets.symmetric(horizontal: 8.w, vertical: 2.h),
+                    padding: EdgeInsets.symmetric(horizontal: AppSpacing.sm, vertical: 2.h),
                     minimumSize: Size.zero,
                     tapTargetSize: MaterialTapTargetSize.shrinkWrap,
                   ),
                   child: Text(
-                    isLoading ? 'Menghitung...' : (selection == null ? 'Atur Ongkir' : 'Ubah'),
-                    style: TextStyle(fontSize: 11.sp, fontWeight: FontWeight.w800),
+                    isLoading
+                        ? 'cart.calculating'.tr()
+                        : (selection == null
+                            ? 'cart.setup_shipping'.tr()
+                            : 'cart.change'.tr()),
+                    style: AppTextStyles.caption(fontWeight: FontWeight.w800),
                   ),
                 ),
               ],
@@ -1933,12 +1986,20 @@ class _CartPageState extends State<CartPage> {
             SizedBox(height: 6.h),
             if (selection == null)
               Text(
-                error ?? 'Belum ada pilihan ongkir. Tap "Atur Ongkir".',
-                style: TextStyle(fontSize: 11.sp, color: AppColors.textSecondary),
+                error ?? 'cart.no_shipping_selection'.tr(),
+                style: AppTextStyles.caption(color: AppColors.textSecondary),
               )
             else
               Text(
-                '${courierCode ?? '-'} ${service ?? '-'} · ${costValue?.toRupiah ?? '-'} · ETD ${etd ?? '-'} hari\nAlamat Tujuan Anda: ${destinationLabel ?? '-'}',
+                'cart.shipping_detail'.tr(
+                  namedArgs: {
+                    'courier': courierCode ?? '-',
+                    'service': service ?? '-',
+                    'cost': costValue != null ? formatMoneyIdr(costValue) : '-',
+                    'etd': etd ?? '-',
+                    'destination': destinationLabel ?? '-',
+                  },
+                ),
                 style: TextStyle(
                   fontSize: 11.sp,
                   color: AppColors.textSecondary,
@@ -1962,14 +2023,15 @@ class _CartPageState extends State<CartPage> {
                 ),
                 label: Text(
                   selectedCourier == null
-                      ? 'Kurir: semua aktif'
-                      : 'Kurir: ${selectedCourier.toUpperCase()}',
+                      ? 'cart.courier_all_active'.tr()
+                      : 'cart.courier_selected'.tr(
+                          namedArgs: {
+                            'courier': selectedCourier.toUpperCase(),
+                          },
+                        ),
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
-                  style: TextStyle(
-                    fontSize: 11.sp,
-                    color: AppColors.textSecondary,
-                  ),
+                  style: AppTextStyles.caption(color: AppColors.textSecondary),
                 ),
               ),
             ),
@@ -1990,14 +2052,11 @@ class _CartPageState extends State<CartPage> {
                 ),
                 label: Text(
                   _destinationQueryBySeller[group.seller.id] == null
-                      ? 'Pilih alamat tujuan Anda'
+                      ? 'cart.pick_destination'.tr()
                       : _destinationQueryBySeller[group.seller.id]!,
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
-                  style: TextStyle(
-                    fontSize: 11.sp,
-                    color: AppColors.textSecondary,
-                  ),
+                  style: AppTextStyles.caption(color: AppColors.textSecondary),
                 ),
               ),
             ),
@@ -2022,7 +2081,12 @@ class _CartPageState extends State<CartPage> {
     final partiallySelected = selectedCount > 0 && !allSelected;
 
     return Padding(
-      padding: EdgeInsets.fromLTRB(8.w, 8.h, 12.w, 8.h),
+      padding: EdgeInsets.fromLTRB(
+        AppSpacing.sm,
+        AppSpacing.sm,
+        AppSpacing.md12,
+        AppSpacing.sm,
+      ),
       child: Row(
         children: [
           // Checkbox pilih semua untuk seller ini (tri-state).
@@ -2055,7 +2119,7 @@ class _CartPageState extends State<CartPage> {
                 '/supplier/${seller.id}',
                 extra: {'name': seller.name},
               ),
-              borderRadius: BorderRadius.circular(10.r),
+              borderRadius: BorderRadius.circular(AppRadius.md),
               child: Padding(
                 padding: EdgeInsets.symmetric(vertical: 4.h, horizontal: 4.w),
                 child: Row(
@@ -2071,11 +2135,11 @@ class _CartPageState extends State<CartPage> {
                       ),
                       child: BisaAvatar(
                         imageUrl: seller.avatarUrl,
-                        radius: 16.r,
+                        radius: AppRadius.xl,
                         fallbackIcon: LucideIcons.store,
                       ),
                     ),
-                    SizedBox(width: 10.w),
+                    SizedBox(width: AppSpacing.sm10),
                     Expanded(
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
@@ -2107,7 +2171,7 @@ class _CartPageState extends State<CartPage> {
                                   ),
                                   child: Icon(
                                     Icons.check,
-                                    color: Colors.white,
+                                    color: AppColors.surface,
                                     size: 8.sp,
                                   ),
                                 ),
@@ -2116,11 +2180,13 @@ class _CartPageState extends State<CartPage> {
                           ),
                           SizedBox(height: 2.h),
                           Text(
-                            '${items.length} produk · $selectedCount dipilih',
-                            style: TextStyle(
-                              fontSize: 11.sp,
-                              color: AppColors.textSecondary,
+                            'cart.products_selected'.tr(
+                              namedArgs: {
+                                'total': '${items.length}',
+                                'selected': '$selectedCount',
+                              },
                             ),
+                            style: AppTextStyles.caption(color: AppColors.textSecondary),
                           ),
                         ],
                       ),
@@ -2149,7 +2215,7 @@ class _CartPageState extends State<CartPage> {
     final isSelected = _selectedItemIds.contains(item.id);
 
     return Padding(
-      padding: EdgeInsets.all(14.w),
+      padding: EdgeInsets.all(AppSpacing.section),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -2176,7 +2242,7 @@ class _CartPageState extends State<CartPage> {
           Stack(
             children: [
               ClipRRect(
-                borderRadius: BorderRadius.circular(12.r),
+                borderRadius: BorderRadius.circular(AppRadius.lg),
                 child: BisaNetworkImage(
                   imageUrl: p.thumbnailUrl,
                   width: 76.w,
@@ -2194,15 +2260,15 @@ class _CartPageState extends State<CartPage> {
                 Positioned.fill(
                   child: Container(
                     decoration: BoxDecoration(
-                      color: Colors.black.withValues(alpha: 0.55),
-                      borderRadius: BorderRadius.circular(12.r),
+                      color: AppColors.black.withValues(alpha: 0.55),
+                      borderRadius: BorderRadius.circular(AppRadius.lg),
                     ),
                     alignment: Alignment.center,
                     child: Text(
-                      'STOK\nHABIS',
+                      'cart.stock_out_badge'.tr(),
                       textAlign: TextAlign.center,
                       style: TextStyle(
-                        color: Colors.white,
+                        color: AppColors.surface,
                         fontSize: 10.sp,
                         fontWeight: FontWeight.w900,
                         height: 1.1,
@@ -2212,7 +2278,7 @@ class _CartPageState extends State<CartPage> {
                 ),
             ],
           ),
-          SizedBox(width: 12.w),
+          SizedBox(width: AppSpacing.md12),
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -2233,7 +2299,7 @@ class _CartPageState extends State<CartPage> {
                 Row(
                   children: [
                     Text(
-                      p.pricePerUnit.toRupiah,
+                      formatMoneyIdr(p.pricePerUnit),
                       style: TextStyle(
                         fontSize: 14.sp,
                         fontWeight: FontWeight.w900,
@@ -2241,33 +2307,30 @@ class _CartPageState extends State<CartPage> {
                       ),
                     ),
                     Text(
-                      ' / ${p.unit}',
-                      style: TextStyle(
-                        fontSize: 11.sp,
-                        color: AppColors.textSecondary,
-                      ),
+                      'cart.unit_per'.tr(namedArgs: {'unit': p.unit}),
+                      style: AppTextStyles.caption(color: AppColors.textSecondary),
                     ),
                   ],
                 ),
                 SizedBox(height: 4.h),
                 _buildStockInfo(stock, atStockLimit, isOutOfStock, p.unit),
-                SizedBox(height: 10.h),
+                SizedBox(height: AppSpacing.sm10),
                 // Subtotal di baris sendiri (rata kanan) — mencegah overflow
                 // ketika harga punya banyak digit (contoh Rp 9.599.904).
                 Container(
                   width: double.infinity,
                   padding: EdgeInsets.symmetric(
-                    horizontal: 10.w,
+                    horizontal: AppSpacing.sm10,
                     vertical: 6.h,
                   ),
                   decoration: BoxDecoration(
                     color: AppColors.primary.withValues(alpha: 0.06),
-                    borderRadius: BorderRadius.circular(8.r),
+                    borderRadius: BorderRadius.circular(AppRadius.button),
                   ),
                   child: Row(
                     children: [
                       Text(
-                        'Subtotal',
+                        'cart.subtotal'.tr(),
                         style: TextStyle(
                           fontSize: 11.sp,
                           color: AppColors.textSecondary,
@@ -2280,7 +2343,7 @@ class _CartPageState extends State<CartPage> {
                           fit: BoxFit.scaleDown,
                           alignment: Alignment.centerRight,
                           child: Text(
-                            subtotal.toRupiah,
+                            formatMoneyIdr(subtotal),
                             style: TextStyle(
                               fontSize: 14.sp,
                               fontWeight: FontWeight.w900,
@@ -2292,13 +2355,13 @@ class _CartPageState extends State<CartPage> {
                     ],
                   ),
                 ),
-                SizedBox(height: 8.h),
+                SizedBox(height: AppSpacing.sm),
                 // Action row: qty controls (kiri) + Nego + Hapus (kanan)
                 Wrap(
                   alignment: WrapAlignment.spaceBetween,
                   crossAxisAlignment: WrapCrossAlignment.center,
-                  spacing: 8.w,
-                  runSpacing: 8.h,
+                  spacing: AppSpacing.sm,
+                  runSpacing: AppSpacing.sm,
                   children: [
                     Row(
                       mainAxisSize: MainAxisSize.min,
@@ -2317,7 +2380,7 @@ class _CartPageState extends State<CartPage> {
                           },
                         ),
                         Padding(
-                          padding: EdgeInsets.symmetric(horizontal: 10.w),
+                          padding: EdgeInsets.symmetric(horizontal: AppSpacing.sm10),
                           child: Text(
                             '${_formatQty(item.quantity)} ${p.unit}',
                             style: TextStyle(
@@ -2352,14 +2415,14 @@ class _CartPageState extends State<CartPage> {
                       children: [
                         _miniActionBtn(
                           icon: LucideIcons.messagesSquare,
-                          label: 'Nego',
+                          label: 'cart.action_nego'.tr(),
                           color: AppColors.info,
                           onTap: () => context.push('/product/${p.id}'),
                         ),
                         SizedBox(width: 6.w),
                         _miniActionBtn(
                           icon: LucideIcons.trash2,
-                          label: 'Hapus',
+                          label: 'cart.action_remove'.tr(),
                           color: AppColors.error,
                           onTap: () =>
                               context.read<CommerceCubit>().removeItem(item.id),
@@ -2385,12 +2448,12 @@ class _CartPageState extends State<CartPage> {
   }) {
     return InkWell(
       onTap: onTap,
-      borderRadius: BorderRadius.circular(8.r),
+      borderRadius: BorderRadius.circular(AppRadius.button),
       child: Container(
-        padding: EdgeInsets.symmetric(horizontal: 8.w, vertical: 6.h),
+        padding: EdgeInsets.symmetric(horizontal: AppSpacing.sm, vertical: 6.h),
         decoration: BoxDecoration(
           color: color.withValues(alpha: 0.08),
-          borderRadius: BorderRadius.circular(8.r),
+          borderRadius: BorderRadius.circular(AppRadius.button),
           border: Border.all(color: color.withValues(alpha: 0.2)),
         ),
         child: Row(
@@ -2416,7 +2479,9 @@ class _CartPageState extends State<CartPage> {
     final badges = <Widget>[];
     badges.add(
       _miniBadge(
-        p.productMode == 'ORGANIC_PRODUCE' ? 'Hasil Tani' : 'Biomassa',
+        p.productMode == 'ORGANIC_PRODUCE'
+            ? 'commerce.mode_organic'.tr()
+            : 'commerce.mode_biomass'.tr(),
         p.productMode == 'ORGANIC_PRODUCE'
             ? AppColors.success
             : AppColors.warning,
@@ -2426,11 +2491,11 @@ class _CartPageState extends State<CartPage> {
       ),
     );
     if (p.isCertified) {
-      badges.add(_miniBadge('Tersertifikasi', AppColors.info,
+      badges.add(_miniBadge('commerce.badge_certified'.tr(), AppColors.info,
           icon: LucideIcons.badgeCheck));
     }
     if (p.isEscrowProtected) {
-      badges.add(_miniBadge('Escrow', AppColors.primary,
+      badges.add(_miniBadge('commerce.badge_escrow'.tr(), AppColors.primary,
           icon: LucideIcons.shieldCheck));
     }
 
@@ -2482,7 +2547,7 @@ class _CartPageState extends State<CartPage> {
           Icon(LucideIcons.packageX, color: AppColors.error, size: 12.sp),
           SizedBox(width: 4.w),
           Text(
-            'Stok habis',
+            'cart.stock_out'.tr(),
             style: TextStyle(
               color: AppColors.error,
               fontSize: 11.sp,
@@ -2504,7 +2569,12 @@ class _CartPageState extends State<CartPage> {
           ),
           SizedBox(width: 4.w),
           Text(
-            'Sudah mencapai stok maksimal (${_formatQty(stock)} $unit)',
+            'cart.stock_max_reached'.tr(
+              namedArgs: {
+                'qty': _formatQty(stock),
+                'unit': unit,
+              },
+            ),
             style: TextStyle(
               color: AppColors.warning,
               fontSize: 11.sp,
@@ -2521,7 +2591,12 @@ class _CartPageState extends State<CartPage> {
         Icon(LucideIcons.package, color: AppColors.textHint, size: 12.sp),
         SizedBox(width: 4.w),
         Text(
-          'Stok: ${_formatQty(stock)} $unit',
+          'cart.stock_available'.tr(
+            namedArgs: {
+              'qty': _formatQty(stock),
+              'unit': unit,
+            },
+          ),
           style: TextStyle(
             color: AppColors.textSecondary,
             fontSize: 11.sp,
@@ -2540,11 +2615,21 @@ class _CartPageState extends State<CartPage> {
         : num.tryParse(previewTotal?.toString() ?? '') ?? 0;
 
     return Container(
-      margin: EdgeInsets.fromLTRB(16.w, 0, 16.w, 12.h),
-      padding: EdgeInsets.fromLTRB(14.w, 12.h, 12.w, 12.h),
+      margin: EdgeInsets.fromLTRB(
+        AppSpacing.md,
+        0,
+        AppSpacing.md,
+        AppSpacing.md12,
+      ),
+      padding: EdgeInsets.fromLTRB(
+        AppSpacing.section,
+        AppSpacing.md12,
+        AppSpacing.md12,
+        AppSpacing.md12,
+      ),
       decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(14.r),
+        color: AppColors.surface,
+        borderRadius: BorderRadius.circular(AppRadius.tile),
         border: Border.all(
           color: selected != null
               ? AppColors.primary.withValues(alpha: 0.25)
@@ -2552,7 +2637,7 @@ class _CartPageState extends State<CartPage> {
         ),
       ),
       child: InkWell(
-        borderRadius: BorderRadius.circular(14.r),
+        borderRadius: BorderRadius.circular(AppRadius.tile),
         onTap: () async {
           final choice = await PaymentMethodPickerSheet.show(
             context,
@@ -2566,10 +2651,10 @@ class _CartPageState extends State<CartPage> {
         child: Row(
           children: [
             Container(
-              padding: EdgeInsets.all(8.r),
+              padding: EdgeInsets.all(AppSpacing.sm),
               decoration: BoxDecoration(
                 color: AppColors.primary.withValues(alpha: 0.12),
-                borderRadius: BorderRadius.circular(10.r),
+                borderRadius: BorderRadius.circular(AppRadius.md),
               ),
               child: Icon(
                 LucideIcons.wallet,
@@ -2577,13 +2662,13 @@ class _CartPageState extends State<CartPage> {
                 color: AppColors.primary,
               ),
             ),
-            SizedBox(width: 12.w),
+            SizedBox(width: AppSpacing.md12),
             Expanded(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
-                    'Metode Pembayaran',
+                    'cart.payment_method'.tr(),
                     style: TextStyle(
                       fontSize: 13.sp,
                       fontWeight: FontWeight.w800,
@@ -2593,8 +2678,13 @@ class _CartPageState extends State<CartPage> {
                   SizedBox(height: 4.h),
                   Text(
                     selected != null
-                        ? '${selected.name} (${selected.code})'
-                        : 'Pilih sekali — berlaku untuk semua toko',
+                        ? 'cart.payment_selected'.tr(
+                            namedArgs: {
+                              'name': selected.name,
+                              'code': selected.code,
+                            },
+                          )
+                        : 'cart.payment_pick_once'.tr(),
                     style: TextStyle(
                       fontSize: 11.sp,
                       color: selected != null
@@ -2625,7 +2715,7 @@ class _CartPageState extends State<CartPage> {
     final displayAddress = _shippingAddressLabel ??
         (fix != null
             ? fix.shortLabel
-            : 'Alamat utama profil akan dipakai otomatis jika tersedia');
+            : 'cart.primary_auto_hint'.tr());
     final detailLine = _selectedProfileAddress != null
         ? _displayLineFromEntity(_selectedProfileAddress!)
         : (fix?.address?.trim().isNotEmpty ?? false)
@@ -2634,11 +2724,21 @@ class _CartPageState extends State<CartPage> {
                 ? _shippingFullAddress!
                 : null;
     return Container(
-      margin: EdgeInsets.fromLTRB(16.w, 0, 16.w, 12.h),
-      padding: EdgeInsets.fromLTRB(14.w, 12.h, 12.w, 12.h),
+      margin: EdgeInsets.fromLTRB(
+        AppSpacing.md,
+        0,
+        AppSpacing.md,
+        AppSpacing.md12,
+      ),
+      padding: EdgeInsets.fromLTRB(
+        AppSpacing.section,
+        AppSpacing.md12,
+        AppSpacing.md12,
+        AppSpacing.md12,
+      ),
       decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(14.r),
+        color: AppColors.surface,
+        borderRadius: BorderRadius.circular(AppRadius.tile),
         border: Border.all(
           color: hasAddress
               ? AppColors.primary.withValues(alpha: 0.25)
@@ -2651,11 +2751,11 @@ class _CartPageState extends State<CartPage> {
           Row(
             children: [
               Container(
-                padding: EdgeInsets.all(8.r),
+                padding: EdgeInsets.all(AppSpacing.sm),
                 decoration: BoxDecoration(
                   color: (hasAddress ? AppColors.primary : AppColors.warning)
                       .withValues(alpha: 0.12),
-                  borderRadius: BorderRadius.circular(10.r),
+                  borderRadius: BorderRadius.circular(AppRadius.md),
                 ),
                 child: Icon(
                   hasAddress ? LucideIcons.mapPin : LucideIcons.mapPinOff,
@@ -2663,7 +2763,7 @@ class _CartPageState extends State<CartPage> {
                   color: hasAddress ? AppColors.primary : AppColors.warning,
                 ),
               ),
-              SizedBox(width: 12.w),
+              SizedBox(width: AppSpacing.md12),
               Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
@@ -2672,7 +2772,7 @@ class _CartPageState extends State<CartPage> {
                     Row(
                       children: [
                         Text(
-                          'Alamat Tujuan Anda',
+                          'cart.destination_title'.tr(),
                           style: TextStyle(
                             fontSize: 11.sp,
                             fontWeight: FontWeight.w700,
@@ -2692,7 +2792,7 @@ class _CartPageState extends State<CartPage> {
                               borderRadius: BorderRadius.circular(6.r),
                             ),
                             child: Text(
-                              'Utama',
+                              'cart.primary_badge'.tr(),
                               style: TextStyle(
                                 fontSize: 9.sp,
                                 fontWeight: FontWeight.w800,
@@ -2734,35 +2834,37 @@ class _CartPageState extends State<CartPage> {
               ),
             ],
           ),
-          SizedBox(height: 10.h),
+          SizedBox(height: AppSpacing.sm10),
           Row(
             children: [
               Expanded(
                 child: _buildShippingAddressAction(
                   icon: LucideIcons.bookUser,
-                  label: 'Profil',
+                  label: 'cart.source_profile'.tr(),
                   highlighted: _selectedProfileAddress != null,
                   onTap: _pickSavedShippingAddress,
                 ),
               ),
-              SizedBox(width: 8.w),
+              SizedBox(width: AppSpacing.sm),
               Expanded(
                 child: _buildShippingAddressAction(
                   icon: LucideIcons.mapPinned,
-                  label: 'Map',
+                  label: 'cart.source_map'.tr(),
                   highlighted: _shippingFix == null &&
                       _selectedProfileAddress == null &&
                       (_shippingFullAddress?.isNotEmpty ?? false),
                   onTap: _pickShippingAddressFromMap,
                 ),
               ),
-              SizedBox(width: 8.w),
+              SizedBox(width: AppSpacing.sm),
               Expanded(
                 child: _buildShippingAddressAction(
                   icon: LucideIcons.locateFixed,
                   label: _detectingLocation
                       ? '...'
-                      : (_shippingFix != null ? 'GPS' : 'Deteksi'),
+                      : (_shippingFix != null
+                          ? 'cart.source_gps'.tr()
+                          : 'cart.source_detect'.tr()),
                   highlighted: _shippingFix != null,
                   loading: _detectingLocation,
                   onTap: _detectingLocation ? null : _detectShippingLocation,
@@ -2792,15 +2894,15 @@ class _CartPageState extends State<CartPage> {
 
     return Material(
       color: bg,
-      borderRadius: BorderRadius.circular(10.r),
+      borderRadius: BorderRadius.circular(AppRadius.md),
       child: InkWell(
         onTap: onTap,
-        borderRadius: BorderRadius.circular(10.r),
+        borderRadius: BorderRadius.circular(AppRadius.md),
         child: Container(
           height: 40.h,
           alignment: Alignment.center,
           decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(10.r),
+            borderRadius: BorderRadius.circular(AppRadius.md),
             border: Border.all(color: border),
           ),
           child: loading
@@ -2893,10 +2995,10 @@ class _CartPageState extends State<CartPage> {
 
     return Container(
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: AppColors.surface,
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withValues(alpha: 0.06),
+            color: AppColors.black.withValues(alpha: 0.06),
             blurRadius: 12,
             offset: const Offset(0, -4),
           ),
@@ -2904,9 +3006,14 @@ class _CartPageState extends State<CartPage> {
       ),
       child: SafeArea(
         top: false,
-        minimum: EdgeInsets.only(bottom: 8.h),
+        minimum: EdgeInsets.only(bottom: AppSpacing.sm),
         child: Padding(
-          padding: EdgeInsets.fromLTRB(16.w, 10.h, 16.w, 8.h),
+          padding: EdgeInsets.fromLTRB(
+            AppSpacing.md,
+            AppSpacing.sm10,
+            AppSpacing.md,
+            AppSpacing.sm,
+          ),
           child: Row(
             crossAxisAlignment: CrossAxisAlignment.center,
             children: [
@@ -2917,8 +3024,10 @@ class _CartPageState extends State<CartPage> {
                   children: [
                     Text(
                       selectedCount > 0
-                          ? 'Estimasi ($selectedCount item)'
-                          : 'Pilih produk',
+                          ? 'cart.estimate_count'.tr(
+                              namedArgs: {'count': '$selectedCount'},
+                            )
+                          : 'cart.pick_products'.tr(),
                       style: TextStyle(
                         fontSize: 11.sp,
                         fontWeight: FontWeight.w600,
@@ -2927,7 +3036,7 @@ class _CartPageState extends State<CartPage> {
                     ),
                     SizedBox(height: 2.h),
                     Text(
-                      selectedTotal.toRupiah,
+                      formatMoneyIdr(selectedTotal),
                       style: TextStyle(
                         fontSize: 18.sp,
                         fontWeight: FontWeight.w900,
@@ -2935,7 +3044,7 @@ class _CartPageState extends State<CartPage> {
                       ),
                     ),
                     Text(
-                      'Ongkir, admin & PPN di halaman checkout',
+                      'cart.fees_at_checkout'.tr(),
                       style: TextStyle(
                         fontSize: 10.sp,
                         color: AppColors.textHint,
@@ -2944,17 +3053,19 @@ class _CartPageState extends State<CartPage> {
                   ],
                 ),
               ),
-              SizedBox(width: 12.w),
+              SizedBox(width: AppSpacing.md12),
               CustomButton(
                 text: selectedCount == 0
-                    ? 'Pilih'
-                    : 'Checkout ($selectedCount)',
+                    ? 'cart.select'.tr()
+                    : 'cart.checkout_count'.tr(
+                        namedArgs: {'count': '$selectedCount'},
+                      ),
                 width: 148.w,
                 height: 48.h,
                 useGradient: canContinue,
                 backgroundColor: canContinue ? null : AppColors.grey200,
                 textColor:
-                    canContinue ? Colors.white : AppColors.textSecondary,
+                    canContinue ? AppColors.textOnPrimary : AppColors.textSecondary,
                 onPressed:
                     canContinue ? () => _goToCheckoutPage(context, cart) : null,
               ),
@@ -2999,11 +3110,15 @@ class _CartPageState extends State<CartPage> {
     }
 
     final previewSubtotal = toDoubleValue(_checkoutPreview?['subtotal']);
+    final previewVoucherDiscount =
+        toDoubleValue(_checkoutPreview?['voucherDiscount']);
     final previewPlatformFee = toDoubleValue(_checkoutPreview?['platformFee']);
     final previewVat = toDoubleValue(_checkoutPreview?['vatAmount']);
     final previewLogistics = toDoubleValue(_checkoutPreview?['logisticsFee']);
     final previewTotal = toDoubleValue(_checkoutPreview?['totalAmount']);
-    final hasPreview = _checkoutPreview != null && !_checkoutPreviewLoading;
+    final hasPreview = _checkoutPreview != null;
+    final isPreviewRefreshing =
+        _checkoutPreviewLoading && _checkoutPreview != null;
     final subtotalShown =
         hasPreview ? previewSubtotal : selectedTotal;
     final logisticsShown = hasPreview ? previewLogistics : shippingTotal;
@@ -3033,31 +3148,31 @@ class _CartPageState extends State<CartPage> {
     final canCheckout = isReadyToPlaceOrder || canRetryPreview;
 
     final checkoutButtonText = _isCheckingOut
-        ? 'Memproses...'
+        ? 'cart.processing'.tr()
         : (selectedCount == 0
-            ? 'Pilih'
+            ? 'cart.select'.tr()
             : (hasOutOfStock && _anySelectedOutOfStock(cart)
-                ? 'Hapus dulu'
+                ? 'cart.remove_first'.tr()
                 : (!hasValidShippingAddress
-                      ? 'Lengkapi alamat'
+                      ? 'cart.complete_address'.tr()
                       : (_checkoutPreviewLoading
-                            ? 'Hitung...'
+                            ? 'cart.calculating_short'.tr()
                             : (_checkoutPreviewError != null
-                                  ? 'Ulangi'
+                                  ? 'cart.retry'.tr()
                                   : (!hasCompleteShipping
-                                        ? 'Atur ongkir'
+                                        ? 'cart.setup_shipping_btn'.tr()
                                         : (!hasPreview
-                                              ? 'Hitung...'
+                                              ? 'cart.calculating_short'.tr()
                                               : (_selectedPayment == null
-                                                    ? 'Pilih bayar'
-                                                    : 'Pesanan & bayar'))))))));
+                                                    ? 'cart.pick_payment'.tr()
+                                                    : 'cart.place_order'.tr()))))))));
 
     return Container(
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: AppColors.surface,
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withValues(alpha: 0.06),
+            color: AppColors.black.withValues(alpha: 0.06),
             blurRadius: 12,
             offset: const Offset(0, -4),
           ),
@@ -3065,9 +3180,14 @@ class _CartPageState extends State<CartPage> {
       ),
       child: SafeArea(
         top: false,
-        minimum: EdgeInsets.only(bottom: 8.h),
+        minimum: EdgeInsets.only(bottom: AppSpacing.sm),
         child: Padding(
-          padding: EdgeInsets.fromLTRB(16.w, 10.h, 16.w, 8.h),
+          padding: EdgeInsets.fromLTRB(
+            AppSpacing.md,
+            AppSpacing.sm10,
+            AppSpacing.md,
+            AppSpacing.sm,
+          ),
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
@@ -3076,8 +3196,10 @@ class _CartPageState extends State<CartPage> {
                 children: [
                   Text(
                     selectedCount > 0
-                        ? 'Ringkasan ($selectedCount dipilih)'
-                        : 'Ringkasan pembayaran',
+                        ? 'cart.summary_selected'.tr(
+                            namedArgs: {'count': '$selectedCount'},
+                          )
+                        : 'cart.summary_payment'.tr(),
                     style: TextStyle(
                       fontSize: 12.sp,
                       fontWeight: FontWeight.w800,
@@ -3085,7 +3207,7 @@ class _CartPageState extends State<CartPage> {
                     ),
                   ),
                   Text(
-                    '${cart.count} item',
+                    '${'cart.item_count'.tr(namedArgs: {'count': '${cart.count}'})}',
                     style: TextStyle(
                       fontSize: 11.sp,
                       fontWeight: FontWeight.w600,
@@ -3094,34 +3216,110 @@ class _CartPageState extends State<CartPage> {
                   ),
                 ],
               ),
-              SizedBox(height: 8.h),
+              if (_isCheckoutFlow && selectedCount > 0) ...[
+                SizedBox(height: AppSpacing.sm),
+                Row(
+                  children: [
+                    Expanded(
+                      child: TextField(
+                        controller: _voucherCtrl,
+                        decoration: InputDecoration(
+                          isDense: true,
+                          hintText: 'cart.voucher_hint'.tr(),
+                          border: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(AppRadius.md),
+                          ),
+                        ),
+                        textCapitalization: TextCapitalization.characters,
+                      ),
+                    ),
+                    SizedBox(width: AppSpacing.sm),
+                    TextButton(
+                      onPressed: _voucherApplying ? null : () => _applyVoucher(cart),
+                      child: Text(
+                        _appliedVoucherCode != null
+                            ? 'cart.voucher_change'.tr()
+                            : 'cart.voucher_apply'.tr(),
+                      ),
+                    ),
+                  ],
+                ),
+                if (_voucherError != null)
+                  Align(
+                    alignment: Alignment.centerLeft,
+                    child: Text(
+                      _voucherError!,
+                      style: TextStyle(fontSize: 11.sp, color: AppColors.error),
+                    ),
+                  ),
+                if (_appliedVoucherCode != null)
+                  Align(
+                    alignment: Alignment.centerLeft,
+                    child: Text(
+                      'cart.voucher_applied'.tr(namedArgs: {
+                        'code': _appliedVoucherCode!,
+                      }),
+                      style: TextStyle(
+                        fontSize: 11.sp,
+                        color: AppColors.success,
+                        fontWeight: FontWeight.w700,
+                      ),
+                    ),
+                  ),
+                if (_savedPaymentPref != null) ...[
+                  SizedBox(height: 6.h),
+                  Align(
+                    alignment: Alignment.centerLeft,
+                    child: Text(
+                      'cart.saved_payment_hint'.tr(namedArgs: {
+                        'name': _savedPaymentPref!.name,
+                      }),
+                      style: TextStyle(
+                        fontSize: 11.sp,
+                        color: AppColors.primary,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                  ),
+                ],
+              ],
+              SizedBox(height: AppSpacing.sm),
               Container(
                 width: double.infinity,
-                padding: EdgeInsets.symmetric(horizontal: 12.w, vertical: 8.h),
+                padding: EdgeInsets.symmetric(
+                  horizontal: AppSpacing.md12,
+                  vertical: AppSpacing.sm,
+                ),
                 decoration: BoxDecoration(
                   color: AppColors.grey50,
-                  borderRadius: BorderRadius.circular(10.r),
+                  borderRadius: BorderRadius.circular(AppRadius.md),
                   border: Border.all(color: AppColors.grey200),
                 ),
                 child: Column(
                   children: [
                     _buildCheckoutPriceRow(
-                      'Subtotal',
-                      subtotalShown.toRupiah,
+                      'cart.subtotal'.tr(),
+                      formatMoneyIdr(subtotalShown),
                     ),
-                    if (hasPreview)
+                    if (hasPreview && previewVoucherDiscount > 0)
                       _buildCheckoutPriceRow(
-                        'Biaya Admin',
-                        previewPlatformFee.toRupiah,
+                        'cart.voucher_discount'.tr(),
+                        '-${formatMoneyIdr(previewVoucherDiscount)}',
+                        valueColor: AppColors.success,
                       ),
                     if (hasPreview)
                       _buildCheckoutPriceRow(
-                        'PPN',
-                        previewVat.toRupiah,
+                      'cart.fee_admin'.tr(),
+                        formatMoneyIdr(previewPlatformFee),
+                      ),
+                    if (hasPreview)
+                      _buildCheckoutPriceRow(
+                        'cart.fee_vat'.tr(),
+                        formatMoneyIdr(previewVat),
                       ),
                     _buildCheckoutPriceRow(
-                      'Ongkir',
-                      logisticsShown.toRupiah,
+                      'cart.fee_shipping'.tr(),
+                      formatMoneyIdr(logisticsShown),
                     ),
                   ],
                 ),
@@ -3131,7 +3329,7 @@ class _CartPageState extends State<CartPage> {
                 Align(
                   alignment: Alignment.centerLeft,
                   child: Text(
-                    'Lengkapi alamat pengiriman dulu',
+                    'cart.complete_shipping_address'.tr(),
                     style: TextStyle(
                       fontSize: 11.sp,
                       color: AppColors.warning,
@@ -3145,7 +3343,7 @@ class _CartPageState extends State<CartPage> {
                 Align(
                   alignment: Alignment.centerLeft,
                   child: Text(
-                    'Atur ongkir semua supplier dulu',
+                    'cart.setup_all_shipping'.tr(),
                     style: TextStyle(
                       fontSize: 11.sp,
                       color: AppColors.warning,
@@ -3164,7 +3362,7 @@ class _CartPageState extends State<CartPage> {
                 Align(
                   alignment: Alignment.centerLeft,
                   child: Text(
-                    'Pilih metode pembayaran dulu',
+                    'cart.pick_payment_method'.tr(),
                     style: TextStyle(
                       fontSize: 11.sp,
                       color: AppColors.warning,
@@ -3173,16 +3371,33 @@ class _CartPageState extends State<CartPage> {
                   ),
                 ),
               ],
-              if (_checkoutPreviewLoading && selectedCount > 0 && hasCompleteShipping) ...[
+              if (_checkoutPreviewLoading &&
+                  selectedCount > 0 &&
+                  hasCompleteShipping &&
+                  !isPreviewRefreshing) ...[
                 SizedBox(height: 6.h),
                 Align(
                   alignment: Alignment.centerLeft,
                   child: Text(
-                    'Menghitung breakdown biaya...',
+                    'cart.calculating_breakdown'.tr(),
                     style: TextStyle(
                       fontSize: 11.sp,
                       color: AppColors.textSecondary,
                       fontWeight: FontWeight.w700,
+                    ),
+                  ),
+                ),
+              ],
+              if (isPreviewRefreshing) ...[
+                SizedBox(height: 6.h),
+                Align(
+                  alignment: Alignment.centerLeft,
+                  child: Text(
+                    'cart.updating_breakdown'.tr(),
+                    style: TextStyle(
+                      fontSize: 11.sp,
+                      color: AppColors.textSecondary,
+                      fontWeight: FontWeight.w600,
                     ),
                   ),
                 ),
@@ -3204,7 +3419,7 @@ class _CartPageState extends State<CartPage> {
                 ),
               ],
               Padding(
-                padding: EdgeInsets.symmetric(vertical: 10.h),
+                padding: EdgeInsets.symmetric(vertical: AppSpacing.sm10),
                 child: Divider(height: 1.h, color: AppColors.grey300),
               ),
               Row(
@@ -3216,7 +3431,7 @@ class _CartPageState extends State<CartPage> {
                       mainAxisSize: MainAxisSize.min,
                       children: [
                         Text(
-                          'Total',
+                          'cart.total'.tr(),
                           style: TextStyle(
                             fontSize: 11.sp,
                             fontWeight: FontWeight.w600,
@@ -3225,7 +3440,7 @@ class _CartPageState extends State<CartPage> {
                         ),
                         SizedBox(height: 2.h),
                         Text(
-                          grandTotal.toRupiah,
+                          formatMoneyIdr(grandTotal),
                           maxLines: 1,
                           overflow: TextOverflow.ellipsis,
                           style: TextStyle(
@@ -3236,7 +3451,9 @@ class _CartPageState extends State<CartPage> {
                         ),
                         if (selectedCount > 0)
                           Text(
-                            '$selectedCount produk dipilih',
+                            'cart.products_picked'.tr(
+                              namedArgs: {'count': '$selectedCount'},
+                            ),
                             style: TextStyle(
                               fontSize: 10.sp,
                               color: AppColors.textHint,
@@ -3245,7 +3462,7 @@ class _CartPageState extends State<CartPage> {
                       ],
                     ),
                   ),
-                  SizedBox(width: 12.w),
+                  SizedBox(width: AppSpacing.md12),
                   CustomButton(
                     text: checkoutButtonText,
                     width: 148.w,
@@ -3259,7 +3476,10 @@ class _CartPageState extends State<CartPage> {
                     onPressed: isReadyToPlaceOrder
                         ? () => _onCheckout(context, cart)
                         : canRetryPreview
-                            ? () => _refreshCheckoutPreview(cart)
+                            ? () {
+                                _lastCheckoutPreviewKey = null;
+                                _refreshCheckoutPreview(cart, force: true);
+                              }
                             : null,
                   ),
                 ],
@@ -3288,15 +3508,15 @@ class _CartPageState extends State<CartPage> {
     final color = enabled ? AppColors.textPrimary : AppColors.grey300;
     return InkWell(
       onTap: onTap,
-      borderRadius: BorderRadius.circular(8.r),
+      borderRadius: BorderRadius.circular(AppRadius.button),
       child: Container(
         padding: EdgeInsets.all(6.r),
         decoration: BoxDecoration(
           border: Border.all(
             color: enabled ? AppColors.grey200 : AppColors.grey100,
           ),
-          borderRadius: BorderRadius.circular(8.r),
-          color: enabled ? Colors.white : AppColors.grey50,
+          borderRadius: BorderRadius.circular(AppRadius.button),
+          color: enabled ? AppColors.surface : AppColors.grey50,
         ),
         child: Icon(icon, size: 16.sp, color: color),
       ),
@@ -3377,9 +3597,10 @@ class _CartRecommendationSectionState
     super.dispose();
   }
 
-  String get _modeLabel => widget.productMode == 'ORGANIC_PRODUCE'
-      ? 'Hasil Tani'
-      : 'Biomassa';
+  String _modeLabel(BuildContext context) =>
+      widget.productMode == 'ORGANIC_PRODUCE'
+          ? 'commerce.mode_organic'.tr()
+          : 'commerce.mode_biomass'.tr();
 
   IconData get _modeIcon => widget.productMode == 'ORGANIC_PRODUCE'
       ? LucideIcons.sprout
@@ -3396,17 +3617,17 @@ class _CartRecommendationSectionState
           padding: EdgeInsets.all(6.r),
           decoration: BoxDecoration(
             color: _modeColor.withValues(alpha: 0.12),
-            borderRadius: BorderRadius.circular(8.r),
+            borderRadius: BorderRadius.circular(AppRadius.button),
           ),
           child: Icon(_modeIcon, size: 14.sp, color: _modeColor),
         ),
-        SizedBox(width: 8.w),
+        SizedBox(width: AppSpacing.sm),
         Expanded(
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Text(
-                'Mungkin Anda Suka',
+                'cart.you_may_like'.tr(),
                 style: TextStyle(
                   fontSize: 15.sp,
                   fontWeight: FontWeight.w900,
@@ -3427,7 +3648,7 @@ class _CartRecommendationSectionState
         GestureDetector(
           onTap: () => context.go('/'),
           child: Text(
-            'Lihat Semua',
+            'commerce.see_all'.tr(),
             style: TextStyle(
               fontSize: 12.sp,
               fontWeight: FontWeight.w700,
@@ -3448,22 +3669,25 @@ class _CartRecommendationSectionState
           return state.maybeWhen(
             initial: () => const SizedBox.shrink(),
             loading: () => Padding(
-              padding: EdgeInsets.only(top: 8.h),
+              padding: EdgeInsets.only(top: AppSpacing.sm),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  _buildHeader('Memuat rekomendasi...'),
-                  SizedBox(height: 12.h),
+                  _buildHeader('cart.rec_loading'.tr()),
+                  SizedBox(height: AppSpacing.md12),
                   SizedBox(
-                    height: 220.h,
+                    height: ProductCardSkeleton.horizontalListViewportHeight,
                     child: ListView.separated(
                       scrollDirection: Axis.horizontal,
-                      padding: EdgeInsets.symmetric(horizontal: 16.w),
+                      padding: EdgeInsets.symmetric(horizontal: AppSpacing.md),
                       itemCount: 3,
-                      separatorBuilder: (_, __) => SizedBox(width: 12.w),
+                      separatorBuilder: (_, __) => SizedBox(width: AppSpacing.md12),
                       itemBuilder: (_, __) => SizedBox(
                         width: 160.w,
-                        child: const ProductCardSkeleton(showSellerInfo: true),
+                        child: ProductCardSkeleton(
+                          imageHeight: 120.h,
+                          showSellerInfo: true,
+                        ),
                       ),
                     ),
                   ),
@@ -3471,17 +3695,17 @@ class _CartRecommendationSectionState
               ),
             ),
             error: (msg) => Padding(
-              padding: EdgeInsets.only(top: 8.h),
+              padding: EdgeInsets.only(top: AppSpacing.sm),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  _buildHeader('Gagal memuat rekomendasi'),
-                  SizedBox(height: 8.h),
+                  _buildHeader('cart.rec_failed'.tr()),
+                  SizedBox(height: AppSpacing.sm),
                   Container(
-                    padding: EdgeInsets.all(12.w),
+                    padding: EdgeInsets.all(AppSpacing.md12),
                     decoration: BoxDecoration(
                       color: AppColors.grey50,
-                      borderRadius: BorderRadius.circular(10.r),
+                      borderRadius: BorderRadius.circular(AppRadius.md),
                     ),
                     child: Row(
                       children: [
@@ -3490,14 +3714,11 @@ class _CartRecommendationSectionState
                           color: AppColors.textHint,
                           size: 16.sp,
                         ),
-                        SizedBox(width: 8.w),
+                        SizedBox(width: AppSpacing.sm),
                         Expanded(
                           child: Text(
                             msg,
-                            style: TextStyle(
-                              fontSize: 12.sp,
-                              color: AppColors.textSecondary,
-                            ),
+                            style: AppTextStyles.bodySecondary(color: AppColors.textSecondary),
                           ),
                         ),
                         TextButton(
@@ -3505,7 +3726,7 @@ class _CartRecommendationSectionState
                             _triedFallback = false;
                             _fetch();
                           },
-                          child: const Text('Coba Lagi'),
+                          child: Text('coba_lagi'.tr()),
                         ),
                       ],
                     ),
@@ -3525,22 +3746,25 @@ class _CartRecommendationSectionState
                   if (mounted) _fetchFallback();
                 });
                 return Padding(
-                  padding: EdgeInsets.only(top: 8.h),
+                  padding: EdgeInsets.only(top: AppSpacing.sm),
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      _buildHeader('Mencari rekomendasi lain...'),
-                      SizedBox(height: 12.h),
+                      _buildHeader('cart.rec_searching'.tr()),
+                      SizedBox(height: AppSpacing.md12),
                       SizedBox(
-                        height: 80.h,
+                        height: 120.h,
                         child: ListView.separated(
                           scrollDirection: Axis.horizontal,
-                          padding: EdgeInsets.symmetric(horizontal: 16.w),
+                          padding: EdgeInsets.symmetric(horizontal: AppSpacing.md),
                           itemCount: 2,
-                          separatorBuilder: (_, __) => SizedBox(width: 12.w),
+                          separatorBuilder: (_, __) => SizedBox(width: AppSpacing.md12),
                           itemBuilder: (_, __) => SizedBox(
                             width: 140.w,
-                            child: const ProductCardSkeleton(showSellerInfo: false),
+                            child: ProductCardSkeleton(
+                              imageHeight: 52.h,
+                              showSellerInfo: false,
+                            ),
                           ),
                         ),
                       ),
@@ -3552,21 +3776,21 @@ class _CartRecommendationSectionState
               if (filtered.isEmpty) {
                 // Bahkan setelah fallback masih kosong → tampilkan empty state
                 return Padding(
-                  padding: EdgeInsets.only(top: 8.h),
+                  padding: EdgeInsets.only(top: AppSpacing.sm),
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      _buildHeader('Belum ada rekomendasi tersedia'),
-                      SizedBox(height: 10.h),
+                      _buildHeader('cart.rec_none'.tr()),
+                      SizedBox(height: AppSpacing.sm10),
                       Container(
                         width: double.infinity,
                         padding: EdgeInsets.symmetric(
-                          horizontal: 14.w,
+                          horizontal: AppSpacing.section,
                           vertical: 18.h,
                         ),
                         decoration: BoxDecoration(
                           color: AppColors.grey50,
-                          borderRadius: BorderRadius.circular(12.r),
+                          borderRadius: BorderRadius.circular(AppRadius.lg),
                         ),
                         child: Column(
                           children: [
@@ -3577,7 +3801,7 @@ class _CartRecommendationSectionState
                             ),
                             SizedBox(height: 6.h),
                             Text(
-                              'Jelajahi marketplace untuk lihat lebih banyak produk',
+                              'cart.explore_marketplace'.tr(),
                               textAlign: TextAlign.center,
                               style: TextStyle(
                                 fontSize: 12.sp,
@@ -3585,7 +3809,7 @@ class _CartRecommendationSectionState
                                 fontWeight: FontWeight.w600,
                               ),
                             ),
-                            SizedBox(height: 8.h),
+                            SizedBox(height: AppSpacing.sm),
                             TextButton.icon(
                               onPressed: () => context.go('/'),
                               icon: Icon(
@@ -3594,7 +3818,7 @@ class _CartRecommendationSectionState
                                 color: AppColors.primary,
                               ),
                               label: Text(
-                                'Buka Marketplace',
+                                'cart.open_marketplace'.tr(),
                                 style: TextStyle(
                                   color: AppColors.primary,
                                   fontWeight: FontWeight.w800,
@@ -3611,22 +3835,24 @@ class _CartRecommendationSectionState
               }
 
               final subtitle = _triedFallback
-                  ? 'Produk terlaris di marketplace'
-                  : 'Rekomendasi $_modeLabel terlaris';
+                  ? 'cart.rec_bestseller'.tr()
+                  : 'cart.rec_mode_bestseller'.tr(
+                      namedArgs: {'mode': _modeLabel(context)},
+                    );
 
               return Padding(
-                padding: EdgeInsets.only(top: 8.h),
+                padding: EdgeInsets.only(top: AppSpacing.sm),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     _buildHeader(subtitle),
-                    SizedBox(height: 12.h),
+                    SizedBox(height: AppSpacing.md12),
                     MasonryGridView.count(
                       shrinkWrap: true,
                       physics: const NeverScrollableScrollPhysics(),
                       crossAxisCount: 2,
-                      mainAxisSpacing: 12.h,
-                      crossAxisSpacing: 10.w,
+                      mainAxisSpacing: AppSpacing.md12,
+                      crossAxisSpacing: AppSpacing.sm10,
                       itemCount: filtered.length,
                       itemBuilder: (context, index) {
                         return ProductCard(product: filtered[index]);

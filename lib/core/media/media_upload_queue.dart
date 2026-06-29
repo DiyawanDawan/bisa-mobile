@@ -26,6 +26,7 @@ class MediaUploadQueue {
     required String folder,
     CancelToken? cancelToken,
     void Function(double progress)? onProgress,
+    bool forceFresh = false,
   }) async {
     final manageBatch = !_progress.snapshot.active;
     if (manageBatch) {
@@ -35,8 +36,9 @@ class MediaUploadQueue {
     await _acquireSlot();
     try {
       _progress.beginFile(localPath);
-      final resumeSessionId =
-          await _uploadService.sessionStore?.getSessionId(localPath);
+      final resumeSessionId = forceFresh
+          ? null
+          : await _uploadService.sessionStore?.getSessionId(localPath);
 
       final result = await _uploadService.uploadFile(
         localPath: localPath,

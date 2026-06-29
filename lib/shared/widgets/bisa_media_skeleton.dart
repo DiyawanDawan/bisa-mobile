@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:skeletonizer/skeletonizer.dart';
 
+import '../../core/constants/app_layout.dart';
 import '../../core/constants/app_colors.dart';
 import 'shimmer_loading.dart';
 
@@ -38,7 +39,7 @@ class BisaMediaSkeleton extends StatelessWidget {
     final isCircle = shape == BoxShape.circle;
     final radius = isCircle
         ? null
-        : (borderRadius ?? BorderRadius.circular(8.r));
+        : (borderRadius ?? BorderRadius.circular(AppRadius.button));
 
     Widget bone = Bone(
       width: width ?? double.infinity,

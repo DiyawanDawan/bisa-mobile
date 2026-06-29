@@ -1,3 +1,4 @@
+import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:mobile_bisa/core/constants/app_colors.dart';
@@ -33,7 +34,7 @@ class InvoiceShippingCard extends StatelessWidget {
           border: Border.all(color: AppColors.warning.withValues(alpha: 0.2)),
         ),
         child: Text(
-          'Alamat pengiriman belum tersedia.',
+          'invoice.shipping_missing'.tr(),
           style: TextStyle(fontSize: 12.sp, color: AppColors.textSecondary),
         ),
       );
@@ -43,7 +44,7 @@ class InvoiceShippingCard extends StatelessWidget {
       width: double.infinity,
       padding: EdgeInsets.all(16.w),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: AppColors.surface,
         borderRadius: BorderRadius.circular(14.r),
         border: Border.all(color: AppColors.grey200),
       ),
@@ -55,7 +56,7 @@ class InvoiceShippingCard extends StatelessWidget {
               Icon(Icons.local_shipping_outlined, size: 18.sp, color: AppColors.primary),
               SizedBox(width: 8.w),
               Text(
-                'Pengiriman BISA',
+                'invoice.shipping_bisa'.tr(),
                 style: TextStyle(
                   fontWeight: FontWeight.w800,
                   fontSize: 14.sp,
@@ -66,19 +67,22 @@ class InvoiceShippingCard extends StatelessWidget {
           SizedBox(height: 10.h),
           if (hasOrigin) ...[
             _addressBlock(
-              'Asal — Pengirim',
+              'invoice.shipping_origin_title'.tr(),
               originSnapshot!,
               footer: sellerOriginLabel != null && sellerOriginLabel!.isNotEmpty
-                  ? 'Lokasi ongkir: $sellerOriginLabel'
+                  ? 'invoice.shipping_origin_label'.tr(namedArgs: {
+                      'label': sellerOriginLabel!,
+                    })
                   : null,
             ),
             if (hasDestination) SizedBox(height: 12.h),
           ],
-          if (hasDestination) _addressBlock('Tujuan — Penerima', snapshot!),
+          if (hasDestination)
+            _addressBlock('invoice.shipping_dest_title'.tr(), snapshot!),
           if (methodLines.isNotEmpty) ...[
             SizedBox(height: 12.h),
             Text(
-              'Metode Pengiriman',
+              'invoice.shipping_method'.tr(),
               style: TextStyle(
                 fontSize: 12.sp,
                 fontWeight: FontWeight.w700,
@@ -139,19 +143,19 @@ class InvoiceShippingCard extends StatelessWidget {
       final label = courierName != null && courierName.isNotEmpty
           ? '$courierName (${courier.toUpperCase()})'
           : courier.toUpperCase();
-      lines.add('Kurir: $label');
+      lines.add('invoice.shipping_line_courier'.tr(namedArgs: {'label': label}));
     }
     if (service != null && service.isNotEmpty) {
-      lines.add('Layanan: $service');
+      lines.add('invoice.shipping_line_service'.tr(namedArgs: {'service': service}));
     }
     if (origin != null && origin.isNotEmpty) {
-      lines.add('Asal ongkir: $origin');
+      lines.add('invoice.shipping_line_origin'.tr(namedArgs: {'origin': origin}));
     }
     if (destination != null && destination.isNotEmpty) {
-      lines.add('Tujuan ongkir: $destination');
+      lines.add('invoice.shipping_line_dest'.tr(namedArgs: {'dest': destination}));
     }
     if (etd != null && etd.isNotEmpty) {
-      lines.add('Estimasi: $etd');
+      lines.add('invoice.shipping_line_eta'.tr(namedArgs: {'eta': etd}));
     }
     return lines;
   }
@@ -179,13 +183,19 @@ class InvoiceShippingCard extends StatelessWidget {
           ),
         ),
         SizedBox(height: 6.h),
-        if (recipient != null && recipient.isNotEmpty) _line('Nama', recipient),
-        if (phone != null && phone.isNotEmpty) _line('Telepon', phone),
-        if (address != null && address.isNotEmpty) _line('Alamat', address),
+        if (recipient != null && recipient.isNotEmpty)
+          _line('invoice.shipping_address_name'.tr(), recipient),
+        if (phone != null && phone.isNotEmpty)
+          _line('invoice.shipping_address_phone'.tr(), phone),
+        if (address != null && address.isNotEmpty)
+          _line('invoice.shipping_address_street'.tr(), address),
         if (regency != null || province != null)
           _line(
-            'Wilayah',
-            [regency, province].whereType<String>().where((s) => s.isNotEmpty).join(', '),
+            'invoice.shipping_address_region'.tr(),
+            [regency, province]
+                .whereType<String>()
+                .where((s) => s.isNotEmpty)
+                .join(', '),
           ),
         if (footer != null && footer.isNotEmpty) ...[
           SizedBox(height: 4.h),

@@ -1,12 +1,15 @@
 import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
+import '../../../../core/i18n/failure_messages.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
 import 'package:share_plus/share_plus.dart';
+import '../../../../core/constants/app_layout.dart';
 import '../../../../core/constants/app_colors.dart';
+import '../../../../core/utils/app_feedback.dart';
 import '../../../../core/utils/media_url_utils.dart';
 import '../../../../injection_container.dart';
 import '../../../../features/auth/presentation/bloc/auth_cubit.dart';
@@ -18,7 +21,7 @@ import '../../domain/entities/forum_entity.dart';
 import '../../domain/entities/forum_media.dart';
 import '../widgets/forum_media_widgets.dart';
 import '../../../../shared/widgets/forum_detail_skeleton.dart';
-import 'package:timeago/timeago.dart' as timeago;
+import 'package:mobile_bisa/core/i18n/locale_formatters.dart';
 
 class ForumDetailPage extends StatefulWidget {
   final String postId;
@@ -60,7 +63,7 @@ class _ForumDetailPageState extends State<ForumDetailPage> {
           builder: (builderContext, state) {
             return state.maybeWhen(
               loading: () => const ShimmerForumDetailPlaceholder(),
-              error: (msg) => Center(child: Text(msg)),
+              error: (msg) => Center(child: Text(msg.localizedFailure)),
               loaded: (posts) {
                 final post = posts.firstWhere(
                   (element) => element.id == widget.postId,
@@ -78,24 +81,24 @@ class _ForumDetailPageState extends State<ForumDetailPage> {
                             Container(
                               width: double.infinity,
                               decoration: BoxDecoration(
-                                color: Colors.white,
-                                borderRadius: BorderRadius.circular(32.r),
+                                color: AppColors.surface,
+                                borderRadius: BorderRadius.circular(AppSpacing.xxlPx.r),
                                 boxShadow: [
                                   BoxShadow(
-                                    color: Colors.black.withOpacity(0.04),
+                                    color: AppColors.black.withOpacity(0.04),
                                     blurRadius: 24,
                                     offset: const Offset(0, 8),
                                   ),
                                 ],
                               ),
                               padding: EdgeInsets.symmetric(
-                                horizontal: 20.w,
-                                vertical: 24.h,
+                                horizontal: AppSpacing.lg,
+                                vertical: AppSpacing.xl,
                               ),
                               child: Column(
                                 crossAxisAlignment: CrossAxisAlignment.start,
                                 children: [
-                                  _buildAuthorInfo(post),
+                                  _buildAuthorInfo(context, post),
                                   IntrinsicHeight(
                                     child: Row(
                                       crossAxisAlignment:
@@ -120,7 +123,7 @@ class _ForumDetailPageState extends State<ForumDetailPage> {
                                             crossAxisAlignment:
                                                 CrossAxisAlignment.start,
                                             children: [
-                                              SizedBox(height: 16.h),
+                                              SizedBox(height: AppSpacing.md),
                                               Text(
                                                 post.title,
                                                 style: TextStyle(
@@ -131,7 +134,7 @@ class _ForumDetailPageState extends State<ForumDetailPage> {
                                                   letterSpacing: -0.8,
                                                 ),
                                               ),
-                                              SizedBox(height: 12.h),
+                                              SizedBox(height: AppSpacing.md12),
                                               Text(
                                                 post.content,
                                                 style: TextStyle(
@@ -143,12 +146,12 @@ class _ForumDetailPageState extends State<ForumDetailPage> {
                                                 ),
                                               ),
                                               ForumMediaGrid(media: post.mediaUrls),
-                                              SizedBox(height: 24.h),
+                                              SizedBox(height: AppSpacing.xl),
                                               _buildInteractionBar(
                                                 builderContext,
                                                 post,
                                               ),
-                                              SizedBox(height: 24.h),
+                                              SizedBox(height: AppSpacing.xl),
                                             ],
                                           ),
                                         ),
@@ -178,14 +181,16 @@ class _ForumDetailPageState extends State<ForumDetailPage> {
                                             children: [
                                               Icon(
                                                 LucideIcons.messageSquare,
-                                                color: Colors.white,
+                                                color: AppColors.surface,
                                                 size: 14.sp,
                                               ),
                                               SizedBox(width: 6.w),
                                               Text(
-                                                'Komentar (${post.commentCount})',
+                                                'forum.comments_count'.tr(namedArgs: {
+                                                  'count': '${post.commentCount}',
+                                                }),
                                                 style: TextStyle(
-                                                  color: Colors.white,
+                                                  color: AppColors.surface,
                                                   fontWeight: FontWeight.w800,
                                                   fontSize: 12.sp,
                                                 ),
@@ -195,7 +200,7 @@ class _ForumDetailPageState extends State<ForumDetailPage> {
                                         ),
                                         const Spacer(),
                                         Text(
-                                          'Terbaru',
+                                          'forum.sort_latest'.tr(),
                                           style: TextStyle(
                                             color: AppColors.textHint,
                                             fontSize: 12.sp,
@@ -258,7 +263,7 @@ class _ForumDetailPageState extends State<ForumDetailPage> {
         color: AppColors.secondary,
         shape: BoxShape.circle,
       ),
-      child: Icon(Icons.check, color: Colors.white, size: 8.sp),
+      child: Icon(Icons.check, color: AppColors.textOnPrimary, size: 8.sp),
     );
   }
 
@@ -271,7 +276,7 @@ class _ForumDetailPageState extends State<ForumDetailPage> {
         borderRadius: BorderRadius.circular(4.r),
       ),
       child: Text(
-        'Anda',
+        'forum.you_badge'.tr(),
         style: TextStyle(
           fontSize: 10.sp,
           fontWeight: FontWeight.w800,
@@ -281,11 +286,12 @@ class _ForumDetailPageState extends State<ForumDetailPage> {
     );
   }
 
-  String _formatForumDateTime(DateTime dateTime) {
-    return DateFormat('d MMM yyyy, HH:mm', 'id_ID').format(dateTime);
+  String _formatForumDateTime(BuildContext context, DateTime dateTime) {
+    return context.formatDateTime(dateTime);
   }
 
   Widget _buildCommentAuthorLine(
+    BuildContext context,
     ForumCommentEntity comment, {
     required bool isReply,
     required bool isMine,
@@ -321,7 +327,7 @@ class _ForumDetailPageState extends State<ForumDetailPage> {
             ),
             SizedBox(width: 4.w),
             Text(
-              _formatForumDateTime(comment.createdAt),
+              _formatForumDateTime(context, comment.createdAt),
               style: TextStyle(
                 color: AppColors.textHint,
                 fontSize: 11.sp,
@@ -329,7 +335,7 @@ class _ForumDetailPageState extends State<ForumDetailPage> {
               ),
             ),
             Text(
-              ' · ${timeago.format(comment.createdAt, locale: 'id')}',
+              ' · ${context.formatTimeAgo(comment.createdAt)}',
               style: TextStyle(
                 color: AppColors.textHint.withValues(alpha: 0.85),
                 fontSize: 10.sp,
@@ -342,7 +348,7 @@ class _ForumDetailPageState extends State<ForumDetailPage> {
     );
   }
 
-  Widget _buildAuthorInfo(ForumPostEntity post) {
+  Widget _buildAuthorInfo(BuildContext context, ForumPostEntity post) {
     return Row(
       children: [
         Container(
@@ -367,7 +373,7 @@ class _ForumDetailPageState extends State<ForumDetailPage> {
                 : null,
           ),
         ),
-        SizedBox(width: 16.w),
+        SizedBox(width: AppSpacing.md),
         Expanded(
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
@@ -400,7 +406,7 @@ class _ForumDetailPageState extends State<ForumDetailPage> {
                   SizedBox(width: 6.w),
                   Flexible(
                     child: Text(
-                      '${_formatForumDateTime(post.createdAt)} · ${timeago.format(post.createdAt, locale: 'id')}',
+                      '${_formatForumDateTime(context, post.createdAt)} · ${context.formatTimeAgo(post.createdAt)}',
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
                       style: TextStyle(
@@ -430,7 +436,7 @@ class _ForumDetailPageState extends State<ForumDetailPage> {
             LucideIcons.arrowBigUp,
             post.upvotes.toString(),
             AppColors.primary,
-            'Dukung',
+            'forum.vote_up'.tr(),
             isActive: post.userVote == 'UP',
             gradient: post.userVote == 'UP'
                 ? AppColors.voteUpGradient
@@ -452,12 +458,12 @@ class _ForumDetailPageState extends State<ForumDetailPage> {
               );
             },
           ),
-          SizedBox(width: 8.w),
+          SizedBox(width: AppSpacing.sm),
           _buildStatItem(
             LucideIcons.arrowBigDown,
             post.downvotes.toString(),
             AppColors.error,
-            'Turun',
+            'forum.vote_down'.tr(),
             isActive: post.userVote == 'DOWN',
             gradient: post.userVote == 'DOWN'
                 ? AppColors.voteDownGradient
@@ -479,34 +485,37 @@ class _ForumDetailPageState extends State<ForumDetailPage> {
               );
             },
           ),
-          SizedBox(width: 8.w),
+          SizedBox(width: AppSpacing.sm),
           _buildStatItem(
             LucideIcons.messageCircle,
             post.commentCount.toString(),
             AppColors.info,
-            'Komen',
+            'forum.comment'.tr(),
             onTap: () {
               // Focus the comment input
             },
           ),
-          SizedBox(width: 8.w),
+          SizedBox(width: AppSpacing.sm),
           _buildStatItem(
             LucideIcons.share2,
             '',
             AppColors.textSecondary,
-            'Share',
+            'forum.share'.tr(),
             onTap: () {
               Share.share(
-                'Yuk diskusi di Komunitas BISA: ${post.title}\n\n${post.contentPreview ?? post.content}\n\nBaca selengkapnya di aplikasi BISA!',
+                'forum.share_detail'.tr(namedArgs: {
+                  'title': post.title,
+                  'content': post.contentPreview ?? post.content,
+                }),
               );
             },
           ),
-          SizedBox(width: 12.w),
+          SizedBox(width: AppSpacing.md12),
           Container(
-            padding: EdgeInsets.symmetric(horizontal: 10.w, vertical: 8.h),
+            padding: EdgeInsets.symmetric(horizontal: AppSpacing.sm10, vertical: AppSpacing.sm),
             decoration: BoxDecoration(
               color: AppColors.grey50,
-              borderRadius: BorderRadius.circular(10.r),
+              borderRadius: BorderRadius.circular(AppRadius.md),
             ),
             child: Row(
               children: [
@@ -542,9 +551,9 @@ class _ForumDetailPageState extends State<ForumDetailPage> {
       decoration: BoxDecoration(
         color: gradient == null ? color.withOpacity(0.08) : null,
         gradient: gradient,
-        borderRadius: BorderRadius.circular(12.r),
+        borderRadius: BorderRadius.circular(AppRadius.lg),
         border: Border.all(
-          color: isActive ? Colors.transparent : color.withOpacity(0.1),
+          color: isActive ? AppColors.transparent : color.withOpacity(0.1),
         ),
         boxShadow: isActive
             ? [
@@ -558,22 +567,22 @@ class _ForumDetailPageState extends State<ForumDetailPage> {
       ),
       child: InkWell(
         onTap: onTap,
-        borderRadius: BorderRadius.circular(12.r),
+        borderRadius: BorderRadius.circular(AppRadius.lg),
         child: Container(
           height: 40.h,
           constraints: BoxConstraints(minWidth: label.isEmpty ? 40.h : 0),
-          padding: EdgeInsets.symmetric(horizontal: label.isEmpty ? 0 : 12.w),
+          padding: EdgeInsets.symmetric(horizontal: label.isEmpty ? 0 : AppSpacing.md12),
           child: Row(
             mainAxisSize: MainAxisSize.min,
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              Icon(icon, size: 20.sp, color: isActive ? Colors.white : color),
+              Icon(icon, size: 20.sp, color: isActive ? AppColors.white : color),
               if (label.isNotEmpty) ...[
                 SizedBox(width: 6.w),
                 Text(
                   label,
                   style: TextStyle(
-                    color: isActive ? Colors.white : color,
+                    color: isActive ? AppColors.white : color,
                     fontWeight: isActive ? FontWeight.w900 : FontWeight.w800,
                     fontSize: 14.sp,
                   ),
@@ -600,7 +609,7 @@ class _ForumDetailPageState extends State<ForumDetailPage> {
       decoration: BoxDecoration(
         color: isActive ? null : color.withOpacity(0.08),
         gradient: isActive ? gradient : null,
-        borderRadius: BorderRadius.circular(8.r),
+        borderRadius: BorderRadius.circular(AppRadius.button),
         boxShadow: isActive
             ? [
                 BoxShadow(
@@ -613,20 +622,20 @@ class _ForumDetailPageState extends State<ForumDetailPage> {
       ),
       child: InkWell(
         onTap: onTap,
-        borderRadius: BorderRadius.circular(8.r),
+        borderRadius: BorderRadius.circular(AppRadius.button),
         child: Padding(
-          padding: EdgeInsets.symmetric(horizontal: 8.w, vertical: 4.h),
+          padding: EdgeInsets.symmetric(horizontal: AppSpacing.sm, vertical: AppSpacing.xs),
           child: Row(
             mainAxisSize: MainAxisSize.min,
             children: [
-              Icon(icon, size: 16.sp, color: isActive ? Colors.white : color),
+              Icon(icon, size: 16.sp, color: isActive ? AppColors.white : color),
               SizedBox(width: 4.w),
               if (count > 0)
                 Text(
                   count.toString(),
                   style: TextStyle(
                     fontSize: 12.sp,
-                    color: isActive ? Colors.white : color,
+                    color: isActive ? AppColors.white : color,
                     fontWeight: isActive ? FontWeight.w900 : FontWeight.w700,
                   ),
                 ),
@@ -659,7 +668,7 @@ class _ForumDetailPageState extends State<ForumDetailPage> {
 
     return Padding(
       key: key,
-      padding: EdgeInsets.only(bottom: 16.h, left: leftPadding),
+      padding: EdgeInsets.only(bottom: AppSpacing.md, left: leftPadding),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -672,7 +681,7 @@ class _ForumDetailPageState extends State<ForumDetailPage> {
               ),
             ),
             child: CircleAvatar(
-              radius: isReply ? 14.r : 18.r,
+              radius: isReply ? AppRadius.tile : 18.r,
               backgroundColor: AppColors.grey100,
               backgroundImage:
                   resolveMediaImageProvider(comment.user.avatarUrl),
@@ -685,12 +694,13 @@ class _ForumDetailPageState extends State<ForumDetailPage> {
                   : null,
             ),
           ),
-          SizedBox(width: 10.w),
+          SizedBox(width: AppSpacing.sm10),
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 _buildCommentAuthorLine(
+                  context,
                   comment,
                   isReply: isReply,
                   isMine: isMine,
@@ -698,18 +708,18 @@ class _ForumDetailPageState extends State<ForumDetailPage> {
                 SizedBox(height: 6.h),
                 Container(
                   width: double.infinity,
-                  padding: EdgeInsets.fromLTRB(10.w, 8.h, 10.w, 8.h),
+                  padding: EdgeInsets.fromLTRB(AppSpacing.sm10, AppSpacing.sm, AppSpacing.sm10, AppSpacing.sm),
                   decoration: isMine
                       ? BoxDecoration(
                           color: AppColors.primary.withValues(alpha: 0.06),
-                          borderRadius: BorderRadius.circular(12.r),
+                          borderRadius: BorderRadius.circular(AppRadius.lg),
                           border: Border.all(
                             color: AppColors.primary.withValues(alpha: 0.18),
                           ),
                         )
                       : BoxDecoration(
                           color: AppColors.grey50,
-                          borderRadius: BorderRadius.circular(12.r),
+                          borderRadius: BorderRadius.circular(AppRadius.lg),
                         ),
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
@@ -729,7 +739,7 @@ class _ForumDetailPageState extends State<ForumDetailPage> {
                           media: comment.mediaUrls,
                           layout: ForumMediaLayout.comment,
                         ),
-                      SizedBox(height: 8.h),
+                      SizedBox(height: AppSpacing.sm),
                       Row(
                         children: [
                           _buildVoteBadge(
@@ -759,7 +769,7 @@ class _ForumDetailPageState extends State<ForumDetailPage> {
                             },
                             gradient: AppColors.voteUpGradient,
                           ),
-                          SizedBox(width: 8.w),
+                          SizedBox(width: AppSpacing.sm),
                           _buildVoteBadge(
                             context,
                             icon: LucideIcons.arrowBigDown,
@@ -787,7 +797,7 @@ class _ForumDetailPageState extends State<ForumDetailPage> {
                             },
                             gradient: AppColors.voteDownGradient,
                           ),
-                          SizedBox(width: 20.w),
+                          SizedBox(width: AppSpacing.lg),
                           GestureDetector(
                             onTap: () {
                               final isAuthenticated = context
@@ -817,7 +827,7 @@ class _ForumDetailPageState extends State<ForumDetailPage> {
                                 ),
                                 SizedBox(width: 6.w),
                                 Text(
-                                  'Balas',
+                                  'forum.reply'.tr(),
                                   style: TextStyle(
                                     fontSize: 12.sp,
                                     color: AppColors.primary,
@@ -833,7 +843,7 @@ class _ForumDetailPageState extends State<ForumDetailPage> {
                   ),
                 ),
                 if (hasReplies) ...[
-                  SizedBox(height: 10.h),
+                  SizedBox(height: AppSpacing.sm10),
                   GestureDetector(
                     onTap: () {
                       setState(() {
@@ -847,15 +857,17 @@ class _ForumDetailPageState extends State<ForumDetailPage> {
                     child: Row(
                       children: [
                         Container(
-                          width: 12.w,
+                          width: AppSpacing.md12,
                           height: 1.h,
                           color: AppColors.primary.withOpacity(0.3),
                         ),
-                        SizedBox(width: 8.w),
+                        SizedBox(width: AppSpacing.sm),
                         Text(
                           isExpanded
-                              ? 'Sembunyikan balasan'
-                              : 'Lihat ${comment.replies!.length} balasan',
+                              ? 'forum.hide_replies'.tr()
+                              : 'forum.show_replies'.tr(namedArgs: {
+                                  'count': '${comment.replies!.length}',
+                                }),
                           style: TextStyle(
                             fontSize: 11.sp,
                             color: AppColors.primary,
@@ -876,7 +888,7 @@ class _ForumDetailPageState extends State<ForumDetailPage> {
                 if (hasReplies && isExpanded && depth < 3)
                   ...comment.replies!.map(
                     (reply) => Padding(
-                      padding: EdgeInsets.only(top: 12.h),
+                      padding: EdgeInsets.only(top: AppSpacing.md12),
                       child: _buildCommentItem(
                         context,
                         reply,
@@ -900,8 +912,8 @@ class _ForumDetailPageState extends State<ForumDetailPage> {
         if (_commentAttachments.isNotEmpty)
           Container(
             width: double.infinity,
-            padding: EdgeInsets.fromLTRB(20.w, 8.h, 20.w, 0),
-            color: Colors.white,
+            padding: EdgeInsets.fromLTRB(AppSpacing.lg, AppSpacing.sm, AppSpacing.lg, 0),
+            color: AppColors.surface,
             child: ForumMediaPickerRow(
               attachments: _commentAttachments,
               maxItems: 4,
@@ -912,15 +924,15 @@ class _ForumDetailPageState extends State<ForumDetailPage> {
           ),
         if (_replyToId != null)
           Container(
-            padding: EdgeInsets.symmetric(horizontal: 20.w, vertical: 8.h),
+            padding: EdgeInsets.symmetric(horizontal: AppSpacing.lg, vertical: AppSpacing.sm),
             color: AppColors.primary.withOpacity(0.05),
             child: Row(
               children: [
                 Icon(LucideIcons.reply, size: 14.sp, color: AppColors.primary),
-                SizedBox(width: 8.w),
+                SizedBox(width: AppSpacing.sm),
                 Expanded(
                   child: Text(
-                    'Membalas @${_replyToUser}',
+                    'forum.replying_to'.tr(namedArgs: {'user': _replyToUser ?? ''}),
                     style: TextStyle(
                       fontSize: 12.sp,
                       color: AppColors.primary,
@@ -944,20 +956,20 @@ class _ForumDetailPageState extends State<ForumDetailPage> {
           ),
         Container(
           padding: EdgeInsets.fromLTRB(
-            20.w,
-            12.h,
-            20.w,
-            20.h + MediaQuery.of(context).viewInsets.bottom,
+            AppSpacing.lg,
+            AppSpacing.md12,
+            AppSpacing.lg,
+            AppSpacing.lg + MediaQuery.of(context).viewInsets.bottom,
           ),
           decoration: BoxDecoration(
-            color: AppColors.white,
+            color: AppColors.surface,
             borderRadius: BorderRadius.only(
               topLeft: Radius.circular(_replyToId != null ? 0 : 30.r),
               topRight: Radius.circular(_replyToId != null ? 0 : 30.r),
             ),
             boxShadow: [
               BoxShadow(
-                color: Colors.black.withOpacity(0.06),
+                color: AppColors.black.withOpacity(0.06),
                 blurRadius: 25,
                 offset: const Offset(0, -10),
               ),
@@ -977,10 +989,10 @@ class _ForumDetailPageState extends State<ForumDetailPage> {
                 ),
                 Expanded(
                   child: Container(
-                    padding: EdgeInsets.symmetric(horizontal: 16.w),
+                    padding: EdgeInsets.symmetric(horizontal: AppSpacing.md),
                     decoration: BoxDecoration(
                       color: AppColors.grey50,
-                      borderRadius: BorderRadius.circular(20.r),
+                      borderRadius: BorderRadius.circular(AppRadius.pill),
                       border: Border.all(color: AppColors.grey100),
                     ),
                     child: TextField(
@@ -993,20 +1005,20 @@ class _ForumDetailPageState extends State<ForumDetailPage> {
                       ),
                       decoration: InputDecoration(
                         hintText: _replyToId != null
-                            ? 'Tulis balasan Anda...'
-                            : 'Tulis tanggapan Anda...',
+                            ? 'forum.hint_reply'.tr()
+                            : 'forum.hint_comment'.tr(),
                         hintStyle: TextStyle(
                           color: AppColors.textHint,
                           fontSize: 14.sp,
                           fontWeight: FontWeight.w400,
                         ),
                         border: InputBorder.none,
-                        contentPadding: EdgeInsets.symmetric(vertical: 14.h),
+                        contentPadding: EdgeInsets.symmetric(vertical: AppSpacing.section),
                       ),
                     ),
                   ),
                 ),
-                SizedBox(width: 12.w),
+                SizedBox(width: AppSpacing.md12),
                 GestureDetector(
                   onTap: _isSendingComment ? null : () => _submitComment(context),
                   child: AnimatedContainer(
@@ -1026,7 +1038,7 @@ class _ForumDetailPageState extends State<ForumDetailPage> {
                     ),
                     child: const Icon(
                       LucideIcons.send,
-                      color: Colors.white,
+                      color: AppColors.surface,
                       size: 20,
                     ),
                   ),
@@ -1046,7 +1058,7 @@ class _ForumDetailPageState extends State<ForumDetailPage> {
         child: Column(
           children: [
             Container(
-              padding: EdgeInsets.all(20.r),
+              padding: EdgeInsets.all(AppSpacing.lg),
               decoration: BoxDecoration(
                 color: AppColors.grey50,
                 shape: BoxShape.circle,
@@ -1057,9 +1069,9 @@ class _ForumDetailPageState extends State<ForumDetailPage> {
                 color: AppColors.grey200,
               ),
             ),
-            SizedBox(height: 16.h),
+            SizedBox(height: AppSpacing.md),
             Text(
-              'Jadilah yang pertama berkomentar!',
+              'forum.empty_comments'.tr(),
               style: TextStyle(
                 color: AppColors.textHint,
                 fontSize: 14.sp,
@@ -1145,13 +1157,7 @@ class _ForumDetailPageState extends State<ForumDetailPage> {
           ..addAll(savedAttachments);
         _replyToId = parent;
       });
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(error),
-          backgroundColor: AppColors.error,
-          behavior: SnackBarBehavior.floating,
-        ),
-      );
+      showErrorSnackBar(context, error);
     }
   }
 }

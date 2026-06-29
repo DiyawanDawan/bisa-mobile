@@ -1,8 +1,8 @@
 import 'dart:io';
 import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
+import '../../../../core/i18n/failure_messages.dart';
 import 'package:image_picker/image_picker.dart';
-import 'package:path/path.dart' as path;
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:go_router/go_router.dart';
@@ -10,9 +10,13 @@ import 'package:lucide_icons_flutter/lucide_icons.dart';
 import 'package:mobile_bisa/features/auth/presentation/bloc/auth_cubit.dart';
 import 'package:flutter_staggered_grid_view/flutter_staggered_grid_view.dart';
 
+import '../../../../core/constants/app_layout.dart';
 import '../../../../core/constants/app_colors.dart';
+import '../../../../core/constants/app_text_styles.dart';
+import '../../../../core/utils/app_feedback.dart';
 import '../../../../core/utils/safe_area_utils.dart';
-import '../../../../core/utils/extensions.dart';
+import '../../../../core/utils/money_format.dart';
+import '../../../../core/utils/promo_analytics_tracker.dart';
 import '../../../../core/utils/product_pricing.dart';
 import '../../../../core/utils/rupiah_input_formatter.dart';
 import '../../../negotiation/domain/models/negotiation_offer_draft.dart';
@@ -31,12 +35,17 @@ import '../../../../shared/widgets/shimmer_loading.dart';
 import 'package:skeletonizer/skeletonizer.dart';
 import '../widgets/horizontal_product_section.dart';
 import '../widgets/product_specs_sheet.dart';
-import 'supplier_profile_page.dart';
-import 'product_reviews_page.dart';
+import '../../../../shared/widgets/product_video_player.dart';
 import '../../../../shared/widgets/auth_sheet.dart';
 import '../../../../shared/widgets/bisa_network_image.dart';
 import '../../../../core/utils/media_url_utils.dart';
 import '../../../commerce/presentation/bloc/commerce_cubit.dart';
+import '../../../orders/presentation/bloc/order_cubit.dart';
+import '../bloc/compare_cubit.dart';
+import '../bloc/product_qa_cubit.dart';
+import '../widgets/product_qa_section.dart';
+import '../widgets/product_recommendations_section.dart';
+import '../../../ai/presentation/widgets/predict_quality_sheet.dart';
 import '../../../commerce/presentation/widgets/product_like_button.dart';
 import '../../../follow/presentation/widgets/follow_button.dart';
 import '../../../../shared/widgets/custom_button.dart';
@@ -58,6 +67,76 @@ class _ProductDetailPageState extends State<ProductDetailPage> {
   File? _imageFile;
   final _messageController = TextEditingController();
   bool _isDescriptionExpanded = false;
+  late final ProductQaCubit _qaCubit = sl<ProductQaCubit>();
+  bool _isSampleOrdering = false;
+
+  @override
+  void dispose() {
+    _qaCubit.close();
+    _messageController.dispose();
+    super.dispose();
+  }
+
+  Future<void> _orderSample(ProductEntity p) async {
+    if (!mounted) return;
+    final ready = await ReadinessGate.ensureBuyerReady(context);
+    if (!ready || !mounted) return;
+
+    final qty = p.sampleMaxQty >= 1 ? 1.0 : p.sampleMaxQty;
+    final unitPrice = p.samplePricePerUnit ?? p.pricePerUnit;
+
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: Text('product.sample_order_title'.tr()),
+        content: Text(
+          'product.sample_order_confirm'.tr(namedArgs: {
+            'qty': '$qty',
+            'unit': p.unit,
+            'price': formatMoneyDisplay(unitPrice),
+          }),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx, false),
+            child: Text('cancel'.tr()),
+          ),
+          TextButton(
+            onPressed: () => Navigator.pop(ctx, true),
+            child: Text('product.sample_order_cta'.tr()),
+          ),
+        ],
+      ),
+    );
+    if (confirmed != true || !mounted) return;
+
+    setState(() => _isSampleOrdering = true);
+    final result = await context.read<OrderCubit>().createDirectOrder(
+      items: [
+        {'productId': p.id, 'quantity': qty},
+      ],
+      orderType: 'SAMPLE',
+    );
+    if (!mounted) return;
+    setState(() => _isSampleOrdering = false);
+
+    if (!result.isSuccess) {
+      if (result.isBuyerReadiness) {
+        await ReadinessGate.ensureBuyerReady(context);
+      } else {
+        showFailureSnackBarFromMessage(
+          context,
+          result.errorMessage ?? 'product.sample_order_failed',
+        );
+      }
+      return;
+    }
+
+    final orderId = result.orders.firstOrNull?['orderId']?.toString();
+    if (orderId != null && mounted) {
+      context.push('/order/$orderId');
+    }
+  }
 
   Future<void> _pickImage() async {
     final picker = ImagePicker();
@@ -82,7 +161,11 @@ class _ProductDetailPageState extends State<ProductDetailPage> {
             state.maybeWhen(
               loaded: (products, hasReachedMax) {
                 if (products.isNotEmpty) {
-                  setState(() => _product = products.first);
+                  final p = products.first;
+                  setState(() => _product = p);
+                  if (p.isPromotionActive) {
+                    PromoAnalyticsTracker.recordImpression(p.id);
+                  }
                 }
               },
               orElse: () {},
@@ -91,7 +174,7 @@ class _ProductDetailPageState extends State<ProductDetailPage> {
           builder: (context, state) {
             return state.maybeWhen(
               loading: () => _buildLoadingSkeleton(),
-              error: (message) => Center(child: Text(message)),
+              error: (message) => Center(child: Text(message.localizedFailure)),
               loaded: (products, hasReachedMax) =>
                   _product == null ? _buildLoadingSkeleton() : _buildContent(),
               orElse: () => _buildLoadingSkeleton(),
@@ -114,25 +197,25 @@ class _ProductDetailPageState extends State<ProductDetailPage> {
           ),
         ),
         SliverPadding(
-          padding: EdgeInsets.all(16.w),
+          padding: AppSpacing.cardPadding,
           sliver: SliverToBoxAdapter(
             child: ShimmerLoading(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Bone.multiText(lines: 2),
-                  SizedBox(height: 16.h),
+                  SizedBox(height: AppSpacing.md),
                   Row(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Bone.circle(size: 44.w),
-                      SizedBox(width: 12.w),
+                      SizedBox(width: AppSpacing.md12),
                       Expanded(child: Bone.multiText(lines: 2)),
                     ],
                   ),
-                  SizedBox(height: 20.h),
+                  SizedBox(height: AppSpacing.lg),
                   Bone(width: double.infinity, height: 56.h),
-                  SizedBox(height: 12.h),
+                  SizedBox(height: AppSpacing.md12),
                   Bone(width: double.infinity, height: 120.h),
                 ],
               ),
@@ -147,7 +230,7 @@ class _ProductDetailPageState extends State<ProductDetailPage> {
     final company = p.seller.companyName?.trim();
     if (company != null && company.isNotEmpty) return company;
     final name = p.seller.name.trim();
-    return name.isNotEmpty ? name : 'Toko';
+    return name.isNotEmpty ? name : 'marketplace.store_default_name'.tr();
   }
 
   Future<void> _openNegotiationPreview(NegotiationOfferDraft draft) async {
@@ -188,7 +271,7 @@ class _ProductDetailPageState extends State<ProductDetailPage> {
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
-      backgroundColor: Colors.transparent,
+      backgroundColor: AppColors.transparent,
       builder: (sheetContext) {
         final maxHeight = MediaQuery.sizeOf(sheetContext).height * 0.92;
         return Padding(
@@ -196,10 +279,10 @@ class _ProductDetailPageState extends State<ProductDetailPage> {
           child: ConstrainedBox(
             constraints: BoxConstraints(maxHeight: maxHeight),
             child: Container(
-              padding: EdgeInsets.all(24.r),
+              padding: EdgeInsets.all(AppSpacing.xl),
               decoration: BoxDecoration(
-                color: AppColors.white,
-                borderRadius: BorderRadius.vertical(top: Radius.circular(32.r)),
+                color: AppColors.surface,
+                borderRadius: BorderRadius.vertical(top: Radius.circular(AppSpacing.xxlPx.r)),
               ),
               child: StatefulBuilder(
                 builder: (context, setSheetState) {
@@ -218,7 +301,7 @@ class _ProductDetailPageState extends State<ProductDetailPage> {
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
                     Text(
-                      'Tawar Harga',
+                      'marketplace.negotiate_title'.tr(),
                       style: TextStyle(
                         fontSize: 20.sp,
                         fontWeight: FontWeight.w900,
@@ -231,7 +314,7 @@ class _ProductDetailPageState extends State<ProductDetailPage> {
                     ),
                   ],
                 ),
-                SizedBox(height: 12.h),
+                SizedBox(height: AppSpacing.md12),
                 NegotiationSellerChip(
                   displayName:
                       prefill?.sellerDisplayName ?? _sellerDisplayName(p),
@@ -239,27 +322,27 @@ class _ProductDetailPageState extends State<ProductDetailPage> {
                   isVerified:
                       prefill?.sellerIsVerified ?? p.seller.isVerified,
                 ),
-                SizedBox(height: 10.h),
+                SizedBox(height: AppSpacing.sm10),
                 NegotiationProductPreview(
                   name: p.name,
                   thumbnailUrl: p.thumbnailUrl,
-                  priceLabel: p.pricePerUnit.toRupiah,
-                  subtitle: 'Harga di katalog',
+                  priceLabel: formatMoneyDisplay(p.pricePerUnit),
+                  subtitle: 'marketplace.catalog_price'.tr(),
                 ),
-                SizedBox(height: 10.h),
+                SizedBox(height: AppSpacing.sm10),
                 NegotiationStockBanner(
                   stock: p.stock,
                   minOrder: p.minOrder,
                   unit: p.unit,
                   requestedQty: requestedQty,
                 ),
-                SizedBox(height: 12.h),
+                SizedBox(height: AppSpacing.md12),
                 Container(
                   width: double.infinity,
-                  padding: EdgeInsets.all(12.w),
+                  padding: EdgeInsets.all(AppSpacing.md12),
                   decoration: BoxDecoration(
                     color: AppColors.primary.withValues(alpha: 0.06),
-                    borderRadius: BorderRadius.circular(12.r),
+                    borderRadius: BorderRadius.circular(AppRadius.lg),
                   ),
                   child: Row(
                     crossAxisAlignment: CrossAxisAlignment.start,
@@ -269,11 +352,10 @@ class _ProductDetailPageState extends State<ProductDetailPage> {
                         size: 18.sp,
                         color: AppColors.primary,
                       ),
-                      SizedBox(width: 10.w),
+                      SizedBox(width: AppSpacing.sm10),
                       Expanded(
                         child: Text(
-                          'Isi jumlah & harga yang Anda inginkan. '
-                          'Penjual akan membalas di chat negosiasi.',
+                          'marketplace.negotiate_hint'.tr(),
                           style: TextStyle(
                             fontSize: 11.sp,
                             height: 1.4,
@@ -285,26 +367,30 @@ class _ProductDetailPageState extends State<ProductDetailPage> {
                     ],
                   ),
                 ),
-                SizedBox(height: 20.h),
+                SizedBox(height: AppSpacing.lg),
                 Text(
-                  '1. Berapa yang Anda butuhkan?',
+                  'marketplace.step_qty'.tr(),
                   style: TextStyle(
                     fontSize: 13.sp,
                     fontWeight: FontWeight.w800,
                     color: AppColors.textPrimary,
                   ),
                 ),
-                SizedBox(height: 8.h),
+                SizedBox(height: AppSpacing.sm),
                 CustomTextField(
-                  label: 'Jumlah (${p.unit})',
-                  hint:
-                      'Min ${ProductPricingInfo.formatQty(p.minOrder)} · maks ${ProductPricingInfo.formatQty(p.stock)}',
+                  label: 'marketplace.qty_label'.tr(namedArgs: {'unit': p.unit}),
+                  hint: 'marketplace.qty_hint'.tr(namedArgs: {
+                    'min': ProductPricingInfo.formatQty(p.minOrder),
+                    'max': ProductPricingInfo.formatQty(p.stock),
+                  }),
                   controller: quantityController,
                   keyboardType: TextInputType.number,
                   prefixIcon: LucideIcons.package,
                   onChanged: (_) => setSheetState(() {}),
                   validator: (value) {
-                    if (value == null || value.isEmpty) return 'Wajib diisi';
+                    if (value == null || value.isEmpty) {
+                      return 'marketplace.required_field'.tr();
+                    }
                     return NegotiationQuantityRules.validate(
                       quantity: double.tryParse(value),
                       minOrder: p.minOrder,
@@ -313,9 +399,9 @@ class _ProductDetailPageState extends State<ProductDetailPage> {
                     );
                   },
                 ),
-                SizedBox(height: 20.h),
+                SizedBox(height: AppSpacing.lg),
                 Text(
-                  '2. Harga yang Anda tawarkan',
+                  'marketplace.step_offer_price'.tr(),
                   style: TextStyle(
                     fontSize: 13.sp,
                     fontWeight: FontWeight.w800,
@@ -324,16 +410,21 @@ class _ProductDetailPageState extends State<ProductDetailPage> {
                 ),
                 SizedBox(height: 4.h),
                 Text(
-                  'Harga di katalog: ${p.pricePerUnit.toRupiah} / ${p.unit}',
+                  'marketplace.catalog_price_line'.tr(namedArgs: {
+                    'price': formatMoneyDisplay(p.pricePerUnit),
+                    'unit': p.unit,
+                  }),
                   style: TextStyle(
                     fontSize: 11.sp,
                     color: AppColors.textSecondary,
                     fontWeight: FontWeight.w600,
                   ),
                 ),
-                SizedBox(height: 8.h),
+                SizedBox(height: AppSpacing.sm),
                 CustomTextField(
-                  label: 'Harga tawaran (per ${p.unit})',
+                  label: 'marketplace.offer_price_label'.tr(
+                    namedArgs: {'unit': p.unit},
+                  ),
                   hint: formatRupiahInput(p.pricePerUnit),
                   controller: priceController,
                   keyboardType: TextInputType.number,
@@ -341,41 +432,41 @@ class _ProductDetailPageState extends State<ProductDetailPage> {
                   inputFormatters: [RupiahInputFormatter()],
                   validator: (value) {
                     if (value == null || value.trim().isEmpty) {
-                      return 'Wajib diisi';
+                      return 'marketplace.required_field'.tr();
                     }
                     if (parseRupiahInput(value) == null) {
-                      return 'Nominal tidak valid';
+                      return 'marketplace.invalid_amount'.tr();
                     }
                     return null;
                   },
                 ),
-                SizedBox(height: 20.h),
+                SizedBox(height: AppSpacing.lg),
                 Text(
-                  '3. Catatan untuk penjual (opsional)',
+                  'marketplace.step_seller_note'.tr(),
                   style: TextStyle(
                     fontSize: 13.sp,
                     fontWeight: FontWeight.w800,
                     color: AppColors.textPrimary,
                   ),
                 ),
-                SizedBox(height: 8.h),
+                SizedBox(height: AppSpacing.sm),
                 CustomTextField(
-                  label: 'pesantambahanopsional'.tr().tr(),
-                  hint: 'tulispesanuntukpenjual'.tr().tr(),
+                  label: 'marketplace.optional_message_label'.tr(),
+                  hint: 'marketplace.optional_message_hint'.tr(),
                   controller: _messageController,
                   maxLines: 3,
                   prefixIcon: LucideIcons.messageSquare,
                 ),
-                SizedBox(height: 16.h),
+                SizedBox(height: AppSpacing.md),
                 Text(
-                  'Foto pendukung (opsional)',
+                  'marketplace.support_photo_optional'.tr(),
                   style: TextStyle(
                     fontSize: 12.sp,
                     fontWeight: FontWeight.w700,
                     color: AppColors.textSecondary,
                   ),
                 ),
-                SizedBox(height: 12.h),
+                SizedBox(height: AppSpacing.md12),
                 InkWell(
                   onTap: _pickImage,
                   child: Container(
@@ -383,7 +474,7 @@ class _ProductDetailPageState extends State<ProductDetailPage> {
                     width: double.infinity,
                     decoration: BoxDecoration(
                       color: AppColors.grey50,
-                      borderRadius: BorderRadius.circular(16.r),
+                      borderRadius: BorderRadius.circular(AppRadius.xl),
                       border: Border.all(color: AppColors.grey200, width: 1),
                     ),
                     child: _imageFile != null
@@ -391,27 +482,27 @@ class _ProductDetailPageState extends State<ProductDetailPage> {
                             fit: StackFit.expand,
                             children: [
                               ClipRRect(
-                                borderRadius: BorderRadius.circular(16.r),
+                                borderRadius: BorderRadius.circular(AppRadius.xl),
                                 child: Image.file(
                                   _imageFile!,
                                   fit: BoxFit.cover,
                                 ),
                               ),
                               Positioned(
-                                top: 8.r,
-                                right: 8.r,
+                                top: AppSpacing.sm,
+                                right: AppSpacing.sm,
                                 child: GestureDetector(
                                   onTap: () =>
                                       setState(() => _imageFile = null),
                                   child: CircleAvatar(
-                                    radius: 12.r,
-                                    backgroundColor: Colors.black.withValues(
+                                    radius: AppRadius.lg,
+                                    backgroundColor: AppColors.black.withValues(
                                       alpha: 0.5,
                                     ),
                                     child: Icon(
                                       Icons.close,
                                       size: 14.sp,
-                                      color: Colors.white,
+                                      color: AppColors.surface,
                                     ),
                                   ),
                                 ),
@@ -426,9 +517,9 @@ class _ProductDetailPageState extends State<ProductDetailPage> {
                                 color: AppColors.grey400,
                                 size: 32.sp,
                               ),
-                              SizedBox(height: 8.h),
+                              SizedBox(height: AppSpacing.sm),
                               Text(
-                                'Klik untuk tambah gambar',
+                                'marketplace.tap_add_image'.tr(),
                                 style: TextStyle(
                                   color: AppColors.textHint,
                                   fontSize: 12.sp,
@@ -438,11 +529,11 @@ class _ProductDetailPageState extends State<ProductDetailPage> {
                           ),
                   ),
                 ),
-                SizedBox(height: 32.h),
+                SizedBox(height: AppSpacing.xxl),
                 CustomButton(
                   text: outOfStock
-                      ? 'Stok habis'
-                      : 'Lihat ringkasan penawaran',
+                      ? 'marketplace.out_of_stock'.tr()
+                      : 'marketplace.view_offer_summary'.tr(),
                   useGradient: true,
                   onPressed: outOfStock
                       ? null
@@ -473,7 +564,7 @@ class _ProductDetailPageState extends State<ProductDetailPage> {
                     _openNegotiationPreview(draft);
                   },
                 ),
-                SizedBox(height: 16.h),
+                SizedBox(height: AppSpacing.md),
                     ],
                   ),
                 ),
@@ -494,6 +585,8 @@ class _ProductDetailPageState extends State<ProductDetailPage> {
     final List<String> images = p.images != null && p.images!.isNotEmpty
         ? p.images!.map((e) => e.url).toList()
         : [p.thumbnailUrl ?? ''];
+    final hasVideo = p.videoUrl != null && p.videoUrl!.isNotEmpty;
+    final galleryCount = images.length + (hasVideo ? 1 : 0);
 
     return CustomScrollView(
       physics: const BouncingScrollPhysics(),
@@ -502,11 +595,11 @@ class _ProductDetailPageState extends State<ProductDetailPage> {
           expandedHeight: 350.h,
           pinned: true,
           elevation: 0,
-          backgroundColor: AppColors.white,
+          backgroundColor: AppColors.surface,
           leading: Padding(
-            padding: EdgeInsets.all(8.r),
+            padding: EdgeInsets.all(AppSpacing.sm),
             child: CircleAvatar(
-              backgroundColor: Colors.white,
+              backgroundColor: AppColors.surface,
               child: IconButton(
                 icon: Icon(
                   Icons.arrow_back_ios_new_rounded,
@@ -534,9 +627,9 @@ class _ProductDetailPageState extends State<ProductDetailPage> {
 
                 if (isOwner) {
                   return Padding(
-                    padding: EdgeInsets.all(8.r),
+                    padding: EdgeInsets.all(AppSpacing.sm),
                     child: CircleAvatar(
-                      backgroundColor: Colors.white,
+                      backgroundColor: AppColors.surface,
                       child: IconButton(
                         icon: Icon(
                           LucideIcons.settings,
@@ -553,9 +646,9 @@ class _ProductDetailPageState extends State<ProductDetailPage> {
               },
             ),
             Padding(
-              padding: EdgeInsets.all(8.r),
+              padding: EdgeInsets.all(AppSpacing.sm),
               child: CircleAvatar(
-                backgroundColor: Colors.white,
+                backgroundColor: AppColors.surface,
                 child: IconButton(
                   icon: Icon(
                     LucideIcons.search,
@@ -566,18 +659,54 @@ class _ProductDetailPageState extends State<ProductDetailPage> {
                 ),
               ),
             ),
+            BlocBuilder<CompareCubit, CompareState>(
+              builder: (context, compareState) {
+                final inCompare = compareState.contains(_product!.id);
+                return Padding(
+                  padding: EdgeInsets.all(AppSpacing.sm),
+                  child: CircleAvatar(
+                    backgroundColor: inCompare
+                        ? AppColors.primaryLight
+                        : AppColors.surface,
+                    child: IconButton(
+                      icon: Icon(
+                        LucideIcons.columns3,
+                        color: inCompare
+                            ? AppColors.primary
+                            : AppColors.textPrimary,
+                        size: 18.sp,
+                      ),
+                      onPressed: () {
+                        final cubit = context.read<CompareCubit>();
+                        final wasSelected =
+                            cubit.state.contains(_product!.id);
+                        final err = cubit.toggle(_product!);
+                        if (!context.mounted) return;
+                        if (err != null) {
+                          showErrorSnackBar(context, err.tr());
+                          return;
+                        }
+                        if (!wasSelected) {
+                          context.push('/compare-products');
+                        }
+                      },
+                    ),
+                  ),
+                );
+              },
+            ),
             Padding(
-              padding: EdgeInsets.all(8.r),
+              padding: EdgeInsets.all(AppSpacing.sm),
               child: ProductLikeButton(
                 productId: _product!.id,
                 size: 18,
-                backgroundColor: Colors.white,
+                backgroundColor: AppColors.surface,
               ),
             ),
             Padding(
-              padding: EdgeInsets.all(8.r),
+              padding: EdgeInsets.all(AppSpacing.sm),
               child: CircleAvatar(
-                backgroundColor: Colors.white,
+                backgroundColor: AppColors.surface,
                 child: IconButton(
                   icon: Icon(
                     LucideIcons.share2,
@@ -594,12 +723,64 @@ class _ProductDetailPageState extends State<ProductDetailPage> {
               fit: StackFit.expand,
               children: [
                 PageView.builder(
-                  itemCount: images.length,
+                  itemCount: galleryCount,
                   onPageChanged: (index) =>
                       setState(() => _currentImageIndex = index),
                   itemBuilder: (context, index) {
+                    if (hasVideo && index == 0) {
+                      return Stack(
+                        fit: StackFit.expand,
+                        children: [
+                          ProductVideoPlayer(
+                            videoUrl: p.videoUrl!,
+                            height: 350.h,
+                          ),
+                          Positioned(
+                            top: AppSpacing.md12,
+                            right: AppSpacing.md12,
+                            child: Material(
+                              color: AppColors.black.withValues(alpha: 0.55),
+                              borderRadius: BorderRadius.circular(AppRadius.button),
+                              child: InkWell(
+                                onTap: () => ProductVideoPlayer.openFullscreen(
+                                  context,
+                                  p.videoUrl!,
+                                ),
+                                borderRadius: BorderRadius.circular(AppRadius.button),
+                                child: Padding(
+                                  padding: EdgeInsets.symmetric(
+                                    horizontal: AppSpacing.sm10,
+                                    vertical: 6.h,
+                                  ),
+                                  child: Row(
+                                    mainAxisSize: MainAxisSize.min,
+                                    children: [
+                                      Icon(
+                                        LucideIcons.maximize2,
+                                        color: AppColors.surface,
+                                        size: 14.sp,
+                                      ),
+                                      SizedBox(width: 4.w),
+                                      Text(
+                                        'marketplace.video_fullscreen'.tr(),
+                                        style: TextStyle(
+                                          color: AppColors.surface,
+                                          fontSize: 10.sp,
+                                          fontWeight: FontWeight.w700,
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                              ),
+                            ),
+                          ),
+                        ],
+                      );
+                    }
+                    final imageIndex = hasVideo ? index - 1 : index;
                     return BisaNetworkImage(
-                      imageUrl: images[index],
+                      imageUrl: images[imageIndex],
                       fit: BoxFit.cover,
                       errorWidget: (context, url, error) =>
                           Container(color: AppColors.grey100),
@@ -607,26 +788,26 @@ class _ProductDetailPageState extends State<ProductDetailPage> {
                   },
                 ),
                 // Image Indicator
-                if (images.length > 1)
+                if (galleryCount > 1)
                   Positioned(
-                    bottom: 20.h,
+                    bottom: AppSpacing.lg,
                     left: 0,
                     right: 0,
                     child: Row(
                       mainAxisAlignment: MainAxisAlignment.center,
-                      children: images.asMap().entries.map((entry) {
+                      children: List.generate(galleryCount, (entry) {
                         return Container(
-                          width: 8.w,
-                          height: 8.w,
+                          width: AppSpacing.sm,
+                          height: AppSpacing.sm,
                           margin: EdgeInsets.symmetric(horizontal: 4.w),
                           decoration: BoxDecoration(
                             shape: BoxShape.circle,
-                            color: _currentImageIndex == entry.key
+                            color: _currentImageIndex == entry
                                 ? AppColors.primary
-                                : Colors.white.withValues(alpha: 0.5),
+                                : AppColors.white.withValues(alpha: 0.5),
                           ),
                         );
-                      }).toList(),
+                      }),
                     ),
                   ),
                 // Shadow overlay for readability
@@ -637,9 +818,9 @@ class _ProductDetailPageState extends State<ProductDetailPage> {
                         begin: Alignment.topCenter,
                         end: Alignment.bottomCenter,
                         colors: [
-                          Colors.black.withValues(alpha: 0.1),
-                          Colors.transparent,
-                          Colors.black.withValues(alpha: 0.05),
+                          AppColors.black.withValues(alpha: 0.1),
+                          AppColors.transparent,
+                          AppColors.black.withValues(alpha: 0.05),
                         ],
                       ),
                     ),
@@ -652,11 +833,11 @@ class _ProductDetailPageState extends State<ProductDetailPage> {
         SliverToBoxAdapter(
           child: Container(
             decoration: BoxDecoration(
-              color: AppColors.white,
-              borderRadius: BorderRadius.vertical(top: Radius.circular(32.r)),
+              color: AppColors.surface,
+              borderRadius: BorderRadius.vertical(top: Radius.circular(AppSpacing.xxlPx.r)),
               boxShadow: [
                 BoxShadow(
-                  color: Colors.black.withValues(alpha: 0.05),
+                  color: AppColors.black.withValues(alpha: 0.05),
                   blurRadius: 10,
                   offset: const Offset(0, -5),
                 ),
@@ -666,22 +847,26 @@ class _ProductDetailPageState extends State<ProductDetailPage> {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 _buildProductSummary(p),
-                SizedBox(height: 12.h),
+                SizedBox(height: AppSpacing.md12),
                 Divider(color: AppColors.grey100, thickness: 1.h, height: 1.h),
                 _buildSellerSection(p),
                 Divider(color: AppColors.grey100, thickness: 1.h, height: 1.h),
                 _buildProductRating(p),
                 Divider(color: AppColors.grey100, thickness: 1.h, height: 1.h),
                 _buildProductDescription(p),
+                Divider(color: AppColors.grey100, thickness: 1.h, height: 1.h),
+                ProductQaSection(product: p, cubit: _qaCubit),
               ],
             ),
           ),
         ),
+        if (p.productMode == 'BIOMASS_MATERIAL')
+          SliverToBoxAdapter(child: _buildPredictQualityEntry(p)),
         if (p.productMode == 'ORGANIC_PRODUCE' || p.technicalSpec != null)
           SliverToBoxAdapter(
             child: Container(
               decoration: BoxDecoration(
-                color: AppColors.white,
+                color: AppColors.surface,
                 border: Border(
                   top: BorderSide(color: AppColors.grey100, width: 1.h),
                 ),
@@ -689,15 +874,18 @@ class _ProductDetailPageState extends State<ProductDetailPage> {
               child: _buildTechnicalSpecs(p),
             ),
           ),
+        SliverToBoxAdapter(
+          child: ProductRecommendationsSection(productId: p.id),
+        ),
 
         SliverToBoxAdapter(
           child: Container(
             color: AppColors.background,
-            padding: EdgeInsets.only(top: 24.h),
+            padding: EdgeInsets.only(top: AppSpacing.xl),
             child: HorizontalProductSection(
               title: _product?.productMode == 'ORGANIC_PRODUCE'
-                  ? 'Rekomendasi Hasil Tani'
-                  : 'Rekomendasi Produk',
+                  ? 'marketplace.rec_organic'.tr()
+                  : 'marketplace.rec_product'.tr(),
               limit: 20,
               productMode: _product?.productMode,
               onShowAll: () {
@@ -705,8 +893,8 @@ class _ProductDetailPageState extends State<ProductDetailPage> {
                   '/collection-products',
                   extra: {
                     'title': _product?.productMode == 'ORGANIC_PRODUCE'
-                        ? 'Rekomendasi Hasil Tani'
-                        : 'Rekomendasi Produk',
+                        ? 'marketplace.rec_organic'.tr()
+                        : 'marketplace.rec_product'.tr(),
                     'sortBy': 'createdAt',
                     'sortOrder': 'desc',
                     'productMode': _product?.productMode,
@@ -718,11 +906,16 @@ class _ProductDetailPageState extends State<ProductDetailPage> {
         ),
         SliverToBoxAdapter(
           child: Padding(
-            padding: EdgeInsets.fromLTRB(20.w, 32.h, 20.w, 16.h),
+            padding: EdgeInsets.fromLTRB(
+              AppSpacing.lg,
+              AppSpacing.xxl,
+              AppSpacing.lg,
+              AppSpacing.md,
+            ),
             child: Text(
               _product?.productMode == 'ORGANIC_PRODUCE'
-                  ? 'Semua Hasil Tani Organik'
-                  : 'Semua Produk',
+                  ? 'marketplace.all_organic'.tr()
+                  : 'marketplace.all_products'.tr(),
               style: TextStyle(
                 fontSize: 18.sp,
                 fontWeight: FontWeight.w900,
@@ -740,18 +933,18 @@ class _ProductDetailPageState extends State<ProductDetailPage> {
                 return state.maybeWhen(
                   loading: () => ShimmerProductGridPlaceholder(
                     itemCount: 4,
-                    padding: EdgeInsets.symmetric(horizontal: 20.w),
+                    padding: EdgeInsets.symmetric(horizontal: AppSpacing.lg),
                   ),
                   loaded: (products, hasReachedMax) {
                     if (products.isEmpty) return const SizedBox.shrink();
                     return Padding(
-                      padding: EdgeInsets.symmetric(horizontal: 20.w),
+                      padding: EdgeInsets.symmetric(horizontal: AppSpacing.lg),
                       child: MasonryGridView.count(
                         shrinkWrap: true,
                         physics: const NeverScrollableScrollPhysics(),
                         crossAxisCount: 2,
-                        crossAxisSpacing: 16.w,
-                        mainAxisSpacing: 16.h,
+                        crossAxisSpacing: AppSpacing.md,
+                        mainAxisSpacing: AppSpacing.md,
                         itemCount: products.length,
                         itemBuilder: (context, index) {
                           return ProductCard(product: products[index]);
@@ -773,13 +966,21 @@ class _ProductDetailPageState extends State<ProductDetailPage> {
   Widget _buildProductSummary(ProductEntity p) {
     return Container(
       width: double.infinity,
-      padding: EdgeInsets.fromLTRB(24.w, 24.h, 24.w, 0.h),
+      padding: EdgeInsets.fromLTRB(
+        AppSpacing.xl,
+        AppSpacing.xl,
+        AppSpacing.xl,
+        0,
+      ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           // Category Label
           Container(
-            padding: EdgeInsets.symmetric(horizontal: 8.w, vertical: 4.h),
+            padding: EdgeInsets.symmetric(
+              horizontal: AppSpacing.sm,
+              vertical: AppSpacing.xs,
+            ),
             decoration: BoxDecoration(
               color: p.productMode == 'ORGANIC_PRODUCE'
                   ? AppColors.primaryLight
@@ -788,7 +989,7 @@ class _ProductDetailPageState extends State<ProductDetailPage> {
             ),
             child: Text(
               p.productMode == 'ORGANIC_PRODUCE'
-                  ? (p.cropType ?? 'Hasil Tani').toUpperCase()
+                  ? (p.cropType ?? 'marketplace.badge_mode_organic'.tr()).toUpperCase()
                   : p.biomassaType.toUpperCase(),
               style: TextStyle(
                 fontSize: 10.sp,
@@ -800,7 +1001,7 @@ class _ProductDetailPageState extends State<ProductDetailPage> {
               ),
             ),
           ),
-          SizedBox(height: 8.h),
+          SizedBox(height: AppSpacing.sm),
           // Product Name
           Text(
             p.name,
@@ -825,17 +1026,17 @@ class _ProductDetailPageState extends State<ProductDetailPage> {
                     borderRadius: BorderRadius.circular(4.r),
                   ),
                   child: Text(
-                    p.originalPrice!.toRupiah,
+                    formatMoneyDisplay(p.originalPrice!),
                     style: TextStyle(
                       fontSize: 12.sp,
                       fontWeight: FontWeight.w700,
-                      color: Colors.white,
+                      color: AppColors.textOnPrimary,
                       decoration: TextDecoration.lineThrough,
-                      decorationColor: Colors.white,
+                      decorationColor: AppColors.textOnPrimary,
                     ),
                   ),
                 ),
-                SizedBox(width: 8.w),
+                SizedBox(width: AppSpacing.sm),
                 Container(
                   margin: EdgeInsets.only(bottom: 4.h),
                   padding: EdgeInsets.symmetric(horizontal: 6.w, vertical: 2.h),
@@ -859,7 +1060,7 @@ class _ProductDetailPageState extends State<ProductDetailPage> {
             crossAxisAlignment: CrossAxisAlignment.end,
             children: [
               Text(
-                p.pricePerUnit.toRupiah,
+                formatMoneyDisplay(p.pricePerUnit),
                 style: TextStyle(
                   fontSize: 24.sp,
                   fontWeight: FontWeight.w900,
@@ -867,7 +1068,7 @@ class _ProductDetailPageState extends State<ProductDetailPage> {
                   letterSpacing: -1.0,
                 ),
               ),
-              SizedBox(width: 8.w),
+              SizedBox(width: AppSpacing.sm),
               Padding(
                 padding: EdgeInsets.only(bottom: 4.h),
                 child: Text(
@@ -893,13 +1094,13 @@ class _ProductDetailPageState extends State<ProductDetailPage> {
                 return const SizedBox.shrink();
               }
               return Padding(
-                padding: EdgeInsets.only(top: 8.h),
+                padding: EdgeInsets.only(top: AppSpacing.sm),
                 child: Container(
                   width: double.infinity,
-                  padding: EdgeInsets.all(10.w),
+                  padding: EdgeInsets.all(AppSpacing.sm10),
                   decoration: BoxDecoration(
                     color: AppColors.grey50,
-                    borderRadius: BorderRadius.circular(10.r),
+                    borderRadius: BorderRadius.circular(AppRadius.md),
                     border: Border.all(color: AppColors.grey200),
                   ),
                   child: Column(
@@ -925,11 +1126,11 @@ class _ProductDetailPageState extends State<ProductDetailPage> {
                         ),
                       ] else
                         Text(
-                          'Min. beli ${ProductPricingInfo.formatQty(p.minOrder)} ${p.unit}',
-                          style: TextStyle(
-                            fontSize: 11.sp,
-                            color: AppColors.textSecondary,
-                          ),
+                          'marketplace.min_buy'.tr(namedArgs: {
+                            'qty': ProductPricingInfo.formatQty(p.minOrder),
+                            'unit': p.unit,
+                          }),
+                          style: AppTextStyles.caption(color: AppColors.textSecondary),
                         ),
                     ],
                   ),
@@ -937,23 +1138,26 @@ class _ProductDetailPageState extends State<ProductDetailPage> {
               );
             },
           ),
-          SizedBox(height: 12.h),
+          SizedBox(height: AppSpacing.md12),
           // Badges Row
           Wrap(
-            spacing: 8.w,
-            runSpacing: 8.h,
+            spacing: AppSpacing.sm,
+            runSpacing: AppSpacing.sm,
             children: [
               Container(
-                padding: EdgeInsets.symmetric(horizontal: 10.w, vertical: 6.h),
+                padding: EdgeInsets.symmetric(
+                  horizontal: AppSpacing.sm10,
+                  vertical: AppSpacing.xs6,
+                ),
                 decoration: BoxDecoration(
                   color: p.productMode == 'ORGANIC_PRODUCE'
                       ? AppColors.primaryLight
                       : AppColors.primaryLight,
-                  borderRadius: BorderRadius.circular(8.r),
+                  borderRadius: BorderRadius.circular(AppRadius.button),
                 ),
                 child: Text(
                   p.productMode == 'ORGANIC_PRODUCE'
-                      ? (p.cropType ?? 'Hasil Tani').toUpperCase()
+                      ? (p.cropType ?? 'marketplace.badge_mode_organic'.tr()).toUpperCase()
                       : p.biomassaType.toUpperCase(),
                   style: TextStyle(
                     color: p.productMode == 'ORGANIC_PRODUCE'
@@ -968,14 +1172,14 @@ class _ProductDetailPageState extends State<ProductDetailPage> {
                 if (p.isChemicalFree)
                   _buildSmallBadge(
                     LucideIcons.leaf,
-                    'Bebas Kimia',
+                    'marketplace.badge_chemical_free'.tr(),
                     AppColors.primaryMedium,
                   ),
                 if (p.fertilizerType != null && p.fertilizerType!.isNotEmpty)
                   _buildSmallBadge(
                     LucideIcons.sprout,
                     p.fertilizerType!.toUpperCase().contains('BIOCHAR')
-                        ? 'Tanah Biochar'
+                        ? 'marketplace.badge_biochar_soil'.tr()
                         : p.fertilizerType!,
                     AppColors.secondary,
                   ),
@@ -983,33 +1187,40 @@ class _ProductDetailPageState extends State<ProductDetailPage> {
                 if (p.grade != null)
                   _buildSmallBadge(
                     LucideIcons.medal,
-                    'Grade ${p.grade}',
+                    'marketplace.badge_grade'.tr(namedArgs: {'grade': '${p.grade}'}),
                     AppColors.warning,
                   ),
               ],
               if (p.isCertified)
                 _buildSmallBadge(
                   LucideIcons.award,
-                  'Certified',
+                  'marketplace.badge_certified'.tr(),
                   AppColors.success,
                 ),
               if (p.isIotMonitored)
-                _buildSmallBadge(LucideIcons.cpu, 'IoT', AppColors.info),
+                Tooltip(
+                  message: 'marketplace.badge_iot_tooltip'.tr(),
+                  child: _buildSmallBadge(
+                    LucideIcons.cpu,
+                    'marketplace.badge_iot'.tr(),
+                    AppColors.info,
+                  ),
+                ),
               if (p.isEscrowProtected)
                 _buildSmallBadge(
                   LucideIcons.shieldCheck,
-                  'Secure',
+                  'marketplace.badge_secure'.tr(),
                   AppColors.ocean,
                 ),
             ],
           ),
-          SizedBox(height: 12.h),
+          SizedBox(height: AppSpacing.md12),
           Divider(color: AppColors.grey100, thickness: 1.5.h, height: 2.h),
           // Quick Info Grid
           Container(
             decoration: BoxDecoration(
               color: AppColors.primaryLight.withValues(alpha: 0.1),
-              borderRadius: BorderRadius.circular(16.r),
+              borderRadius: BorderRadius.circular(AppRadius.xl),
               border: Border.all(
                 color: AppColors.primaryLight.withValues(alpha: 0.2),
               ),
@@ -1019,17 +1230,17 @@ class _ProductDetailPageState extends State<ProductDetailPage> {
               children: [
                 _buildQuickInfoItem(
                   LucideIcons.package,
-                  'Stok',
+                  'marketplace.stock_label'.tr(),
                   '${p.stock} ${p.unit}',
                 ),
                 _buildDivider(),
                 _buildQuickInfoItem(
                   LucideIcons.shoppingCart,
-                  'Min. Order',
+                  'marketplace.min_order_label'.tr(),
                   '${p.minOrder} ${p.unit}',
                 ),
                 _buildDivider(),
-                _buildQuickInfoItem(LucideIcons.mapPin, 'Lokasi', p.province),
+                _buildQuickInfoItem(LucideIcons.mapPin, 'marketplace.location_label'.tr(), p.province),
               ],
             ),
           ),
@@ -1048,14 +1259,14 @@ class _ProductDetailPageState extends State<ProductDetailPage> {
     return Column(
       children: [
         Container(
-          padding: EdgeInsets.all(8.r),
+          padding: EdgeInsets.all(AppSpacing.sm),
           decoration: BoxDecoration(
             color: AppColors.primaryLight.withValues(alpha: 0.2),
             shape: BoxShape.circle,
           ),
           child: Icon(icon, size: 18.sp, color: AppColors.primary),
         ),
-        SizedBox(height: 8.h),
+        SizedBox(height: AppSpacing.sm),
         Text(
           label,
           style: TextStyle(
@@ -1086,11 +1297,16 @@ class _ProductDetailPageState extends State<ProductDetailPage> {
         );
       },
       child: Padding(
-        padding: EdgeInsets.fromLTRB(24.w, 12.h, 24.w, 10.h),
+        padding: EdgeInsets.fromLTRB(
+          AppSpacing.xl,
+          AppSpacing.md12,
+          AppSpacing.xl,
+          AppSpacing.sm10,
+        ),
         child: Row(
           children: [
             CircleAvatar(
-              radius: 20.r,
+              radius: AppRadius.pill,
               backgroundColor: AppColors.primaryLight,
               backgroundImage: resolveMediaImageProvider(p.seller.avatarUrl),
               child: p.seller.avatarUrl == null
@@ -1101,7 +1317,7 @@ class _ProductDetailPageState extends State<ProductDetailPage> {
                     )
                   : null,
             ),
-            SizedBox(width: 12.w),
+            SizedBox(width: AppSpacing.md12),
             Expanded(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -1132,10 +1348,7 @@ class _ProductDetailPageState extends State<ProductDetailPage> {
                   ),
                   Text(
                     p.regency ?? p.province,
-                    style: TextStyle(
-                      fontSize: 11.sp,
-                      color: AppColors.textHint,
-                    ),
+                    style: AppTextStyles.caption(color: AppColors.textHint),
                   ),
                   if (p.seller.isVerified)
                     Row(
@@ -1148,7 +1361,7 @@ class _ProductDetailPageState extends State<ProductDetailPage> {
                         SizedBox(width: 4.w),
                         Flexible(
                           child: Text(
-                            'Supplier Terverifikasi',
+                            'marketplace.verified_supplier'.tr(),
                             maxLines: 1,
                             overflow: TextOverflow.ellipsis,
                             style: TextStyle(
@@ -1165,7 +1378,7 @@ class _ProductDetailPageState extends State<ProductDetailPage> {
                     children: [
                       Icon(
                         Icons.star_rounded,
-                        color: Colors.amber,
+                        color: AppColors.warning,
                         size: 14.sp,
                       ),
                       SizedBox(width: 4.w),
@@ -1179,7 +1392,7 @@ class _ProductDetailPageState extends State<ProductDetailPage> {
                       ),
                       SizedBox(width: 4.w),
                       Text(
-                        'Rating Mitra',
+                        'marketplace.partner_rating'.tr(),
                         style: TextStyle(
                           fontSize: 10.sp,
                           color: AppColors.textHint,
@@ -1210,7 +1423,12 @@ class _ProductDetailPageState extends State<ProductDetailPage> {
         context.push('/product-reviews/${p.id}', extra: {'name': p.name});
       },
       child: Padding(
-        padding: EdgeInsets.fromLTRB(24.w, 8.h, 24.w, 16.h),
+        padding: EdgeInsets.fromLTRB(
+          AppSpacing.xl,
+          AppSpacing.sm,
+          AppSpacing.xl,
+          AppSpacing.md,
+        ),
         child: Row(
           children: [
             Row(
@@ -1219,15 +1437,18 @@ class _ProductDetailPageState extends State<ProductDetailPage> {
                   index < p.averageRating.floor()
                       ? Icons.star_rounded
                       : Icons.star_outline_rounded,
-                  color: Colors.amber,
+                  color: AppColors.warning,
                   size: 18.sp,
                 );
               }),
             ),
-            SizedBox(width: 8.w),
+            SizedBox(width: AppSpacing.sm),
             Expanded(
               child: Text(
-                '${p.averageRating} (${p.totalReviews} ulasan)',
+                'marketplace.reviews_count'.tr(namedArgs: {
+                  'rating': '${p.averageRating}',
+                  'count': '${p.totalReviews}',
+                }),
                 style: TextStyle(
                   fontWeight: FontWeight.w700,
                   fontSize: 13.sp,
@@ -1248,12 +1469,17 @@ class _ProductDetailPageState extends State<ProductDetailPage> {
 
   Widget _buildProductDescription(ProductEntity p) {
     return Padding(
-      padding: EdgeInsets.fromLTRB(24.w, 12.h, 24.w, 12.h),
+      padding: EdgeInsets.fromLTRB(
+        AppSpacing.xl,
+        AppSpacing.md12,
+        AppSpacing.xl,
+        AppSpacing.md12,
+      ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
-            'Tentang Produk',
+            'marketplace.about_product'.tr(),
             style: TextStyle(
               fontSize: 15.sp,
               fontWeight: FontWeight.w800,
@@ -1262,7 +1488,7 @@ class _ProductDetailPageState extends State<ProductDetailPage> {
           ),
           SizedBox(height: 4.h),
           Text(
-            p.description ?? 'Tidak ada deskripsi tersedia untuk produk ini.',
+            p.description ?? 'marketplace.no_description'.tr(),
             maxLines: _isDescriptionExpanded ? null : 3,
             overflow: _isDescriptionExpanded ? null : TextOverflow.ellipsis,
             style: TextStyle(
@@ -1279,9 +1505,9 @@ class _ProductDetailPageState extends State<ProductDetailPage> {
                 });
               },
               child: Padding(
-                padding: EdgeInsets.only(top: 8.h),
+                padding: EdgeInsets.only(top: AppSpacing.sm),
                 child: Text(
-                  _isDescriptionExpanded ? 'Sembunyikan' : 'Lihat Selengkapnya',
+                  _isDescriptionExpanded ? 'marketplace.show_less'.tr() : 'marketplace.show_more'.tr(),
                   style: TextStyle(
                     fontSize: 13.sp,
                     fontWeight: FontWeight.w700,
@@ -1297,6 +1523,62 @@ class _ProductDetailPageState extends State<ProductDetailPage> {
 
   ProductSpecsData _specsFromProduct(ProductEntity p) {
     return ProductSpecsData.fromProduct(p);
+  }
+
+  Widget _buildPredictQualityEntry(ProductEntity p) {
+    return Padding(
+      padding: EdgeInsets.fromLTRB(
+        AppSpacing.xl,
+        AppSpacing.md12,
+        AppSpacing.xl,
+        AppSpacing.sm,
+      ),
+      child: Material(
+        color: AppColors.transparent,
+        child: InkWell(
+          onTap: () => PredictQualitySheet.show(
+            context,
+            initialBiomassaType: p.biomassaType,
+          ),
+          borderRadius: BorderRadius.circular(AppRadius.tile),
+          child: Ink(
+            padding: EdgeInsets.all(AppSpacing.section),
+            decoration: BoxDecoration(
+              gradient: LinearGradient(
+                colors: [
+                  AppColors.primary.withValues(alpha: 0.12),
+                  AppColors.primaryLight.withValues(alpha: 0.4),
+                ],
+              ),
+              borderRadius: BorderRadius.circular(AppRadius.tile),
+              border: Border.all(color: AppColors.primary.withValues(alpha: 0.25)),
+            ),
+            child: Row(
+              children: [
+                Icon(LucideIcons.sparkles, color: AppColors.primary, size: 22.sp),
+                SizedBox(width: AppSpacing.md12),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        'ai.predict_entry_title'.tr(),
+                        style: AppTextStyles.body(fontWeight: FontWeight.w800),
+                      ),
+                      Text(
+                        'ai.predict_entry_subtitle'.tr(),
+                        style: AppTextStyles.caption(color: AppColors.textSecondary),
+                      ),
+                    ],
+                  ),
+                ),
+                Icon(LucideIcons.chevronRight, color: AppColors.grey400, size: 18.sp),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
   }
 
   Widget _buildTechnicalSpecs(ProductEntity p) {
@@ -1315,10 +1597,15 @@ class _ProductDetailPageState extends State<ProductDetailPage> {
         ? specs.take(_specPreviewLimit).toList()
         : specs;
     final title =
-        isOrganic ? 'Spesifikasi Hasil Tani' : 'Spesifikasi Teknis';
+        isOrganic ? 'marketplace.specs_organic'.tr() : 'marketplace.specs_technical'.tr();
 
     return Padding(
-      padding: EdgeInsets.fromLTRB(24.w, 12.h, 24.w, isOrganic ? 24.h : 12.h),
+      padding: EdgeInsets.fromLTRB(
+        AppSpacing.xl,
+        AppSpacing.md12,
+        AppSpacing.xl,
+        isOrganic ? AppSpacing.xl : AppSpacing.md12,
+      ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -1344,7 +1631,7 @@ class _ProductDetailPageState extends State<ProductDetailPage> {
                     tapTargetSize: MaterialTapTargetSize.shrinkWrap,
                   ),
                   child: Text(
-                    'Lihat Semua',
+                    'marketplace.show_all'.tr(),
                     style: TextStyle(
                       fontSize: 12.sp,
                       fontWeight: FontWeight.w700,
@@ -1354,11 +1641,11 @@ class _ProductDetailPageState extends State<ProductDetailPage> {
                 ),
             ],
           ),
-          SizedBox(height: 12.h),
+          SizedBox(height: AppSpacing.md12),
           Container(
             decoration: BoxDecoration(
-              color: AppColors.white,
-              borderRadius: BorderRadius.circular(12.r),
+              color: AppColors.surface,
+              borderRadius: BorderRadius.circular(AppRadius.lg),
               border: Border.all(color: AppColors.grey100),
             ),
             child: Column(
@@ -1376,7 +1663,7 @@ class _ProductDetailPageState extends State<ProductDetailPage> {
             ),
           ),
           if (isOrganic) ...[
-            SizedBox(height: 20.h),
+            SizedBox(height: AppSpacing.lg),
             _buildOrganicEsgSection(),
           ],
         ],
@@ -1386,10 +1673,10 @@ class _ProductDetailPageState extends State<ProductDetailPage> {
 
   Widget _buildOrganicEsgSection() {
     return Container(
-      padding: EdgeInsets.all(16.r),
+      padding: EdgeInsets.all(AppSpacing.md),
       decoration: BoxDecoration(
         color: AppColors.primaryLight.withValues(alpha: 0.2),
-        borderRadius: BorderRadius.circular(16.r),
+        borderRadius: BorderRadius.circular(AppRadius.xl),
         border: Border.all(
           color: AppColors.primaryLight.withValues(alpha: 0.4),
           width: 1.w,
@@ -1405,9 +1692,9 @@ class _ProductDetailPageState extends State<ProductDetailPage> {
                 color: AppColors.primary,
                 size: 20.sp,
               ),
-              SizedBox(width: 12.w),
+              SizedBox(width: AppSpacing.md12),
               Text(
-                'Dampak Keberlanjutan (ESG Impact)',
+                'marketplace.esg_title'.tr(),
                 style: TextStyle(
                   fontSize: 13.sp,
                   fontWeight: FontWeight.w800,
@@ -1416,9 +1703,9 @@ class _ProductDetailPageState extends State<ProductDetailPage> {
               ),
             ],
           ),
-          SizedBox(height: 8.h),
+          SizedBox(height: AppSpacing.sm),
           Text(
-            'Setiap pembelian produk ini mendukung perekonomian petani lokal mandiri yang melestarikan tanah dengan teknik regeneratif. Dengan mengonsumsi pangan bebas bahan kimia, Anda berkontribusi mengurangi emisi nitrogen oksida global & penyerapan karbon di lapisan tanah.',
+            'marketplace.esg_body'.tr(),
             style: TextStyle(
               fontSize: 11.sp,
               color: AppColors.textSecondary,
@@ -1433,8 +1720,8 @@ class _ProductDetailPageState extends State<ProductDetailPage> {
   Widget _buildSpecRow(String label, String value) {
     return Padding(
       padding: EdgeInsets.symmetric(
-        horizontal: 16.w,
-        vertical: 12.h,
+        horizontal: AppSpacing.md,
+        vertical: AppSpacing.md12,
       ),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -1442,7 +1729,7 @@ class _ProductDetailPageState extends State<ProductDetailPage> {
           Expanded(
             flex: 2,
             child: Text(
-              label,
+              ProductSpecsMapper.displayLabel(label),
               style: TextStyle(
                 fontSize: 13.sp,
                 color: AppColors.textHint,
@@ -1450,11 +1737,11 @@ class _ProductDetailPageState extends State<ProductDetailPage> {
               ),
             ),
           ),
-          SizedBox(width: 12.w),
+          SizedBox(width: AppSpacing.md12),
           Expanded(
             flex: 3,
             child: Text(
-              value,
+              ProductSpecsMapper.displayValue(value),
               textAlign: TextAlign.end,
               style: TextStyle(
                 fontSize: 13.sp,
@@ -1472,20 +1759,20 @@ class _ProductDetailPageState extends State<ProductDetailPage> {
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
-      backgroundColor: Colors.transparent,
+      backgroundColor: AppColors.transparent,
       builder: (context) {
         final maxH = MediaQuery.sizeOf(context).height * 0.75;
         return Container(
           constraints: BoxConstraints(maxHeight: maxH),
           padding: EdgeInsets.fromLTRB(
-            24.w,
-            12.h,
-            24.w,
-            24.h + systemBottomInset(context),
+            AppSpacing.xl,
+            AppSpacing.md12,
+            AppSpacing.xl,
+            AppSpacing.xl + systemBottomInset(context),
           ),
           decoration: BoxDecoration(
-            color: AppColors.white,
-            borderRadius: BorderRadius.vertical(top: Radius.circular(32.r)),
+            color: AppColors.surface,
+            borderRadius: BorderRadius.vertical(top: Radius.circular(AppSpacing.xxlPx.r)),
           ),
           child: Column(
             mainAxisSize: MainAxisSize.min,
@@ -1495,7 +1782,7 @@ class _ProductDetailPageState extends State<ProductDetailPage> {
                 child: Container(
                   width: 36.w,
                   height: 4.h,
-                  margin: EdgeInsets.only(bottom: 16.h),
+                  margin: EdgeInsets.only(bottom: AppSpacing.md),
                   decoration: BoxDecoration(
                     color: AppColors.grey200,
                     borderRadius: BorderRadius.circular(2.r),
@@ -1503,20 +1790,20 @@ class _ProductDetailPageState extends State<ProductDetailPage> {
                 ),
               ),
               Text(
-                'Semua Spesifikasi',
+                'marketplace.all_specs'.tr(),
                 style: TextStyle(
                   fontSize: 18.sp,
                   fontWeight: FontWeight.w900,
                   color: AppColors.textPrimary,
                 ),
               ),
-              SizedBox(height: 16.h),
+              SizedBox(height: AppSpacing.md),
               Flexible(
                 child: SingleChildScrollView(
                   child: Container(
                     decoration: BoxDecoration(
-                      color: AppColors.white,
-                      borderRadius: BorderRadius.circular(12.r),
+                      color: AppColors.surface,
+                      borderRadius: BorderRadius.circular(AppRadius.lg),
                       border: Border.all(color: AppColors.grey100),
                     ),
                     child: Column(
@@ -1559,8 +1846,51 @@ class _ProductDetailPageState extends State<ProductDetailPage> {
               mainAxisSize: MainAxisSize.min,
               children: [
                 Divider(color: AppColors.grey200, height: 1, thickness: 1),
+                if (p.allowsSample && p.minOrder > 1)
+                  Padding(
+                    padding: EdgeInsets.fromLTRB(
+                      AppSpacing.xl,
+                      AppSpacing.md12,
+                      AppSpacing.xl,
+                      0,
+                    ),
+                    child: SizedBox(
+                      width: double.infinity,
+                      height: 44.h,
+                      child: OutlinedButton.icon(
+                        onPressed: _isSampleOrdering
+                            ? null
+                            : () {
+                                if (!isAuthenticated) {
+                                  AuthSheet.show(context);
+                                  return;
+                                }
+                                _orderSample(p);
+                              },
+                        icon: _isSampleOrdering
+                            ? SizedBox(
+                                width: AppSpacing.md,
+                                height: AppSpacing.md,
+                                child: const CircularProgressIndicator(
+                                  strokeWidth: 2,
+                                ),
+                              )
+                            : Icon(LucideIcons.flaskConical, size: 18.sp),
+                        label: Text('product.sample_order_cta'.tr()),
+                        style: OutlinedButton.styleFrom(
+                          foregroundColor: AppColors.primary,
+                          side: BorderSide(color: AppColors.primary),
+                        ),
+                      ),
+                    ),
+                  ),
                 Padding(
-                  padding: EdgeInsets.fromLTRB(24.w, 16.h, 24.w, 16.h),
+                  padding: EdgeInsets.fromLTRB(
+                    AppSpacing.xl,
+                    AppSpacing.md,
+                    AppSpacing.xl,
+                    AppSpacing.md,
+                  ),
                   child: Row(
                     children: [
                       // Minimal Floating Chat Button
@@ -1568,12 +1898,12 @@ class _ProductDetailPageState extends State<ProductDetailPage> {
                         height: 56.h,
                         width: 56.h,
                         decoration: BoxDecoration(
-                          color: AppColors.white,
-                          borderRadius: BorderRadius.circular(16.r),
+                          color: AppColors.surface,
+                          borderRadius: BorderRadius.circular(AppRadius.xl),
                           border: Border.all(color: AppColors.grey100),
                           boxShadow: [
                             BoxShadow(
-                              color: Colors.black.withValues(alpha: 0.12),
+                              color: AppColors.black.withValues(alpha: 0.12),
                               blurRadius: 12,
                               offset: const Offset(0, 4),
                             ),
@@ -1592,14 +1922,14 @@ class _ProductDetailPageState extends State<ProductDetailPage> {
                           },
                         ),
                       ),
-                      SizedBox(width: 12.w),
+                      SizedBox(width: AppSpacing.md12),
                       // Nego Button
                       Expanded(
                         child: Container(
                           height: 56.h,
                           decoration: BoxDecoration(
-                            color: AppColors.white,
-                            borderRadius: BorderRadius.circular(16.r),
+                            color: AppColors.surface,
+                            borderRadius: BorderRadius.circular(AppRadius.xl),
                             border: Border.all(
                               color: AppColors.primary,
                               width: 1.5,
@@ -1614,7 +1944,7 @@ class _ProductDetailPageState extends State<ProductDetailPage> {
                               _showNegotiationSheet();
                             },
                             child: Text(
-                              'Nego Harga',
+                              'marketplace.nego_price'.tr(),
                               style: TextStyle(
                                 fontSize: 15.sp,
                                 fontWeight: FontWeight.w800,
@@ -1624,14 +1954,14 @@ class _ProductDetailPageState extends State<ProductDetailPage> {
                           ),
                         ),
                       ),
-                      SizedBox(width: 12.w),
+                      SizedBox(width: AppSpacing.md12),
                       // Floating Buy Button
                       Expanded(
                         child: Container(
                           height: 56.h,
                           decoration: BoxDecoration(
                             gradient: AppColors.primaryGradient,
-                            borderRadius: BorderRadius.circular(16.r),
+                            borderRadius: BorderRadius.circular(AppRadius.xl),
                             boxShadow: [
                               BoxShadow(
                                 color: AppColors.primary.withValues(alpha: 0.3),
@@ -1650,33 +1980,35 @@ class _ProductDetailPageState extends State<ProductDetailPage> {
                                   .read<CommerceCubit>()
                                   .addToCart(p.id, p.minOrder);
                               if (context.mounted && ok) {
-                                ScaffoldMessenger.of(context).showSnackBar(
-                                  SnackBar(
-                                    content: Text(
-                                      'Ditambahkan ke keranjang (${p.minOrder.toInt()} ${p.unit})',
-                                    ),
-                                    behavior: SnackBarBehavior.floating,
-                                    action: SnackBarAction(
-                                      label: 'Lihat',
-                                      onPressed: () => context.push('/cart'),
-                                    ),
+                                showCustomSnackBar(
+                                  context,
+                                  content: Text(
+                                    'marketplace.added_to_cart'.tr(namedArgs: {
+                                      'qty': '${p.minOrder.toInt()}',
+                                      'unit': p.unit,
+                                    }),
+                                  ),
+                                  backgroundColor: AppColors.success,
+                                  action: SnackBarAction(
+                                    label: 'marketplace.view_cart'.tr(),
+                                    onPressed: () => context.push('/cart'),
                                   ),
                                 );
                               }
                             },
                             style: ElevatedButton.styleFrom(
-                              backgroundColor: Colors.transparent,
-                              shadowColor: Colors.transparent,
+                              backgroundColor: AppColors.transparent,
+                              shadowColor: AppColors.transparent,
                               shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(16.r),
+                                borderRadius: BorderRadius.circular(AppRadius.xl),
                               ),
                             ),
                             child: Text(
-                              'Keranjang',
+                              'marketplace.cart_btn'.tr(),
                               style: TextStyle(
                                 fontSize: 15.sp,
                                 fontWeight: FontWeight.w800,
-                                color: AppColors.white,
+                                color: AppColors.surface,
                               ),
                             ),
                           ),
@@ -1695,10 +2027,13 @@ class _ProductDetailPageState extends State<ProductDetailPage> {
 
   Widget _buildSmallBadge(IconData icon, String label, Color color) {
     return Container(
-      padding: EdgeInsets.symmetric(horizontal: 10.w, vertical: 6.h),
+      padding: EdgeInsets.symmetric(
+        horizontal: AppSpacing.sm10,
+        vertical: AppSpacing.xs6,
+      ),
       decoration: BoxDecoration(
         color: color.withValues(alpha: 0.1),
-        borderRadius: BorderRadius.circular(8.r),
+        borderRadius: BorderRadius.circular(AppRadius.button),
         border: Border.all(color: color.withValues(alpha: 0.2), width: 1),
       ),
       child: Row(

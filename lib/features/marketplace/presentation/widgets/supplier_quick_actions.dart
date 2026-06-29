@@ -1,8 +1,10 @@
+import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:go_router/go_router.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
+import '../../../../core/constants/app_layout.dart';
 import '../../../../core/constants/app_colors.dart';
 import '../../../../core/readiness/readiness_gate.dart';
 import '../../../auth/presentation/bloc/auth_cubit.dart';
@@ -62,9 +64,9 @@ class SupplierQuickActions extends StatelessWidget {
                     borderRadius: BorderRadius.circular(4.r),
                   ),
                 ),
-                SizedBox(width: 8.w),
+                SizedBox(width: AppSpacing.sm),
                 Text(
-                  'Aksi Cepat',
+                  'marketplace.quick_actions_title'.tr(),
                   style: TextStyle(
                     fontSize: 15.sp,
                     fontWeight: FontWeight.w800,
@@ -74,11 +76,10 @@ class SupplierQuickActions extends StatelessWidget {
                 ),
               ],
             ),
-            SizedBox(height: 14.h),
+            SizedBox(height: AppSpacing.section),
             LayoutBuilder(
               builder: (context, constraints) {
                 const spacing = 10.0;
-                // Lebar sel > tinggi sel agar icon 3D + label 2 baris tidak overflow.
                 const cellAspectRatio = 0.84;
                 final cellWidth =
                     (constraints.maxWidth - spacing * (_columns - 1)) /
@@ -114,73 +115,73 @@ class SupplierQuickActions extends StatelessWidget {
     return [
       _QuickActionData(
         icon: LucideIcons.plus,
-        label: 'Tambah Produk',
+        label: 'marketplace.action_add_product'.tr(),
         color: AppColors.success,
         onTap: () => ReadinessGate.pushAddProduct(context),
       ),
       _QuickActionData(
         icon: LucideIcons.package,
-        label: 'Kelola Produk',
+        label: 'marketplace.action_manage_products'.tr(),
         color: AppColors.primary,
         onTap: () => context.push('/product-management'),
       ),
       _QuickActionData(
         icon: LucideIcons.store,
-        label: 'Manajemen Toko',
+        label: 'marketplace.action_store_management'.tr(),
         color: AppColors.primaryDark,
         onTap: () => context.push('/store-management'),
       ),
       _QuickActionData(
         icon: LucideIcons.chartBar,
-        label: 'Analitik',
+        label: 'marketplace.action_analytics'.tr(),
         color: AppColors.info,
         onTap: () => context.push('/sales-analytics'),
       ),
       _QuickActionData(
         icon: LucideIcons.heart,
-        label: 'Minat Produk',
+        label: 'marketplace.action_product_engagement'.tr(),
         color: AppColors.error,
         onTap: () => context.push('/product-engagement'),
       ),
       _QuickActionData(
         icon: LucideIcons.shoppingBag,
-        label: 'Pesanan',
+        label: 'marketplace.action_orders'.tr(),
         color: AppColors.secondary,
         onTap: () => MainShellScope.maybeOf(context)?.selectTab(3),
       ),
       _QuickActionData(
         icon: LucideIcons.messageSquare,
-        label: 'Negosiasi',
+        label: 'marketplace.action_negotiation'.tr(),
         color: AppColors.ocean,
         onTap: () => MainShellScope.maybeOf(context)?.selectTab(1),
       ),
       _QuickActionData(
         icon: LucideIcons.wallet,
-        label: 'Dompet',
+        label: 'marketplace.action_wallet'.tr(),
         color: AppColors.warning,
         onTap: () => context.push('/wallet'),
       ),
       _QuickActionData(
         icon: LucideIcons.cpu,
-        label: 'Monitoring IoT',
+        label: 'marketplace.action_iot_monitoring'.tr(),
         color: AppColors.info,
         onTap: () => context.push('/iot-dashboard'),
       ),
       _QuickActionData(
         icon: LucideIcons.truck,
-        label: 'Asal Pengiriman',
+        label: 'marketplace.action_shipping_origin'.tr(),
         color: AppColors.ocean,
         onTap: () => context.push('/supplier-shipping-origin'),
       ),
       _QuickActionData(
         icon: LucideIcons.shieldCheck,
-        label: 'Verifikasi',
+        label: 'marketplace.action_verification'.tr(),
         color: AppColors.success,
         onTap: () => context.push('/verification'),
       ),
       _QuickActionData(
         icon: LucideIcons.bell,
-        label: 'Notifikasi',
+        label: 'marketplace.action_notifications'.tr(),
         color: AppColors.error,
         onTap: () => context.push('/notifications'),
       ),
@@ -232,7 +233,7 @@ class _QuickActionCardState extends State<_QuickActionCard> {
           padding: EdgeInsets.symmetric(horizontal: 3.w, vertical: 6.h),
           decoration: BoxDecoration(
             color: AppColors.surface,
-            borderRadius: BorderRadius.circular(14.r),
+            borderRadius: BorderRadius.circular(AppRadius.tile),
             border: Border.all(
               color: AppColors.grey100.withValues(alpha: 0.85),
             ),
@@ -279,7 +280,6 @@ class _QuickActionCardState extends State<_QuickActionCard> {
   }
 }
 
-/// Icon badge dengan gradient + shadow agar terlihat sedikit 3D / mengambang.
 class _QuickActionIcon3D extends StatelessWidget {
   const _QuickActionIcon3D({
     required this.icon,
@@ -305,7 +305,7 @@ class _QuickActionIcon3D extends StatelessWidget {
           colors: [top, mid, bottom],
           stops: const [0.0, 0.55, 1.0],
         ),
-        borderRadius: BorderRadius.circular(12.r),
+        borderRadius: BorderRadius.circular(AppRadius.lg),
         boxShadow: [
           BoxShadow(
             color: color.withValues(alpha: 0.42),
@@ -336,7 +336,7 @@ class _QuickActionIcon3D extends StatelessWidget {
           ),
           Icon(
             icon,
-            color: AppColors.white,
+            color: AppColors.surface,
             size: 16.sp,
           ),
         ],

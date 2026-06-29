@@ -59,7 +59,7 @@ class GisRepositoryImpl implements GisRepository {
       return Right(entities);
     } on DioException catch (e) {
       return Left(
-        ServerFailure(message: e.message ?? 'Gagal memuat data wilayah'),
+        ServerFailure(message: e.message ?? 'errors.gis_regions_load'),
       );
     } catch (e) {
       return const Left(UnexpectedFailure());
@@ -73,7 +73,7 @@ class GisRepositoryImpl implements GisRepository {
       return Right(models.map((e) => e.toEntity()).toList());
     } on DioException catch (e) {
       return Left(
-        ServerFailure(message: e.message ?? 'Gagal memuat peta limbah'),
+        ServerFailure(message: e.message ?? 'errors.gis_waste_map_load'),
       );
     } catch (e) {
       return const Left(UnexpectedFailure());
@@ -84,14 +84,24 @@ class GisRepositoryImpl implements GisRepository {
   Future<Either<Failure, Map<String, dynamic>>> matchSupplyDemand(
     double lat,
     double lng,
-    double radius,
-  ) async {
+    double radius, {
+    String? biomassaType,
+    String? regency,
+    String? province,
+  }) async {
     try {
-      final result = await remoteDataSource.matchSupplyDemand(lat, lng, radius);
+      final result = await remoteDataSource.matchSupplyDemand(
+        lat,
+        lng,
+        radius,
+        biomassaType: biomassaType,
+        regency: regency,
+        province: province,
+      );
       return Right(result);
     } on DioException catch (e) {
       return Left(
-        ServerFailure(message: e.message ?? 'Gagal melakukan pemetaan'),
+        ServerFailure(message: e.message ?? 'errors.gis_match_failed'),
       );
     } catch (e) {
       return const Left(UnexpectedFailure());

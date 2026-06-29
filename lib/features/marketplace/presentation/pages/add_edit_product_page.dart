@@ -1,8 +1,11 @@
 import 'package:easy_localization/easy_localization.dart';
 import 'dart:convert';
 import 'package:flutter/material.dart';
+import '../../../../core/utils/app_feedback.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
+import 'package:lucide_icons_flutter/lucide_icons.dart';
+import '../../../../core/constants/app_layout.dart';
 import '../../../../core/constants/app_colors.dart';
 import '../../../../core/readiness/readiness_gate.dart';
 import '../../../../shared/widgets/custom_button.dart';
@@ -11,6 +14,8 @@ import '../../../../shared/widgets/bisa_app_bar.dart';
 import '../../domain/entities/product_entity.dart';
 import '../../domain/entities/product_image_draft.dart';
 import '../widgets/product_image_editor.dart';
+import '../utils/prediction_product_mapper.dart';
+import '../widgets/iot_prediction_import_sheet.dart';
 import '../widgets/product_specs_sheet.dart';
 import '../bloc/marketplace_cubit.dart';
 import '../bloc/category_cubit.dart';
@@ -24,8 +29,13 @@ import '../../../../injection_container.dart';
 
 class AddEditProductPage extends StatefulWidget {
   final ProductEntity? product;
+  final IotPredictionImportResult? predictionSeed;
 
-  const AddEditProductPage({super.key, this.product});
+  const AddEditProductPage({
+    super.key,
+    this.product,
+    this.predictionSeed,
+  });
 
   @override
   State<AddEditProductPage> createState() => _AddEditProductPageState();
@@ -52,6 +62,7 @@ class _AddEditProductPageState extends State<AddEditProductPage> {
   String _selectedStatus = 'ACTIVE';
   String? _selectedGrade;
   String? _selectedCategoryId;
+  String? _aiPredictionId;
 
   List<ProductImageDraft> _imageDrafts = [];
   final _imageEditorKey = GlobalKey<ProductImageEditorState>();
@@ -92,6 +103,35 @@ class _AddEditProductPageState extends State<AddEditProductPage> {
         ];
       }
     }
+
+    final seed = widget.predictionSeed;
+    if (seed != null) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (!mounted) return;
+        _applyPredictionSeed(seed, showSnack: false);
+      });
+    }
+  }
+
+  void _applyPredictionSeed(IotPredictionImportResult result, {bool showSnack = true}) {
+    setState(() {
+      _productMode = 'BIOMASS_MATERIAL';
+      _selectedBiomassaType = result.biomassaType ?? 'BIOCHAR';
+      _selectedGrade = result.grade;
+      _specsData = result.specsData;
+      _aiPredictionId = result.predictionId;
+      if (_nameController.text.trim().isEmpty && result.suggestedName != null) {
+        _nameController.text = result.suggestedName!;
+      }
+      if (result.suggestedPricePerUnit != null &&
+          _priceController.text.trim().isEmpty) {
+        _priceController.text = result.suggestedPricePerUnit!.round().toString();
+      }
+    });
+    _reloadCategories(context);
+    if (showSnack && mounted) {
+      showSuccessSnackBar(context, productSeedAppliedMessage());
+    }
   }
 
   @override
@@ -103,6 +143,12 @@ class _AddEditProductPageState extends State<AddEditProductPage> {
     _descriptionController.dispose();
     _minOrderController.dispose();
     super.dispose();
+  }
+
+  Future<void> _importFromIot() async {
+    final result = await IotPredictionImportSheet.show(context);
+    if (result == null || !mounted) return;
+    _applyPredictionSeed(result);
   }
 
   Future<void> _openSpecsSheet() async {
@@ -154,26 +200,17 @@ class _AddEditProductPageState extends State<AddEditProductPage> {
   Future<void> _submit() async {
     if (_formKey.currentState!.validate()) {
       if (_selectedCategoryId == null) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(
-              _productMode == 'BIOMASS_MATERIAL'
-                  ? 'Pilih jenis biomassa dan kategori produk'
-                  : 'Pilih kategori hasil pertanian',
-            ),
-            backgroundColor: AppColors.error,
-          ),
+        showErrorSnackBar(
+          context,
+          _productMode == 'BIOMASS_MATERIAL'
+              ? 'marketplace.pick_biomass_and_category'.tr()
+              : 'marketplace.pick_organic_category'.tr(),
         );
         return;
       }
       final drafts = _imageEditorKey.currentState?.items ?? _imageDrafts;
       if (drafts.isEmpty) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('Pilih minimal satu foto produk'),
-            backgroundColor: AppColors.error,
-          ),
-        );
+        showErrorSnackBar(context, 'marketplace.min_one_photo'.tr());
         return;
       }
 
@@ -198,6 +235,7 @@ class _AddEditProductPageState extends State<AddEditProductPage> {
         'status': _selectedStatus,
         'productMode': _productMode,
         if (_selectedCategoryId != null) 'categoryId': _selectedCategoryId,
+        if (_aiPredictionId != null) 'aiPredictionId': _aiPredictionId,
         'imageOrder': payload.imageOrderJson,
         ..._buildSpecsPayload(),
       };
@@ -247,8 +285,10 @@ class _AddEditProductPageState extends State<AddEditProductPage> {
         backgroundColor: AppColors.background,
         resizeToAvoidBottomInset: true,
         appBar: BisaAppBar(
-          title: isEdit ? 'Edit Produk' : 'Tambah Produk Baru',
-          backgroundColor: Colors.white,
+          title: isEdit
+              ? 'marketplace.edit_product'.tr()
+              : 'marketplace.add_product_new'.tr(),
+          backgroundColor: AppColors.surface,
           centerTitle: true,
         ),
         bottomNavigationBar: _buildSubmitBar(isEdit),
@@ -263,14 +303,11 @@ class _AddEditProductPageState extends State<AddEditProductPage> {
           listener: (context, state) {
             state.maybeWhen(
               loaded: (products, hasReachedMax) {
-                ScaffoldMessenger.of(context).showSnackBar(
-                  SnackBar(
-                    content: Text(
-                      isEdit
-                          ? 'Produk diperbarui'
-                          : 'Produk berhasil ditambahkan',
-                    ),
-                  ),
+                showSuccessSnackBar(
+                  context,
+                  isEdit
+                      ? 'marketplace.product_updated'.tr()
+                      : 'marketplace.product_added'.tr(),
                 );
                 Navigator.pop(context);
               },
@@ -282,12 +319,7 @@ class _AddEditProductPageState extends State<AddEditProductPage> {
                   await ReadinessGate.ensureStoreReady(context);
                   return;
                 }
-                ScaffoldMessenger.of(context).showSnackBar(
-                  SnackBar(
-                    content: Text(message),
-                    backgroundColor: AppColors.error,
-                  ),
-                );
+                showFailureSnackBarFromMessage(context, message);
               },
               orElse: () {},
             );
@@ -314,8 +346,23 @@ class _AddEditProductPageState extends State<AddEditProductPage> {
                   ),
                   SizedBox(height: _sectionGap.h),
                   _formSection(
-                    title: 'Tipe & Kategori',
+                    title: 'marketplace.section_type_category'.tr(),
                     children: [
+                      if (widget.product == null && _productMode == 'BIOMASS_MATERIAL')
+                        Padding(
+                          padding: EdgeInsets.only(bottom: _fieldGap.h),
+                          child: OutlinedButton.icon(
+                            onPressed: _importFromIot,
+                            icon: Icon(LucideIcons.radio, size: 18.sp),
+                            label: Text('marketplace.import_iot_cta'.tr()),
+                            style: OutlinedButton.styleFrom(
+                              foregroundColor: AppColors.primary,
+                              side: BorderSide(
+                                color: AppColors.primary.withValues(alpha: 0.35),
+                              ),
+                            ),
+                          ),
+                        ),
                       _buildProductModeFormToggle(),
                       if (_productMode == 'BIOMASS_MATERIAL')
                         _buildBiomassaTypeSelector(),
@@ -324,15 +371,16 @@ class _AddEditProductPageState extends State<AddEditProductPage> {
                   ),
                   SizedBox(height: _sectionGap.h),
                   _formSection(
-                    title: 'Informasi Produk',
+                    title: 'marketplace.section_product_info'.tr(),
                     children: [
                       CustomTextField(
-                        label: 'namaproduk_1'.tr(),
+                        label: 'marketplace.product_name_label'.tr(),
                         controller: _nameController,
                         hint: _productMode == 'ORGANIC_PRODUCE'
-                            ? 'contoh: Beras Organik Mentik Wangi'
-                            : 'contohbiochargradeasekamp_1'.tr(),
-                        validator: (v) => v!.isEmpty ? 'Wajib diisi' : null,
+                            ? 'marketplace.product_name_hint_organic'.tr()
+                            : 'marketplace.product_name_hint_biomass'.tr(),
+                        validator: (v) =>
+                            v!.isEmpty ? 'marketplace.required_field'.tr() : null,
                       ),
                       if (_productMode == 'BIOMASS_MATERIAL' &&
                           _selectedBiomassaType == 'BIOCHAR')
@@ -350,10 +398,11 @@ class _AddEditProductPageState extends State<AddEditProductPage> {
                               controller: _priceController,
                               keyboardType: TextInputType.number,
                               hint: '0',
-                              validator: (v) => v!.isEmpty ? 'Wajib' : null,
+                              validator: (v) =>
+                                  v!.isEmpty ? 'marketplace.required_short'.tr() : null,
                             ),
                           ),
-                          SizedBox(width: 8.w),
+                          SizedBox(width: AppSpacing.sm),
                           Expanded(
                             child: _buildDropdown(
                               label: 'satuan1'.tr(),
@@ -367,17 +416,18 @@ class _AddEditProductPageState extends State<AddEditProductPage> {
                       ),
                       Container(
                         padding: EdgeInsets.symmetric(
-                          horizontal: 10.w,
-                          vertical: 8.h,
+                          horizontal: AppSpacing.sm10,
+                    vertical: AppSpacing.sm,
                         ),
                         decoration: BoxDecoration(
                           color: AppColors.grey50,
-                          borderRadius: BorderRadius.circular(8.r),
+                          borderRadius: BorderRadius.circular(AppRadius.button),
                           border: Border.all(color: AppColors.grey100),
                         ),
                         child: Text(
-                          'Diskon promo berlaku per 1 $_selectedUnit. '
-                          'Total = qty × harga jual. Min. order terpisah.',
+                          'marketplace.promo_hint'.tr(
+                            namedArgs: {'unit': _selectedUnit},
+                          ),
                           style: TextStyle(
                             fontSize: 10.sp,
                             color: AppColors.textSecondary,
@@ -386,10 +436,12 @@ class _AddEditProductPageState extends State<AddEditProductPage> {
                         ),
                       ),
                       CustomTextField(
-                        label: 'Harga coret per $_selectedUnit (opsional)',
+                        label: 'marketplace.strikethrough_price'.tr(
+                          namedArgs: {'unit': _selectedUnit},
+                        ),
                         controller: _originalPriceController,
                         keyboardType: TextInputType.number,
-                        hint: 'Kosongkan jika tanpa promo',
+                        hint: 'marketplace.no_promo_hint'.tr(),
                       ),
                     ],
                   ),
@@ -403,7 +455,7 @@ class _AddEditProductPageState extends State<AddEditProductPage> {
                   ),
                   SizedBox(height: _sectionGap.h),
                   _formSection(
-                    title: 'Stok & Keterangan',
+                    title: 'marketplace.section_stock_desc'.tr(),
                     children: [
                       Row(
                         children: [
@@ -413,10 +465,11 @@ class _AddEditProductPageState extends State<AddEditProductPage> {
                               controller: _stockController,
                               keyboardType: TextInputType.number,
                               hint: '0',
-                              validator: (v) => v!.isEmpty ? 'Wajib' : null,
+                              validator: (v) =>
+                                  v!.isEmpty ? 'marketplace.required_short'.tr() : null,
                             ),
                           ),
-                          SizedBox(width: 8.w),
+                          SizedBox(width: AppSpacing.sm),
                           Expanded(
                             child: CustomTextField(
                               label: 'minorder'.tr(),
@@ -457,7 +510,7 @@ class _AddEditProductPageState extends State<AddEditProductPage> {
     return Material(
       color: AppColors.surface,
       elevation: 8,
-      shadowColor: Colors.black.withValues(alpha: 0.08),
+      shadowColor: AppColors.black.withValues(alpha: 0.08),
       child: SafeArea(
         top: false,
         child: Padding(
@@ -465,7 +518,9 @@ class _AddEditProductPageState extends State<AddEditProductPage> {
           child: BlocBuilder<MarketplaceCubit, MarketplaceState>(
             builder: (context, state) {
               return CustomButton(
-                text: isEdit ? 'Simpan Perubahan' : 'Terbitkan Produk',
+                text: isEdit
+                    ? 'marketplace.save_changes'.tr()
+                    : 'marketplace.publish_product'.tr(),
                 isLoading: state.maybeWhen(
                   loading: () => true,
                   orElse: () => false,
@@ -487,10 +542,10 @@ class _AddEditProductPageState extends State<AddEditProductPage> {
     final fields = child != null ? [child] : (children ?? const []);
     return Container(
       width: double.infinity,
-      padding: EdgeInsets.all(12.w),
+      padding: EdgeInsets.all(AppSpacing.md12),
       decoration: BoxDecoration(
         color: AppColors.surface,
-        borderRadius: BorderRadius.circular(12.r),
+        borderRadius: BorderRadius.circular(AppRadius.lg),
         border: Border.all(color: AppColors.grey100),
       ),
       child: Column(
@@ -505,7 +560,7 @@ class _AddEditProductPageState extends State<AddEditProductPage> {
                 color: AppColors.textPrimary,
               ),
             ),
-            SizedBox(height: 10.h),
+            SizedBox(height: AppSpacing.sm10),
           ],
           for (var i = 0; i < fields.length; i++) ...[
             if (i > 0) SizedBox(height: _fieldGap.h),
@@ -530,10 +585,10 @@ class _AddEditProductPageState extends State<AddEditProductPage> {
         ),
         SizedBox(height: 6.h),
         Container(
-          padding: EdgeInsets.symmetric(horizontal: 12.w),
+          padding: EdgeInsets.symmetric(horizontal: AppSpacing.md12),
           decoration: BoxDecoration(
             border: Border.all(color: AppColors.grey300),
-            borderRadius: BorderRadius.circular(8.r),
+            borderRadius: BorderRadius.circular(AppRadius.button),
           ),
           child: DropdownButtonHideUnderline(
             child: DropdownButton<String>(
@@ -556,7 +611,7 @@ class _AddEditProductPageState extends State<AddEditProductPage> {
         ),
         SizedBox(height: 4.h),
         Text(
-          'Pilih jenis biomassa dulu — kategori akan muncul sesuai tipe (biochar, sekam, jagung, dll.)',
+          'marketplace.biomassa_type_hint'.tr(),
           style: TextStyle(
             fontSize: 10.sp,
             color: AppColors.textHint,
@@ -586,23 +641,31 @@ class _AddEditProductPageState extends State<AddEditProductPage> {
         final biomassaLabel = biomassaTypeLabel(_selectedBiomassaType);
 
         return CategoryPickerField(
-          label: isBiomass ? 'Kategori Biomassa' : 'Kategori Hasil Pertanian',
+          label: isBiomass
+              ? 'marketplace.category_biomass'.tr()
+              : 'marketplace.category_organic'.tr(),
           enabled: isBiomass ? true : true,
           isLoading: state is CategoryLoading,
           categories: categories,
           selectedId: _selectedCategoryId,
           disabledHint: isBiomass
-              ? 'Memuat kategori biomassa...'
-              : 'Memuat kategori hasil pertanian...',
+              ? 'marketplace.loading_biomass_categories'.tr()
+              : 'marketplace.loading_organic_categories'.tr(),
           emptyHint: isBiomass
-              ? 'Belum ada kategori untuk $biomassaLabel'
-              : 'Belum ada kategori hasil pertanian',
+              ? 'marketplace.no_category_for_type'.tr(
+                  namedArgs: {'type': biomassaLabel},
+                )
+              : 'marketplace.no_organic_categories'.tr(),
           pickerTitle: isBiomass
-              ? 'Kategori — $biomassaLabel'
-              : 'Pilih Kategori Hasil Tani',
+              ? 'marketplace.category_picker_biomass'.tr(
+                  namedArgs: {'type': biomassaLabel},
+                )
+              : 'marketplace.category_picker_organic'.tr(),
           searchHint: isBiomass
-              ? 'Cari kategori $biomassaLabel...'
-              : 'Cari kategori, mis. Beras / Sayur / Buah...',
+              ? 'marketplace.search_category_biomass'.tr(
+                  namedArgs: {'type': biomassaLabel},
+                )
+              : 'marketplace.search_category_organic'.tr(),
           onSelected: (cat) => setState(() => _selectedCategoryId = cat?.id),
         );
       },
@@ -628,10 +691,10 @@ class _AddEditProductPageState extends State<AddEditProductPage> {
         ),
         SizedBox(height: 6.h),
         Container(
-          padding: EdgeInsets.symmetric(horizontal: 10.w),
+          padding: EdgeInsets.symmetric(horizontal: AppSpacing.sm10),
           decoration: BoxDecoration(
             border: Border.all(color: AppColors.grey200),
-            borderRadius: BorderRadius.circular(8.r),
+            borderRadius: BorderRadius.circular(AppRadius.button),
             color: AppColors.grey50,
           ),
           child: DropdownButtonHideUnderline(
@@ -655,7 +718,7 @@ class _AddEditProductPageState extends State<AddEditProductPage> {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(
-          'Tipe Produk',
+          'marketplace.product_type_label'.tr(),
           style: TextStyle(
             fontSize: 13.sp,
             fontWeight: FontWeight.w600,
@@ -667,19 +730,19 @@ class _AddEditProductPageState extends State<AddEditProductPage> {
           height: 38.h,
           decoration: BoxDecoration(
             color: AppColors.grey100,
-            borderRadius: BorderRadius.circular(10.r),
+            borderRadius: BorderRadius.circular(AppRadius.md),
           ),
           child: Row(
             children: [
               Expanded(
                 child: _buildFormModeTab(
-                  label: 'Bahan Baku Industri',
+                  label: 'marketplace.mode_biomass_industrial'.tr(),
                   mode: 'BIOMASS_MATERIAL',
                 ),
               ),
               Expanded(
                 child: _buildFormModeTab(
-                  label: 'Hasil Tani Konsumsi',
+                  label: 'marketplace.mode_organic_consumption'.tr(),
                   mode: 'ORGANIC_PRODUCE',
                 ),
               ),
@@ -711,8 +774,8 @@ class _AddEditProductPageState extends State<AddEditProductPage> {
         duration: const Duration(milliseconds: 200),
         alignment: Alignment.center,
         decoration: BoxDecoration(
-          color: isSelected ? AppColors.primary : Colors.transparent,
-          borderRadius: BorderRadius.circular(10.r),
+          color: isSelected ? AppColors.primary : AppColors.transparent,
+          borderRadius: BorderRadius.circular(AppRadius.md),
         ),
         child: Text(
           label,
@@ -720,7 +783,7 @@ class _AddEditProductPageState extends State<AddEditProductPage> {
           maxLines: 2,
           overflow: TextOverflow.ellipsis,
           style: TextStyle(
-            color: isSelected ? Colors.white : AppColors.textSecondary,
+            color: isSelected ? AppColors.textOnPrimary : AppColors.textSecondary,
             fontWeight: isSelected ? FontWeight.w700 : FontWeight.w600,
             fontSize: 11.sp,
             height: 1.2,

@@ -4,19 +4,22 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:go_router/go_router.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
+import '../../../../core/constants/app_layout.dart';
 import '../../../../core/constants/app_colors.dart';
+import '../../../../core/i18n/tr_safe.dart';
 import '../../../../core/utils/safe_navigator.dart';
 import '../../../../shared/widgets/bisa_app_bar.dart';
-import '../../../../shared/widgets/custom_button.dart';
 import '../../../../shared/widgets/bisa_dialog.dart';
+import '../../../../shared/widgets/custom_button.dart';
 import '../../../../injection_container.dart';
 import '../../domain/entities/iot_dashboard_entity.dart';
 import '../bloc/iot_cubit.dart';
 import '../../../../shared/widgets/shimmer_loading.dart';
 import '../widgets/iot_alert_tile.dart';
-import '../widgets/iot_metric_summary_row.dart';
+import '../widgets/iot_current_conditions_panel.dart';
 import '../widgets/iot_range_chips.dart';
 import '../widgets/iot_telemetry_chart.dart';
+import '../widgets/iot_realtime_panel.dart';
 import '../widgets/iot_settings_tab.dart';
 import 'dart:async';
 
@@ -80,7 +83,7 @@ class _IotDeviceDetailPageState extends State<IotDeviceDetailPage>
         child: Scaffold(
           backgroundColor: AppColors.background,
           appBar: BisaAppBar(
-            title: widget.deviceName ?? 'Detail Perangkat',
+            title: widget.deviceName ?? 'iot.detail_default_title'.tr(),
             backgroundColor: AppColors.surface,
             onBackTap: () => safeRouterPop(context, _changed),
             bottom: TabBar(
@@ -89,11 +92,11 @@ class _IotDeviceDetailPageState extends State<IotDeviceDetailPage>
               unselectedLabelColor: AppColors.textSecondary,
               indicatorColor: AppColors.primary,
               isScrollable: true,
-              tabs: const [
-                Tab(text: 'Ringkasan'),
-                Tab(text: 'Grafik'),
-                Tab(text: 'Alert'),
-                Tab(text: 'Atur'),
+              tabs: [
+                Tab(text: 'iot.tab_summary'.tr()),
+                Tab(text: 'iot.tab_chart'.tr()),
+                Tab(text: 'iot.tab_alerts'.tr()),
+                Tab(text: 'iot.tab_settings'.tr()),
               ],
             ),
           ),
@@ -104,21 +107,21 @@ class _IotDeviceDetailPageState extends State<IotDeviceDetailPage>
                   itemCount: 5,
                   itemHeight: 96.h,
                   scrollable: true,
-                  padding: EdgeInsets.all(16.w),
+                  padding: EdgeInsets.all(AppSpacing.md),
                 ),
                 error: (message) => Center(
                   child: Padding(
-                    padding: EdgeInsets.all(24.w),
+                    padding: EdgeInsets.all(AppSpacing.xl),
                     child: Column(
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
                         Text(message, textAlign: TextAlign.center),
-                        SizedBox(height: 16.h),
+                        SizedBox(height: AppSpacing.md),
                         TextButton(
                           onPressed: () => context
                               .read<IotCubit>()
                               .getDeviceDashboard(widget.deviceId),
-                          child: const Text('Coba lagi'),
+                          child: Text('iot.retry'.tr()),
                         ),
                       ],
                     ),
@@ -158,56 +161,41 @@ class _IotDeviceDetailPageState extends State<IotDeviceDetailPage>
     final last = d.lastReading;
 
     return SingleChildScrollView(
-      padding: EdgeInsets.all(20.w),
+      padding: EdgeInsets.symmetric(horizontal: AppSpacing.md, vertical: AppSpacing.sm10),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           _buildMonitoringPanel(context, d.isMonitoringEnabled, d.liveStatus),
-          SizedBox(height: 16.h),
+          SizedBox(height: AppSpacing.sm),
+          IotRealtimePanel(
+            deviceId: widget.deviceId,
+            lastTemperature: last?.temperature,
+            enabled: d.isMonitoringEnabled,
+            onAnalysisComplete: () {
+              if (!context.mounted) return;
+              context.read<IotCubit>().getDeviceDashboard(widget.deviceId, range: d.range);
+            },
+          ),
           if (d.isMonitoringEnabled) ...[
-            Text(
-              'Kondisi Terkini',
-              style: TextStyle(
-                fontWeight: FontWeight.w900,
-                fontSize: 16.sp,
-                color: AppColors.textPrimary,
-              ),
-            ),
-            SizedBox(height: 12.h),
-            Row(
-              children: [
-                Expanded(
-                  child: _buildMetricCard(
-                    'Suhu',
-                    '${last?.temperature.toStringAsFixed(1) ?? "-"}°C',
-                    LucideIcons.thermometer,
-                    AppColors.error,
-                  ),
-                ),
-                SizedBox(width: 12.w),
-                Expanded(
-                  child: _buildMetricCard(
-                    'Kelembaban',
-                    '${last?.humidity?.toStringAsFixed(1) ?? "-"}%',
-                    LucideIcons.droplets,
-                    AppColors.ocean,
-                  ),
-                ),
-              ],
-            ),
-            SizedBox(height: 16.h),
-            IotMetricSummaryRow(
+            SizedBox(height: AppSpacing.sm10),
+            IotCurrentConditionsPanel(
+              lastReading: last,
               stats: d.summaryStats,
               uptimePercent: d.uptimePercent,
+              readingsLabel: trSafe(
+                'iot.detail_readings_current_status',
+                namedArgs: {
+                  'count': '${d.currentReadingsCount ?? d.summaryStats.totalReadings}',
+                  'window': d.statusWindow,
+                },
+                fallback: '{count} · {window}',
+              ),
             ),
-            SizedBox(height: 12.h),
-            Text(
-              '${d.readingsInRange} pembacaan dalam rentang ${d.range}',
-              style: TextStyle(fontSize: 11.sp, color: AppColors.textHint),
-            ),
-          ] else
+          ] else ...[
+            SizedBox(height: AppSpacing.sm10),
             _buildDisabledPlaceholder(),
-          SizedBox(height: 24.h),
+          ],
+          SizedBox(height: AppSpacing.md),
           _buildActionButtons(context),
         ],
       ),
@@ -221,7 +209,7 @@ class _IotDeviceDetailPageState extends State<IotDeviceDetailPage>
     bool loading,
   ) {
     return SingleChildScrollView(
-      padding: EdgeInsets.all(20.w),
+      padding: EdgeInsets.symmetric(horizontal: AppSpacing.md, vertical: AppSpacing.sm10),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -229,7 +217,7 @@ class _IotDeviceDetailPageState extends State<IotDeviceDetailPage>
             children: [
               Expanded(
                 child: Text(
-                  'Perbarui otomatis (45 dtk)',
+                  'iot.detail_auto_refresh'.tr(),
                   style: TextStyle(
                     fontSize: 12.sp,
                     fontWeight: FontWeight.w600,
@@ -244,14 +232,14 @@ class _IotDeviceDetailPageState extends State<IotDeviceDetailPage>
               ),
             ],
           ),
-          SizedBox(height: 8.h),
+          SizedBox(height: AppSpacing.sm),
           IotRangeChips(
             selected: range,
             onSelected: (r) {
               context.read<IotCubit>().getDeviceDashboard(widget.deviceId, range: r);
             },
           ),
-          SizedBox(height: 16.h),
+          SizedBox(height: AppSpacing.md),
           IotTelemetryChart(
             isLoading: loading,
             temperatureSeries: d.temperatureSeries,
@@ -282,14 +270,14 @@ class _IotDeviceDetailPageState extends State<IotDeviceDetailPage>
     if (alerts.isEmpty) {
       return Center(
         child: Padding(
-          padding: EdgeInsets.all(32.w),
+          padding: EdgeInsets.all(AppSpacing.xxl),
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
               Icon(LucideIcons.bellOff, size: 48.sp, color: AppColors.grey300),
-              SizedBox(height: 12.h),
+              SizedBox(height: AppSpacing.md12),
               Text(
-                'Tidak ada peringatan',
+                'iot.no_alerts_title'.tr(),
                 style: TextStyle(
                   fontSize: 15.sp,
                   fontWeight: FontWeight.w700,
@@ -297,7 +285,7 @@ class _IotDeviceDetailPageState extends State<IotDeviceDetailPage>
               ),
               SizedBox(height: 6.h),
               Text(
-                'Semua kondisi dalam batas aman',
+                'iot.no_alerts_subtitle'.tr(),
                 style: TextStyle(fontSize: 12.sp, color: AppColors.textSecondary),
               ),
             ],
@@ -307,7 +295,7 @@ class _IotDeviceDetailPageState extends State<IotDeviceDetailPage>
     }
 
     return ListView.builder(
-      padding: EdgeInsets.all(20.w),
+      padding: EdgeInsets.all(AppSpacing.lg),
       itemCount: alerts.length,
       itemBuilder: (context, index) {
         final alert = alerts[index];
@@ -338,40 +326,39 @@ class _IotDeviceDetailPageState extends State<IotDeviceDetailPage>
     if (!isMonitoringEnabled) {
       bannerColor = AppColors.grey500;
       bannerIcon = LucideIcons.powerOff;
-      title = 'Monitoring Nonaktif';
-      subtitle =
-          'Perangkat tidak menerima data sensor dan tidak mengirim peringatan bahaya.';
+      title = 'iot.panel_monitoring_off_title'.tr();
+      subtitle = 'iot.panel_monitoring_off_subtitle'.tr();
     } else if (isAlert) {
       bannerColor = AppColors.error;
       bannerIcon = LucideIcons.triangleAlert;
-      title = 'Peringatan Aktif';
-      subtitle = 'Suhu atau kondisi di luar batas aman. Segera periksa lokasi.';
+      title = 'iot.panel_monitoring_alert_title'.tr();
+      subtitle = 'iot.panel_monitoring_alert_subtitle'.tr();
     } else if (isOnline) {
       bannerColor = AppColors.success;
       bannerIcon = LucideIcons.check;
-      title = 'Monitoring Aktif — Online';
-      subtitle = 'Data sensor diterima secara real-time.';
+      title = 'iot.panel_monitoring_online_title'.tr();
+      subtitle = 'iot.panel_monitoring_online_subtitle'.tr();
     } else {
       bannerColor = AppColors.warning;
       bannerIcon = LucideIcons.wifiOff;
-      title = 'Monitoring Aktif — Offline';
-      subtitle = 'Belum ada data baru. Periksa koneksi perangkat.';
+      title = 'iot.panel_monitoring_offline_title'.tr();
+      subtitle = 'iot.panel_monitoring_offline_subtitle'.tr();
     }
 
     return Container(
-      padding: EdgeInsets.all(16.w),
+      padding: EdgeInsets.all(10.w),
       decoration: BoxDecoration(
         color: bannerColor.withValues(alpha: 0.08),
-        borderRadius: BorderRadius.circular(16.r),
+        borderRadius: BorderRadius.circular(12.r),
         border: Border.all(color: bannerColor.withValues(alpha: 0.2)),
       ),
       child: Column(
         children: [
           Row(
-            crossAxisAlignment: CrossAxisAlignment.start,
+            crossAxisAlignment: CrossAxisAlignment.center,
             children: [
-              Icon(bannerIcon, color: bannerColor, size: 22.sp),
-              SizedBox(width: 12.w),
+              Icon(bannerIcon, color: bannerColor, size: 18.sp),
+              SizedBox(width: 8.w),
               Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
@@ -380,58 +367,34 @@ class _IotDeviceDetailPageState extends State<IotDeviceDetailPage>
                       title,
                       style: TextStyle(
                         fontWeight: FontWeight.w800,
-                        fontSize: 14.sp,
+                        fontSize: 13.sp,
                         color: bannerColor,
                       ),
                     ),
-                    SizedBox(height: 4.h),
                     Text(
                       subtitle,
                       style: TextStyle(
-                        fontSize: 12.sp,
+                        fontSize: 11.sp,
                         color: AppColors.textSecondary,
-                        height: 1.35,
+                        height: 1.25,
                       ),
                     ),
                   ],
                 ),
               ),
+              Switch.adaptive(
+                value: isMonitoringEnabled,
+                activeColor: AppColors.primary,
+                materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                onChanged: (enabled) {
+                  if (!enabled) {
+                    _confirmDisableMonitoring(context);
+                  } else {
+                    _setMonitoring(context, true);
+                  }
+                },
+              ),
             ],
-          ),
-          SizedBox(height: 12.h),
-          Container(
-            padding: EdgeInsets.symmetric(horizontal: 12.w, vertical: 8.h),
-            decoration: BoxDecoration(
-              color: AppColors.surface,
-              borderRadius: BorderRadius.circular(12.r),
-            ),
-            child: Row(
-              children: [
-                Expanded(
-                  child: Text(
-                    isMonitoringEnabled
-                        ? 'Nonaktifkan saat produksi berhenti'
-                        : 'Aktifkan untuk mulai monitoring',
-                    style: TextStyle(
-                      fontSize: 12.sp,
-                      fontWeight: FontWeight.w600,
-                      color: AppColors.textPrimary,
-                    ),
-                  ),
-                ),
-                Switch.adaptive(
-                  value: isMonitoringEnabled,
-                  activeColor: AppColors.primary,
-                  onChanged: (enabled) {
-                    if (!enabled) {
-                      _confirmDisableMonitoring(context);
-                    } else {
-                      _setMonitoring(context, true);
-                    }
-                  },
-                ),
-              ],
-            ),
           ),
         ],
       ),
@@ -441,67 +404,33 @@ class _IotDeviceDetailPageState extends State<IotDeviceDetailPage>
   Widget _buildDisabledPlaceholder() {
     return Container(
       width: double.infinity,
-      padding: EdgeInsets.all(24.w),
+      padding: EdgeInsets.symmetric(horizontal: AppSpacing.md, vertical: AppSpacing.sm10),
       decoration: BoxDecoration(
         color: AppColors.surface,
-        borderRadius: BorderRadius.circular(20.r),
-        boxShadow: AppColors.softShadow,
-      ),
-      child: Column(
-        children: [
-          Icon(LucideIcons.powerOff, size: 40.sp, color: AppColors.grey300),
-          SizedBox(height: 12.h),
-          Text(
-            'Sensor dinonaktifkan',
-            style: TextStyle(
-              fontWeight: FontWeight.w700,
-              fontSize: 14.sp,
-              color: AppColors.textPrimary,
-            ),
-          ),
-          SizedBox(height: 6.h),
-          Text(
-            'Aktifkan monitoring kembali saat produksi dimulai.',
-            textAlign: TextAlign.center,
-            style: TextStyle(fontSize: 12.sp, color: AppColors.textSecondary),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildMetricCard(
-    String label,
-    String value,
-    IconData icon,
-    Color color,
-  ) {
-    return Container(
-      padding: EdgeInsets.all(16.w),
-      decoration: BoxDecoration(
-        color: AppColors.surface,
-        borderRadius: BorderRadius.circular(16.r),
+        borderRadius: BorderRadius.circular(12.r),
         border: Border.all(color: AppColors.grey100),
       ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
+      child: Row(
         children: [
-          Icon(icon, color: color, size: 20.sp),
-          SizedBox(height: 12.h),
-          Text(
-            value,
-            style: TextStyle(
-              fontWeight: FontWeight.w900,
-              fontSize: 22.sp,
-              color: AppColors.textPrimary,
-            ),
-          ),
-          Text(
-            label,
-            style: TextStyle(
-              color: AppColors.textHint,
-              fontSize: 12.sp,
-              fontWeight: FontWeight.w600,
+          Icon(LucideIcons.powerOff, size: 20.sp, color: AppColors.grey300),
+          SizedBox(width: 10.w),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  'iot.sensor_disabled_title'.tr(),
+                  style: TextStyle(
+                    fontWeight: FontWeight.w700,
+                    fontSize: 13.sp,
+                    color: AppColors.textPrimary,
+                  ),
+                ),
+                Text(
+                  'iot.sensor_disabled_subtitle'.tr(),
+                  style: TextStyle(fontSize: 11.sp, color: AppColors.textSecondary),
+                ),
+              ],
             ),
           ),
         ],
@@ -510,20 +439,24 @@ class _IotDeviceDetailPageState extends State<IotDeviceDetailPage>
   }
 
   Widget _buildActionButtons(BuildContext context) {
-    return CustomButton(
-      text: 'hapus_perangkat'.tr(),
-      backgroundColor: AppColors.error,
-      onPressed: () => _confirmDelete(context),
+    return SizedBox(
+      height: 42.h,
+      child: CustomButton(
+        text: 'hapus_perangkat'.tr(),
+        backgroundColor: AppColors.error,
+        onPressed: () => _confirmDelete(context),
+      ),
     );
   }
 
   Future<void> _confirmDisableMonitoring(BuildContext context) async {
     final confirmed = await showBisaConfirmDialog(
       context,
-      title: 'Nonaktifkan Monitoring?',
-      message:
-          'Perangkat tidak akan lagi menerima data sensor atau mengirim peringatan bahaya.',
-      confirmText: 'Nonaktifkan',
+      title: 'iot.disable_confirm_title'.tr(),
+      message: 'iot.disable_confirm_message'.tr(
+        namedArgs: {'name': widget.deviceName ?? ''},
+      ),
+      confirmText: 'iot.disable_confirm_action'.tr(),
       destructive: true,
     );
     if (confirmed == true && context.mounted) {

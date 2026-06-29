@@ -1,6 +1,8 @@
+import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
+import 'package:mobile_bisa/core/constants/app_layout.dart';
 import 'package:mobile_bisa/core/constants/app_colors.dart';
 import 'package:mobile_bisa/features/marketplace/presentation/bloc/marketplace_cubit.dart';
 import 'package:mobile_bisa/features/marketplace/presentation/widgets/product_card.dart';
@@ -81,15 +83,18 @@ class _HorizontalProductSectionState extends State<HorizontalProductSection> {
           return state.maybeWhen(
             initial: () => const SizedBox.shrink(),
             loading: () => SizedBox(
-              height: 220.h,
+              height: ProductCardSkeleton.horizontalListViewportHeight,
               child: ListView.separated(
                 scrollDirection: Axis.horizontal,
-                padding: EdgeInsets.symmetric(horizontal: 16.w),
+                padding: EdgeInsets.symmetric(horizontal: AppSpacing.md),
                 itemCount: 3,
-                separatorBuilder: (_, __) => SizedBox(width: 12.w),
+                separatorBuilder: (_, __) => SizedBox(width: AppSpacing.md12),
                 itemBuilder: (_, __) => SizedBox(
                   width: 160.w,
-                  child: const ProductCardSkeleton(showSellerInfo: true),
+                  child: ProductCardSkeleton(
+                    imageHeight: 120.h,
+                    showSellerInfo: true,
+                  ),
                 ),
               ),
             ),
@@ -118,7 +123,7 @@ class _HorizontalProductSectionState extends State<HorizontalProductSection> {
                         GestureDetector(
                           onTap: widget.onShowAll,
                           child: Text(
-                            'Lihat Semua',
+                            'marketplace.show_all'.tr(),
                             style: TextStyle(
                               fontSize: 12.sp,
                               fontWeight: FontWeight.w700,
@@ -132,13 +137,13 @@ class _HorizontalProductSectionState extends State<HorizontalProductSection> {
                   SingleChildScrollView(
                     scrollDirection: Axis.horizontal,
                     physics: const BouncingScrollPhysics(),
-                    padding: EdgeInsets.symmetric(horizontal: 16.w),
+                    padding: EdgeInsets.symmetric(horizontal: AppSpacing.md),
                     child: IntrinsicHeight(
                       child: Row(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           for (var i = 0; i < products.length; i++) ...[
-                            if (i > 0) SizedBox(width: 8.w),
+                            if (i > 0) SizedBox(width: AppSpacing.sm),
                             SizedBox(
                               width: 165.w,
                               child: ProductCard(
@@ -151,12 +156,12 @@ class _HorizontalProductSectionState extends State<HorizontalProductSection> {
                       ),
                     ),
                   ),
-                  SizedBox(height: 10.h),
+                  SizedBox(height: AppSpacing.sm10),
                 ],
               );
             },
             error: (message) => Padding(
-              padding: EdgeInsets.symmetric(horizontal: 20.w, vertical: 8.h),
+              padding: EdgeInsets.symmetric(horizontal: AppSpacing.lg, vertical: AppSpacing.sm),
               child: Text(
                 message,
                 style: TextStyle(fontSize: 12.sp, color: AppColors.error),

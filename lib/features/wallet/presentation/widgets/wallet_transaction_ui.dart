@@ -3,37 +3,39 @@ import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
 import 'package:mobile_bisa/core/constants/app_colors.dart';
-import 'package:mobile_bisa/core/utils/extensions.dart';
+import 'package:mobile_bisa/core/utils/money_format.dart';
 import 'package:mobile_bisa/core/utils/safe_area_utils.dart';
 import 'package:mobile_bisa/features/wallet/domain/entities/wallet_transaction_entity.dart';
 
 String walletTransactionTitle(WalletTransactionEntity tx) {
   switch (tx.type) {
     case WalletTransactionType.sales:
-      return 'Penjualan ${tx.orderNumber ?? ''}';
+      return 'wallet.tx_sales_title'.tr(namedArgs: {
+        'orderNumber': tx.orderNumber ?? '',
+      });
     case WalletTransactionType.payout:
-      return 'Penarikan Dana';
+      return 'wallet.tx_payout_title'.tr();
     case WalletTransactionType.subscription:
-      return 'Biaya Langganan BISA Pro';
+      return 'wallet.tx_subscription_title'.tr();
     default:
-      return 'Transaksi';
+      return 'wallet.tx_default_title'.tr();
   }
 }
 
 String walletTransactionStatusText(WalletTransactionStatus status) {
   switch (status) {
     case WalletTransactionStatus.pending:
-      return 'Menunggu';
+      return 'wallet.filter_pending'.tr();
     case WalletTransactionStatus.escrowHeld:
-      return 'Dana Ditahan (Escrow)';
+      return 'wallet.tx_status_escrow'.tr();
     case WalletTransactionStatus.released:
-      return 'Berhasil';
+      return 'wallet.filter_released'.tr();
     case WalletTransactionStatus.refunded:
-      return 'Dikembalikan';
+      return 'wallet.tx_status_refunded'.tr();
     case WalletTransactionStatus.failed:
-      return 'Gagal';
+      return 'wallet.filter_failed'.tr();
     default:
-      return 'Tidak Diketahui';
+      return 'wallet.tx_status_unknown'.tr();
   }
 }
 
@@ -61,7 +63,7 @@ void showWalletTransactionDetail(
   showModalBottomSheet(
     context: context,
     isScrollControlled: true,
-    backgroundColor: Colors.transparent,
+    backgroundColor: AppColors.transparent,
     builder: (bContext) => Container(
       padding: EdgeInsets.fromLTRB(
         20.w,
@@ -70,7 +72,7 @@ void showWalletTransactionDetail(
         20.h + systemBottomInset(bContext),
       ),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: AppColors.surface,
         borderRadius: BorderRadius.vertical(top: Radius.circular(24.r)),
       ),
       child: Column(
@@ -117,7 +119,7 @@ void showWalletTransactionDetail(
           SizedBox(height: 6.h),
           Center(
             child: Text(
-              '${isIncome ? '+' : '-'} ${tx.amount.toRupiah}',
+              '${isIncome ? '+' : '-'} ${formatMoneyIdr(tx.amount)}',
               style: TextStyle(
                 fontSize: 22.sp,
                 fontWeight: FontWeight.w900,
@@ -127,32 +129,32 @@ void showWalletTransactionDetail(
           ),
           SizedBox(height: 20.h),
           _detailRow(
-            'Status',
+            'wallet.tx_detail_status'.tr(),
             walletTransactionStatusText(tx.status),
             valueColor: walletTransactionStatusColor(tx.status),
           ),
           _detailRow(
-            'Tanggal',
+            'wallet.tx_detail_date'.tr(),
             DateFormat('dd MMMM yyyy, HH:mm').format(tx.createdAt),
           ),
-          _detailRow('ID Transaksi', tx.id),
+          _detailRow('wallet.tx_detail_id'.tr(), tx.id),
           if (tx.paymentMethod != null && tx.paymentMethod!.isNotEmpty)
-            _detailRow('Metode/Rekening', tx.paymentMethod!),
+            _detailRow('wallet.tx_detail_method'.tr(), tx.paymentMethod!),
           if (tx.externalId != null && tx.externalId!.isNotEmpty)
-            _detailRow('Referensi', tx.externalId!),
+            _detailRow('wallet.tx_detail_reference'.tr(), tx.externalId!),
           if (tx.type == WalletTransactionType.sales) ...[
             SizedBox(height: 8.h),
             const Divider(),
             SizedBox(height: 8.h),
-            _detailRow('Pemasukan Kotor', tx.amount.toRupiah),
+            _detailRow('wallet.tx_detail_gross'.tr(), formatMoneyIdr(tx.amount)),
             _detailRow(
-              'Biaya Platform',
-              '- ${tx.platformFee.toRupiah}',
+              'wallet.tx_detail_platform_fee'.tr(),
+              '- ${formatMoneyIdr(tx.platformFee)}',
               valueColor: AppColors.error,
             ),
             _detailRow(
-              'Pemasukan Bersih',
-              tx.sellerAmount.toRupiah,
+              'wallet.tx_detail_net'.tr(),
+              formatMoneyIdr(tx.sellerAmount),
               valueColor: AppColors.success,
               isBold: true,
             ),
@@ -265,7 +267,7 @@ class WalletTransactionTile extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.end,
               children: [
                 Text(
-                  '${isIncome ? '+' : '-'} ${tx.amount.toRupiah}',
+                  '${isIncome ? '+' : '-'} ${formatMoneyIdr(tx.amount)}',
                   style: TextStyle(
                     fontWeight: FontWeight.w800,
                     color: isIncome ? AppColors.success : AppColors.error,

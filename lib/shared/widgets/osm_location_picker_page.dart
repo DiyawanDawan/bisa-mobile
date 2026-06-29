@@ -1,7 +1,9 @@
+import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 import 'package:location_picker_flutter_map/location_picker_flutter_map.dart'
     hide LocationService;
 import '../../core/constants/app_colors.dart';
+import '../../core/utils/app_feedback.dart';
 import '../../core/utils/safe_area_utils.dart';
 import '../../core/services/location_service.dart';
 import '../../core/utils/safe_navigator.dart';
@@ -81,14 +83,7 @@ class _OsmLocationPickerPageState extends State<OsmLocationPickerPage> {
       final fix = await LocationService.instance.getCurrentFix();
       if (!mounted) return;
       if (fix == null) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text(
-              'Tidak dapat mengambil lokasi GPS. Periksa izin lokasi.',
-            ),
-            backgroundColor: AppColors.warning,
-          ),
-        );
+        showWarningSnackBar(context, 'shared.osm_gps_error');
         return;
       }
       setState(() {
@@ -103,16 +98,16 @@ class _OsmLocationPickerPageState extends State<OsmLocationPickerPage> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: AppColors.background,
-      appBar: const BisaAppBar(
-        title: 'Cari Alamat di Peta',
-        backgroundColor: Colors.white,
+      appBar: BisaAppBar(
+        title: 'shared.osm_picker_title'.tr(),
+        backgroundColor: AppColors.surface,
       ),
       floatingActionButton: Padding(
         padding: EdgeInsets.only(bottom: systemBottomInset(context)),
         child: FloatingActionButton.small(
           heroTag: 'osm_gps_center',
           backgroundColor: AppColors.primary,
-          foregroundColor: Colors.white,
+          foregroundColor: AppColors.textOnPrimary,
           onPressed: _centeringOnGps ? null : _centerOnCurrentGps,
           child: _centeringOnGps
               ? const SizedBox(
@@ -120,7 +115,7 @@ class _OsmLocationPickerPageState extends State<OsmLocationPickerPage> {
                   height: 20,
                   child: CircularProgressIndicator(
                     strokeWidth: 2,
-                    color: Colors.white,
+                    color: AppColors.surface,
                   ),
                 )
               : const Icon(Icons.my_location_rounded),
@@ -141,7 +136,7 @@ class _OsmLocationPickerPageState extends State<OsmLocationPickerPage> {
               if (!mounted) return;
               showBisaSnackBarMessage(
                 context,
-                'Gagal memuat peta: $e',
+                'shared.osm_map_load_error'.tr(namedArgs: {'error': '$e'}),
                 isError: true,
               );
             },
@@ -149,20 +144,20 @@ class _OsmLocationPickerPageState extends State<OsmLocationPickerPage> {
               mapLanguage: 'id',
               initZoom: 16,
             ),
-            searchConfiguration: const SearchConfiguration(
-              searchBarHintText: 'Cari jalan, desa, atau landmark...',
+            searchConfiguration: SearchConfiguration(
+              searchBarHintText: 'shared.osm_search_hint'.tr(),
               maxSearchResults: 8,
             ),
             selectButtonConfiguration: SelectButtonConfiguration(
-              selectLocationButtonText: 'Gunakan Lokasi Ini',
+              selectLocationButtonText: 'shared.osm_select_location'.tr(),
               selectedLocationButtonTextStyle: const TextStyle(
                 fontSize: 16,
                 fontWeight: FontWeight.w700,
-                color: Colors.white,
+                color: AppColors.surface,
               ),
               selectLocationButtonStyle: ElevatedButton.styleFrom(
                 backgroundColor: AppColors.primary,
-                foregroundColor: Colors.white,
+                foregroundColor: AppColors.textOnPrimary,
                 shape: const RoundedRectangleBorder(
                   borderRadius: BorderRadius.all(Radius.circular(12)),
                 ),
@@ -177,7 +172,7 @@ class _OsmLocationPickerPageState extends State<OsmLocationPickerPage> {
               child: Material(
                 elevation: 2,
                 borderRadius: BorderRadius.circular(8),
-                color: Colors.white,
+                color: AppColors.surface,
                 child: Padding(
                   padding: const EdgeInsets.symmetric(
                     horizontal: 12,
@@ -193,7 +188,7 @@ class _OsmLocationPickerPageState extends State<OsmLocationPickerPage> {
                       const SizedBox(width: 10),
                       Expanded(
                         child: Text(
-                          'Memusatkan ke lokasi Anda...',
+                          'shared.osm_centering_gps'.tr(),
                           style: TextStyle(
                             fontSize: 12,
                             color: AppColors.textSecondary,

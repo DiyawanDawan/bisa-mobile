@@ -1,10 +1,14 @@
+import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:go_router/go_router.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
+import 'package:mobile_bisa/core/constants/app_layout.dart';
 import 'package:mobile_bisa/core/constants/app_colors.dart';
-import 'package:mobile_bisa/core/utils/extensions.dart';
+import 'package:mobile_bisa/core/i18n/failure_messages.dart';
+import 'package:mobile_bisa/core/utils/app_feedback.dart';
+import 'package:mobile_bisa/core/utils/money_format.dart';
 import 'package:mobile_bisa/features/auth/presentation/bloc/auth_cubit.dart';
 import 'package:mobile_bisa/features/invoice/domain/entities/invoice_pdf_data.dart';
 import 'package:mobile_bisa/features/invoice/presentation/bloc/review_invoice_cubit.dart';
@@ -14,6 +18,7 @@ import 'package:mobile_bisa/features/invoice/presentation/widgets/invoice_shippi
 import 'package:mobile_bisa/features/invoice/presentation/widgets/invoice_status_banner.dart';
 import 'package:mobile_bisa/features/orders/domain/entities/order_entity.dart';
 import 'package:mobile_bisa/injection_container.dart';
+import '../../../stretch/data/datasources/stretch_remote_data_source.dart';
 import 'package:mobile_bisa/shared/widgets/bisa_app_bar.dart';
 import 'package:mobile_bisa/shared/widgets/bisa_avatar.dart';
 import 'package:mobile_bisa/shared/widgets/custom_button.dart';
@@ -46,8 +51,8 @@ class _ReviewInvoiceBody extends StatelessWidget {
     return Scaffold(
       backgroundColor: AppColors.background,
       appBar: BisaAppBar(
-        title: 'Review Tagihan',
-        backgroundColor: Colors.white,
+        title: 'invoice.review_title'.tr(),
+        backgroundColor: AppColors.surface,
         centerTitle: false,
         actions: [
           BlocBuilder<ReviewInvoiceCubit, ReviewInvoiceState>(
@@ -55,7 +60,7 @@ class _ReviewInvoiceBody extends StatelessWidget {
               final order = state.order;
               if (order == null) return const SizedBox.shrink();
               return IconButton(
-                tooltip: 'Export PDF',
+                tooltip: 'invoice.export_tooltip'.tr(),
                 icon: const Icon(Icons.picture_as_pdf_outlined),
                 onPressed: () => InvoiceExportHelper.exportOrder(context, order),
               );
@@ -68,7 +73,7 @@ class _ReviewInvoiceBody extends StatelessWidget {
             if (state.status == ReviewInvoiceStatus.loading ||
                 state.status == ReviewInvoiceStatus.initial) {
               return Padding(
-                padding: EdgeInsets.all(16.w),
+                padding: EdgeInsets.all(AppSpacing.md),
                 child: const ShimmerListPlaceholder(itemCount: 4, itemHeight: 88),
               );
             }
@@ -76,13 +81,15 @@ class _ReviewInvoiceBody extends StatelessWidget {
             if (state.status == ReviewInvoiceStatus.error) {
               return _errorState(
                 context,
-                state.errorMessage ?? 'Gagal memuat tagihan',
+                localizeFailureMessage(
+                  state.errorMessage ?? 'invoice.error_load',
+                ),
               );
             }
 
             final order = state.order;
             if (order == null) {
-              return _errorState(context, 'Data tagihan tidak ditemukan');
+              return _errorState(context, 'invoice.error_not_found'.tr());
             }
 
             final product = order.items.isNotEmpty ? order.items.first : null;
@@ -97,23 +104,23 @@ class _ReviewInvoiceBody extends StatelessWidget {
                 Expanded(
                   child: SingleChildScrollView(
                     physics: const BouncingScrollPhysics(),
-                    padding: EdgeInsets.fromLTRB(16.w, 16.h, 16.w, 24.h),
+                    padding: EdgeInsets.fromLTRB(AppSpacing.md, AppSpacing.md, AppSpacing.md, AppSpacing.xl),
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         InvoiceStatusBanner(
                           title: isSupplier
-                              ? 'Tagihan Diterbitkan'
-                              : 'Menunggu Pembayaran',
+                              ? 'invoice.status_issued_supplier'.tr()
+                              : 'invoice.status_pending_buyer'.tr(),
                           subtitle: isSupplier
-                              ? 'Tagihan sudah dikirim. Edit jika ada typo sebelum pembeli bayar.'
-                              : 'Periksa rincian tagihan dari supplier. Lanjutkan jika sudah sesuai.',
+                              ? 'invoice.status_subtitle_supplier'.tr()
+                              : 'invoice.status_subtitle_buyer'.tr(),
                         ),
-                        SizedBox(height: 14.h),
-                        _sectionTitle('Pihak Tagihan'),
-                        SizedBox(height: 8.h),
+                        SizedBox(height: AppSpacing.section),
+                        _sectionTitle('invoice.parties_title'.tr()),
+                        SizedBox(height: AppSpacing.sm),
                         _partyCard(
-                          title: 'Supplier (Penjual)',
+                          title: 'invoice.supplier_label'.tr(),
                           name: order.seller.name,
                           email: order.seller.email,
                           avatarUrl: order.seller.avatarUrl,
@@ -121,9 +128,9 @@ class _ReviewInvoiceBody extends StatelessWidget {
                           accent: AppColors.primary,
                           isVerified: order.seller.isVerified,
                         ),
-                        SizedBox(height: 10.h),
+                        SizedBox(height: AppSpacing.sm10),
                         _partyCard(
-                          title: 'Pembeli',
+                          title: 'invoice.buyer_label'.tr(),
                           name: order.buyer.name,
                           email: order.buyer.email,
                           avatarUrl: order.buyer.avatarUrl,
@@ -131,31 +138,31 @@ class _ReviewInvoiceBody extends StatelessWidget {
                           accent: AppColors.info,
                           isVerified: order.buyer.isVerified,
                         ),
-                        SizedBox(height: 10.h),
+                        SizedBox(height: AppSpacing.sm10),
                         _orderNumberRow(order.orderNumber),
-                        SizedBox(height: 14.h),
+                        SizedBox(height: AppSpacing.section),
                         if (product != null) ...[
-                          _sectionTitle('Detail Produk'),
-                          SizedBox(height: 8.h),
+                          _sectionTitle('invoice.product_detail_title'.tr()),
+                          SizedBox(height: AppSpacing.sm),
                           _infoCard([
-                            _infoRow('Produk', product.productName),
+                            _infoRow('invoice.label_product'.tr(), product.productName),
                             _infoRow(
-                              'Jumlah',
+                              'invoice.label_qty'.tr(),
                               '${product.quantity.toStringAsFixed(0)} ${InvoicePdfData.displayUnit(product.productUnit)}',
                             ),
-                            _infoRow('Harga/Unit', product.pricePerUnit.toRupiah),
+                            _infoRow('invoice.label_price_unit'.tr(), formatMoneyIdr(product.pricePerUnit)),
                           ]),
-                          SizedBox(height: 14.h),
+                          SizedBox(height: AppSpacing.section),
                         ],
                         InvoiceBreakdownCard(
-                          title: 'Rincian Tagihan',
+                          title: 'invoice.breakdown_title'.tr(),
                           subtotal: order.subtotal,
                           platformFee: order.platformFee,
                           logisticsFee: order.logisticsFee,
                           vatAmount: order.vatAmount,
                           totalAmount: order.totalAmount,
                         ),
-                        SizedBox(height: 14.h),
+                        SizedBox(height: AppSpacing.section),
                         InvoiceShippingCard(
                           snapshot: order.shippingAddressSnapshot,
                           originSnapshot: InvoicePdfData.originFromSnapshot(
@@ -169,15 +176,15 @@ class _ReviewInvoiceBody extends StatelessWidget {
                         ),
                         if (order.specifications != null &&
                             order.specifications!.isNotEmpty) ...[
-                          SizedBox(height: 14.h),
-                          _sectionTitle('Catatan'),
-                          SizedBox(height: 8.h),
+                          SizedBox(height: AppSpacing.section),
+                          _sectionTitle('invoice.label_notes'.tr()),
+                          SizedBox(height: AppSpacing.sm),
                           Container(
                             width: double.infinity,
-                            padding: EdgeInsets.all(14.w),
+                            padding: EdgeInsets.all(AppSpacing.section),
                             decoration: BoxDecoration(
-                              color: Colors.white,
-                              borderRadius: BorderRadius.circular(14.r),
+                              color: AppColors.surface,
+                              borderRadius: BorderRadius.circular(AppRadius.tile),
                               border: Border.all(color: AppColors.grey200),
                             ),
                             child: Text(
@@ -190,7 +197,7 @@ class _ReviewInvoiceBody extends StatelessWidget {
                             ),
                           ),
                         ],
-                        SizedBox(height: 14.h),
+                        SizedBox(height: AppSpacing.section),
                         _qrSection(order),
                       ],
                     ),
@@ -210,20 +217,53 @@ class _ReviewInvoiceBody extends StatelessWidget {
     );
   }
 
+  Widget _signatureStatus(OrderEntity order) {
+    return Container(
+      width: double.infinity,
+      padding: EdgeInsets.all(AppSpacing.md12),
+      decoration: BoxDecoration(
+        color: order.isDigitalSigned ? AppColors.success.withValues(alpha: 0.08) : AppColors.warning.withValues(alpha: 0.08),
+        borderRadius: BorderRadius.circular(AppRadius.lg),
+        border: Border.all(
+          color: order.isDigitalSigned ? AppColors.success.withValues(alpha: 0.3) : AppColors.warning.withValues(alpha: 0.3),
+        ),
+      ),
+      child: Text(
+        order.isDigitalSigned
+            ? 'invoice.contract_fully_signed'.tr()
+            : 'invoice.contract_pending_signature'.tr(),
+        style: TextStyle(fontSize: 12.sp, fontWeight: FontWeight.w600),
+      ),
+    );
+  }
+
+  Future<void> _signContract(BuildContext context, String negotiationId, String orderId) async {
+    try {
+      await sl<StretchRemoteDataSource>().signOrderContract(orderId);
+      if (!context.mounted) return;
+      showSuccessSnackBar(context, 'invoice.contract_signed'.tr());
+      context.read<ReviewInvoiceCubit>().load(negotiationId);
+    } catch (_) {
+      if (context.mounted) {
+        showErrorSnackBar(context, 'errors.generic'.tr());
+      }
+    }
+  }
+
   Widget _qrSection(OrderEntity order) {
     final qrData = ContractVerifyUrl.verify(order.orderNumber);
     return Container(
       width: double.infinity,
-      padding: EdgeInsets.all(16.w),
+      padding: EdgeInsets.all(AppSpacing.md),
       decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(14.r),
+        color: AppColors.surface,
+        borderRadius: BorderRadius.circular(AppRadius.tile),
         border: Border.all(color: AppColors.grey200),
       ),
       child: Column(
         children: [
           Text(
-            'Kontrak Digital',
+            'invoice.contract_title'.tr(),
             style: TextStyle(fontWeight: FontWeight.w800, fontSize: 14.sp),
           ),
           SizedBox(height: 4.h),
@@ -231,15 +271,15 @@ class _ReviewInvoiceBody extends StatelessWidget {
             order.orderNumber,
             style: TextStyle(fontSize: 11.sp, color: AppColors.textSecondary),
           ),
-          SizedBox(height: 12.h),
+          SizedBox(height: AppSpacing.md12),
           QrImageView(
             data: qrData,
             size: 120.w,
-            backgroundColor: Colors.white,
+            backgroundColor: AppColors.surface,
           ),
-          SizedBox(height: 8.h),
+          SizedBox(height: AppSpacing.sm),
           Text(
-            'Scan untuk verifikasi kontrak resmi',
+            'invoice.contract_qr_hint'.tr(),
             style: TextStyle(fontSize: 11.sp, color: AppColors.textSecondary),
             textAlign: TextAlign.center,
           ),
@@ -250,7 +290,7 @@ class _ReviewInvoiceBody extends StatelessWidget {
                 await launchUrl(uri, mode: LaunchMode.externalApplication);
               }
             },
-            child: const Text('Buka halaman verifikasi'),
+            child: Text('invoice.action_open_verify'.tr()),
           ),
         ],
       ),
@@ -271,10 +311,10 @@ class _ReviewInvoiceBody extends StatelessWidget {
   }) {
     return Container(
       width: double.infinity,
-      padding: EdgeInsets.all(14.w),
+      padding: EdgeInsets.all(AppSpacing.section),
       decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(14.r),
+        color: AppColors.surface,
+        borderRadius: BorderRadius.circular(AppRadius.tile),
         border: Border.all(color: AppColors.grey200),
       ),
       child: Row(
@@ -282,11 +322,11 @@ class _ReviewInvoiceBody extends StatelessWidget {
         children: [
           BisaAvatar(
             imageUrl: avatarUrl,
-            radius: 20.r,
+            radius: AppRadius.pill,
             fallbackIcon: fallbackIcon,
             backgroundColor: accent.withValues(alpha: 0.1),
           ),
-          SizedBox(width: 12.w),
+          SizedBox(width: AppSpacing.md12),
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -358,10 +398,10 @@ class _ReviewInvoiceBody extends StatelessWidget {
   Widget _orderNumberRow(String orderNumber) {
     return Container(
       width: double.infinity,
-      padding: EdgeInsets.symmetric(horizontal: 14.w, vertical: 10.h),
+      padding: EdgeInsets.symmetric(horizontal: AppSpacing.section, vertical: AppSpacing.sm10),
       decoration: BoxDecoration(
         color: AppColors.grey50,
-        borderRadius: BorderRadius.circular(12.r),
+        borderRadius: BorderRadius.circular(AppRadius.lg),
         border: Border.all(color: AppColors.grey200),
       ),
       child: Row(
@@ -373,14 +413,14 @@ class _ReviewInvoiceBody extends StatelessWidget {
           ),
           SizedBox(width: 6.w),
           Text(
-            'No. Tagihan',
+            'invoice.label_invoice_number'.tr(),
             style: TextStyle(
               fontSize: 11.sp,
               color: AppColors.textSecondary,
               fontWeight: FontWeight.w600,
             ),
           ),
-          SizedBox(width: 8.w),
+          SizedBox(width: AppSpacing.sm),
           Expanded(
             child: Text(
               orderNumber,
@@ -413,10 +453,10 @@ class _ReviewInvoiceBody extends StatelessWidget {
   Widget _infoCard(List<Widget> rows) {
     return Container(
       width: double.infinity,
-      padding: EdgeInsets.all(14.w),
+      padding: EdgeInsets.all(AppSpacing.section),
       decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(14.r),
+        color: AppColors.surface,
+        borderRadius: BorderRadius.circular(AppRadius.tile),
         border: Border.all(color: AppColors.grey200),
       ),
       child: Column(children: rows),
@@ -456,11 +496,11 @@ class _ReviewInvoiceBody extends StatelessWidget {
   }) {
     return DecoratedBox(
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: AppColors.surface,
         border: Border(top: BorderSide(color: AppColors.grey200)),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withValues(alpha: 0.06),
+            color: AppColors.black.withValues(alpha: 0.06),
             blurRadius: 16,
             offset: const Offset(0, -4),
           ),
@@ -468,15 +508,30 @@ class _ReviewInvoiceBody extends StatelessWidget {
       ),
       child: SafeArea(
         top: false,
-        minimum: EdgeInsets.only(bottom: 12.h),
+        minimum: EdgeInsets.only(bottom: AppSpacing.md12),
         child: Padding(
-          padding: EdgeInsets.fromLTRB(16.w, 12.h, 16.w, 8.h),
+          padding: EdgeInsets.fromLTRB(AppSpacing.md, AppSpacing.md12, AppSpacing.md, AppSpacing.sm),
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              if (!isSupplier && canPay)
+              if (!order.isDigitalSigned) ...[
+                _signatureStatus(order),
+                SizedBox(height: AppSpacing.sm),
+                if ((isSupplier && order.sellerSignedAt == null) ||
+                    (!isSupplier && order.buyerSignedAt == null))
+                  CustomButton(
+                    text: 'invoice.action_sign_contract'.tr(),
+                    height: 44.h,
+                    useGradient: true,
+                    onPressed: () => _signContract(context, negotiationId, order.id),
+                  ),
+                if ((isSupplier && order.sellerSignedAt == null) ||
+                    (!isSupplier && order.buyerSignedAt == null))
+                  SizedBox(height: AppSpacing.sm),
+              ],
+              if (!isSupplier && canPay && order.isDigitalSigned)
                 CustomButton(
-                  text: 'Setuju & Lanjut Bayar',
+                  text: 'invoice.action_agree_pay'.tr(),
                   useGradient: true,
                   height: 48.h,
                   onPressed: () => context.push(
@@ -486,14 +541,14 @@ class _ReviewInvoiceBody extends StatelessWidget {
                 )
               else if (!isSupplier)
                 CustomButton(
-                  text: 'Tagihan Sudah Diproses',
+                  text: 'invoice.payment_processed'.tr(),
                   height: 48.h,
                   onPressed: null,
                 ),
-              if (!isSupplier && canPay) SizedBox(height: 8.h),
+              if (!isSupplier && canPay) SizedBox(height: AppSpacing.sm),
               if (isSupplier && canPay) ...[
                 CustomButton(
-                  text: 'Edit Tagihan',
+                  text: 'invoice.action_edit'.tr(),
                   height: 44.h,
                   isOutlined: true,
                   onPressed: () async {
@@ -505,10 +560,10 @@ class _ReviewInvoiceBody extends StatelessWidget {
                     }
                   },
                 ),
-                SizedBox(height: 8.h),
+                SizedBox(height: AppSpacing.sm),
               ],
               CustomButton(
-                text: 'Download PDF',
+                text: 'invoice.action_download_pdf'.tr(),
                 height: 44.h,
                 isOutlined: true,
                 onPressed: () =>
@@ -519,7 +574,7 @@ class _ReviewInvoiceBody extends StatelessWidget {
                 onPressed: () => context.pop(),
                 style: TextButton.styleFrom(
                   foregroundColor: AppColors.textSecondary,
-                  padding: EdgeInsets.symmetric(vertical: 10.h),
+                  padding: EdgeInsets.symmetric(vertical: AppSpacing.sm10),
                   minimumSize: Size(double.infinity, 40.h),
                 ),
                 child: Row(
@@ -528,7 +583,7 @@ class _ReviewInvoiceBody extends StatelessWidget {
                     Icon(Icons.arrow_back_rounded, size: 18.sp),
                     SizedBox(width: 6.w),
                     Text(
-                      'Kembali ke Chat',
+                      'invoice.action_back_to_chat'.tr(),
                       style: TextStyle(
                         fontWeight: FontWeight.w700,
                         fontSize: 13.sp,
@@ -547,20 +602,20 @@ class _ReviewInvoiceBody extends StatelessWidget {
   Widget _errorState(BuildContext context, String message) {
     return Center(
       child: Padding(
-        padding: EdgeInsets.all(24.w),
+        padding: EdgeInsets.all(AppSpacing.xl),
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
             Icon(Icons.error_outline, size: 48.sp, color: AppColors.error),
-            SizedBox(height: 12.h),
+            SizedBox(height: AppSpacing.md12),
             Text(
               message,
               textAlign: TextAlign.center,
               style: TextStyle(fontSize: 14.sp, color: AppColors.textSecondary),
             ),
-            SizedBox(height: 16.h),
+            SizedBox(height: AppSpacing.md),
             CustomButton(
-              text: 'Kembali',
+              text: 'invoice.action_back'.tr(),
               onPressed: () => context.pop(),
             ),
           ],

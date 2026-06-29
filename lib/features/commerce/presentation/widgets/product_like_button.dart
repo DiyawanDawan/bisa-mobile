@@ -2,7 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
+import '../../../../core/constants/app_layout.dart';
 import '../../../../core/constants/app_colors.dart';
+import '../../../../core/utils/app_feedback.dart';
 import '../../../../shared/widgets/auth_sheet.dart';
 import '../../../auth/presentation/bloc/auth_cubit.dart';
 import '../bloc/commerce_cubit.dart';
@@ -25,7 +27,7 @@ class ProductLikeButton extends StatelessWidget {
       builder: (context, state) {
         final liked = state.likedIds.contains(productId);
         return Material(
-          color: backgroundColor ?? Colors.white.withValues(alpha: 0.92),
+          color: backgroundColor ?? AppColors.white.withValues(alpha: 0.92),
           shape: const CircleBorder(),
           child: InkWell(
             customBorder: const CircleBorder(),
@@ -38,16 +40,16 @@ class ProductLikeButton extends StatelessWidget {
                 AuthSheet.show(context);
                 return;
               }
-              final nowLiked = await context.read<CommerceCubit>().toggleLike(productId);
+              final nowLiked =
+                  await context.read<CommerceCubit>().toggleLike(productId);
               if (context.mounted) {
-                ScaffoldMessenger.of(context).showSnackBar(
-                  SnackBar(
-                    content: Text(
-                      nowLiked ? 'Ditambahkan ke favorit' : 'Dihapus dari favorit',
-                    ),
-                    behavior: SnackBarBehavior.floating,
-                    duration: const Duration(seconds: 1),
-                  ),
+                final message = nowLiked
+                    ? 'commerce.added_to_favorites'
+                    : 'commerce.removed_from_favorites';
+                showSuccessSnackBar(
+                  context,
+                  message,
+                  duration: const Duration(seconds: 1),
                 );
               }
             },

@@ -14,6 +14,9 @@ abstract class UserEntity with _$UserEntity {
     String? address,
     @Default('user') String role,
     @Default(false) bool isVerified,
+    String? kycStatus,
+    @Default(false) bool isKycVerified,
+    String? kycRejectionReason,
     required DateTime createdAt,
     @Default('FREE') String tier,
     DateTime? subscriptionExpiresAt,
@@ -21,4 +24,13 @@ abstract class UserEntity with _$UserEntity {
   }) = _UserEntity;
 
   const UserEntity._();
+
+  bool get isKycPending => kycStatus == 'PENDING';
+
+  bool get isKycRejected => kycStatus == 'REJECTED';
+
+  bool get isKycApproved => kycStatus == 'VERIFIED' || isKycVerified;
+
+  bool get canSubmitKycDocuments =>
+      kycStatus == null || kycStatus == 'REJECTED';
 }

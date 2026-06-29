@@ -174,8 +174,74 @@ class IotRepositoryImpl implements IotRepository {
     }
   }
 
+  @override
+  Future<Either<Failure, Map<String, dynamic>?>> getPyrolysisSession(String deviceId) async {
+    try {
+      final result = await remoteDataSource.getPyrolysisSession(deviceId);
+      return Right(result);
+    } on DioException catch (e) {
+      return Left(_handleDioError(e));
+    } catch (e) {
+      return const Left(UnexpectedFailure());
+    }
+  }
+
+  @override
+  Future<Either<Failure, Map<String, dynamic>>> startPyrolysisSession(
+    String deviceId, {
+    required String biomassaType,
+    required double beratInput,
+  }) async {
+    try {
+      final result = await remoteDataSource.startPyrolysisSession(
+        deviceId,
+        biomassaType: biomassaType,
+        beratInput: beratInput,
+      );
+      return Right(result);
+    } on DioException catch (e) {
+      return Left(_handleDioError(e));
+    } catch (e) {
+      return const Left(UnexpectedFailure());
+    }
+  }
+
+  @override
+  Future<Either<Failure, void>> stopPyrolysisSession(String deviceId) async {
+    try {
+      await remoteDataSource.stopPyrolysisSession(deviceId);
+      return const Right(null);
+    } on DioException catch (e) {
+      return Left(_handleDioError(e));
+    } catch (e) {
+      return const Left(UnexpectedFailure());
+    }
+  }
+
+  @override
+  Future<Either<Failure, Map<String, dynamic>>> analyzeRealtime(
+    String deviceId, {
+    String? biomassaType,
+    double? beratInput,
+    int? waktuPembakaranMin,
+  }) async {
+    try {
+      final result = await remoteDataSource.analyzeRealtime(
+        deviceId,
+        biomassaType: biomassaType,
+        beratInput: beratInput,
+        waktuPembakaranMin: waktuPembakaranMin,
+      );
+      return Right(result);
+    } on DioException catch (e) {
+      return Left(_handleDioError(e));
+    } catch (e) {
+      return const Left(UnexpectedFailure());
+    }
+  }
+
   Failure _handleDioError(DioException e) {
-    final message = e.response?.data?['meta']?['message'] ?? e.message ?? 'Terjadi kesalahan';
+    final message = e.response?.data?['meta']?['message'] ?? e.message ?? 'errors.generic';
     return ServerFailure(message: message);
   }
 }

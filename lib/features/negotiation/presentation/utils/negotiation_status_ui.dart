@@ -1,6 +1,9 @@
+import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
+import 'package:mobile_bisa/core/constants/app_layout.dart';
 import 'package:mobile_bisa/core/constants/app_colors.dart';
+import 'package:mobile_bisa/core/utils/app_feedback.dart';
 import '../../domain/entities/negotiation_entity.dart';
 import '../../domain/entities/negotiation_entity_extensions.dart';
 
@@ -17,40 +20,40 @@ class NegotiationStatusDisplay {
   static NegotiationStatusDisplay forLinkedOrder(String orderStatus) {
     switch (orderStatus.toUpperCase()) {
       case 'PENDING':
-        return const NegotiationStatusDisplay(
-          label: 'Menunggu Pembayaran',
+        return NegotiationStatusDisplay(
+          label: 'negotiation.status_order_pending_payment'.tr(),
           color: AppColors.primary,
         );
       case 'PROCESSING':
       case 'PAID':
       case 'CONFIRMED':
-        return const NegotiationStatusDisplay(
-          label: 'Dibayar · Diproses',
+        return NegotiationStatusDisplay(
+          label: 'negotiation.status_order_paid_processing'.tr(),
           color: AppColors.secondary,
         );
       case 'SHIPPED':
-        return const NegotiationStatusDisplay(
-          label: 'Dikirim',
+        return NegotiationStatusDisplay(
+          label: 'negotiation.status_order_shipped'.tr(),
           color: AppColors.secondary,
         );
       case 'DELIVERED':
-        return const NegotiationStatusDisplay(
-          label: 'Terkirim',
+        return NegotiationStatusDisplay(
+          label: 'negotiation.status_order_delivered'.tr(),
           color: AppColors.secondary,
         );
       case 'COMPLETED':
-        return const NegotiationStatusDisplay(
-          label: 'Selesai',
+        return NegotiationStatusDisplay(
+          label: 'negotiation.status_order_completed'.tr(),
           color: AppColors.success,
         );
       case 'DISPUTED':
-        return const NegotiationStatusDisplay(
-          label: 'Sengketa',
+        return NegotiationStatusDisplay(
+          label: 'negotiation.status_order_disputed'.tr(),
           color: AppColors.error,
         );
       case 'CANCELLED':
-        return const NegotiationStatusDisplay(
-          label: 'Dibatalkan',
+        return NegotiationStatusDisplay(
+          label: 'negotiation.status_order_cancelled'.tr(),
           color: AppColors.error,
         );
       default:
@@ -78,39 +81,39 @@ class NegotiationStatusDisplay {
 
     switch (status) {
       case 'OPEN_NEGOTIATION':
-        return const NegotiationStatusDisplay(
-          label: 'Aktif',
+        return NegotiationStatusDisplay(
+          label: 'negotiation.status_list_active'.tr(),
           color: AppColors.warning,
         );
       case 'OFFER_SUBMITTED':
-        return const NegotiationStatusDisplay(
-          label: 'Menunggu',
+        return NegotiationStatusDisplay(
+          label: 'negotiation.status_list_waiting'.tr(),
           color: AppColors.warning,
         );
       case 'OFFER_ACCEPTED':
-        return const NegotiationStatusDisplay(
-          label: 'Diterima',
+        return NegotiationStatusDisplay(
+          label: 'negotiation.status_list_accepted'.tr(),
           color: AppColors.secondary,
         );
       case 'OFFER_REJECTED':
-        return const NegotiationStatusDisplay(
-          label: 'Ditolak',
+        return NegotiationStatusDisplay(
+          label: 'negotiation.status_list_rejected'.tr(),
           color: AppColors.error,
         );
       case 'LOCKED':
       case 'CONTRACT_CREATED':
-        return const NegotiationStatusDisplay(
-          label: 'Tagihan',
+        return NegotiationStatusDisplay(
+          label: 'negotiation.status_list_invoice'.tr(),
           color: AppColors.primary,
         );
       case 'EXPIRED':
-        return const NegotiationStatusDisplay(
-          label: 'Kedaluwarsa',
+        return NegotiationStatusDisplay(
+          label: 'negotiation.status_list_expired'.tr(),
           color: AppColors.textHint,
         );
       case 'CANCELLED':
-        return const NegotiationStatusDisplay(
-          label: 'Dibatalkan',
+        return NegotiationStatusDisplay(
+          label: 'negotiation.status_list_cancelled'.tr(),
           color: AppColors.error,
         );
       default:
@@ -134,39 +137,41 @@ class NegotiationStatusDisplay {
     switch (status) {
       case 'OFFER_SUBMITTED':
         return NegotiationStatusDisplay(
-          label: isSupplier ? 'Tawaran Masuk' : 'Menunggu Konfirmasi',
+          label: isSupplier
+              ? 'negotiation.status_room_offer_incoming'.tr()
+              : 'negotiation.status_room_waiting_confirmation'.tr(),
           color: AppColors.warning,
         );
       case 'OFFER_ACCEPTED':
-        return const NegotiationStatusDisplay(
-          label: 'Tawaran Diterima',
+        return NegotiationStatusDisplay(
+          label: 'negotiation.status_room_offer_accepted'.tr(),
           color: AppColors.secondary,
         );
       case 'OFFER_REJECTED':
-        return const NegotiationStatusDisplay(
-          label: 'Tawaran Ditolak',
+        return NegotiationStatusDisplay(
+          label: 'negotiation.status_room_offer_rejected'.tr(),
           color: AppColors.error,
         );
       case 'LOCKED':
       case 'CONTRACT_CREATED':
-        return const NegotiationStatusDisplay(
-          label: 'Menunggu Pembayaran',
+        return NegotiationStatusDisplay(
+          label: 'negotiation.status_order_pending_payment'.tr(),
           color: AppColors.primary,
         );
       case 'EXPIRED':
-        return const NegotiationStatusDisplay(
-          label: 'Kedaluwarsa',
+        return NegotiationStatusDisplay(
+          label: 'negotiation.status_list_expired'.tr(),
           color: AppColors.textHint,
         );
       case 'CANCELLED':
-        return const NegotiationStatusDisplay(
-          label: 'Dibatalkan',
+        return NegotiationStatusDisplay(
+          label: 'negotiation.status_list_cancelled'.tr(),
           color: AppColors.error,
         );
       case 'OPEN_NEGOTIATION':
       default:
-        return const NegotiationStatusDisplay(
-          label: 'Tawaran Aktif',
+        return NegotiationStatusDisplay(
+          label: 'negotiation.status_room_active_offer'.tr(),
           color: AppColors.warning,
         );
     }
@@ -180,26 +185,30 @@ class NegotiationStatusDisplay {
   static String closureTitle(String status, {required bool isSupplier}) {
     switch (status) {
       case 'OFFER_REJECTED':
-        return isSupplier ? 'Anda menolak penawaran' : 'Penawaran ditolak supplier';
+        return isSupplier
+            ? 'negotiation.closure_rejected_by_supplier'.tr()
+            : 'negotiation.closure_rejected_by_supplier_buyer'.tr();
       case 'CANCELLED':
-        return isSupplier ? 'Negosiasi dibatalkan pembeli' : 'Anda membatalkan negosiasi';
+        return isSupplier
+            ? 'negotiation.closure_cancelled_by_buyer_supplier'.tr()
+            : 'negotiation.closure_cancelled_by_buyer'.tr();
       case 'EXPIRED':
-        return 'Negosiasi kedaluwarsa';
+        return 'negotiation.closure_expired'.tr();
       default:
-        return 'Negosiasi ditutup';
+        return 'negotiation.closure_default'.tr();
     }
   }
 
   static String closureSourceLabel(String? closedBy) {
     switch (closedBy) {
       case 'SUPPLIER':
-        return 'Ditolak oleh supplier';
+        return 'negotiation.closure_source_supplier'.tr();
       case 'BUYER':
-        return 'Dibatalkan oleh pembeli';
+        return 'negotiation.closure_source_buyer'.tr();
       case 'SYSTEM':
-        return 'Kedaluwarsa otomatis';
+        return 'negotiation.closure_source_system'.tr();
       default:
-        return 'Alasan penutupan';
+        return 'negotiation.closure_source_default'.tr();
     }
   }
 
@@ -217,6 +226,29 @@ class NegotiationStatusDisplay {
   static bool isLinkedOrderDisputed(NegotiationEntity negotiation) =>
       disputeOrderRoute(negotiation) != null;
 
+  /// Sama aturan backend `clearChatMessages`.
+  static bool canClearChat(NegotiationEntity negotiation) {
+    if (isLinkedOrderDisputed(negotiation)) return false;
+    const blocked = {'OFFER_REJECTED', 'EXPIRED', 'CANCELLED'};
+    return !blocked.contains(negotiation.status.toUpperCase());
+  }
+
+  static String clearChatBlockedReason(NegotiationEntity negotiation) {
+    if (isLinkedOrderDisputed(negotiation)) {
+      return 'negotiation.clear_chat_blocked_dispute'.tr();
+    }
+    final status = negotiation.status.toUpperCase();
+    if (status == 'OFFER_REJECTED' ||
+        status == 'EXPIRED' ||
+        status == 'CANCELLED') {
+      final label = forList(status).label;
+      return 'negotiation.clear_chat_blocked_closed'.tr(
+        namedArgs: {'status': label},
+      );
+    }
+    return 'negotiation.clear_chat_blocked_generic'.tr();
+  }
+
   /// Buka ruang negosiasi; saat sengketa tetap ke chat mediasi (bukan hanya detail order).
   static void openFromList(
     BuildContext context,
@@ -225,13 +257,7 @@ class NegotiationStatusDisplay {
   }) {
     if (currentUserId != null &&
         !negotiation.isParticipant(currentUserId)) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text(
-            'Negosiasi ini bukan milik akun Anda. Tarik untuk memuat ulang daftar.',
-          ),
-        ),
-      );
+      showWarningSnackBar(context, 'negotiation.not_your_room');
       return;
     }
     if (negotiation.isInquiryChat) {

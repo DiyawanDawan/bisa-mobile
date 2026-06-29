@@ -6,6 +6,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:go_router/go_router.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
+import '../../../../core/constants/app_layout.dart';
 import '../../../../core/constants/app_colors.dart';
 import '../../../../core/readiness/readiness_gate.dart';
 import '../../../../injection_container.dart';
@@ -36,20 +37,33 @@ class _SupplierProductListPageState extends State<SupplierProductListPage> {
   String _sortKey = 'newest';
   Timer? _debounce;
 
-  static const _statusLabels = <String?, String>{
-    null: 'Semua Status',
-    'ACTIVE': 'Aktif',
-    'DRAFT': 'Draft',
-    'OUT_OF_STOCK': 'Stok Habis',
-    'INACTIVE': 'Non-aktif',
-  };
+  String _statusLabel(String? status) {
+    switch (status) {
+      case 'ACTIVE':
+        return 'marketplace.status_active'.tr();
+      case 'DRAFT':
+        return 'marketplace.status_draft'.tr();
+      case 'OUT_OF_STOCK':
+        return 'marketplace.status_out_of_stock'.tr();
+      case 'INACTIVE':
+        return 'marketplace.status_inactive'.tr();
+      default:
+        return 'marketplace.status_all'.tr();
+    }
+  }
 
-  static const _sortLabels = <String, String>{
-    'newest': 'Terbaru',
-    'priceAsc': 'Harga Terendah',
-    'priceDesc': 'Harga Tertinggi',
-    'sold': 'Terlaris',
-  };
+  String _sortLabel(String key) {
+    switch (key) {
+      case 'priceAsc':
+        return 'marketplace.sort_price_low'.tr();
+      case 'priceDesc':
+        return 'marketplace.sort_price_high'.tr();
+      case 'sold':
+        return 'marketplace.sort_bestseller'.tr();
+      default:
+        return 'marketplace.sort_newest'.tr();
+    }
+  }
 
   @override
   void initState() {
@@ -136,9 +150,14 @@ class _SupplierProductListPageState extends State<SupplierProductListPage> {
             backgroundColor: AppColors.background,
             appBar: BisaAppBar(
               backgroundColor: AppColors.surface,
-              title: 'Semua Produk',
+              title: 'marketplace.all_products'.tr(),
               actions: [
                 const NotificationBellButton(),
+                BisaAppBarAction(
+                  icon: LucideIcons.upload,
+                  onTap: () => blocContext.push('/bulk-product-upload'),
+                  iconColor: AppColors.textSecondary,
+                ),
                 BisaAppBarAction(
                   icon: LucideIcons.plus,
                   onTap: () => ReadinessGate.pushAddProduct(blocContext),
@@ -157,7 +176,7 @@ class _SupplierProductListPageState extends State<SupplierProductListPage> {
                         loading: () => ListView.separated(
                           padding: EdgeInsets.fromLTRB(16.w, 10.h, 16.w, 16.h),
                           itemCount: 5,
-                          separatorBuilder: (_, __) => SizedBox(height: 10.h),
+                          separatorBuilder: (_, __) => SizedBox(height: AppSpacing.sm10),
                           itemBuilder: (_, __) =>
                               const SupplierProductTileSkeleton(),
                         ),
@@ -195,7 +214,7 @@ class _SupplierProductListPageState extends State<SupplierProductListPage> {
                                         size: 64.r,
                                         color: AppColors.grey200,
                                       ),
-                                      SizedBox(height: 16.h),
+                                      SizedBox(height: AppSpacing.md),
                                       Text(
                                         'Belum ada produk'.tr(),
                                         style: TextStyle(
@@ -220,7 +239,7 @@ class _SupplierProductListPageState extends State<SupplierProductListPage> {
                               padding: EdgeInsets.fromLTRB(16.w, 10.h, 16.w, 16.h),
                               itemCount: products.length,
                               separatorBuilder: (_, __) =>
-                                  SizedBox(height: 10.h),
+                                  SizedBox(height: AppSpacing.sm10),
                               itemBuilder: (context, index) {
                                 final product = products[index];
                                 return SupplierProductTile(
@@ -277,11 +296,11 @@ class _SupplierProductListPageState extends State<SupplierProductListPage> {
               Expanded(
                 child: BisaSearchField(
                   controller: _searchController,
-                  hint: 'Cari produk Anda...',
+                  hint: 'marketplace.search_supplier_products'.tr(),
                   onChanged: (_) => _onSearchChanged(blocContext, userId),
                 ),
               ),
-              SizedBox(width: 10.w),
+              SizedBox(width: AppSpacing.sm10),
               _FilterMenuButton(
                 activeCount: _activeFilterCount,
                 onTap: () => _openFilterSheet(blocContext, userId),
@@ -289,7 +308,7 @@ class _SupplierProductListPageState extends State<SupplierProductListPage> {
             ],
           ),
           if (_activeFilterCount > 0) ...[
-            SizedBox(height: 8.h),
+            SizedBox(height: AppSpacing.sm),
             _buildActiveFilterSummary(blocContext, userId),
           ],
         ],
@@ -307,7 +326,7 @@ class _SupplierProductListPageState extends State<SupplierProductListPage> {
         if (_selectedStatus != null) {
           chips.add(
             _ActiveFilterChip(
-              label: _statusLabels[_selectedStatus] ?? _selectedStatus!,
+              label: _statusLabel(_selectedStatus),
               onClear: () {
                 setState(() => _selectedStatus = null);
                 _reloadProducts(blocContext, userId);
@@ -340,7 +359,7 @@ class _SupplierProductListPageState extends State<SupplierProductListPage> {
         if (_sortKey != 'newest') {
           chips.add(
             _ActiveFilterChip(
-              label: _sortLabels[_sortKey] ?? _sortKey,
+              label: _sortLabel(_sortKey),
               onClear: () {
                 setState(() => _sortKey = 'newest');
                 _reloadProducts(blocContext, userId);
@@ -379,7 +398,7 @@ class _FilterMenuButton extends StatelessWidget {
             height: 44.h,
             decoration: BoxDecoration(
               color: AppColors.primary,
-              borderRadius: BorderRadius.circular(12.r),
+              borderRadius: BorderRadius.circular(AppRadius.lg),
               boxShadow: [
                 BoxShadow(
                   color: AppColors.primary.withValues(alpha: 0.28),
@@ -390,7 +409,7 @@ class _FilterMenuButton extends StatelessWidget {
             ),
             child: Icon(
               LucideIcons.listFilter,
-              color: Colors.white,
+              color: AppColors.surface,
               size: 20.sp,
             ),
           ),
@@ -409,7 +428,7 @@ class _FilterMenuButton extends StatelessWidget {
                 child: Text(
                   '$activeCount',
                   style: TextStyle(
-                    color: Colors.white,
+                    color: AppColors.surface,
                     fontSize: 10.sp,
                     fontWeight: FontWeight.w900,
                   ),
@@ -434,12 +453,12 @@ class _ActiveFilterChip extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Padding(
-      padding: EdgeInsets.only(right: 8.w),
+      padding: EdgeInsets.only(right: AppSpacing.sm),
       child: Container(
         padding: EdgeInsets.symmetric(horizontal: 10.w, vertical: 6.h),
         decoration: BoxDecoration(
           color: AppColors.primaryLight.withValues(alpha: 0.45),
-          borderRadius: BorderRadius.circular(20.r),
+          borderRadius: BorderRadius.circular(AppRadius.pill),
           border: Border.all(color: AppColors.primary.withValues(alpha: 0.25)),
         ),
         child: Row(

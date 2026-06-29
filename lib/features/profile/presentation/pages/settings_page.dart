@@ -10,6 +10,8 @@ import '../../../../shared/widgets/bisa_app_bar.dart';
 import '../../../../shared/widgets/app_version_label.dart';
 import '../../../../shared/widgets/bisa_logo.dart';
 import '../../../auth/presentation/bloc/auth_cubit.dart';
+import '../../../../shared/widgets/language_picker_sheet.dart';
+import '../../../../shared/widgets/currency_selector_sheet.dart';
 
 class SettingsPage extends StatefulWidget {
   const SettingsPage({super.key});
@@ -25,9 +27,9 @@ class _SettingsPageState extends State<SettingsPage> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: AppColors.background,
-      appBar: const BisaAppBar(
-        backgroundColor: AppColors.white,
-        title: 'Pengaturan',
+      appBar: BisaAppBar(
+        backgroundColor: AppColors.surface,
+        title: 'profile.settings_title'.tr(),
       ),
       body: BlocBuilder<AuthCubit, AuthState>(
         builder: (context, authState) {
@@ -41,19 +43,25 @@ class _SettingsPageState extends State<SettingsPage> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                _sectionTitle('Preferensi'),
+                _sectionTitle('profile.settings_section_preferences'.tr()),
                 SizedBox(height: 12.h),
                 _settingsCard([
                   _settingsItem(
                     LucideIcons.languages,
-                    'Bahasa',
-                    'Pilih bahasa aplikasi',
-                    () => _showLanguageBottomSheet(context),
+                    'profile.settings_change_language'.tr(),
+                    'profile.settings_choose_language'.tr(),
+                    () => showLanguagePickerSheet(context),
+                  ),
+                  _settingsItem(
+                    LucideIcons.banknote,
+                    'commerce.display_currency_title'.tr(),
+                    'commerce.display_currency_settings_subtitle'.tr(),
+                    () => showCurrencySelectorSheet(context),
                   ),
                   _settingsItem(
                     LucideIcons.bell,
-                    'Notifikasi',
-                    'Atur pemberitahuan push',
+                    'profile.settings_notifications_title'.tr(),
+                    'profile.settings_notifications_subtitle'.tr(),
                     null,
                     trailing: Switch.adaptive(
                       value: notificationsOn,
@@ -71,45 +79,45 @@ class _SettingsPageState extends State<SettingsPage> {
                   ),
                 ]),
                 SizedBox(height: 16.h),
-                _sectionTitle('Keamanan'),
+                _sectionTitle('profile.settings_section_security'.tr()),
                 SizedBox(height: 8.h),
                 _settingsCard([
                   _settingsItem(
                     LucideIcons.lock,
-                    'Ubah Kata Sandi',
-                    'Perbarui kata sandi Anda',
+                    'profile.menu_change_password'.tr(),
+                    'profile.settings_change_password_subtitle'.tr(),
                     () => context.push('/change-password'),
                   ),
                   _settingsItem(
                     LucideIcons.shieldCheck,
-                    'Privasi & Keamanan',
-                    'Atur privasi data Anda',
+                    'profile.settings_privacy_title'.tr(),
+                    'profile.settings_privacy_subtitle'.tr(),
                     () => context.push('/privacy'),
                   ),
                 ]),
                 SizedBox(height: 16.h),
-                _sectionTitle('Tentang BISA'),
+                _sectionTitle('profile.settings_section_about'.tr()),
                 SizedBox(height: 8.h),
                 _settingsCard([
                   FutureBuilder<String>(
                     future: AppVersion.fullLabel,
                     builder: (context, snapshot) => _settingsItem(
                       LucideIcons.info,
-                      'Versi Aplikasi',
-                      snapshot.data ?? 'Memuat...',
+                      'profile.settings_app_version_title'.tr(),
+                      snapshot.data ?? 'profile.loading'.tr(),
                       null,
                     ),
                   ),
                   _settingsItem(
                     LucideIcons.fileText,
-                    'Syarat & Ketentuan',
-                    'Baca aturan main BISA',
+                    'profile.menu_terms'.tr(),
+                    'profile.settings_terms_subtitle'.tr(),
                     () => context.push('/terms'),
                   ),
                   _settingsItem(
                     LucideIcons.shieldAlert,
-                    'Kebijakan Privasi',
-                    'Cara kami melindungi data Anda',
+                    'profile.menu_privacy'.tr(),
+                    'profile.settings_privacy_policy_subtitle'.tr(),
                     () => context.push('/privacy'),
                   ),
                 ]),
@@ -120,7 +128,7 @@ class _SettingsPageState extends State<SettingsPage> {
                 SizedBox(height: 6.h),
                 Center(
                   child: Text(
-                    'BISA B2B Platform © 2026',
+                    'profile.settings_copyright'.tr(),
                     style: TextStyle(
                       fontSize: 12.sp,
                       color: AppColors.textHint,
@@ -151,11 +159,11 @@ class _SettingsPageState extends State<SettingsPage> {
   Widget _settingsCard(List<Widget> items) {
     return Container(
       decoration: BoxDecoration(
-        color: AppColors.white,
+        color: AppColors.surface,
         borderRadius: BorderRadius.circular(20.r),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.02),
+            color: AppColors.black.withOpacity(0.02),
             blurRadius: 10,
             offset: const Offset(0, 4),
           ),
@@ -226,76 +234,4 @@ class _SettingsPageState extends State<SettingsPage> {
     );
   }
 
-  void _showLanguageBottomSheet(BuildContext context) {
-    showModalBottomSheet(
-      context: context,
-      useSafeArea: true,
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(24.r)),
-      ),
-      builder: (context) {
-        final currentLocale = context.locale;
-        return Container(
-          padding: EdgeInsets.all(24.w),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                'Pilih Bahasa',
-                style: TextStyle(
-                  fontSize: 18.sp,
-                  fontWeight: FontWeight.w900,
-                  color: AppColors.textPrimary,
-                ),
-              ),
-              SizedBox(height: 20.h),
-              _langTile(
-                context,
-                'Bahasa Indonesia',
-                'id',
-                'ID',
-                currentLocale.languageCode == 'id',
-              ),
-              _langTile(
-                context,
-                'English (US)',
-                'en',
-                'US',
-                currentLocale.languageCode == 'en',
-              ),
-              SizedBox(height: 20.h),
-            ],
-          ),
-        );
-      },
-    );
-  }
-
-  Widget _langTile(
-    BuildContext context,
-    String title,
-    String code,
-    String country,
-    bool selected,
-  ) {
-    return ListTile(
-      onTap: () {
-        context.setLocale(Locale(code, country));
-        Navigator.pop(context);
-      },
-      contentPadding: EdgeInsets.zero,
-      title: Text(
-        title,
-        style: TextStyle(
-          fontSize: 15.sp,
-          fontWeight: selected ? FontWeight.w800 : FontWeight.w500,
-          color: selected ? AppColors.primary : AppColors.textPrimary,
-        ),
-      ),
-      trailing: selected
-          ? const Icon(LucideIcons.check, color: AppColors.primary)
-          : null,
-    );
-  }
 }

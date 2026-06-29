@@ -20,6 +20,7 @@ abstract class OrderModel with _$OrderModel {
     String? checkoutBatchId,
     @JsonKey(name: 'checkoutBatchNumber') String? checkoutBatchNumber,
     required String status,
+    @Default('STANDARD') String orderType,
     required dynamic totalAmount,
     required dynamic totalQuantity,
     required dynamic subtotal,
@@ -39,6 +40,9 @@ abstract class OrderModel with _$OrderModel {
     Map<String, dynamic>? pendingPayment,
     Map<String, dynamic>? dispute,
     String? negotiationId,
+    @Default(false) bool isDigitalSigned,
+    String? buyerSignedAt,
+    String? sellerSignedAt,
   }) = _OrderModel;
 
   factory OrderModel.fromJson(Map<String, dynamic> json) => _$OrderModelFromJson(json);
@@ -57,6 +61,7 @@ abstract class OrderModel with _$OrderModel {
         checkoutBatchId: checkoutBatchId,
         checkoutBatchNumber: checkoutBatchNumber,
         status: status,
+        orderType: orderType,
         totalAmount: double.tryParse(totalAmount.toString()) ?? 0.0,
         totalQuantity: double.tryParse(totalQuantity.toString()) ?? 0.0,
         subtotal: double.tryParse(subtotal.toString()) ?? 0.0,
@@ -78,6 +83,9 @@ abstract class OrderModel with _$OrderModel {
             ? OrderDisputeEntity.fromJson(dispute!)
             : null,
         negotiationId: negotiationId,
+        isDigitalSigned: isDigitalSigned,
+        buyerSignedAt: buyerSignedAt != null ? DateTime.tryParse(buyerSignedAt!) : null,
+        sellerSignedAt: sellerSignedAt != null ? DateTime.tryParse(sellerSignedAt!) : null,
       );
 }
 

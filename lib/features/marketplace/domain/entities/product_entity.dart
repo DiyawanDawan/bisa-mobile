@@ -12,6 +12,9 @@ abstract class ProductEntity with _$ProductEntity {
     double? originalPrice,
     required double stock,
     required double minOrder,
+    @Default(true) bool allowsSample,
+    @Default(1) double sampleMaxQty,
+    double? samplePricePerUnit,
     required String unit,
     String? thumbnailUrl,
     required String biomassaType,
@@ -35,7 +38,19 @@ abstract class ProductEntity with _$ProductEntity {
     String? cropType,
     String? categoryId,
     @Default([]) List<ProductSpecEntity> specs,
+    String? videoUrl,
+    @Default(false) bool isPromoted,
+    DateTime? promotedUntil,
+    @Default(0) int promoImpressions,
+    @Default(0) int promoClicks,
   }) = _ProductEntity;
+
+  const ProductEntity._();
+
+  bool get isPromotionActive =>
+      isPromoted &&
+      promotedUntil != null &&
+      promotedUntil!.isAfter(DateTime.now());
 }
 
 @freezed

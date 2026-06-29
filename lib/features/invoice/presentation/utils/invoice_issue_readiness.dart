@@ -1,3 +1,4 @@
+import '../../../../core/i18n/failure_messages.dart';
 import '../bloc/create_invoice_cubit.dart';
 
 /// Hasil cek kelengkapan data sebelum terbitkan tagihan.
@@ -10,8 +11,9 @@ class InvoiceIssueReadiness {
   final bool canIssue;
   final List<String> blockers;
 
-  String get summaryMessage =>
-      blockers.isEmpty ? '' : blockers.first;
+  String get summaryMessage => blockers.isEmpty
+      ? ''
+      : localizeFailureMessage(blockers.first);
 }
 
 class InvoiceIssueReadinessEvaluator {
@@ -21,7 +23,7 @@ class InvoiceIssueReadinessEvaluator {
     final preview = state.preview;
 
     if (preview == null || draft == null) {
-      blockers.add('Data tagihan belum dimuat');
+      blockers.add('invoice.readiness_not_loaded');
       return InvoiceIssueReadiness(canIssue: false, blockers: blockers);
     }
 
@@ -29,9 +31,7 @@ class InvoiceIssueReadinessEvaluator {
     if (draftError != null) blockers.add(draftError);
 
     if (!CreateInvoiceCubit.isDestinationReady(draft)) {
-      blockers.add(
-        'Alamat tujuan belum lengkap (min. 10 karakter + kab/kota atau provinsi)',
-      );
+      blockers.add('invoice.readiness_dest_incomplete');
     }
 
     final sellerSnap = state.sellerShippingSnapshot ?? preview.sellerShippingSnapshot;
@@ -40,27 +40,25 @@ class InvoiceIssueReadinessEvaluator {
         (sellerSnap?['regency']?.toString().trim().isNotEmpty ?? false) ||
         (sellerSnap?['province']?.toString().trim().isNotEmpty ?? false);
     if (!hasOrigin) {
-      blockers.add(
-        'Asal pengiriman toko belum lengkap (profil bisnis / menu Pengiriman)',
-      );
+      blockers.add('invoice.readiness_origin_incomplete');
     }
 
     final selection = state.shippingSelection;
     if (selection == null) {
-      blockers.add('Ongkir belum dipilih — tap "Hitung & Pilih Ongkir"');
+      blockers.add('invoice.readiness_shipping_not_selected');
     } else {
       final courier = selection['courierCode']?.toString().trim() ?? '';
       if (courier.isEmpty) {
-        blockers.add('Kurir pengiriman belum dipilih');
+        blockers.add('invoice.readiness_courier_not_selected');
       }
       final cost = double.tryParse(selection['cost']?.toString() ?? '') ?? 0;
       if (cost <= 0) {
-        blockers.add('Biaya ongkir belum valid');
+        blockers.add('invoice.readiness_shipping_cost_invalid');
       }
       final originId = int.tryParse(selection['originId']?.toString() ?? '');
       final destId = int.tryParse(selection['destinationId']?.toString() ?? '');
       if (originId == null || destId == null) {
-        blockers.add('Data rute ongkir tidak lengkap — hitung ulang ongkir');
+        blockers.add('invoice.readiness_route_incomplete');
       }
     }
 
@@ -77,7 +75,7 @@ class InvoiceIssueReadinessEvaluator {
   }) {
     final blockers = <String>[];
     if (!canEdit) {
-      blockers.add('Tagihan terkunci setelah pembayaran diproses');
+      blockers.add('invoice.readiness_locked_after_payment');
     }
     blockers.addAll(shippingBlockers);
     return InvoiceIssueReadiness(

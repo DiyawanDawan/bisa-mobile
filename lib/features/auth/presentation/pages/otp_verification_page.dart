@@ -5,6 +5,7 @@ import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:go_router/go_router.dart';
 import 'package:pinput/pinput.dart';
 import '../../../../core/constants/app_colors.dart';
+import '../../../../core/utils/app_feedback.dart';
 import '../../../../shared/widgets/custom_button.dart';
 import '../../../../shared/widgets/bisa_app_bar.dart';
 import '../bloc/auth_cubit.dart';
@@ -43,12 +44,12 @@ class _OtpVerificationPageState extends State<OtpVerificationPage> {
         color: AppColors.textPrimary,
       ),
       decoration: BoxDecoration(
-        color: AppColors.white,
+        color: AppColors.surface,
         borderRadius: BorderRadius.circular(16.r),
         border: Border.all(color: AppColors.grey200),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.02),
+            color: AppColors.black.withOpacity(0.02),
             blurRadius: 10,
             offset: const Offset(0, 4),
           ),
@@ -59,7 +60,7 @@ class _OtpVerificationPageState extends State<OtpVerificationPage> {
     return Scaffold(
       backgroundColor: AppColors.background,
       appBar: const BisaAppBar(
-        backgroundColor: Colors.transparent,
+        backgroundColor: AppColors.transparent,
         showShadow: false,
       ),
       body: BlocListener<AuthCubit, AuthState>(
@@ -67,32 +68,14 @@ class _OtpVerificationPageState extends State<OtpVerificationPage> {
           state.maybeWhen(
             success: (message) {
               if (widget.type == 'EMAIL_VERIFICATION') {
-                ScaffoldMessenger.of(context).showSnackBar(
-                  SnackBar(
-                    content: Text(message),
-                    backgroundColor: AppColors.success,
-                    behavior: SnackBarBehavior.floating,
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                  ),
-                );
+                showSuccessSnackBar(context, message);
                 context.go('/login');
               }
             },
             resetTokenReceived: (token) {
               context.push('/reset-password', extra: {'token': token});
             },
-            error: (message) => ScaffoldMessenger.of(context).showSnackBar(
-              SnackBar(
-                content: Text(message),
-                backgroundColor: AppColors.error,
-                behavior: SnackBarBehavior.floating,
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(12),
-                ),
-              ),
-            ),
+            error: (message) => showErrorSnackBar(context, message),
             orElse: () {},
           );
         },
@@ -117,7 +100,7 @@ class _OtpVerificationPageState extends State<OtpVerificationPage> {
                 ),
                 SizedBox(height: 24.h),
                 Text(
-                  'Verifikasi Kode',
+                  'auth.otp_verify_title'.tr(),
                   style: TextStyle(
                     fontSize: 28.sp,
                     fontWeight: FontWeight.w800,
@@ -134,7 +117,7 @@ class _OtpVerificationPageState extends State<OtpVerificationPage> {
                       height: 1.5,
                     ),
                     children: [
-                      TextSpan(text: 'masukkan6digitkodeyangtel'.tr().tr()),
+                      TextSpan(text: 'masukkan_6_digit_kode_yang_tel'.tr()),
                       TextSpan(
                         text: widget.email,
                         style: const TextStyle(
@@ -177,7 +160,7 @@ class _OtpVerificationPageState extends State<OtpVerificationPage> {
                 BlocBuilder<AuthCubit, AuthState>(
                   builder: (context, state) {
                     return CustomButton(
-                      text: 'verifikasisekarang'.tr().tr(),
+                      text: 'verifikasi_sekarang'.tr(),
                       useGradient: true,
                       isLoading: state.maybeWhen(
                         loading: () => true,
@@ -206,7 +189,7 @@ class _OtpVerificationPageState extends State<OtpVerificationPage> {
                   child: Column(
                     children: [
                       Text(
-                        'Tidak menerima kode?',
+                        'auth.otp_no_code'.tr(),
                         style: TextStyle(
                           color: AppColors.textSecondary,
                           fontSize: 14.sp,
@@ -221,7 +204,7 @@ class _OtpVerificationPageState extends State<OtpVerificationPage> {
                           foregroundColor: AppColors.primary,
                         ),
                         child: Text(
-                          'Kirim Ulang Kode',
+                          'auth.otp_resend'.tr(),
                           style: TextStyle(
                             fontWeight: FontWeight.w700,
                             fontSize: 14.sp,

@@ -117,7 +117,7 @@ class ProductManagementCubit extends Cubit<ProductManagementState> {
 
   Future<String?> updateImages(String id, List<ProductImageDraft> drafts) async {
     if (drafts.isEmpty) {
-      return 'Minimal satu foto produk diperlukan';
+      return 'marketplace.min_one_photo_required';
     }
 
     final previous = state;
@@ -156,6 +156,104 @@ class ProductManagementCubit extends Cubit<ProductManagementState> {
         final statsResult = await _repository.getProductStats(id);
         final newStats = statsResult.fold((_) => stats, (s) => s);
         emit(ProductManagementState.loaded(productToShow, stats: newStats));
+        return null;
+      },
+    );
+  }
+
+  Future<String?> promoteProduct(String id, {int days = 7}) async {
+    final previous = state;
+    ProductEntity? product;
+    ProductStatsEntity? stats;
+    previous.maybeWhen(
+      loaded: (p, s) {
+        product = p;
+        stats = s;
+      },
+      orElse: () {},
+    );
+
+    emit(const ProductManagementState.loading());
+    final result = await _repository.promoteProduct(id, days: days);
+    return await result.fold<Future<String?>>(
+      (failure) async {
+        if (product != null) {
+          emit(ProductManagementState.loaded(product!, stats: stats));
+        } else {
+          emit(ProductManagementState.error(failure.message));
+        }
+        return failure.message;
+      },
+      (_) async {
+        final freshResult = await _repository.getProductById(id);
+        final productToShow = freshResult.fold((_) => product!, (p) => p);
+        final statsResult = await _repository.getProductStats(id);
+        final newStats = statsResult.fold((_) => stats, (s) => s);
+        emit(ProductManagementState.loaded(productToShow, stats: newStats));
+        return null;
+      },
+    );
+  }
+
+  Future<String?> uploadProductVideo(String id, String filePath) async {
+    final previous = state;
+    ProductEntity? product;
+    ProductStatsEntity? stats;
+    previous.maybeWhen(
+      loaded: (p, s) {
+        product = p;
+        stats = s;
+      },
+      orElse: () {},
+    );
+
+    emit(const ProductManagementState.loading());
+    final result = await _repository.uploadProductVideo(id, filePath);
+    return await result.fold<Future<String?>>(
+      (failure) async {
+        if (product != null) {
+          emit(ProductManagementState.loaded(product!, stats: stats));
+        } else {
+          emit(ProductManagementState.error(failure.message));
+        }
+        return failure.message;
+      },
+      (updated) async {
+        final statsResult = await _repository.getProductStats(id);
+        final newStats = statsResult.fold((_) => stats, (s) => s);
+        emit(ProductManagementState.loaded(updated, stats: newStats));
+        return null;
+      },
+    );
+  }
+
+  Future<String?> deleteProductVideo(String id) async {
+    final previous = state;
+    ProductEntity? product;
+    ProductStatsEntity? stats;
+    previous.maybeWhen(
+      loaded: (p, s) {
+        product = p;
+        stats = s;
+      },
+      orElse: () {},
+    );
+
+    emit(const ProductManagementState.loading());
+    final result = await _repository.deleteProductVideo(id);
+    return await result.fold<Future<String?>>(
+      (failure) async {
+        if (product != null) {
+          emit(ProductManagementState.loaded(product!, stats: stats));
+        } else {
+          emit(ProductManagementState.error(failure.message));
+        }
+        return failure.message;
+      },
+      (updated) async {
+        final statsResult = await _repository.getProductStats(id);
+        final newStats = statsResult.fold((_) => stats, (s) => s);
+        emit(ProductManagementState.loaded(updated, stats: newStats));
         return null;
       },
     );

@@ -1,4 +1,5 @@
 import 'package:awesome_notifications/awesome_notifications.dart';
+import 'package:easy_localization/easy_localization.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/material.dart';
 import 'package:mobile_bisa/core/constants/app_colors.dart';
@@ -11,10 +12,10 @@ class NotificationService {
       [
         NotificationChannel(
           channelKey: 'basic_channel',
-          channelName: 'Notifikasi Utama',
-          channelDescription: 'Channel notifikasi untuk pesanan dan pesan',
+          channelName: tr('notifications.android_channel_name'),
+          channelDescription: tr('notifications.android_channel_desc'),
           defaultColor: AppColors.primary,
-          ledColor: Colors.white,
+          ledColor: AppColors.white,
           importance: NotificationImportance.High,
           channelShowBadge: true,
         ),
@@ -80,7 +81,7 @@ class NotificationService {
       content: NotificationContent(
         id: DateTime.now().millisecondsSinceEpoch.remainder(100000),
         channelKey: 'basic_channel',
-        title: message.notification?.title ?? 'Notifikasi Baru',
+        title: message.notification?.title ?? tr('notifications.default_title'),
         body: message.notification?.body ?? '',
         payload: Map<String, String>.from(message.data.map((key, value) => MapEntry(key, value.toString()))),
       ),

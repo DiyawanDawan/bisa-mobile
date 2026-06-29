@@ -1,3 +1,4 @@
+import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
@@ -26,7 +27,7 @@ class ConfigErrorPage extends StatelessWidget {
                 ),
                 SizedBox(height: 24.h),
                 Text(
-                  'Konfigurasi API belum diset',
+                  'shared.config_error_title'.tr(),
                   textAlign: TextAlign.center,
                   style: TextStyle(
                     fontSize: 20.sp,
@@ -36,8 +37,7 @@ class ConfigErrorPage extends StatelessWidget {
                 ),
                 SizedBox(height: 12.h),
                 Text(
-                  'Jalankan aplikasi dengan:\n'
-                  'flutter run --dart-define=API_URL=https://host/api/v1',
+                  'shared.config_error_body'.tr(),
                   textAlign: TextAlign.center,
                   style: TextStyle(
                     fontSize: 14.sp,
@@ -48,7 +48,7 @@ class ConfigErrorPage extends StatelessWidget {
                 if (kDebugMode) ...[
                   SizedBox(height: 16.h),
                   Text(
-                    'Mode debug: layar ini hanya muncul di release/profile tanpa API_URL.',
+                    'shared.config_error_debug_note'.tr(),
                     textAlign: TextAlign.center,
                     style: TextStyle(
                       fontSize: 12.sp,

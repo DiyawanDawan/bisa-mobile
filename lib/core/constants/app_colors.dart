@@ -15,6 +15,7 @@ abstract class AppColors {
   static const Color darkerGreen = Color(0xFF1A4823); // #1A4823
 
   // ── Neutrals (Slate-based for premium feel) ──────────────────────────────
+  static const Color transparent = Color(0x00000000);
   static const Color white = Color(0xFFFFFFFF);
   static const Color black = Color(0xFF0F172A);
   static const Color grey50 = Color(0xFFF8FAFC);
@@ -39,6 +40,13 @@ abstract class AppColors {
   static const Color mapVolumeMid = Color(0xFF34D399);
   static const Color mapVolumeLow = Color(0xFFA7F3D0);
   static const Color mapLandBrown = Color(0xFF795548);
+  static const Color mapFilterRiceHusk = Color(0xFFFF9800);
+  static const Color mapFilterCorn = Color(0xFFF9A825);
+  static const Color mapFilterBiochar = Color(0xFFFF5722);
+
+  // ── Info callout surfaces (KYC guide, tips) ─────────────────────────────
+  static const Color infoSurface = Color(0xFFE8F4FD);
+  static const Color infoBorder = Color(0xFF90CAF9);
 
   // ── Forum vote gradients ─────────────────────────────────────────────────
   static const LinearGradient voteUpGradient = LinearGradient(

@@ -1,4 +1,6 @@
+import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
+import 'package:mobile_bisa/core/i18n/failure_messages.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:fl_chart/fl_chart.dart';
@@ -7,6 +9,8 @@ import 'package:lucide_icons_flutter/lucide_icons.dart';
 import 'package:mobile_bisa/core/constants/app_colors.dart';
 import 'package:mobile_bisa/core/utils/pro_subscription.dart';
 import 'package:mobile_bisa/features/auth/presentation/bloc/auth_cubit.dart';
+import 'package:mobile_bisa/features/market/core/market_price_format.dart';
+import 'package:mobile_bisa/features/market/presentation/widgets/market_supply_demand_card.dart';
 import 'package:mobile_bisa/features/market/data/models/market_trend_model.dart';
 import 'package:mobile_bisa/features/market/domain/repositories/market_repository.dart';
 import 'package:mobile_bisa/injection_container.dart';
@@ -64,14 +68,20 @@ class _MarketTrendDetailPageState extends State<MarketTrendDetailPage> {
       }),
       (prediction) => setState(() {
         _loadingPrediction = false;
-        _prediction = prediction;
+        _prediction = prediction.copyWith(
+          id: prediction.id.isEmpty ? widget.trend.id : prediction.id,
+          category:
+              prediction.category.isEmpty ? widget.trend.category : prediction.category,
+        );
       }),
     );
   }
 
   @override
   Widget build(BuildContext context) {
-    final title = _isProUser ? 'Detail Prediksi Harga' : 'Detail Harga Pasar';
+    final title = _isProUser
+        ? 'market.detail_title_prediction'.tr()
+        : 'market.detail_title_market'.tr();
 
     return Scaffold(
       backgroundColor: AppColors.background,
@@ -119,6 +129,19 @@ class _MarketTrendDetailPageState extends State<MarketTrendDetailPage> {
           if (_isProUser) ...[
             SizedBox(height: 24.h),
             _buildInsightSection(trend),
+            if (trend.supplyDemand != null) ...[
+              SizedBox(height: 16.h),
+              Text(
+                'market.sd_section_title'.tr(),
+                style: TextStyle(
+                  fontWeight: FontWeight.bold,
+                  fontSize: 14.sp,
+                  color: AppColors.textPrimary,
+                ),
+              ),
+              SizedBox(height: 8.h),
+              MarketSupplyDemandCard(data: trend.supplyDemand!),
+            ],
           ] else ...[
             SizedBox(height: 24.h),
             _buildProLockedSection(),
@@ -143,13 +166,13 @@ class _MarketTrendDetailPageState extends State<MarketTrendDetailPage> {
           SizedBox(width: 8.w),
           Expanded(
             child: Text(
-              message,
+              message.localizedFailure,
               style: TextStyle(fontSize: 12.sp, color: AppColors.error),
             ),
           ),
           TextButton(
             onPressed: _loadPrediction,
-            child: const Text('Coba lagi'),
+            child: Text('market.retry'.tr()),
           ),
         ],
       ),
@@ -162,7 +185,9 @@ class _MarketTrendDetailPageState extends State<MarketTrendDetailPage> {
     final trendIcon = isUp
         ? LucideIcons.trendingUp
         : (isStable ? LucideIcons.minus : LucideIcons.trendingDown);
-    final trendLabel = isUp ? 'Naik' : (isStable ? 'Stabil' : 'Turun');
+    final trendLabel = isUp
+        ? 'market.trend_up'.tr()
+        : (isStable ? 'market.trend_stable'.tr() : 'market.trend_down'.tr());
     final hasProjection =
         _isProUser && trend.projectedData != null && trend.projectedData!.isNotEmpty;
 
@@ -204,7 +229,7 @@ class _MarketTrendDetailPageState extends State<MarketTrendDetailPage> {
         Row(
           children: [
             _buildStatCard(
-              'Harga Saat Ini',
+              'market.stat_current_price'.tr(),
               trend.currentValue,
               AppColors.primary,
               LucideIcons.tag,
@@ -212,10 +237,13 @@ class _MarketTrendDetailPageState extends State<MarketTrendDetailPage> {
             SizedBox(width: 12.w),
             if (_isProUser)
               _buildStatCard(
-                'Prediksi 3 Bulan',
+                'market.stat_prediction_3mo'.tr(),
                 hasProjection
-                    ? 'Rp ${trend.projectedData!.last.y.toStringAsFixed(0)}'
-                    : 'Belum ada',
+                    ? formatMarketPriceLikeCurrent(
+                        trend.projectedData!.last.y,
+                        trend.currentValue,
+                      )
+                    : 'market.prediction_not_available'.tr(),
                 AppColors.secondary,
                 LucideIcons.bot,
               )
@@ -288,14 +316,14 @@ class _MarketTrendDetailPageState extends State<MarketTrendDetailPage> {
               Icon(LucideIcons.lock, size: 14.sp, color: AppColors.grey400),
               SizedBox(width: 4.w),
               Text(
-                'Prediksi AI',
+                'market.prediction_ai_badge'.tr(),
                 style: TextStyle(fontSize: 11.sp, color: AppColors.grey400),
               ),
             ],
           ),
           SizedBox(height: 6.h),
           Text(
-            'Khusus PRO',
+            'market.pro_only_badge'.tr(),
             style: TextStyle(
               fontSize: 15.sp,
               fontWeight: FontWeight.bold,
@@ -324,7 +352,9 @@ class _MarketTrendDetailPageState extends State<MarketTrendDetailPage> {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
-            showProjection ? 'Tren & Proyeksi Harga' : 'Tren Harga Historis',
+            showProjection
+                ? 'market.chart_title_projection'.tr()
+                : 'market.chart_title_historical'.tr(),
             style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14.sp),
           ),
           SizedBox(height: 16.h),
@@ -424,9 +454,9 @@ class _MarketTrendDetailPageState extends State<MarketTrendDetailPage> {
             Row(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                _chartLegend(trendColor, 'Historis'),
+                _chartLegend(trendColor, 'market.chart_historical'.tr()),
                 SizedBox(width: 20.w),
-                _chartLegend(AppColors.secondary, 'Proyeksi AI'),
+                _chartLegend(AppColors.secondary, 'market.chart_projection'.tr()),
               ],
             ),
           ],
@@ -466,7 +496,7 @@ class _MarketTrendDetailPageState extends State<MarketTrendDetailPage> {
         ),
         child: Center(
           child: Text(
-            'Data historis tidak tersedia',
+            'market.no_historical_data'.tr(),
             style: TextStyle(color: AppColors.textSecondary, fontSize: 13.sp),
           ),
         ),
@@ -489,7 +519,7 @@ class _MarketTrendDetailPageState extends State<MarketTrendDetailPage> {
           Padding(
             padding: EdgeInsets.fromLTRB(16.w, 16.h, 16.w, 8.h),
             child: Text(
-              'Data Historis Terakhir',
+              'market.latest_historical'.tr(),
               style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14.sp),
             ),
           ),
@@ -513,7 +543,7 @@ class _MarketTrendDetailPageState extends State<MarketTrendDetailPage> {
                         ),
                       ),
                       Text(
-                        point.y.toString(),
+                        formatMarketPriceLikeCurrent(point.y, trend.currentValue),
                         style: TextStyle(
                           fontWeight: FontWeight.bold,
                           fontSize: 13.sp,
@@ -539,6 +569,8 @@ class _MarketTrendDetailPageState extends State<MarketTrendDetailPage> {
   }
 
   Widget _buildInsightSection(MarketTrendModel trend) {
+    final sourceLabel = _dataSourceLabel(trend.dataSources);
+
     return Container(
       padding: EdgeInsets.all(20.r),
       decoration: BoxDecoration(
@@ -553,20 +585,23 @@ class _MarketTrendDetailPageState extends State<MarketTrendDetailPage> {
             children: [
               Icon(LucideIcons.bot, color: AppColors.primary, size: 20.sp),
               SizedBox(width: 8.w),
-              Text(
-                'BISA AI Insight',
-                style: TextStyle(
-                  fontWeight: FontWeight.bold,
-                  fontSize: 14.sp,
-                  color: AppColors.primary,
+              Expanded(
+                child: Text(
+                  'BISA AI Insight',
+                  style: TextStyle(
+                    fontWeight: FontWeight.bold,
+                    fontSize: 14.sp,
+                    color: AppColors.primary,
+                  ),
                 ),
               ),
+              if (sourceLabel != null) _buildDataSourceChip(sourceLabel),
             ],
           ),
           SizedBox(height: 12.h),
           Text(
             trend.insight ??
-                'Insight AI sedang diproses. Tarik ulang halaman jika belum muncul.',
+                'market.ai_insight_processing'.tr(),
             style: TextStyle(
               fontSize: 13.sp,
               color: AppColors.textPrimary,
@@ -591,7 +626,7 @@ class _MarketTrendDetailPageState extends State<MarketTrendDetailPage> {
           Icon(LucideIcons.lock, size: 32.sp, color: AppColors.grey400),
           SizedBox(height: 12.h),
           Text(
-            'Prediksi & Insight AI',
+            'market.ai_prediction_section'.tr(),
             style: TextStyle(
               fontSize: 16.sp,
               fontWeight: FontWeight.bold,
@@ -600,7 +635,7 @@ class _MarketTrendDetailPageState extends State<MarketTrendDetailPage> {
           ),
           SizedBox(height: 8.h),
           Text(
-            'Upgrade ke BISA PRO untuk proyeksi harga 3 bulan dan rekomendasi bisnis berbasis AI.',
+            'market.ai_upgrade_prompt'.tr(),
             textAlign: TextAlign.center,
             style: TextStyle(
               fontSize: 13.sp,
@@ -610,7 +645,7 @@ class _MarketTrendDetailPageState extends State<MarketTrendDetailPage> {
           ),
           SizedBox(height: 16.h),
           CustomButton(
-            text: 'Upgrade ke PRO',
+            text: 'market.upgrade_pro'.tr(),
             useGradient: true,
             onPressed: () => context.push('/iot-subscription'),
           ),
@@ -623,5 +658,39 @@ class _MarketTrendDetailPageState extends State<MarketTrendDetailPage> {
     if (trendType == 'UP') return AppColors.success;
     if (trendType == 'STABLE') return AppColors.warning;
     return AppColors.error;
+  }
+
+  String? _dataSourceLabel(List<String> dataSources) {
+    if (dataSources.isEmpty) return null;
+    if (dataSources.contains('bisa_orders')) {
+      return 'market.data_source_live'.tr();
+    }
+    if (dataSources.contains('bisa_listings')) {
+      return 'market.data_source_blended'.tr();
+    }
+    if (dataSources.contains('historical_seed') ||
+        dataSources.contains('benchmark_seed')) {
+      return 'market.data_source_reference'.tr();
+    }
+    return null;
+  }
+
+  Widget _buildDataSourceChip(String label) {
+    return Container(
+      padding: EdgeInsets.symmetric(horizontal: 8.w, vertical: 4.h),
+      decoration: BoxDecoration(
+        color: AppColors.surface,
+        borderRadius: BorderRadius.circular(12.r),
+        border: Border.all(color: AppColors.primary.withValues(alpha: 0.2)),
+      ),
+      child: Text(
+        label,
+        style: TextStyle(
+          fontSize: 10.sp,
+          fontWeight: FontWeight.w600,
+          color: AppColors.primary,
+        ),
+      ),
+    );
   }
 }

@@ -44,24 +44,23 @@ class _HelpCenterPageState extends State<HelpCenterPage> {
     } catch (_) {
       if (!mounted) return;
       setState(() {
-        _error = 'Gagal memuat FAQ. Menampilkan pertanyaan default.';
+        _error = 'profile.help_faq_load_error'.tr();
         _faqs = _fallbackFaqs;
         _loading = false;
       });
     }
   }
 
-  static const _fallbackFaqs = [
-    {
-      'question': 'Bagaimana cara menjual produk biomassa?',
-      'answer':
-          'Daftar sebagai Supplier dan lengkapi verifikasi akun di menu Profil.',
-    },
-    {
-      'question': 'Apakah transaksi di BISA aman?',
-      'answer': 'Ya, kami menggunakan sistem escrow untuk menjamin keamanan transaksi.',
-    },
-  ];
+  List<Map<String, String>> get _fallbackFaqs => [
+        {
+          'question': 'profile.help_faq_fallback_q1'.tr(),
+          'answer': 'profile.help_faq_fallback_a1'.tr(),
+        },
+        {
+          'question': 'profile.help_faq_fallback_q2'.tr(),
+          'answer': 'profile.help_faq_fallback_a2'.tr(),
+        },
+      ];
 
   Future<void> _openWhatsApp() async {
     final raw = (_whatsapp ?? '6281234567890').replaceAll(RegExp(r'\D'), '');
@@ -76,9 +75,9 @@ class _HelpCenterPageState extends State<HelpCenterPage> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: AppColors.background,
-      appBar: const BisaAppBar(
-        title: 'Pusat Bantuan',
-        backgroundColor: Colors.white,
+      appBar: BisaAppBar(
+        title: 'profile.menu_help_center'.tr(),
+        backgroundColor: AppColors.surface,
       ),
       body: _loading
           ? const Center(child: CircularProgressIndicator(color: AppColors.primary))
@@ -93,7 +92,7 @@ class _HelpCenterPageState extends State<HelpCenterPage> {
                     _buildContactCard(),
                     SizedBox(height: 24.h),
                     Text(
-                      'Pertanyaan Populer (FAQ)',
+                      'profile.help_faq_section_title'.tr(),
                       style: TextStyle(fontSize: 16.sp, fontWeight: FontWeight.bold),
                     ),
                     if (_error != null) ...[
@@ -103,7 +102,7 @@ class _HelpCenterPageState extends State<HelpCenterPage> {
                     SizedBox(height: 16.h),
                     if (_faqs.isEmpty)
                       Text(
-                        'Belum ada FAQ. Hubungi tim CS.',
+                        'profile.help_faq_empty'.tr(),
                         style: TextStyle(fontSize: 13.sp, color: AppColors.textSecondary),
                       )
                     else
@@ -136,10 +135,10 @@ class _HelpCenterPageState extends State<HelpCenterPage> {
               Container(
                 padding: EdgeInsets.all(12.w),
                 decoration: BoxDecoration(
-                  color: Colors.white.withValues(alpha: 0.2),
+                  color: AppColors.white.withValues(alpha: 0.2),
                   shape: BoxShape.circle,
                 ),
-                child: Icon(LucideIcons.headset, color: Colors.white, size: 32.sp),
+                child: Icon(LucideIcons.headset, color: AppColors.textOnPrimary, size: 32.sp),
               ),
               SizedBox(width: 16.w),
               Expanded(
@@ -147,17 +146,17 @@ class _HelpCenterPageState extends State<HelpCenterPage> {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      'Butuh Bantuan Lebih Lanjut?',
+                      'profile.help_contact_title'.tr(),
                       style: TextStyle(
-                        color: Colors.white,
+                        color: AppColors.surface,
                         fontWeight: FontWeight.bold,
                         fontSize: 16.sp,
                       ),
                     ),
                     Text(
-                      'tim_kami_siap_membantu_anda_24'.tr(),
+                      'profile.help_support_24'.tr(),
                       style: TextStyle(
-                        color: Colors.white.withOpacity(0.9),
+                        color: AppColors.textOnPrimary.withOpacity(0.9),
                         fontSize: 12.sp,
                       ),
                     ),
@@ -170,13 +169,13 @@ class _HelpCenterPageState extends State<HelpCenterPage> {
           ElevatedButton(
             onPressed: _openWhatsApp,
             style: ElevatedButton.styleFrom(
-              backgroundColor: Colors.white,
+              backgroundColor: AppColors.surface,
               foregroundColor: AppColors.primary,
               minimumSize: Size(double.infinity, 44.h),
               shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8.r)),
             ),
             child: Text(
-              'hubungi_cs_via_whatsapp'.tr(),
+              'profile.help_whatsapp_cta'.tr(),
               style: const TextStyle(fontWeight: FontWeight.bold),
             ),
           ),
@@ -189,7 +188,7 @@ class _HelpCenterPageState extends State<HelpCenterPage> {
     return Container(
       margin: EdgeInsets.only(bottom: 12.h),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: AppColors.surface,
         borderRadius: BorderRadius.circular(12.r),
       ),
       child: ExpansionTile(

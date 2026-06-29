@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import '../constants/app_colors.dart';
+import '../i18n/failure_messages.dart';
 
 /// Inset bawah sistem (home indicator / 3-button nav).
 double systemBottomInset(BuildContext context) =>
@@ -74,6 +75,11 @@ EdgeInsets bisaSnackBarMargin(
       16.h + systemBottomInset(context) + extraBottom,
     );
 
+/// Hapus snackbar yang masih di queue (mis. toast stok cart).
+void clearBisaSnackBars(BuildContext context) {
+  ScaffoldMessenger.of(context).clearSnackBars();
+}
+
 /// SnackBar terpusat dengan safe area.
 void showBisaSnackBar(
   BuildContext context, {
@@ -105,7 +111,7 @@ void showBisaSnackBarMessage(
 }) {
   showBisaSnackBar(
     context,
-    content: Text(message),
+    content: Text(localizeFailureMessage(message)),
     backgroundColor: isError ? AppColors.error : AppColors.success,
     duration: duration,
     extraBottom: extraBottom,

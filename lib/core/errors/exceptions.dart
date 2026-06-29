@@ -7,7 +7,7 @@ class ServerException implements Exception {
   final int? statusCode;
 
   const ServerException({
-    this.message = 'Kesalahan server',
+    this.message = 'errors.server',
     this.statusCode,
   });
 
@@ -18,7 +18,7 @@ class ServerException implements Exception {
 /// Tidak ada koneksi internet
 class NetworkException implements Exception {
   final String message;
-  const NetworkException([this.message = 'Tidak ada koneksi internet']);
+  const NetworkException([this.message = 'errors.network_offline']);
 
   @override
   String toString() => 'NetworkException: $message';
@@ -27,7 +27,7 @@ class NetworkException implements Exception {
 /// Request timeout
 class TimeoutException implements Exception {
   final String message;
-  const TimeoutException([this.message = 'Permintaan habis waktu']);
+  const TimeoutException([this.message = 'errors.timeout']);
 
   @override
   String toString() => 'TimeoutException: $message';
@@ -36,8 +36,7 @@ class TimeoutException implements Exception {
 /// Token tidak valid / sesi berakhir (401)
 class UnauthorizedException implements Exception {
   final String message;
-  const UnauthorizedException(
-      [this.message = 'Sesi Anda telah berakhir. Silakan masuk kembali.']);
+  const UnauthorizedException([this.message = 'errors.unauthorized']);
 
   @override
   String toString() => 'UnauthorizedException: $message';
@@ -46,7 +45,7 @@ class UnauthorizedException implements Exception {
 /// Akses terlarang (403)
 class ForbiddenException implements Exception {
   final String message;
-  const ForbiddenException([this.message = 'Anda tidak memiliki akses']);
+  const ForbiddenException([this.message = 'errors.forbidden']);
 
   @override
   String toString() => 'ForbiddenException: $message';
@@ -55,7 +54,7 @@ class ForbiddenException implements Exception {
 /// Data tidak ditemukan (404)
 class NotFoundException implements Exception {
   final String message;
-  const NotFoundException([this.message = 'Data tidak ditemukan']);
+  const NotFoundException([this.message = 'errors.not_found']);
 
   @override
   String toString() => 'NotFoundException: $message';
@@ -67,7 +66,7 @@ class ValidationException implements Exception {
   final Map<String, List<String>>? errors;
 
   const ValidationException({
-    this.message = 'Data tidak valid',
+    this.message = 'errors.validation',
     this.errors,
   });
 
@@ -78,7 +77,7 @@ class ValidationException implements Exception {
 /// Gagal parsing / decode data
 class ParseException implements Exception {
   final String message;
-  const ParseException([this.message = 'Gagal memproses data dari server']);
+  const ParseException([this.message = 'errors.parse']);
 
   @override
   String toString() => 'ParseException: $message';
@@ -87,7 +86,7 @@ class ParseException implements Exception {
 /// Cache (SharedPreferences / Hive) error
 class CacheException implements Exception {
   final String message;
-  const CacheException([this.message = 'Gagal membaca data lokal']);
+  const CacheException([this.message = 'errors.cache']);
 
   @override
   String toString() => 'CacheException: $message';

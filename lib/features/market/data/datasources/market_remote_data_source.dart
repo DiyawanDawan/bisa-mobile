@@ -1,11 +1,13 @@
 import 'dart:convert';
 import 'package:dio/dio.dart';
 import 'package:flutter/foundation.dart';
+import '../models/market_supply_demand_model.dart';
 import '../models/market_trend_model.dart';
 
 abstract class MarketRemoteDataSource {
   Future<List<MarketTrendModel>> getMarketTrends({String? category});
   Future<MarketTrendModel> getPrediction(String id);
+  Future<MarketSupplyDemandOverviewModel> getSupplyDemandOverview();
 }
 
 class MarketRemoteDataSourceImpl implements MarketRemoteDataSource {
@@ -44,6 +46,21 @@ class MarketRemoteDataSourceImpl implements MarketRemoteDataSource {
       return MarketTrendModel.fromJson(body['data']);
     } catch (e) {
       debugPrint('MarketRemoteDataSource Error: $e');
+      rethrow;
+    }
+  }
+
+  @override
+  Future<MarketSupplyDemandOverviewModel> getSupplyDemandOverview() async {
+    try {
+      final response = await dio.get('/market/supply-demand');
+      dynamic body = response.data;
+      if (body is String) body = jsonDecode(body);
+      return MarketSupplyDemandOverviewModel.fromJson(
+        Map<String, dynamic>.from(body['data'] as Map),
+      );
+    } catch (e) {
+      debugPrint('MarketRemoteDataSource supply-demand Error: $e');
       rethrow;
     }
   }

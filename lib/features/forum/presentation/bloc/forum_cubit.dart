@@ -16,17 +16,20 @@ class ForumCubit extends Cubit<ForumState> {
   String? _lastCategoryId;
   String? _lastTag;
 
+  String? _lastGroupId;
+
   Future<void> getPosts({
     String? keyword,
     String? categoryId,
     String? tag,
+    String? groupId,
     bool showLoading = true,
-    // Bisa di-set `true` untuk reset filter tag (mis. saat user clear chip).
     bool clearTag = false,
   }) async {
     _lastKeyword = keyword ?? _lastKeyword;
     _lastCategoryId = categoryId ?? _lastCategoryId;
     _lastTag = clearTag ? null : (tag ?? _lastTag);
+    _lastGroupId = groupId ?? _lastGroupId;
 
     if (showLoading) {
       emit(const ForumState.loading());
@@ -36,6 +39,7 @@ class ForumCubit extends Cubit<ForumState> {
       keyword: _lastKeyword,
       categoryId: _lastCategoryId,
       tag: _lastTag,
+      groupId: _lastGroupId,
     );
     result.fold((failure) {
       if (showLoading) emit(ForumState.error(failure.message));
@@ -159,6 +163,7 @@ class ForumCubit extends Cubit<ForumState> {
     String title,
     String content,
     String? categoryId, {
+    String? groupId,
     List<ForumMediaAttachment> attachments = const [],
     String? status,
     List<String>? tags,
@@ -183,6 +188,7 @@ class ForumCubit extends Cubit<ForumState> {
       title,
       content,
       categoryId,
+      groupId: groupId,
       mediaUrls: media,
       status: status,
       tags: tags,

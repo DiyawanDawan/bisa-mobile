@@ -1,9 +1,12 @@
 import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
+import 'package:mobile_bisa/core/i18n/failure_messages.dart';
+import 'package:mobile_bisa/core/utils/app_feedback.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:go_router/go_router.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
+import 'package:mobile_bisa/core/constants/app_layout.dart';
 import 'package:mobile_bisa/core/constants/app_colors.dart';
 import 'package:mobile_bisa/core/network/api_client.dart';
 import 'package:mobile_bisa/core/utils/payment_status_utils.dart';
@@ -15,6 +18,7 @@ import 'package:mobile_bisa/features/iot/presentation/bloc/iot_cubit.dart';
 import 'package:mobile_bisa/injection_container.dart';
 import 'package:mobile_bisa/shared/widgets/bisa_app_bar.dart';
 import 'package:mobile_bisa/shared/widgets/custom_button.dart';
+import 'package:mobile_bisa/shared/widgets/pro_tier_matrix.dart';
 import 'package:mobile_bisa/shared/widgets/shimmer_loading.dart';
 
 class IotSubscriptionPage extends StatefulWidget {
@@ -63,7 +67,7 @@ class _IotSubscriptionPageState extends State<IotSubscriptionPage> {
       if (!mounted) return;
       setState(() {
         _loadingChannels = false;
-        _channelsError = 'Gagal memuat metode pembayaran';
+        _channelsError = 'iot.subscription_channels_error'.tr();
       });
     }
   }
@@ -160,18 +164,15 @@ class _IotSubscriptionPageState extends State<IotSubscriptionPage> {
                   '/payment-webview',
                   extra: {
                     'url': url,
-                    'title': isRenewal ? 'Perpanjang Langganan PRO' : 'Pembayaran Langganan PRO',
+                    'title': isRenewal
+                        ? 'iot.subscription_payment_renew_webview'.tr()
+                        : 'iot.subscription_payment_new_webview'.tr(),
                   },
                 );
                 if (!mounted) return;
                 final exit = parsePaymentWebViewExit(result);
                 if (exit == PaymentWebViewExit.failed) {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(
-                      content: Text('Pembayaran gagal atau dibatalkan.'),
-                      backgroundColor: Colors.red,
-                    ),
-                  );
+                  showErrorSnackBar(context, 'iot.payment_failed_body'.tr());
                   return;
                 }
                 if (exit == PaymentWebViewExit.callbackDetected ||
@@ -179,47 +180,31 @@ class _IotSubscriptionPageState extends State<IotSubscriptionPage> {
                   final upgraded = await _pollProSubscriptionStatus();
                   if (!mounted) return;
                   if (upgraded) {
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      SnackBar(
-                        content: Text(
-                          isRenewal
-                              ? 'Pembayaran sukses! Masa aktif PRO Anda diperpanjang.'
-                              : 'Pembayaran sukses! Akun Anda telah diupgrade ke PRO.',
-                        ),
-                        backgroundColor: Colors.green,
-                      ),
+                    showSuccessSnackBar(
+                      context,
+                      isRenewal
+                          ? 'iot.subscription_payment_success_renew'.tr()
+                          : 'iot.subscription_payment_success_new'.tr(),
                     );
                     context.pop(true);
                   } else {
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(
-                        content: Text(
-                          'Pembayaran belum terkonfirmasi. Coba refresh profil beberapa saat lagi.',
-                        ),
-                        backgroundColor: Colors.orange,
-                      ),
-                    );
+                    showWarningSnackBar(context, 'iot.subscription_payment_pending'.tr());
                   }
                 }
               } else {
-                ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(
-                    content: Text('Gagal memproses link pembayaran.'),
-                    backgroundColor: Colors.red,
-                  ),
-                );
+                showErrorSnackBar(context, 'iot.payment_link_failed'.tr());
               }
             },
             error: (message) {
               showDialog(
                 context: context,
                 builder: (context) => AlertDialog(
-                  title: const Text('Pembayaran Gagal'),
-                  content: Text(message),
+                  title: Text('iot.payment_failed_title'.tr()),
+                  content: Text(localizeFailureMessage(message)),
                   actions: [
                     TextButton(
                       onPressed: () => Navigator.pop(context),
-                      child: const Text('Tutup'),
+                      child: Text('iot.close'.tr()),
                     ),
                   ],
                 ),
@@ -237,8 +222,10 @@ class _IotSubscriptionPageState extends State<IotSubscriptionPage> {
           return Scaffold(
             backgroundColor: AppColors.background,
             appBar: BisaAppBar(
-              title: isRenewal ? 'Perpanjang BISA Pro' : 'BISA IoT PRO Plan',
-              backgroundColor: Colors.white,
+              title: isRenewal
+                  ? 'iot.subscription_renew_title'.tr()
+                  : 'iot.subscription_plan_title'.tr(),
+              backgroundColor: AppColors.surface,
             ),
             body: Stack(
               children: [
@@ -257,59 +244,70 @@ class _IotSubscriptionPageState extends State<IotSubscriptionPage> {
                       if (isExpired && user.subscriptionExpiresAt != null)
                         _buildExpiredStatusCard(user.subscriptionExpiresAt!),
                       _buildHeaderCard(isRenewal: isRenewal),
-                      SizedBox(height: 24.h),
+                      SizedBox(height: AppSpacing.xl),
                       Text(
-                        'Keuntungan Anggota PRO:',
+                        'pro.matrix_section_title'.tr(),
                         style: TextStyle(
                           fontSize: 15.sp,
                           fontWeight: FontWeight.bold,
                           color: AppColors.textPrimary,
                         ),
                       ),
-                      SizedBox(height: 12.h),
+                      SizedBox(height: AppSpacing.md12),
+                      const ProTierMatrix(),
+                      SizedBox(height: AppSpacing.xl),
+                      Text(
+                        'iot.subscription_benefits_title'.tr(),
+                        style: TextStyle(
+                          fontSize: 15.sp,
+                          fontWeight: FontWeight.bold,
+                          color: AppColors.textPrimary,
+                        ),
+                      ),
+                      SizedBox(height: AppSpacing.md12),
                       _buildFeatureItem(
                         LucideIcons.thermometer,
-                        'Pemantauan Suhu Gudang Real-time',
-                        'Pantau tungku atau gudang pertanian Anda 24 jam non-stop.',
+                        'iot.subscription_feature_temp_title'.tr(),
+                        'iot.subscription_feature_temp_desc'.tr(),
                       ),
                       _buildFeatureItem(
                         LucideIcons.bellRing,
-                        'Notifikasi Bahaya Instan (Alerting)',
-                        'Terima push notifikasi instan ketika sensor melewati batas suhu aman.',
+                        'iot.subscription_feature_alert_title'.tr(),
+                        'iot.subscription_feature_alert_desc'.tr(),
                       ),
                       _buildFeatureItem(
                         LucideIcons.chartBar,
-                        'Analitik Penjualan Lanjutan',
-                        'Rekomendasi bisnis, funnel minat, dan insight performa toko.',
+                        'iot.subscription_feature_analytics_title'.tr(),
+                        'iot.subscription_feature_analytics_desc'.tr(),
                       ),
                       _buildFeatureItem(
                         LucideIcons.sparkles,
-                        'Analitik Pasar Mendalam (AI)',
-                        'Prediksi harga 3 bulan, proyeksi, dan insight bisnis komoditas biomassa.',
+                        'iot.subscription_feature_market_title'.tr(),
+                        'iot.subscription_feature_market_desc'.tr(),
                       ),
                       _buildFeatureItem(
                         LucideIcons.map,
-                        'Smart GIS Supply-Demand Matching',
-                        'Dapatkan pencocokan armada logistik dan pembeli biomassa radius terdekat.',
+                        'iot.subscription_feature_gis_title'.tr(),
+                        'iot.subscription_feature_gis_desc'.tr(),
                       ),
-                      SizedBox(height: 24.h),
+                      SizedBox(height: AppSpacing.xl),
                       Text(
-                        'Pilih Metode Pembayaran:',
+                        'iot.subscription_pick_payment'.tr(),
                         style: TextStyle(
                           fontSize: 15.sp,
                           fontWeight: FontWeight.bold,
                           color: AppColors.textPrimary,
                         ),
                       ),
-                      SizedBox(height: 12.h),
+                      SizedBox(height: AppSpacing.md12),
                       _buildPaymentMethodsList(),
-                      SizedBox(height: 32.h),
+                      SizedBox(height: AppSpacing.xxl),
                       CustomButton(
                         text: isActive
-                            ? 'Perpanjang Langganan PRO'
+                            ? 'iot.subscription_renew_cta'.tr()
                             : isExpired
-                                ? 'Perpanjang BISA Pro Sekarang'
-                                : 'Aktifkan PRO Plan Sekarang',
+                                ? 'iot.subscription_renew_now_cta'.tr()
+                                : 'iot.subscription_activate_cta'.tr(),
                         useGradient: true,
                         onPressed: _selectedChannelCode == null || _selectedMethod == null
                             ? null
@@ -321,9 +319,9 @@ class _IotSubscriptionPageState extends State<IotSubscriptionPage> {
                               },
                       ),
                       if (isRenewal) ...[
-                        SizedBox(height: 10.h),
+                        SizedBox(height: AppSpacing.sm10),
                         Text(
-                          'Masa aktif akan ditambah 30 hari setelah pembayaran berhasil.',
+                          'iot.subscription_extend_note'.tr(),
                           textAlign: TextAlign.center,
                           style: TextStyle(
                             fontSize: 11.sp,
@@ -332,13 +330,13 @@ class _IotSubscriptionPageState extends State<IotSubscriptionPage> {
                           ),
                         ),
                       ],
-                      SizedBox(height: 24.h),
+                      SizedBox(height: AppSpacing.xl),
                     ],
                   ),
                 ),
                 if (isLoading)
                   Container(
-                    color: Colors.black.withValues(alpha: 0.3),
+                    color: AppColors.black.withValues(alpha: 0.3),
                     child: const Center(
                       child: CircularProgressIndicator(color: AppColors.primary),
                     ),
@@ -354,7 +352,7 @@ class _IotSubscriptionPageState extends State<IotSubscriptionPage> {
   Widget _buildPaymentMethodsList() {
     if (_loadingChannels) {
       return Padding(
-        padding: EdgeInsets.symmetric(vertical: 8.h),
+        padding: EdgeInsets.symmetric(vertical: AppSpacing.sm),
         child: ShimmerListPlaceholder(
           itemCount: 3,
           itemHeight: 56.h,
@@ -365,17 +363,20 @@ class _IotSubscriptionPageState extends State<IotSubscriptionPage> {
     if (_channelsError != null) {
       return Container(
         width: double.infinity,
-        padding: EdgeInsets.all(16.w),
+        padding: EdgeInsets.all(AppSpacing.md),
         decoration: BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.circular(14.r),
+          color: AppColors.surface,
+          borderRadius: BorderRadius.circular(AppRadius.tile),
           border: Border.all(color: AppColors.grey100),
         ),
         child: Column(
           children: [
             Text(_channelsError!, style: TextStyle(color: AppColors.textSecondary, fontSize: 13.sp)),
-            SizedBox(height: 10.h),
-            TextButton(onPressed: _fetchChannels, child: const Text('Coba lagi')),
+            SizedBox(height: AppSpacing.sm10),
+            TextButton(
+              onPressed: _fetchChannels,
+              child: Text('iot.retry'.tr()),
+            ),
           ],
         ),
       );
@@ -384,13 +385,13 @@ class _IotSubscriptionPageState extends State<IotSubscriptionPage> {
     if (_channels.isEmpty) {
       return Container(
         width: double.infinity,
-        padding: EdgeInsets.all(16.w),
+        padding: EdgeInsets.all(AppSpacing.md),
         decoration: BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.circular(14.r),
+          color: AppColors.surface,
+          borderRadius: BorderRadius.circular(AppRadius.tile),
         ),
         child: Text(
-          'Belum ada metode pembayaran tersedia.',
+          'iot.subscription_no_channels'.tr(),
           style: TextStyle(color: AppColors.textSecondary, fontSize: 13.sp),
         ),
       );
@@ -400,7 +401,7 @@ class _IotSubscriptionPageState extends State<IotSubscriptionPage> {
       shrinkWrap: true,
       physics: const NeverScrollableScrollPhysics(),
       itemCount: _channels.length,
-      separatorBuilder: (_, __) => SizedBox(height: 10.h),
+      separatorBuilder: (_, __) => SizedBox(height: AppSpacing.sm10),
       itemBuilder: (context, index) {
         final item = _channels[index];
         final code = item['code']?.toString() ?? '';
@@ -415,10 +416,10 @@ class _IotSubscriptionPageState extends State<IotSubscriptionPage> {
             });
           },
           child: Container(
-            padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 14.h),
+            padding: EdgeInsets.symmetric(horizontal: AppSpacing.md, vertical: AppSpacing.section),
             decoration: BoxDecoration(
-              color: Colors.white,
-              borderRadius: BorderRadius.circular(14.r),
+              color: AppColors.surface,
+              borderRadius: BorderRadius.circular(AppRadius.tile),
               border: Border.all(
                 color: isSelected ? AppColors.primary : AppColors.grey200,
                 width: isSelected ? 2 : 1,
@@ -431,7 +432,7 @@ class _IotSubscriptionPageState extends State<IotSubscriptionPage> {
                   color: isSelected ? AppColors.primary : AppColors.grey400,
                   size: 22.sp,
                 ),
-                SizedBox(width: 14.w),
+                SizedBox(width: AppSpacing.section),
                 Expanded(
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
@@ -477,20 +478,24 @@ class _IotSubscriptionPageState extends State<IotSubscriptionPage> {
   Widget _buildActiveStatusCard(DateTime expiresAt) {
     return Container(
       width: double.infinity,
-      margin: EdgeInsets.only(bottom: 16.h),
-      padding: EdgeInsets.all(14.w),
+      margin: EdgeInsets.only(bottom: AppSpacing.md),
+      padding: EdgeInsets.all(AppSpacing.section),
       decoration: BoxDecoration(
         color: AppColors.success.withValues(alpha: 0.08),
-        borderRadius: BorderRadius.circular(14.r),
+        borderRadius: BorderRadius.circular(AppRadius.tile),
         border: Border.all(color: AppColors.success.withValues(alpha: 0.2)),
       ),
       child: Row(
         children: [
           Icon(LucideIcons.circleCheck, color: AppColors.success, size: 20.sp),
-          SizedBox(width: 10.w),
+          SizedBox(width: AppSpacing.sm10),
           Expanded(
             child: Text(
-              'PRO aktif hingga ${DateFormat('d MMMM yyyy').format(expiresAt)}. Perpanjang untuk menambah 30 hari.',
+              'iot.subscription_pro_active_card'.tr(
+                namedArgs: {
+                  'date': DateFormat('d MMMM yyyy').format(expiresAt),
+                },
+              ),
               style: TextStyle(
                 fontSize: 12.sp,
                 color: AppColors.textPrimary,
@@ -506,20 +511,24 @@ class _IotSubscriptionPageState extends State<IotSubscriptionPage> {
   Widget _buildExpiredStatusCard(DateTime expiredAt) {
     return Container(
       width: double.infinity,
-      margin: EdgeInsets.only(bottom: 16.h),
-      padding: EdgeInsets.all(14.w),
+      margin: EdgeInsets.only(bottom: AppSpacing.md),
+      padding: EdgeInsets.all(AppSpacing.section),
       decoration: BoxDecoration(
         color: AppColors.warning.withValues(alpha: 0.08),
-        borderRadius: BorderRadius.circular(14.r),
+        borderRadius: BorderRadius.circular(AppRadius.tile),
         border: Border.all(color: AppColors.warning.withValues(alpha: 0.2)),
       ),
       child: Row(
         children: [
           Icon(LucideIcons.clockAlert, color: AppColors.warning, size: 20.sp),
-          SizedBox(width: 10.w),
+          SizedBox(width: AppSpacing.sm10),
           Expanded(
             child: Text(
-              'Langganan PRO berakhir ${DateFormat('d MMMM yyyy').format(expiredAt)}. Perpanjang untuk akses penuh kembali.',
+              'iot.subscription_pro_expired_card'.tr(
+                namedArgs: {
+                  'date': DateFormat('d MMMM yyyy').format(expiredAt),
+                },
+              ),
               style: TextStyle(
                 fontSize: 12.sp,
                 color: AppColors.textPrimary,
@@ -538,9 +547,9 @@ class _IotSubscriptionPageState extends State<IotSubscriptionPage> {
   Widget _buildBuyerNotAllowedScreen(BuildContext context) {
     return Scaffold(
       backgroundColor: AppColors.background,
-      appBar: const BisaAppBar(
-        title: 'BISA Pro',
-        backgroundColor: Colors.white,
+      appBar: BisaAppBar(
+        title: 'iot.subscription_bisa_pro_appbar'.tr(),
+        backgroundColor: AppColors.surface,
       ),
       body: Padding(
         padding: EdgeInsets.symmetric(horizontal: 24.w, vertical: 40.h),
@@ -559,9 +568,9 @@ class _IotSubscriptionPageState extends State<IotSubscriptionPage> {
                 color: AppColors.primary,
               ),
             ),
-            SizedBox(height: 20.h),
+            SizedBox(height: AppSpacing.lg),
             Text(
-              'Fitur khusus Supplier',
+              'iot.subscription_buyer_title'.tr(),
               textAlign: TextAlign.center,
               style: TextStyle(
                 fontSize: 18.sp,
@@ -569,12 +578,9 @@ class _IotSubscriptionPageState extends State<IotSubscriptionPage> {
                 color: AppColors.textPrimary,
               ),
             ),
-            SizedBox(height: 8.h),
+            SizedBox(height: AppSpacing.sm),
             Text(
-              'BISA Pro berisi paket fitur penjual seperti monitoring '
-              'IoT gudang, analitik bisnis mendalam, dan asisten AI '
-              'untuk supplier. Sebagai pembeli, semua kebutuhan belanja '
-              'biomassa & hasil tani sudah tersedia gratis untuk Anda.',
+              'iot.subscription_buyer_body'.tr(),
               textAlign: TextAlign.center,
               style: TextStyle(
                 fontSize: 13.sp,
@@ -583,19 +589,19 @@ class _IotSubscriptionPageState extends State<IotSubscriptionPage> {
                 fontWeight: FontWeight.w500,
               ),
             ),
-            SizedBox(height: 24.h),
+            SizedBox(height: AppSpacing.xl),
             SizedBox(
               width: 220.w,
               child: ElevatedButton.icon(
                 onPressed: () => context.pop(),
                 icon: const Icon(LucideIcons.arrowLeft, size: 18),
-                label: const Text('Kembali'),
+                label: Text('iot.back'.tr()),
                 style: ElevatedButton.styleFrom(
                   backgroundColor: AppColors.primary,
-                  foregroundColor: Colors.white,
-                  padding: EdgeInsets.symmetric(vertical: 12.h),
+                  foregroundColor: AppColors.textOnPrimary,
+                  padding: EdgeInsets.symmetric(vertical: AppSpacing.md12),
                   shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(14.r),
+                    borderRadius: BorderRadius.circular(AppRadius.tile),
                   ),
                 ),
               ),
@@ -609,10 +615,10 @@ class _IotSubscriptionPageState extends State<IotSubscriptionPage> {
   Widget _buildHeaderCard({required bool isRenewal}) {
     return Container(
       width: double.infinity,
-      padding: EdgeInsets.all(24.r),
+      padding: EdgeInsets.all(AppSpacing.xl),
       decoration: BoxDecoration(
         gradient: AppColors.primaryGradient,
-        borderRadius: BorderRadius.circular(24.r),
+        borderRadius: BorderRadius.circular(AppSpacing.xlPx.r),
         boxShadow: [
           BoxShadow(
             color: AppColors.primary.withValues(alpha: 0.3),
@@ -628,34 +634,38 @@ class _IotSubscriptionPageState extends State<IotSubscriptionPage> {
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
               Container(
-                padding: EdgeInsets.symmetric(horizontal: 12.w, vertical: 6.h),
+                padding: EdgeInsets.symmetric(horizontal: AppSpacing.md12, vertical: AppSpacing.xs6),
                 decoration: BoxDecoration(
-                  color: Colors.white.withValues(alpha: 0.2),
-                  borderRadius: BorderRadius.circular(12.r),
+                  color: AppColors.white.withValues(alpha: 0.2),
+                  borderRadius: BorderRadius.circular(AppRadius.lg),
                 ),
                 child: Text(
-                  isRenewal ? 'PERPANJANG' : 'POPULER',
+                  isRenewal
+                      ? 'iot.subscription_header_renew_badge'.tr()
+                      : 'iot.subscription_header_popular_badge'.tr(),
                   style: TextStyle(
-                    color: Colors.white,
+                    color: AppColors.surface,
                     fontWeight: FontWeight.bold,
                     fontSize: 10.sp,
                     letterSpacing: 1,
                   ),
                 ),
               ),
-              Icon(LucideIcons.crown, color: Colors.amber, size: 28.sp),
+              Icon(LucideIcons.crown, color: AppColors.warning, size: 28.sp),
             ],
           ),
-          SizedBox(height: 16.h),
+          SizedBox(height: AppSpacing.md),
           Text(
-            isRenewal ? 'Perpanjang BISA Pro' : 'IoT Smart Farm PRO',
+            isRenewal
+                ? 'iot.subscription_header_plan_renew'.tr()
+                : 'iot.subscription_header_plan_new'.tr(),
             style: TextStyle(
-              color: Colors.white,
+              color: AppColors.surface,
               fontSize: 22.sp,
               fontWeight: FontWeight.w900,
             ),
           ),
-          SizedBox(height: 8.h),
+          SizedBox(height: AppSpacing.sm),
           Row(
             crossAxisAlignment: CrossAxisAlignment.baseline,
             textBaseline: TextBaseline.alphabetic,
@@ -663,16 +673,16 @@ class _IotSubscriptionPageState extends State<IotSubscriptionPage> {
               Text(
                 'Rp 99.000',
                 style: TextStyle(
-                  color: Colors.white,
+                  color: AppColors.surface,
                   fontSize: 28.sp,
                   fontWeight: FontWeight.w900,
                 ),
               ),
               SizedBox(width: 4.w),
               Text(
-                '/ bulan',
+                'iot.subscription_price_per_month'.tr(),
                 style: TextStyle(
-                  color: Colors.white.withValues(alpha: 0.8),
+                  color: AppColors.textOnPrimary.withValues(alpha: 0.8),
                   fontSize: 14.sp,
                 ),
               ),
@@ -685,19 +695,19 @@ class _IotSubscriptionPageState extends State<IotSubscriptionPage> {
 
   Widget _buildFeatureItem(IconData icon, String title, String description) {
     return Padding(
-      padding: EdgeInsets.only(bottom: 16.h),
+      padding: EdgeInsets.only(bottom: AppSpacing.md),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Container(
-            padding: EdgeInsets.all(8.r),
+            padding: EdgeInsets.all(AppSpacing.sm),
             decoration: BoxDecoration(
               color: AppColors.primary.withValues(alpha: 0.08),
               shape: BoxShape.circle,
             ),
             child: Icon(icon, color: AppColors.primary, size: 20.sp),
           ),
-          SizedBox(width: 14.w),
+          SizedBox(width: AppSpacing.section),
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,

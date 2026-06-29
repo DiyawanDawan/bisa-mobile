@@ -1,3 +1,4 @@
+import '../i18n/notification_heuristics.dart';
 import '../utils/router.dart';
 import '../../features/notifications/presentation/utils/notification_ui_utils.dart';
 
@@ -78,28 +79,12 @@ abstract class NotificationNavigation {
     goRouter.push('/notifications');
   }
 
-  static bool _isInvoiceNotification(String type, String title, String body) {
-    final hay = '$title $body'.toLowerCase();
-    return hay.contains('tagihan') ||
-        hay.contains('invoice') ||
-        type == 'INVOICE';
-  }
+  static bool _isInvoiceNotification(String type, String title, String body) =>
+      NotificationHeuristics.isInvoiceRelated(type, title, body);
 
-  static bool _isKycNotification(String type, String title, String body) {
-    if (type == 'KYC' || type == 'VERIFICATION') return true;
-    final hay = '$title $body'.toLowerCase();
-    return hay.contains('verifikasi') ||
-        hay.contains('kyc') ||
-        hay.contains('dokumen akun');
-  }
+  static bool _isKycNotification(String type, String title, String body) =>
+      NotificationHeuristics.isKycRelated(type, title, body);
 
-  static bool _shouldOpenPaymentFlow(String type, String title, String body) {
-    if (type == 'PAYMENT_RECEIVED') return false;
-    final hay = '$title $body'.toLowerCase();
-    return hay.contains('bayar') ||
-        hay.contains('tagihan') ||
-        hay.contains('pembayaran') ||
-        hay.contains('menunggu') && hay.contains('bayar') ||
-        hay.contains('pending');
-  }
+  static bool _shouldOpenPaymentFlow(String type, String title, String body) =>
+      NotificationHeuristics.needsPaymentAction(type, title, body);
 }

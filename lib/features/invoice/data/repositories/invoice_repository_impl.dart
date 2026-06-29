@@ -109,7 +109,7 @@ class InvoiceRepositoryImpl implements InvoiceRepository {
       final rawData = e.response?.data;
       final data = rawData is Map<String, dynamic> ? rawData : null;
       final message =
-          data?['meta']?['message'] ?? data?['message'] ?? 'Terjadi kesalahan';
+          data?['meta']?['message'] ?? data?['message'] ?? 'errors.generic';
 
       switch (statusCode) {
         case 401:

@@ -1,5 +1,4 @@
 import 'package:easy_localization/easy_localization.dart';
-import 'package:intl/intl.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
@@ -13,7 +12,11 @@ import 'package:mobile_bisa/features/marketplace/presentation/widgets/store_bann
 import 'package:mobile_bisa/features/marketplace/presentation/bloc/store_banner_cubit.dart';
 import 'package:mobile_bisa/shared/widgets/auth_sheet.dart';
 import 'package:mobile_bisa/shared/widgets/custom_button.dart';
+import '../../../../core/constants/app_layout.dart';
 import '../../../../core/constants/app_colors.dart';
+import '../../../../core/i18n/failure_messages.dart';
+import '../../../../core/i18n/locale_formatters.dart';
+import '../../../../core/utils/app_feedback.dart';
 import '../../../../core/utils/safe_area_utils.dart';
 import '../../../../core/utils/media_url_utils.dart';
 import '../../../auth/presentation/bloc/auth_cubit.dart';
@@ -22,6 +25,7 @@ import '../../../../shared/widgets/notification_bell_button.dart';
 import '../../../../shared/widgets/app_version_label.dart';
 import '../../../../shared/widgets/bisa_logo.dart';
 import '../../../../shared/widgets/shimmer_loading.dart';
+import '../../../../shared/widgets/language_picker_sheet.dart';
 import 'package:skeletonizer/skeletonizer.dart';
 import '../bloc/profile_cubit.dart';
 import '../../../../injection_container.dart';
@@ -42,8 +46,8 @@ class ProfilePage extends StatelessWidget {
           BlocListener<AuthCubit, AuthState>(
             listener: (context, state) {
               state.maybeWhen(
-                authenticated: (_) {
-                  context.read<ProfileCubit>().getProfile();
+                authenticated: (user) {
+                  context.read<ProfileCubit>().applyProfile(user);
                 },
                 orElse: () {},
               );
@@ -53,13 +57,7 @@ class ProfilePage extends StatelessWidget {
             listener: (context, state) {
               state.maybeWhen(
                 success: (message) {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(
-                      content: Text(message.tr()),
-                      backgroundColor: AppColors.success,
-                      behavior: SnackBarBehavior.floating,
-                    ),
-                  );
+                  showSuccessSnackBar(context, message);
                   context.read<ProfileCubit>().getProfile();
                 },
                 orElse: () {},
@@ -78,10 +76,10 @@ class ProfilePage extends StatelessWidget {
             return Scaffold(
               backgroundColor: AppColors.background,
               appBar: BisaAppBar(
-                backgroundColor: AppColors.white,
+                backgroundColor: AppColors.surface,
                 showBackButton: false,
                 centerTitle: false,
-                title: 'Profil Saya',
+                title: 'profile.title'.tr(),
                 actions: const [NotificationBellButton()],
               ),
               body: isAuthenticated
@@ -89,7 +87,7 @@ class ProfilePage extends StatelessWidget {
                       builder: (context, state) {
                         return state.maybeWhen(
                           loading: () => _buildProfileLoadingSkeleton(),
-                          error: (message) => Center(child: Text(message)),
+                          error: (message) => Center(child: Text(message.localizedFailure)),
                           loaded: (user) => SingleChildScrollView(
                             physics: const BouncingScrollPhysics(),
                             padding: EdgeInsets.only(
@@ -99,7 +97,7 @@ class ProfilePage extends StatelessWidget {
                               children: [
                                 _buildProfileHeader(user),
                                 if (user.role == 'SUPPLIER') ...[
-                                  SizedBox(height: 8.h),
+                                  SizedBox(height: AppSpacing.sm),
                                   BlocProvider(
                                     create: (_) =>
                                         sl<StoreBannerCubit>()..loadMyBanners(),
@@ -112,10 +110,10 @@ class ProfilePage extends StatelessWidget {
                                 // Fitur Pro (IoT, Analitik Mendalam) ditujukan
                                 // untuk skema bisnis penjual, bukan pembeli.
                                 if (user.role == 'SUPPLIER') ...[
-                                  SizedBox(height: 12.h),
+                                  SizedBox(height: AppSpacing.md12),
                                   _buildProSubscriptionCard(context, user),
                                 ],
-                                SizedBox(height: 12.h),
+                                SizedBox(height: AppSpacing.md12),
                                 _buildMenuSection(
                                   context,
                                   user.role == 'SUPPLIER',
@@ -123,13 +121,13 @@ class ProfilePage extends StatelessWidget {
                                   user: user,
                                 ),
                                 if (user.role == 'BUYER') ...[
-                                  SizedBox(height: 16.h),
+                                  SizedBox(height: AppSpacing.md),
                                   const Divider(height: 1),
-                                  SizedBox(height: 16.h),
+                                  SizedBox(height: AppSpacing.md),
                                   VerticalProductGridSection(
                                     title: activeProductMode == 'ORGANIC_PRODUCE'
-                                        ? 'Hasil Tani Untuk Anda'
-                                        : 'Produk Untuk Anda',
+                                        ? 'profile.farm_for_you'.tr()
+                                        : 'profile.products_for_you'.tr(),
                                     sortBy: 'createdAt',
                                     sortOrder: 'desc',
                                     productMode: activeProductMode,
@@ -150,15 +148,15 @@ class ProfilePage extends StatelessWidget {
                       child: Column(
                         children: [
                           _buildGuestHeader(context),
-                          SizedBox(height: 12.h),
+                          SizedBox(height: AppSpacing.md12),
                           _buildMenuSection(context, false, isAuthenticated),
-                          SizedBox(height: 16.h),
+                          SizedBox(height: AppSpacing.md),
                           const Divider(height: 1),
-                          SizedBox(height: 16.h),
+                          SizedBox(height: AppSpacing.md),
                           VerticalProductGridSection(
                             title: activeProductMode == 'ORGANIC_PRODUCE'
-                                ? 'Eksplor Hasil Tani'
-                                : 'Eksplor Biomassa',
+                                ? 'profile.explore_farm'.tr()
+                                : 'profile.explore_biomass'.tr(),
                             sortBy: 'createdAt',
                             sortOrder: 'desc',
                             productMode: activeProductMode,
@@ -176,16 +174,16 @@ class ProfilePage extends StatelessWidget {
   Widget _buildGuestHeader(BuildContext context) {
     return Container(
       width: double.infinity,
-      padding: EdgeInsets.fromLTRB(20.w, 12.h, 20.w, 20.h),
+      padding: EdgeInsets.fromLTRB(AppSpacing.lg, AppSpacing.md12, AppSpacing.lg, AppSpacing.lg),
       decoration: BoxDecoration(
-        color: AppColors.white,
+        color: AppColors.surface,
         borderRadius: BorderRadius.only(
-          bottomLeft: Radius.circular(24.r),
-          bottomRight: Radius.circular(24.r),
+          bottomLeft: Radius.circular(AppSpacing.xlPx.r),
+          bottomRight: Radius.circular(AppSpacing.xlPx.r),
         ),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.03),
+            color: AppColors.black.withOpacity(0.03),
             blurRadius: 10,
             offset: const Offset(0, 4),
           ),
@@ -194,9 +192,9 @@ class ProfilePage extends StatelessWidget {
       child: Column(
         children: [
           const BisaLogoBadge(size: 88, showShadow: false),
-          SizedBox(height: 16.h),
+          SizedBox(height: AppSpacing.md),
           Text(
-            'Selamat Datang!',
+            'profile.guest_welcome'.tr(),
             style: TextStyle(
               fontSize: 20.sp,
               fontWeight: FontWeight.w900,
@@ -206,18 +204,18 @@ class ProfilePage extends StatelessWidget {
           ),
           SizedBox(height: 4.h),
           Text(
-            'Masuk untuk akses fitur lengkap BISA',
+            'profile.guest_subtitle'.tr(),
             style: TextStyle(
               fontSize: 13.sp,
               color: AppColors.textSecondary,
               fontWeight: FontWeight.w500,
             ),
           ),
-          SizedBox(height: 16.h),
+          SizedBox(height: AppSpacing.md),
           SizedBox(
             width: 160.w,
             child: CustomButton(
-              text: 'Masuk / Daftar',
+              text: 'profile.guest_login_cta'.tr(),
               size: BisaButtonSize.md,
               fullWidth: true,
               onPressed: () => AuthSheet.show(context),
@@ -247,7 +245,7 @@ class ProfilePage extends StatelessWidget {
     final isFree = user.tier == 'FREE' || user.tier == 'user';
 
     return Padding(
-      padding: EdgeInsets.symmetric(horizontal: 20.w),
+      padding: EdgeInsets.symmetric(horizontal: AppSpacing.lg),
       child: GestureDetector(
         onTap: () => context.push('/iot-subscription'),
         child: Container(
@@ -262,7 +260,7 @@ class ProfilePage extends StatelessWidget {
               begin: Alignment.topLeft,
               end: Alignment.bottomRight,
             ),
-            borderRadius: BorderRadius.circular(20.r),
+            borderRadius: BorderRadius.circular(AppRadius.pill),
             boxShadow: [
               BoxShadow(
                 color:
@@ -277,13 +275,13 @@ class ProfilePage extends StatelessWidget {
               ),
             ],
           ),
-          padding: EdgeInsets.all(20.r),
+          padding: EdgeInsets.all(AppSpacing.lg),
           child: Row(
             children: [
               Container(
-                padding: EdgeInsets.all(10.r),
+                padding: EdgeInsets.all(AppSpacing.sm10),
                 decoration: BoxDecoration(
-                  color: Colors.white.withOpacity(0.2),
+                  color: AppColors.white.withOpacity(0.2),
                   shape: BoxShape.circle,
                 ),
                 child: Icon(
@@ -292,11 +290,11 @@ class ProfilePage extends StatelessWidget {
                       : isExpired
                       ? LucideIcons.clockAlert
                       : LucideIcons.sparkles,
-                  color: AppColors.white,
+                  color: AppColors.surface,
                   size: 22.sp,
                 ),
               ),
-              SizedBox(width: 14.w),
+              SizedBox(width: AppSpacing.section),
               Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
@@ -305,12 +303,12 @@ class ProfilePage extends StatelessWidget {
                       children: [
                         Text(
                           isActive
-                              ? 'BISA Pro Aktif'
+                              ? 'profile.pro_active'.tr()
                               : isExpired
-                              ? 'BISA Pro Berakhir'
-                              : 'Upgrade ke BISA Pro',
+                              ? 'profile.pro_expired'.tr()
+                              : 'profile.pro_upgrade'.tr(),
                           style: TextStyle(
-                            color: AppColors.white,
+                            color: AppColors.surface,
                             fontSize: 15.sp,
                             fontWeight: FontWeight.w900,
                             letterSpacing: -0.3,
@@ -330,7 +328,7 @@ class ProfilePage extends StatelessWidget {
                             child: Text(
                               'PRO',
                               style: TextStyle(
-                                color: AppColors.white,
+                                color: AppColors.surface,
                                 fontSize: 9.sp,
                                 fontWeight: FontWeight.w900,
                                 letterSpacing: 1,
@@ -342,14 +340,18 @@ class ProfilePage extends StatelessWidget {
                     SizedBox(height: 3.h),
                     Text(
                       isActive && user.subscriptionExpiresAt != null
-                          ? 'Aktif hingga ${DateFormat('d MMMM yyyy').format(user.subscriptionExpiresAt!)} · Ketuk untuk perpanjang'
+                          ? 'profile.pro_active_until'.tr(namedArgs: {
+                              'date': context.formatDate(user.subscriptionExpiresAt!),
+                            })
                           : isExpired && user.subscriptionExpiresAt != null
-                          ? 'Berakhir pada ${DateFormat('d MMMM yyyy').format(user.subscriptionExpiresAt!)}'
+                          ? 'profile.pro_expired_on'.tr(namedArgs: {
+                              'date': context.formatDate(user.subscriptionExpiresAt!),
+                            })
                           : isExpired
-                          ? 'Status Berlangganan Berakhir'
-                          : 'Akses fitur premium: IoT & Asisten AI',
+                          ? 'profile.pro_sub_expired'.tr()
+                          : 'profile.pro_sub_benefits'.tr(),
                       style: TextStyle(
-                        color: AppColors.white.withOpacity(0.85),
+                        color: AppColors.textOnPrimary.withOpacity(0.85),
                         fontSize: 11.sp,
                         fontWeight: FontWeight.w500,
                         height: 1.4,
@@ -358,12 +360,12 @@ class ProfilePage extends StatelessWidget {
                   ],
                 ),
               ),
-              SizedBox(width: 8.w),
+              SizedBox(width: AppSpacing.sm),
               Container(
-                padding: EdgeInsets.symmetric(horizontal: 12.w, vertical: 8.h),
+                padding: EdgeInsets.symmetric(horizontal: AppSpacing.md12, vertical: AppSpacing.sm),
                 decoration: BoxDecoration(
                   color: AppColors.white.withOpacity(0.2),
-                  borderRadius: BorderRadius.circular(12.r),
+                  borderRadius: BorderRadius.circular(AppRadius.lg),
                   border: Border.all(
                     color: AppColors.white.withOpacity(0.3),
                     width: 1,
@@ -371,12 +373,12 @@ class ProfilePage extends StatelessWidget {
                 ),
                 child: Text(
                   isActive
-                      ? 'Perpanjang'
+                      ? 'profile.pro_extend'.tr()
                       : isExpired
-                      ? 'Perpanjang'
-                      : 'Mulai',
+                      ? 'profile.pro_extend'.tr()
+                      : 'profile.pro_start'.tr(),
                   style: TextStyle(
-                    color: AppColors.white,
+                    color: AppColors.surface,
                     fontSize: 12.sp,
                     fontWeight: FontWeight.w800,
                   ),
@@ -398,25 +400,25 @@ class ProfilePage extends StatelessWidget {
           children: [
             Container(
               width: double.infinity,
-              padding: EdgeInsets.fromLTRB(20.w, 12.h, 20.w, 20.h),
+              padding: EdgeInsets.fromLTRB(AppSpacing.lg, AppSpacing.md12, AppSpacing.lg, AppSpacing.lg),
               decoration: BoxDecoration(
-                color: AppColors.white,
+                color: AppColors.surface,
                 borderRadius: BorderRadius.only(
-                  bottomLeft: Radius.circular(24.r),
-                  bottomRight: Radius.circular(24.r),
+                  bottomLeft: Radius.circular(AppSpacing.xlPx.r),
+                  bottomRight: Radius.circular(AppSpacing.xlPx.r),
                 ),
               ),
               child: Column(
                 children: [
                   Bone.circle(size: 88.r),
-                  SizedBox(height: 16.h),
+                  SizedBox(height: AppSpacing.md),
                   Bone(width: 180.w, height: 22.h),
-                  SizedBox(height: 8.h),
+                  SizedBox(height: AppSpacing.sm),
                   Bone(width: 120.w, height: 14.h),
                 ],
               ),
             ),
-            SizedBox(height: 16.h),
+            SizedBox(height: AppSpacing.md),
             const ShimmerListPlaceholder(itemCount: 5, itemHeight: 72),
           ],
         ),
@@ -427,12 +429,12 @@ class ProfilePage extends StatelessWidget {
   Widget _buildProfileHeader(UserEntity user) {
     return Container(
       width: double.infinity,
-      padding: EdgeInsets.fromLTRB(20.w, 12.h, 20.w, 20.h),
+      padding: EdgeInsets.fromLTRB(AppSpacing.lg, AppSpacing.md12, AppSpacing.lg, AppSpacing.lg),
       decoration: BoxDecoration(
-        color: AppColors.white,
+        color: AppColors.surface,
         borderRadius: BorderRadius.only(
-          bottomLeft: Radius.circular(24.r),
-          bottomRight: Radius.circular(24.r),
+          bottomLeft: Radius.circular(AppSpacing.xlPx.r),
+          bottomRight: Radius.circular(AppSpacing.xlPx.r),
         ),
         boxShadow: [
           BoxShadow(
@@ -480,14 +482,14 @@ class ProfilePage extends StatelessWidget {
                   ),
                   child: Icon(
                     LucideIcons.camera,
-                    color: AppColors.white,
+                    color: AppColors.surface,
                     size: 14.sp,
                   ),
                 ),
               ),
             ],
           ),
-          SizedBox(height: 12.h),
+          SizedBox(height: AppSpacing.md12),
           Text(
             user.name,
             style: TextStyle(
@@ -506,14 +508,14 @@ class ProfilePage extends StatelessWidget {
               fontWeight: FontWeight.w500,
             ),
           ),
-          SizedBox(height: 12.h),
+          SizedBox(height: AppSpacing.md12),
           FollowStatsRow(userId: user.id),
-          SizedBox(height: 12.h),
+          SizedBox(height: AppSpacing.md12),
           Container(
-            padding: EdgeInsets.symmetric(horizontal: 14.w, vertical: 6.h),
+            padding: EdgeInsets.symmetric(horizontal: AppSpacing.section, vertical: AppSpacing.xs6),
             decoration: BoxDecoration(
               color: AppColors.grey50,
-              borderRadius: BorderRadius.circular(12.r),
+              borderRadius: BorderRadius.circular(AppRadius.lg),
               border: Border.all(color: AppColors.grey100),
             ),
             child: Row(
@@ -528,7 +530,9 @@ class ProfilePage extends StatelessWidget {
                 ),
                 SizedBox(width: 6.w),
                 Text(
-                  user.role == 'SUPPLIER' ? 'SUPPLIER AKUN' : 'PEMBELI AKUN',
+                  user.role == 'SUPPLIER'
+                      ? 'profile.role_supplier'.tr()
+                      : 'profile.role_buyer'.tr(),
                   style: TextStyle(
                     fontSize: 10.sp,
                     fontWeight: FontWeight.w800,
@@ -551,175 +555,176 @@ class ProfilePage extends StatelessWidget {
     UserEntity? user,
   }) {
     return Padding(
-      padding: EdgeInsets.symmetric(horizontal: 20.w),
+      padding: EdgeInsets.symmetric(horizontal: AppSpacing.lg),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           _menuCard([
             _menuItem(
               LucideIcons.sparkles,
-              'Fitur Penting',
+              'profile.menu_important_features'.tr(),
               () => context.push('/important-features'),
             ),
             _menuItem(
               LucideIcons.layoutGrid,
-              'Semua Menu',
+              'profile.menu_all_menu'.tr(),
               () => context.push('/profile/all-menu'),
             ),
           ]),
-          SizedBox(height: 12.h),
-          _sectionTitle('Akun Saya'),
-          SizedBox(height: 8.h),
+          SizedBox(height: AppSpacing.md12),
+          _sectionTitle('profile.section_account'.tr()),
+          SizedBox(height: AppSpacing.sm),
           _menuCard([
             if (isAuthenticated) ...[
               _menuItem(
                 LucideIcons.user,
-                'Ubah Profil',
+                'profile.menu_edit_profile'.tr(),
                 () => context.push('/edit-profile', extra: user),
               ),
               _menuItem(
                 LucideIcons.shieldCheck,
-                'Verifikasi Akun',
+                'verification.title'.tr(),
                 () => context.push('/verification'),
+                trailing: _kycStatusBadge(user),
               ),
               _menuItem(
                 LucideIcons.mapPin,
-                'Alamat Pengiriman',
+                'profile.menu_addresses'.tr(),
                 () => context.push('/addresses'),
               ),
               _menuItem(
                 LucideIcons.creditCard,
-                'Metode Pembayaran',
+                'profile.menu_payment_methods'.tr(),
                 () => context.push('/payment-methods'),
               ),
               _menuItem(
                 LucideIcons.lock,
-                'Ubah Kata Sandi',
+                'profile.menu_change_password'.tr(),
                 () => context.push('/change-password'),
               ),
             ],
             _menuItem(
               LucideIcons.languages,
-              'Ganti Bahasa',
-              () => _showLanguageBottomSheet(context),
+              'settings.change_language'.tr(),
+              () => showLanguagePickerSheet(context),
             ),
           ]),
           if (isAuthenticated && !isSupplier) ...[
-            SizedBox(height: 12.h),
-            _sectionTitle('Produk Saya'),
-            SizedBox(height: 8.h),
+            SizedBox(height: AppSpacing.md12),
+            _sectionTitle('profile.section_my_products'.tr()),
+            SizedBox(height: AppSpacing.sm),
             _menuCard([
               _menuItem(
                 LucideIcons.package,
-                'Produk Saya',
+                'profile.menu_my_products'.tr(),
                 () => context.push('/buyer-products'),
               ),
               _menuItem(
                 LucideIcons.heart,
-                'Favorit Saya',
+                'profile.menu_wishlist'.tr(),
                 () => context.push('/wishlist'),
               ),
             ]),
           ],
           if (isAuthenticated && isSupplier) ...[
-            SizedBox(height: 12.h),
-            _sectionTitle('Manajemen Bisnis'),
-            SizedBox(height: 8.h),
+            SizedBox(height: AppSpacing.md12),
+            _sectionTitle('profile.section_business'.tr()),
+            SizedBox(height: AppSpacing.sm),
             _menuCard([
               _menuItem(
                 LucideIcons.store,
-                'Manajemen Toko',
+                'profile.menu_store_management'.tr(),
                 () => context.push('/store-management'),
               ),
               _menuItem(
                 LucideIcons.chartBar,
-                'Analitik PRO',
+                'profile.menu_sales_analytics'.tr(),
                 () => context.push('/sales-analytics'),
                 trailing: _proBadge(),
               ),
               _menuItem(
                 LucideIcons.heart,
-                'Minat Produk',
+                'profile.menu_product_engagement'.tr(),
                 () => context.push('/product-engagement'),
               ),
               _menuItem(
                 LucideIcons.wallet,
-                'Dompet BISA',
+                'profile.menu_wallet'.tr(),
                 () => context.push('/wallet'),
               ),
             ]),
           ],
-          SizedBox(height: 12.h),
-          _sectionTitle('Wawasan Pasar'),
-          SizedBox(height: 8.h),
+          SizedBox(height: AppSpacing.md12),
+          _sectionTitle('profile.section_market_insight'.tr()),
+          SizedBox(height: AppSpacing.sm),
           _menuCard([
             _menuItem(
               LucideIcons.trendingUp,
-              'Market Intelligence',
+              'profile.menu_market_intelligence'.tr(),
               () => context.push('/market-insight'),
             ),
             // Analitik Mendalam = fitur Pro, khusus Supplier.
             if (isSupplier)
               _menuItem(
                 LucideIcons.sparkles,
-                'Analitik Mendalam',
+                'profile.menu_deep_analytics'.tr(),
                 () => context.push('/market-deep-analytics'),
                 trailing: _proBadge(),
               ),
             if (isAuthenticated && isSupplier)
               _menuItem(
                 LucideIcons.cpu,
-                'Monitoring IoT',
+                'profile.menu_iot_monitoring'.tr(),
                 () => context.push('/iot-dashboard'),
               ),
             _menuItem(
               LucideIcons.map,
-              'Peta Sebaran Limbah',
+              'profile.menu_waste_map'.tr(),
               () => context.push('/waste-mapping'),
             ),
           ]),
-          SizedBox(height: 12.h),
-          _sectionTitle('Lainnya'),
-          SizedBox(height: 8.h),
+          SizedBox(height: AppSpacing.md12),
+          _sectionTitle('profile.section_other'.tr()),
+          SizedBox(height: AppSpacing.sm),
           _menuCard([
             if (isSupplier)
               _menuItem(
                 LucideIcons.creditCard,
-                'Metode Pembayaran',
+                'profile.menu_payment_methods'.tr(),
                 () => context.push('/payment-methods'),
               ),
             _menuItem(
               LucideIcons.bell,
-              'Notifikasi',
+              'profile.menu_notifications'.tr(),
               () => context.push('/notifications'),
             ),
             _menuItem(
               LucideIcons.handHelping,
-              'Pusat Bantuan',
+              'profile.menu_help_center'.tr(),
               () => context.push('/help-center'),
             ),
             _menuItem(
               LucideIcons.fileText,
-              'Syarat & Ketentuan',
+              'profile.menu_terms'.tr(),
               () => context.push('/terms'),
             ),
             _menuItem(
               LucideIcons.shieldAlert,
-              'Kebijakan Privasi',
+              'profile.menu_privacy'.tr(),
               () => context.push('/privacy'),
             ),
             if (isAuthenticated)
               _menuItem(
                 LucideIcons.logOut,
-                'Keluar Aplikasi',
+                'profile.menu_logout'.tr(),
                 () => _showLogoutDialog(context),
                 textColor: AppColors.error,
                 showChevron: false,
               ),
           ]),
-          SizedBox(height: 20.h),
+          SizedBox(height: AppSpacing.lg),
           const Center(child: AppVersionLabel()),
-          SizedBox(height: 8.h),
+          SizedBox(height: AppSpacing.sm),
         ],
       ),
     );
@@ -742,12 +747,12 @@ class ProfilePage extends StatelessWidget {
   Widget _menuCard(List<Widget> items) {
     return Container(
       decoration: BoxDecoration(
-        color: AppColors.white,
-        borderRadius: BorderRadius.circular(16.r),
+        color: AppColors.surface,
+        borderRadius: BorderRadius.circular(AppRadius.xl),
         border: Border.all(color: AppColors.grey100.withOpacity(0.5)),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.02),
+            color: AppColors.black.withOpacity(0.02),
             blurRadius: 8,
             offset: const Offset(0, 2),
           ),
@@ -762,7 +767,7 @@ class ProfilePage extends StatelessWidget {
               item,
               if (idx < items.length - 1)
                 Padding(
-                  padding: EdgeInsets.symmetric(horizontal: 16.w),
+                  padding: EdgeInsets.symmetric(horizontal: AppSpacing.md),
                   child: Divider(
                     height: 1,
                     color: AppColors.grey100.withOpacity(0.5),
@@ -771,6 +776,43 @@ class ProfilePage extends StatelessWidget {
             ],
           );
         }).toList(),
+      ),
+    );
+  }
+
+  Widget? _kycStatusBadge(UserEntity? user) {
+    if (user == null) return null;
+
+    final String labelKey;
+    final Color color;
+
+    if (user.isKycApproved) {
+      labelKey = 'verification.kyc_badge_verified';
+      color = AppColors.success;
+    } else if (user.isKycPending) {
+      labelKey = 'verification.kyc_badge_pending';
+      color = AppColors.warning;
+    } else if (user.isKycRejected) {
+      labelKey = 'verification.kyc_badge_rejected';
+      color = AppColors.error;
+    } else {
+      return null;
+    }
+
+    return Container(
+      padding: EdgeInsets.symmetric(horizontal: AppSpacing.sm, vertical: 3.h),
+      decoration: BoxDecoration(
+        color: color.withOpacity(0.12),
+        borderRadius: BorderRadius.circular(AppRadius.button),
+        border: Border.all(color: color.withOpacity(0.35)),
+      ),
+      child: Text(
+        labelKey.tr(),
+        style: TextStyle(
+          color: color,
+          fontSize: 10.sp,
+          fontWeight: FontWeight.w700,
+        ),
       ),
     );
   }
@@ -785,7 +827,7 @@ class ProfilePage extends StatelessWidget {
       child: Text(
         'PRO',
         style: TextStyle(
-          color: AppColors.white,
+          color: AppColors.surface,
           fontSize: 9.sp,
           fontWeight: FontWeight.w900,
         ),
@@ -803,15 +845,15 @@ class ProfilePage extends StatelessWidget {
     bool isLocked = false,
   }) {
     return ListTile(
-      contentPadding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 0),
+      contentPadding: EdgeInsets.symmetric(horizontal: AppSpacing.md, vertical: 0),
       visualDensity: VisualDensity.compact,
       leading: Container(
-        padding: EdgeInsets.all(8.r),
+        padding: EdgeInsets.all(AppSpacing.sm),
         decoration: BoxDecoration(
           color:
               (isLocked ? AppColors.grey400 : (textColor ?? AppColors.primary))
                   .withOpacity(0.06),
-          borderRadius: BorderRadius.circular(10.r),
+          borderRadius: BorderRadius.circular(AppRadius.md),
         ),
         child: Icon(
           icon,
@@ -823,6 +865,8 @@ class ProfilePage extends StatelessWidget {
       ),
       title: Text(
         title,
+        maxLines: 1,
+        overflow: TextOverflow.ellipsis,
         style: TextStyle(
           fontSize: 14.sp,
           color: isLocked
@@ -851,10 +895,10 @@ class ProfilePage extends StatelessWidget {
       context: context,
       builder: (dialogContext) => AlertDialog(
         shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(20.r),
+          borderRadius: BorderRadius.circular(AppRadius.pill),
         ),
         title: Text(
-          'Keluar',
+          'keluar'.tr(),
           style: TextStyle(fontWeight: FontWeight.w900, fontSize: 18.sp),
         ),
         content: Text(
@@ -865,7 +909,7 @@ class ProfilePage extends StatelessWidget {
           TextButton(
             onPressed: () => Navigator.pop(dialogContext),
             child: Text(
-              'Batal',
+              'batal'.tr(),
               style: TextStyle(
                 color: AppColors.textSecondary,
                 fontWeight: FontWeight.w700,
@@ -878,7 +922,7 @@ class ProfilePage extends StatelessWidget {
               context.read<AuthCubit>().logout();
             },
             child: Text(
-              'Keluar',
+              'keluar'.tr(),
               style: TextStyle(
                 color: AppColors.error,
                 fontWeight: FontWeight.w900,
@@ -890,76 +934,4 @@ class ProfilePage extends StatelessWidget {
     );
   }
 
-  void _showLanguageBottomSheet(BuildContext context) {
-    showModalBottomSheet(
-      context: context,
-      useSafeArea: true,
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(24.r)),
-      ),
-      builder: (context) {
-        final currentLocale = context.locale;
-        return Container(
-          padding: EdgeInsets.all(24.w),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                'Pilih Bahasa',
-                style: TextStyle(
-                  fontSize: 18.sp,
-                  fontWeight: FontWeight.w900,
-                  color: AppColors.textPrimary,
-                ),
-              ),
-              SizedBox(height: 20.h),
-              _langTile(
-                context,
-                'Bahasa Indonesia',
-                'id',
-                'ID',
-                currentLocale.languageCode == 'id',
-              ),
-              _langTile(
-                context,
-                'English (US)',
-                'en',
-                'US',
-                currentLocale.languageCode == 'en',
-              ),
-              SizedBox(height: 20.h),
-            ],
-          ),
-        );
-      },
-    );
-  }
-
-  Widget _langTile(
-    BuildContext context,
-    String title,
-    String code,
-    String country,
-    bool selected,
-  ) {
-    return ListTile(
-      onTap: () {
-        context.setLocale(Locale(code, country));
-        Navigator.pop(context);
-      },
-      contentPadding: EdgeInsets.zero,
-      title: Text(
-        title,
-        style: TextStyle(
-          fontSize: 15.sp,
-          fontWeight: selected ? FontWeight.w800 : FontWeight.w500,
-          color: selected ? AppColors.primary : AppColors.textPrimary,
-        ),
-      ),
-      trailing: selected
-          ? const Icon(LucideIcons.check, color: AppColors.primary)
-          : null,
-    );
-  }
 }

@@ -15,6 +15,7 @@ import 'core/network/token_repository.dart';
 import 'features/auth/data/datasources/auth_remote_data_source.dart';
 import 'features/auth/domain/repositories/auth_repository.dart';
 import 'features/auth/data/repositories/auth_repository_impl.dart';
+import 'features/stretch/data/datasources/stretch_remote_data_source.dart';
 import 'features/marketplace/data/datasources/marketplace_remote_data_source.dart';
 import 'features/marketplace/domain/repositories/marketplace_repository.dart';
 import 'features/marketplace/data/repositories/marketplace_repository_impl.dart';
@@ -22,8 +23,11 @@ import 'features/orders/data/datasources/order_remote_data_source.dart';
 import 'features/orders/domain/repositories/order_repository.dart';
 import 'features/orders/data/repositories/order_repository_impl.dart';
 import 'features/forum/data/datasources/forum_remote_data_source.dart';
+import 'features/forum/data/datasources/forum_group_remote_data_source.dart';
 import 'features/forum/domain/repositories/forum_repository.dart';
+import 'features/forum/domain/repositories/forum_group_repository.dart';
 import 'features/forum/data/repositories/forum_repository_impl.dart';
+import 'features/forum/data/repositories/forum_group_repository_impl.dart';
 import 'features/ai/data/datasources/ai_remote_data_source.dart';
 import 'features/ai/domain/repositories/ai_repository.dart';
 import 'features/ai/data/repositories/ai_repository_impl.dart';
@@ -42,6 +46,7 @@ import 'features/iot/data/repositories/iot_repository_impl.dart';
 import 'features/auth/presentation/bloc/auth_cubit.dart';
 import 'features/marketplace/presentation/bloc/marketplace_cubit.dart';
 import 'features/forum/presentation/bloc/forum_cubit.dart';
+import 'features/forum/presentation/bloc/forum_group_cubit.dart';
 import 'features/orders/presentation/bloc/order_cubit.dart';
 import 'features/profile/presentation/bloc/profile_cubit.dart';
 import 'features/ai/presentation/bloc/ai_cubit.dart';
@@ -63,6 +68,12 @@ import 'features/marketplace/data/datasources/store_banner_remote_data_source.da
 import 'features/marketplace/data/datasources/review_remote_data_source.dart';
 import 'features/marketplace/domain/repositories/review_repository.dart';
 import 'features/marketplace/data/repositories/review_repository_impl.dart';
+import 'features/marketplace/data/datasources/product_question_remote_data_source.dart';
+import 'features/marketplace/domain/repositories/product_question_repository.dart';
+import 'features/marketplace/data/repositories/product_question_repository_impl.dart';
+import 'features/marketplace/presentation/bloc/product_qa_cubit.dart';
+import 'features/marketplace/presentation/bloc/compare_cubit.dart';
+import 'features/marketplace/presentation/utils/compare_list_store.dart';
 import 'package:mobile_bisa/features/gis/data/datasources/gis_remote_data_source.dart';
 import 'package:mobile_bisa/features/gis/domain/repositories/gis_repository.dart';
 import 'package:mobile_bisa/features/gis/data/repositories/gis_repository_impl.dart';
@@ -98,6 +109,7 @@ Future<void> init() async {
   //! Features - Forum
   // Cubits
   sl.registerFactory(() => ForumCubit(sl()));
+  sl.registerFactory(() => ForumGroupCubit(sl()));
 
   //! Features - Orders
   // Cubits
@@ -134,6 +146,11 @@ Future<void> init() async {
 
   //! Features - Market
   sl.registerFactory(() => MarketCubit(sl()));
+
+  //! Features - Q1 stretch (referral, ERP, live, e-sign helpers)
+  sl.registerLazySingleton(
+    () => StretchRemoteDataSource(sl<ApiClient>().dio),
+  );
 
   //! Features - Commerce (Cart & Wishlist)
   sl.registerFactory(() => CommerceCubit(sl()));
@@ -203,6 +220,15 @@ Future<void> init() async {
   sl.registerLazySingleton<ForumRepository>(
     () => ForumRepositoryImpl(remoteDataSource: sl()),
   );
+  sl.registerLazySingleton<ForumGroupRemoteDataSource>(
+    () => ForumGroupRemoteDataSourceImpl(
+      dio: sl<ApiClient>().dio,
+      uploadQueue: sl<MediaUploadQueue>(),
+    ),
+  );
+  sl.registerLazySingleton<ForumGroupRepository>(
+    () => ForumGroupRepositoryImpl(remoteDataSource: sl()),
+  );
 
   //! Features - AI
   sl.registerLazySingleton<AiRemoteDataSource>(
@@ -267,6 +293,21 @@ Future<void> init() async {
     () => ReviewRepositoryImpl(remoteDataSource: sl()),
   );
 
+  //! Features - Product Q&A (FB-4)
+  sl.registerFactory(() => ProductQaCubit(sl()));
+  sl.registerLazySingleton<ProductQuestionRemoteDataSource>(
+    () => ProductQuestionRemoteDataSourceImpl(dio: sl<ApiClient>().dio),
+  );
+  sl.registerLazySingleton<ProductQuestionRepository>(
+    () => ProductQuestionRepositoryImpl(remoteDataSource: sl()),
+  );
+
+  //! Features - Compare products (FB-6)
+  sl.registerLazySingleton(
+    () => CompareListStore(sl<SharedPreferences>()),
+  );
+  sl.registerLazySingleton(() => CompareCubit(sl<CompareListStore>()));
+
   //! Features - GIS
   sl.registerLazySingleton<GisRemoteDataSource>(
     () => GisRemoteDataSourceImpl(dio: sl<ApiClient>().dio),
@@ -315,8 +356,8 @@ Future<void> init() async {
   // throw StateError, yang membuat app blank/dark screen pasca splash bila
   // Config build-time tidak diisi. Sekarang fallback ke empty string;
   // semua call API akan gagal dengan DioException yang jelas, app tetap render.
-  const apiUrl = AppConfig.apiUrl;
-  if (apiUrl.isEmpty) {
+  final apiUrl = AppConfig.effectiveApiUrl;
+  if (apiUrl.isEmpty && !kDebugMode) {
     debugPrint(
       '[BISA] API_URL kosong. Set --dart-define=API_URL=... saat run/build.',
     );

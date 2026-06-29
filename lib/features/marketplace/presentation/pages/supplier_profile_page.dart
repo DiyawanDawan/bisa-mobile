@@ -5,6 +5,7 @@ import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:flutter_staggered_grid_view/flutter_staggered_grid_view.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
 import 'package:go_router/go_router.dart';
+import '../../../../core/constants/app_layout.dart';
 import '../../../../core/constants/app_colors.dart';
 import '../../../../core/utils/media_url_utils.dart';
 import '../../../../injection_container.dart';
@@ -19,6 +20,7 @@ import '../bloc/store_banner_cubit.dart';
 import '../widgets/store_banner_section.dart';
 import '../../domain/entities/product_entity.dart';
 import '../widgets/product_card.dart';
+import '../widgets/supplier_trade_history_section.dart';
 import '../../../../shared/widgets/shimmer_loading.dart';
 import '../../../follow/presentation/widgets/follow_button.dart';
 
@@ -41,16 +43,25 @@ class SupplierProfilePage extends StatefulWidget {
 class _SupplierProfilePageState extends State<SupplierProfilePage> {
   final _searchController = TextEditingController();
   String _searchQuery = '';
-  String _selectedFilter = 'Semua';
+  String _selectedFilter = 'ALL';
   UserEntity? _supplier;
 
-  final List<String> _filters = [
-    'Semua',
-    'Terbaru',
-    'Harga Terendah',
-    'Harga Tertinggi',
-    'Rating Tertinggi',
-  ];
+  static const _filterAll = 'ALL';
+  static const _filterNewest = 'NEWEST';
+  static const _filterPriceLow = 'PRICE_LOW';
+  static const _filterPriceHigh = 'PRICE_HIGH';
+  static const _filterRatingHigh = 'RATING_HIGH';
+
+  List<Map<String, String>> _filterOptions() => [
+        {'value': _filterAll, 'label': 'marketplace.filter_all'.tr()},
+        {'value': _filterNewest, 'label': 'marketplace.sort_newest'.tr()},
+        {'value': _filterPriceLow, 'label': 'marketplace.sort_price_low'.tr()},
+        {'value': _filterPriceHigh, 'label': 'marketplace.sort_price_high'.tr()},
+        {
+          'value': _filterRatingHigh,
+          'label': 'marketplace.sort_rating_high'.tr(),
+        },
+      ];
 
   @override
   void initState() {
@@ -97,16 +108,16 @@ class _SupplierProfilePageState extends State<SupplierProfilePage> {
     }).toList();
 
     switch (_selectedFilter) {
-      case 'Terbaru':
+      case _filterNewest:
         filtered.sort((a, b) => b.createdAt.compareTo(a.createdAt));
         break;
-      case 'Harga Terendah':
+      case _filterPriceLow:
         filtered.sort((a, b) => a.pricePerUnit.compareTo(b.pricePerUnit));
         break;
-      case 'Harga Tertinggi':
+      case _filterPriceHigh:
         filtered.sort((a, b) => b.pricePerUnit.compareTo(a.pricePerUnit));
         break;
-      case 'Rating Tertinggi':
+      case _filterRatingHigh:
         filtered.sort((a, b) => b.averageRating.compareTo(a.averageRating));
         break;
     }
@@ -166,16 +177,16 @@ class _SupplierProfilePageState extends State<SupplierProfilePage> {
           backgroundColor: AppColors.background,
           appBar: BisaAppBar(
             title: widget.previewAsOwner
-                ? 'Pratinjau Toko'
+                ? 'marketplace.store_preview_buyer'.tr()
                 : widget.supplierName,
-            backgroundColor: AppColors.white,
+            backgroundColor: AppColors.surface,
           ),
           body: Column(
             children: [
               if (widget.previewAsOwner)
                 Container(
                   width: double.infinity,
-                  padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 10.h),
+                  padding: EdgeInsets.symmetric(horizontal: AppSpacing.md, vertical: AppSpacing.sm10),
                   color: AppColors.primaryLight.withValues(alpha: 0.35),
                   child: Row(
                     children: [
@@ -184,10 +195,12 @@ class _SupplierProfilePageState extends State<SupplierProfilePage> {
                         size: 16.sp,
                         color: AppColors.primaryDark,
                       ),
-                      SizedBox(width: 8.w),
+                      SizedBox(width: AppSpacing.sm),
                       Expanded(
                         child: Text(
-                          'Tampilan pembeli · ${widget.supplierName}',
+                          'marketplace.supplier_buyer_preview'.tr(
+                            namedArgs: {'name': widget.supplierName},
+                          ),
                           style: TextStyle(
                             fontSize: 12.sp,
                             fontWeight: FontWeight.w600,
@@ -210,7 +223,7 @@ class _SupplierProfilePageState extends State<SupplierProfilePage> {
                 ),
                 error: (message) => Center(
                   child: Padding(
-                    padding: EdgeInsets.all(24.w),
+                    padding: EdgeInsets.all(AppSpacing.xl),
                     child: Column(
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
@@ -219,7 +232,7 @@ class _SupplierProfilePageState extends State<SupplierProfilePage> {
                           size: 48.sp,
                           color: AppColors.error,
                         ),
-                        SizedBox(height: 12.h),
+                        SizedBox(height: AppSpacing.md12),
                         Text(
                           message,
                           textAlign: TextAlign.center,
@@ -253,6 +266,11 @@ class _SupplierProfilePageState extends State<SupplierProfilePage> {
                           ],
                         ),
                       ),
+                      SliverToBoxAdapter(
+                        child: SupplierTradeHistorySection(
+                          supplierId: widget.supplierId,
+                        ),
+                      ),
                       SliverToBoxAdapter(child: _buildSearchFilterCard()),
                       SliverPadding(
                         padding: EdgeInsets.fromLTRB(16.w, 12.h, 16.w, 40.h),
@@ -263,8 +281,8 @@ class _SupplierProfilePageState extends State<SupplierProfilePage> {
                                   shrinkWrap: true,
                                   physics: const NeverScrollableScrollPhysics(),
                                   crossAxisCount: 2,
-                                  mainAxisSpacing: 16.h,
-                                  crossAxisSpacing: 12.w,
+                                  mainAxisSpacing: AppSpacing.md,
+                                  crossAxisSpacing: AppSpacing.md12,
                                   itemCount: filtered.length,
                                   itemBuilder: (context, index) {
                                     return ProductCard(
@@ -293,12 +311,12 @@ class _SupplierProfilePageState extends State<SupplierProfilePage> {
 
   Widget _buildSearchFilterCard() {
     return Padding(
-      padding: EdgeInsets.fromLTRB(16.w, 0, 16.w, 4.h),
+      padding: EdgeInsets.fromLTRB(AppSpacing.md, 0, AppSpacing.md, AppSpacing.xs),
       child: Container(
         padding: EdgeInsets.fromLTRB(14.w, 14.h, 14.w, 12.h),
         decoration: BoxDecoration(
           color: AppColors.surface,
-          borderRadius: BorderRadius.circular(20.r),
+          borderRadius: BorderRadius.circular(AppRadius.pill),
           boxShadow: [
             BoxShadow(
               color: AppColors.black.withValues(alpha: 0.05),
@@ -312,26 +330,28 @@ class _SupplierProfilePageState extends State<SupplierProfilePage> {
           children: [
             BisaSearchField(
               controller: _searchController,
-              hint: 'Cari produk supplier...',
+              hint: 'marketplace.search_supplier_products'.tr(),
               onChanged: (value) => setState(() => _searchQuery = value),
               onClear: () {
                 _searchController.clear();
                 setState(() => _searchQuery = '');
               },
             ),
-            SizedBox(height: 10.h),
+            SizedBox(height: AppSpacing.sm10),
             SizedBox(
               height: 36.h,
               child: ListView.separated(
                 scrollDirection: Axis.horizontal,
-                itemCount: _filters.length,
-                separatorBuilder: (_, __) => SizedBox(width: 8.w),
+                itemCount: _filterOptions().length,
+                separatorBuilder: (_, __) => SizedBox(width: AppSpacing.sm),
                 itemBuilder: (context, index) {
-                  final filter = _filters[index];
-                  final isSelected = _selectedFilter == filter;
+                  final filter = _filterOptions()[index];
+                  final value = filter['value']!;
+                  final label = filter['label']!;
+                  final isSelected = _selectedFilter == value;
                   return FilterChip(
                     label: Text(
-                      filter,
+                      label,
                       style: TextStyle(
                         fontSize: 11.sp,
                         fontWeight:
@@ -351,10 +371,10 @@ class _SupplierProfilePageState extends State<SupplierProfilePage> {
                           : AppColors.grey200,
                     ),
                     shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(20.r),
+                      borderRadius: BorderRadius.circular(AppRadius.pill),
                     ),
                     onSelected: (_) =>
-                        setState(() => _selectedFilter = filter),
+                        setState(() => _selectedFilter = value),
                   );
                 },
               ),
@@ -372,7 +392,7 @@ class _SupplierProfilePageState extends State<SupplierProfilePage> {
     final isVerified = _supplier?.isVerified ?? true;
 
     return Container(
-      margin: EdgeInsets.symmetric(horizontal: 16.w),
+      margin: EdgeInsets.symmetric(horizontal: AppSpacing.md),
       padding: EdgeInsets.fromLTRB(16.w, 14.h, 16.w, 16.h),
       decoration: BoxDecoration(
         color: AppColors.surface,
@@ -418,7 +438,7 @@ class _SupplierProfilePageState extends State<SupplierProfilePage> {
                       : null,
                 ),
               ),
-              SizedBox(width: 12.w),
+              SizedBox(width: AppSpacing.md12),
               Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
@@ -459,7 +479,7 @@ class _SupplierProfilePageState extends State<SupplierProfilePage> {
                           SizedBox(width: 4.w),
                           Flexible(
                             child: Text(
-                              'Supplier Terverifikasi',
+                              'marketplace.verified_supplier'.tr(),
                               maxLines: 1,
                               overflow: TextOverflow.ellipsis,
                               style: TextStyle(
@@ -496,27 +516,27 @@ class _SupplierProfilePageState extends State<SupplierProfilePage> {
                   ],
                 ),
               ),
-              SizedBox(width: 8.w),
+              SizedBox(width: AppSpacing.sm),
               FollowButton(userId: widget.supplierId, compact: true),
             ],
           ),
-          SizedBox(height: 12.h),
+          SizedBox(height: AppSpacing.md12),
           UserFollowStatsRow(userId: widget.supplierId),
-          SizedBox(height: 12.h),
+          SizedBox(height: AppSpacing.md12),
           Row(
             children: [
               Expanded(
                 child: Supplier3DStatCard(
-                  label: 'Produk',
+                  label: 'marketplace.products_label'.tr(),
                   value: '$productCount',
                   color: AppColors.primary,
                   icon: LucideIcons.package,
                 ),
               ),
-              SizedBox(width: 8.w),
+              SizedBox(width: AppSpacing.sm),
               Expanded(
                 child: Supplier3DStatCard(
-                  label: 'Rating',
+                  label: 'marketplace.rating_label'.tr(),
                   value: avgRating > 0
                       ? avgRating.toStringAsFixed(1)
                       : '-',
@@ -524,10 +544,10 @@ class _SupplierProfilePageState extends State<SupplierProfilePage> {
                   icon: LucideIcons.star,
                 ),
               ),
-              SizedBox(width: 8.w),
+              SizedBox(width: AppSpacing.sm),
               Expanded(
                 child: Supplier3DStatCard(
-                  label: 'Bergabung',
+                  label: 'marketplace.joined_label'.tr(),
                   value: _joinLabel(),
                   color: AppColors.success,
                   icon: LucideIcons.calendar,
@@ -535,7 +555,7 @@ class _SupplierProfilePageState extends State<SupplierProfilePage> {
               ),
             ],
           ),
-          SizedBox(height: 14.h),
+          SizedBox(height: AppSpacing.section),
           Row(
             children: [
               Expanded(
@@ -545,16 +565,16 @@ class _SupplierProfilePageState extends State<SupplierProfilePage> {
                   label: Text('chat'.tr()),
                   style: ElevatedButton.styleFrom(
                     backgroundColor: AppColors.primary,
-                    foregroundColor: AppColors.white,
+                    foregroundColor: AppColors.textOnPrimary,
                     elevation: 0,
-                    padding: EdgeInsets.symmetric(vertical: 12.h),
+                    padding: EdgeInsets.symmetric(vertical: AppSpacing.md12),
                     shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(14.r),
+                      borderRadius: BorderRadius.circular(AppRadius.tile),
                     ),
                   ),
                 ),
               ),
-              SizedBox(width: 10.w),
+              SizedBox(width: AppSpacing.sm10),
               Expanded(
                 child: OutlinedButton.icon(
                   onPressed: () {},
@@ -562,12 +582,12 @@ class _SupplierProfilePageState extends State<SupplierProfilePage> {
                   label: Text('bagikan'.tr()),
                   style: OutlinedButton.styleFrom(
                     foregroundColor: AppColors.primary,
-                    padding: EdgeInsets.symmetric(vertical: 12.h),
+                    padding: EdgeInsets.symmetric(vertical: AppSpacing.md12),
                     side: BorderSide(
                       color: AppColors.primary.withValues(alpha: 0.35),
                     ),
                     shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(14.r),
+                      borderRadius: BorderRadius.circular(AppRadius.tile),
                     ),
                   ),
                 ),
@@ -586,11 +606,11 @@ class _SupplierProfilePageState extends State<SupplierProfilePage> {
         child: Column(
           children: [
             Icon(LucideIcons.package, size: 48.sp, color: AppColors.grey200),
-            SizedBox(height: 16.h),
+            SizedBox(height: AppSpacing.md),
             Text(
               _searchQuery.isNotEmpty
-                  ? 'Produk tidak ditemukan.'
-                  : 'Supplier belum memiliki produk.',
+                  ? 'marketplace.supplier_search_not_found'.tr()
+                  : 'marketplace.supplier_no_products'.tr(),
               style: TextStyle(color: AppColors.textHint, fontSize: 14.sp),
             ),
           ],

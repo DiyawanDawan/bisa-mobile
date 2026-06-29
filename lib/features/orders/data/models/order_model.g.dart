@@ -12,6 +12,7 @@ _OrderModel _$OrderModelFromJson(Map<String, dynamic> json) => _OrderModel(
   checkoutBatchId: json['checkoutBatchId'] as String?,
   checkoutBatchNumber: json['checkoutBatchNumber'] as String?,
   status: json['status'] as String,
+  orderType: json['orderType'] as String? ?? 'STANDARD',
   totalAmount: json['totalAmount'],
   totalQuantity: json['totalQuantity'],
   subtotal: json['subtotal'],
@@ -48,6 +49,9 @@ _OrderModel _$OrderModelFromJson(Map<String, dynamic> json) => _OrderModel(
   pendingPayment: json['pendingPayment'] as Map<String, dynamic>?,
   dispute: json['dispute'] as Map<String, dynamic>?,
   negotiationId: json['negotiationId'] as String?,
+  isDigitalSigned: json['isDigitalSigned'] as bool? ?? false,
+  buyerSignedAt: json['buyerSignedAt'] as String?,
+  sellerSignedAt: json['sellerSignedAt'] as String?,
 );
 
 Map<String, dynamic> _$OrderModelToJson(_OrderModel instance) =>
@@ -57,6 +61,7 @@ Map<String, dynamic> _$OrderModelToJson(_OrderModel instance) =>
       'checkoutBatchId': instance.checkoutBatchId,
       'checkoutBatchNumber': instance.checkoutBatchNumber,
       'status': instance.status,
+      'orderType': instance.orderType,
       'totalAmount': instance.totalAmount,
       'totalQuantity': instance.totalQuantity,
       'subtotal': instance.subtotal,
@@ -76,6 +81,9 @@ Map<String, dynamic> _$OrderModelToJson(_OrderModel instance) =>
       'pendingPayment': instance.pendingPayment,
       'dispute': instance.dispute,
       'negotiationId': instance.negotiationId,
+      'isDigitalSigned': instance.isDigitalSigned,
+      'buyerSignedAt': instance.buyerSignedAt,
+      'sellerSignedAt': instance.sellerSignedAt,
     };
 
 _OrderItemModel _$OrderItemModelFromJson(Map<String, dynamic> json) =>

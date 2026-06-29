@@ -1,10 +1,12 @@
 import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
+import '../../../../core/i18n/failure_messages.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:flutter_staggered_grid_view/flutter_staggered_grid_view.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
 import 'package:visibility_detector/visibility_detector.dart';
+import 'package:mobile_bisa/core/constants/app_layout.dart';
 import 'package:mobile_bisa/core/constants/app_colors.dart';
 import 'package:mobile_bisa/features/marketplace/presentation/bloc/marketplace_cubit.dart';
 import 'package:mobile_bisa/features/marketplace/presentation/bloc/category_cubit.dart';
@@ -12,6 +14,7 @@ import 'package:mobile_bisa/features/marketplace/presentation/bloc/category_stat
 import 'package:mobile_bisa/features/marketplace/data/models/category_model.dart';
 import 'package:mobile_bisa/features/marketplace/presentation/widgets/product_card.dart';
 import 'package:mobile_bisa/features/marketplace/presentation/widgets/filter_bottom_sheet.dart';
+import 'package:mobile_bisa/features/marketplace/presentation/marketplace_i18n.dart';
 import 'package:mobile_bisa/injection_container.dart';
 import 'package:mobile_bisa/shared/widgets/bisa_filter_chip.dart';
 import 'package:mobile_bisa/shared/widgets/shimmer_loading.dart';
@@ -134,9 +137,9 @@ class _VerticalProductGridSectionState
                 initial: () => const SizedBox.shrink(),
                 loading: () => ShimmerProductGridPlaceholder(
                   itemCount: 4,
-                  padding: EdgeInsets.symmetric(horizontal: 16.w),
+                  padding: EdgeInsets.symmetric(horizontal: AppSpacing.md),
                 ),
-                error: (message) => Center(child: Text(message)),
+                error: (message) => Center(child: Text(message.localizedFailure)),
                 loaded: (products, hasReachedMax) {
                   if (products.isEmpty) {
                     return Container(
@@ -146,8 +149,8 @@ class _VerticalProductGridSectionState
                         mainAxisAlignment: MainAxisAlignment.center,
                         children: [
                           Icon(LucideIcons.packageSearch, size: 48.sp, color: AppColors.grey200),
-                          SizedBox(height: 12.h),
-                          Text('produk_tidak_ditemukan'.tr(), style: TextStyle(color: AppColors.textSecondary)),
+                          SizedBox(height: AppSpacing.md12),
+                          Text('marketplace.no_products_found'.tr(), style: TextStyle(color: AppColors.textSecondary)),
                         ],
                       ),
                     );
@@ -156,13 +159,13 @@ class _VerticalProductGridSectionState
                   return Column(
                     children: [
                       Padding(
-                        padding: EdgeInsets.symmetric(horizontal: 16.w),
+                        padding: EdgeInsets.symmetric(horizontal: AppSpacing.md),
                         child: MasonryGridView.count(
                           shrinkWrap: true,
                           physics: const NeverScrollableScrollPhysics(),
                           crossAxisCount: 2,
-                          mainAxisSpacing: 16.h,
-                          crossAxisSpacing: 12.w,
+                          mainAxisSpacing: AppSpacing.md,
+                          crossAxisSpacing: AppSpacing.md12,
                           itemCount: products.length,
                           itemBuilder: (context, index) {
                             return ProductCard(product: products[index]);
@@ -187,7 +190,7 @@ class _VerticalProductGridSectionState
                             ),
                           ),
                         ),
-                      SizedBox(height: 20.h),
+                      SizedBox(height: AppSpacing.lg),
                     ],
                   );
                 },
@@ -210,12 +213,12 @@ class _VerticalProductGridSectionState
 
         return Container(
           height: 44.h,
-          margin: EdgeInsets.only(bottom: 8.h),
+          margin: EdgeInsets.only(bottom: AppSpacing.sm),
           child: Row(
             children: [
               Expanded(
                 child: ListView.builder(
-                  padding: EdgeInsets.symmetric(horizontal: 20.w),
+                  padding: EdgeInsets.symmetric(horizontal: AppSpacing.lg),
                   scrollDirection: Axis.horizontal,
                   physics: const BouncingScrollPhysics(),
                   itemCount: categories.length + 1,
@@ -227,10 +230,10 @@ class _VerticalProductGridSectionState
                         : _selectedCategory?.id == cat?.id;
 
                     return Padding(
-                      padding: EdgeInsets.only(right: 8.w),
+                      padding: EdgeInsets.only(right: AppSpacing.sm),
                       child: Center(
                         child: BisaFilterChip(
-                          label: isAll ? 'Semua' : cat!.name,
+                          label: isAll ? 'marketplace.category_all'.tr() : cat!.name,
                           isSelected: isSel,
                           onTap: () {
                             setState(() => _selectedCategory = cat);
@@ -243,13 +246,13 @@ class _VerticalProductGridSectionState
                 ),
               ),
               Padding(
-                padding: EdgeInsets.only(right: 20.w),
+                padding: EdgeInsets.only(right: AppSpacing.lg),
                 child: GestureDetector(
                   onTap: () {
                     FilterBottomSheet.show(
                       context,
                       sortBy: _sortBy,
-                      category: _selectedCategory?.name ?? 'Semua',
+                      category: _selectedCategory?.name ?? kMarketplaceFilterAllCategory,
                       minPrice: _minPrice,
                       maxPrice: _maxPrice,
                       minRating: _minRating,
@@ -257,7 +260,7 @@ class _VerticalProductGridSectionState
                       onApply: (sortBy, category, minPrice, maxPrice, minRating) {
                         setState(() {
                           _sortBy = sortBy;
-                          if (category == 'Semua') {
+                          if (category == kMarketplaceFilterAllCategory) {
                             _selectedCategory = null;
                           } else {
                             try {
@@ -275,10 +278,10 @@ class _VerticalProductGridSectionState
                     );
                   },
                   child: Container(
-                    padding: EdgeInsets.all(10.r),
+                    padding: EdgeInsets.all(AppSpacing.sm10),
                     decoration: BoxDecoration(
                       color: AppColors.primary,
-                      borderRadius: BorderRadius.circular(12.r),
+                      borderRadius: BorderRadius.circular(AppRadius.lg),
                       boxShadow: [
                         BoxShadow(
                           color: AppColors.primary.withOpacity(0.3),
@@ -289,7 +292,7 @@ class _VerticalProductGridSectionState
                     ),
                     child: Icon(
                       LucideIcons.slidersHorizontal,
-                      color: Colors.white,
+                      color: AppColors.surface,
                       size: 18.sp,
                     ),
                   ),

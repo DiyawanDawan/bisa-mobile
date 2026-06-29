@@ -5,6 +5,7 @@ import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:go_router/go_router.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
 import 'package:mobile_bisa/features/marketplace/domain/entities/product_entity.dart';
+import '../../../../core/constants/app_layout.dart';
 import '../../../../core/constants/app_colors.dart';
 import '../../../../core/readiness/readiness_gate.dart';
 import '../../../../core/utils/safe_area_utils.dart';
@@ -66,7 +67,7 @@ class _StoreManagementPageState extends State<StoreManagementPage> {
               backgroundColor: AppColors.surface,
               showBackButton: false,
               centerTitle: false,
-              title: 'Manajemen Produk',
+              title: 'marketplace.product_management_title'.tr(),
               actions: [
                 const NotificationBellButton(),
                 BisaAppBarAction(
@@ -88,7 +89,7 @@ class _StoreManagementPageState extends State<StoreManagementPage> {
                   children: [
                     const SupplierQuickActions(),
                     Padding(
-                      padding: EdgeInsets.fromLTRB(16.w, 8.h, 16.w, 0),
+                      padding: EdgeInsets.fromLTRB(AppSpacing.md, AppSpacing.sm, AppSpacing.md, 0),
                       child: SupplierProductCategoryBar(
                         selectedCategoryId: _selectedCategoryId,
                         onCategorySelected: (category) {
@@ -98,12 +99,12 @@ class _StoreManagementPageState extends State<StoreManagementPage> {
                       ),
                     ),
                     Padding(
-                      padding: EdgeInsets.fromLTRB(16.w, 8.h, 16.w, 0),
+                      padding: EdgeInsets.fromLTRB(AppSpacing.md, AppSpacing.sm, AppSpacing.md, 0),
                       child: Row(
                         children: [
                           Expanded(
                             child: Text(
-                              'Produk Anda',
+                              'marketplace.your_products'.tr(),
                               style: TextStyle(
                                 fontSize: 15.sp,
                                 fontWeight: FontWeight.w800,
@@ -118,7 +119,7 @@ class _StoreManagementPageState extends State<StoreManagementPage> {
                               mainAxisSize: MainAxisSize.min,
                               children: [
                                 Text(
-                                  'Lihat semua produk',
+                                  'marketplace.view_all_products_short'.tr(),
                                   style: TextStyle(
                                     fontSize: 13.sp,
                                     fontWeight: FontWeight.w700,
@@ -154,14 +155,14 @@ class _StoreManagementPageState extends State<StoreManagementPage> {
                             ),
                           ),
                           error: (message) => Padding(
-                            padding: EdgeInsets.all(24.w),
+                            padding: EdgeInsets.all(AppSpacing.xl),
                             child: Column(
                               children: [
                                 Text(message, textAlign: TextAlign.center),
                                 TextButton(
                                   onPressed: () =>
                                       _reloadProducts(blocContext),
-                                  child: Text('coba_lagi'.tr()),
+                                  child: Text('marketplace.try_again'.tr()),
                                 ),
                               ],
                             ),
@@ -202,29 +203,29 @@ class _StoreManagementPageState extends State<StoreManagementPage> {
               size: 56.r,
               color: AppColors.grey200,
             ),
-            SizedBox(height: 12.h),
+            SizedBox(height: AppSpacing.md12),
             Text(
-              'Belum ada produk'.tr(),
+              'marketplace.no_products_yet'.tr(),
               style: TextStyle(
                 fontSize: 15.sp,
                 fontWeight: FontWeight.bold,
                 color: AppColors.textSecondary,
               ),
             ),
-            SizedBox(height: 8.h),
+            SizedBox(height: AppSpacing.sm),
             Text(
-              'Mulai tambahkan produk pertama Anda'.tr(),
+              'marketplace.add_first_product_hint'.tr(),
               style: TextStyle(
                 fontSize: 13.sp,
                 color: AppColors.textHint,
               ),
               textAlign: TextAlign.center,
             ),
-            SizedBox(height: 16.h),
+            SizedBox(height: AppSpacing.md),
             OutlinedButton.icon(
               onPressed: () => ReadinessGate.pushAddProduct(blocContext),
               icon: Icon(LucideIcons.plus, size: 18.sp),
-              label: const Text('Tambah Produk'),
+              label: Text('marketplace.add_product'.tr()),
             ),
           ],
         ),
@@ -234,11 +235,11 @@ class _StoreManagementPageState extends State<StoreManagementPage> {
     final preview = products.take(StoreManagementPage._previewLimit).toList();
 
     return Padding(
-      padding: EdgeInsets.fromLTRB(16.w, 8.h, 16.w, 0),
+      padding: EdgeInsets.fromLTRB(AppSpacing.md, AppSpacing.sm, AppSpacing.md, 0),
       child: Column(
         children: [
           for (var i = 0; i < preview.length; i++) ...[
-            if (i > 0) SizedBox(height: 12.h),
+            if (i > 0) SizedBox(height: AppSpacing.md12),
             SupplierProductTile(
               product: preview[i],
               onTap: () async {

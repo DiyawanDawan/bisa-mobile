@@ -9,12 +9,22 @@ abstract class OrderRepository {
     int limit = 20,
     String? search,
     String? status,
+    String? orderType,
   });
   Future<Either<Failure, List<OrderEntity>>> getMySales({
     int page = 1,
     int limit = 20,
     String? search,
     String? status,
+    String? orderType,
+  });
+  Future<Either<Failure, Map<String, int>>> getMyPurchasesStatusCounts({
+    String? search,
+    String? orderType,
+  });
+  Future<Either<Failure, Map<String, int>>> getMySalesStatusCounts({
+    String? search,
+    String? orderType,
   });
   Future<Either<Failure, OrderEntity>> getOrderDetail(String id);
   Future<Either<Failure, CheckoutBatchDetailEntity>> getCheckoutBatchDetail(String anchorOrderId);
@@ -52,6 +62,8 @@ abstract class OrderRepository {
     Map<String, dynamic>? shippingSnapshot,
     List<Map<String, dynamic>>? shippingSelections,
     String? notes,
+    String? orderType,
+    String? voucherCode,
   });
   Future<Either<Failure, Map<String, dynamic>>> previewDirectOrder({
     required List<Map<String, dynamic>> items,
@@ -59,6 +71,12 @@ abstract class OrderRepository {
     Map<String, dynamic>? shippingSnapshot,
     List<Map<String, dynamic>>? shippingSelections,
     String? notes,
+    String? voucherCode,
+  });
+  Future<Either<Failure, Map<String, dynamic>>> validateVoucher({
+    required String code,
+    required double subtotal,
+    List<String>? sellerIds,
   });
   Future<Either<Failure, Map<String, dynamic>?>> getShippingOrigin();
   Future<Either<Failure, void>> setShippingOrigin({

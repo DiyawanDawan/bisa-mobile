@@ -1,5 +1,6 @@
 import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
+import '../../../../core/i18n/failure_messages.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
@@ -7,10 +8,12 @@ import 'package:mobile_bisa/features/gis/domain/entities/region_entity.dart';
 import 'package:mobile_bisa/features/gis/domain/repositories/gis_repository.dart';
 import 'package:mobile_bisa/features/gis/presentation/bloc/gis_cubit.dart';
 import '../../../../core/constants/app_colors.dart';
+import '../../../../core/utils/app_feedback.dart';
 import '../../../../core/utils/safe_navigator.dart';
 import '../../../../core/services/location_service.dart';
 import '../../../../injection_container.dart';
 import '../bloc/profile_cubit.dart';
+import '../../../../shared/widgets/bisa_dialog.dart';
 import '../../../../shared/widgets/custom_text_field.dart';
 import '../../../../shared/widgets/bisa_app_bar.dart';
 import '../../../../shared/widgets/custom_button.dart';
@@ -31,62 +34,74 @@ class AddressListPage extends StatelessWidget {
       child: Builder(
         builder: (context) => Scaffold(
           backgroundColor: AppColors.background,
-          appBar: const BisaAppBar(
-            title: 'Alamat Pengiriman',
-            backgroundColor: Colors.white,
+          appBar: BisaAppBar(
+            title: 'profile.menu_addresses'.tr(),
+            backgroundColor: AppColors.surface,
           ),
-          body: BlocBuilder<ProfileCubit, ProfileState>(
-            builder: (context, state) {
-              return state.maybeWhen(
-                loading: () => ShimmerListPlaceholder(
-                  itemCount: 4,
-                  itemHeight: 100.h,
-                  scrollable: true,
-                  padding: EdgeInsets.all(16.w),
-                ),
-                error: (message) => Center(child: Text(message)),
-                addressesLoaded: (addresses) {
-                  if (addresses.isEmpty) {
-                    return Center(
-                      child: Column(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          Icon(
-                            LucideIcons.mapPin,
-                            size: 64.sp,
-                            color: AppColors.grey300,
-                          ),
-                          SizedBox(height: 16.h),
-                          Text(
-                            'belum_ada_alamat_tersimpan'.tr(),
-                            style: TextStyle(color: AppColors.textSecondary),
-                          ),
-                        ],
+          body: Column(
+            children: [
+              Expanded(
+                child: BlocBuilder<ProfileCubit, ProfileState>(
+                  builder: (context, state) {
+                    return state.maybeWhen(
+                      loading: () => ShimmerListPlaceholder(
+                        itemCount: 4,
+                        itemHeight: 84.h,
+                        scrollable: true,
+                        padding: EdgeInsets.fromLTRB(16.w, 12.h, 16.w, 4.h),
                       ),
+                      error: (message) => Center(child: Text(message.localizedFailure)),
+                      addressesLoaded: (addresses) {
+                        if (addresses.isEmpty) {
+                          return Center(
+                            child: Padding(
+                              padding: EdgeInsets.symmetric(horizontal: 24.w),
+                              child: Column(
+                                mainAxisAlignment: MainAxisAlignment.center,
+                                children: [
+                                  Icon(
+                                    LucideIcons.mapPin,
+                                    size: 64.sp,
+                                    color: AppColors.grey300,
+                                  ),
+                                  SizedBox(height: 16.h),
+                                  Text(
+                                    'profile.address_empty'.tr(),
+                                    textAlign: TextAlign.center,
+                                    style: TextStyle(color: AppColors.textSecondary),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          );
+                        }
+                        return ListView.separated(
+                          padding: EdgeInsets.fromLTRB(16.w, 12.h, 16.w, 4.h),
+                          itemCount: addresses.length,
+                          separatorBuilder: (_, __) => SizedBox(height: 8.h),
+                          itemBuilder: (context, index) {
+                            final address = addresses[index];
+                            return _buildAddressItem(context, address);
+                          },
+                        );
+                      },
+                      orElse: () => const SizedBox.shrink(),
                     );
-                  }
-                  return ListView.separated(
-                    padding: EdgeInsets.all(20.w),
-                    itemCount: addresses.length,
-                    separatorBuilder: (_, __) => SizedBox(height: 12.h),
-                    itemBuilder: (context, index) {
-                      final address = addresses[index];
-                      return _buildAddressItem(context, address);
-                    },
-                  );
-                },
-                orElse: () => const SizedBox(),
-              );
-            },
-          ),
-          bottomNavigationBar: SafeArea(
-            child: Padding(
-              padding: EdgeInsets.fromLTRB(20.w, 0, 20.w, 16.h),
-              child: CustomButton(
-                text: 'Tambah Alamat Baru',
-                onPressed: () => _showAddAddressDialog(context),
+                  },
+                ),
               ),
-            ),
+              SafeArea(
+                top: false,
+                child: Padding(
+                  padding: EdgeInsets.fromLTRB(16.w, 4.h, 16.w, 10.h),
+                  child: CustomButton(
+                    text: 'profile.address_add_button'.tr(),
+                    height: 44.h,
+                    onPressed: () => _showAddAddressDialog(context),
+                  ),
+                ),
+              ),
+            ],
           ),
         ),
       ),
@@ -114,19 +129,19 @@ class AddressListPage extends StatelessWidget {
         : '';
 
     return Container(
-      padding: EdgeInsets.all(16.w),
+      padding: EdgeInsets.fromLTRB(12.w, 10.h, 12.w, 10.h),
       decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(16.r),
+        color: AppColors.surface,
+        borderRadius: BorderRadius.circular(12.r),
         border: Border.all(
           color: address.isPrimary ? AppColors.primary : AppColors.grey200,
           width: address.isPrimary ? 1.5 : 1,
         ),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withValues(alpha: 0.02),
-            blurRadius: 10,
-            offset: const Offset(0, 4),
+            color: AppColors.black.withValues(alpha: 0.02),
+            blurRadius: 6,
+            offset: const Offset(0, 2),
           ),
         ],
       ),
@@ -134,187 +149,122 @@ class AddressListPage extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Row(
-                children: [
-                  Icon(
-                    LucideIcons.mapPin,
-                    color: AppColors.primary,
-                    size: 20.sp,
-                  ),
-                  SizedBox(width: 8.w),
-                  Text(
-                    address.name?.isNotEmpty == true
-                        ? address.name
-                        : 'Alamat Pengiriman',
-                    style: TextStyle(
-                      fontWeight: FontWeight.bold,
-                      fontSize: 14.sp,
+              Padding(
+                padding: EdgeInsets.only(top: 1.h),
+                child: Icon(
+                  LucideIcons.mapPin,
+                  color: AppColors.primary,
+                  size: 16.sp,
+                ),
+              ),
+              SizedBox(width: 6.w),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      address.name?.isNotEmpty == true
+                          ? address.name
+                          : 'profile.menu_addresses'.tr(),
+                      style: TextStyle(
+                        fontWeight: FontWeight.w700,
+                        fontSize: 13.sp,
+                        height: 1.2,
+                      ),
                     ),
-                  ),
-                ],
+                    if (address.phoneNumber?.isNotEmpty == true) ...[
+                      SizedBox(height: 2.h),
+                      Text(
+                        address.phoneNumber,
+                        style: TextStyle(
+                          color: AppColors.textSecondary,
+                          fontSize: 11.sp,
+                          height: 1.2,
+                        ),
+                      ),
+                    ],
+                  ],
+                ),
               ),
               if (address.isPrimary)
                 Container(
-                  padding: EdgeInsets.symmetric(horizontal: 8.w, vertical: 4.h),
+                  padding: EdgeInsets.symmetric(horizontal: 6.w, vertical: 2.h),
                   decoration: BoxDecoration(
                     color: AppColors.primary.withValues(alpha: 0.1),
                     borderRadius: BorderRadius.circular(4.r),
                   ),
                   child: Text(
-                    'Utama',
+                    'profile.address_primary_badge'.tr(),
                     style: TextStyle(
                       color: AppColors.primary,
-                      fontSize: 10.sp,
-                      fontWeight: FontWeight.bold,
+                      fontSize: 9.sp,
+                      fontWeight: FontWeight.w700,
                     ),
                   ),
                 ),
             ],
           ),
-          SizedBox(height: 12.h),
-          if (address.phoneNumber?.isNotEmpty == true) ...[
-            Row(
-              children: [
-                Icon(
-                  LucideIcons.phone,
-                  size: 14.sp,
-                  color: AppColors.textSecondary,
-                ),
-                SizedBox(width: 6.w),
-                Text(
-                  address.phoneNumber,
-                  style: TextStyle(
-                    color: AppColors.textSecondary,
-                    fontSize: 13.sp,
-                  ),
-                ),
-              ],
-            ),
-            SizedBox(height: 8.h),
-          ],
+          SizedBox(height: 6.h),
           Text(
             address.address ?? '',
+            maxLines: 2,
+            overflow: TextOverflow.ellipsis,
             style: TextStyle(
-              fontSize: 13.sp,
+              fontSize: 12.sp,
               color: AppColors.textPrimary,
-              height: 1.4,
+              height: 1.25,
             ),
           ),
-          SizedBox(height: 4.h),
-          Text(
-            '$locationText$postalText',
-            style: TextStyle(fontSize: 13.sp, color: AppColors.textSecondary),
+          if (locationText.isNotEmpty || postalText.isNotEmpty) ...[
+            SizedBox(height: 2.h),
+            Text(
+              '$locationText$postalText',
+              maxLines: 2,
+              overflow: TextOverflow.ellipsis,
+              style: TextStyle(
+                fontSize: 11.sp,
+                color: AppColors.textSecondary,
+                height: 1.25,
+              ),
+            ),
+          ],
+          Padding(
+            padding: EdgeInsets.only(top: 8.h),
+            child: Divider(height: 1, color: AppColors.grey200),
           ),
-          SizedBox(height: 16.h),
+          SizedBox(height: 8.h),
           Row(
-            mainAxisAlignment: MainAxisAlignment.end,
             children: [
               if (!address.isPrimary) ...[
-                InkWell(
-                  onTap: () => context.read<ProfileCubit>().setDefaultAddress(
-                    address.id,
-                  ),
-                  borderRadius: BorderRadius.circular(8.r),
-                  child: Container(
-                    padding: EdgeInsets.symmetric(
-                      horizontal: 12.w,
-                      vertical: 8.h,
+                Expanded(
+                  child: _addressActionButton(
+                    onTap: () => context.read<ProfileCubit>().setDefaultAddress(
+                      address.id,
                     ),
-                    decoration: BoxDecoration(
-                      color: AppColors.success.withValues(alpha: 0.1),
-                      borderRadius: BorderRadius.circular(8.r),
-                    ),
-                    child: Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        Icon(
-                          LucideIcons.check,
-                          size: 16.sp,
-                          color: AppColors.success,
-                        ),
-                        SizedBox(width: 6.w),
-                        Text(
-                          'Jadikan Utama',
-                          style: TextStyle(
-                            color: AppColors.success,
-                            fontSize: 12.sp,
-                            fontWeight: FontWeight.w600,
-                          ),
-                        ),
-                      ],
-                    ),
+                    icon: LucideIcons.check,
+                    label: 'profile.address_set_primary_short'.tr(),
+                    color: AppColors.success,
                   ),
                 ),
-                SizedBox(width: 12.w),
+                SizedBox(width: 6.w),
               ],
-              InkWell(
-                onTap: () => _showAddAddressDialog(context, address),
-                borderRadius: BorderRadius.circular(8.r),
-                child: Container(
-                  padding: EdgeInsets.symmetric(
-                    horizontal: 12.w,
-                    vertical: 8.h,
-                  ),
-                  decoration: BoxDecoration(
-                    color: AppColors.primary.withValues(alpha: 0.1),
-                    borderRadius: BorderRadius.circular(8.r),
-                  ),
-                  child: Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Icon(
-                        LucideIcons.pencil,
-                        size: 16.sp,
-                        color: AppColors.primary,
-                      ),
-                      SizedBox(width: 6.w),
-                      Text(
-                        'Edit',
-                        style: TextStyle(
-                          color: AppColors.primary,
-                          fontSize: 12.sp,
-                          fontWeight: FontWeight.w600,
-                        ),
-                      ),
-                    ],
-                  ),
+              Expanded(
+                child: _addressActionButton(
+                  onTap: () => _showAddAddressDialog(context, address),
+                  icon: LucideIcons.pencil,
+                  label: 'profile.address_edit_action'.tr(),
+                  color: AppColors.primary,
                 ),
               ),
-              SizedBox(width: 12.w),
-              InkWell(
-                onTap: () =>
-                    context.read<ProfileCubit>().deleteAddress(address.id),
-                borderRadius: BorderRadius.circular(8.r),
-                child: Container(
-                  padding: EdgeInsets.symmetric(
-                    horizontal: 12.w,
-                    vertical: 8.h,
-                  ),
-                  decoration: BoxDecoration(
-                    color: AppColors.error.withValues(alpha: 0.1),
-                    borderRadius: BorderRadius.circular(8.r),
-                  ),
-                  child: Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Icon(
-                        LucideIcons.trash2,
-                        size: 16.sp,
-                        color: AppColors.error,
-                      ),
-                      SizedBox(width: 6.w),
-                      Text(
-                        'hapus'.tr(),
-                        style: TextStyle(
-                          color: AppColors.error,
-                          fontSize: 12.sp,
-                          fontWeight: FontWeight.w600,
-                        ),
-                      ),
-                    ],
-                  ),
+              SizedBox(width: 6.w),
+              Expanded(
+                child: _addressActionButton(
+                  onTap: () => _confirmDeleteAddress(context, address),
+                  icon: LucideIcons.trash2,
+                  label: 'profile.address_delete'.tr(),
+                  color: AppColors.error,
                 ),
               ),
             ],
@@ -324,8 +274,66 @@ class AddressListPage extends StatelessWidget {
     );
   }
 
+  Widget _addressActionButton({
+    required VoidCallback onTap,
+    required IconData icon,
+    required String label,
+    required Color color,
+  }) {
+    return Material(
+      color: color.withValues(alpha: 0.08),
+      borderRadius: BorderRadius.circular(8.r),
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(8.r),
+        child: Padding(
+          padding: EdgeInsets.symmetric(horizontal: 6.w, vertical: 7.h),
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Icon(icon, size: 13.sp, color: color),
+              SizedBox(width: 3.w),
+              Flexible(
+                child: Text(
+                  label,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  textAlign: TextAlign.center,
+                  style: TextStyle(
+                    color: color,
+                    fontSize: 10.sp,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Future<void> _confirmDeleteAddress(BuildContext context, dynamic address) async {
+    final label = address.name?.toString().trim().isNotEmpty == true
+        ? address.name.toString().trim()
+        : 'profile.address_default_label'.tr();
+
+    final confirmed = await showBisaConfirmDialog(
+      context,
+      title: 'profile.address_delete_confirm_title'.tr(),
+      message: 'profile.address_delete_confirm_message'.tr(
+        namedArgs: {'label': label},
+      ),
+      confirmText: 'profile.address_delete'.tr(),
+      destructive: true,
+    );
+
+    if (confirmed == true && context.mounted) {
+      context.read<ProfileCubit>().deleteAddress(address.id);
+    }
+  }
+
   void _showAddAddressDialog(BuildContext context, [dynamic existingAddress]) {
-    final pageMessenger = ScaffoldMessenger.of(context);
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
@@ -338,14 +346,14 @@ class AddressListPage extends StatelessWidget {
         return SizedBox(
           height: sheetHeight,
           child: Scaffold(
-            backgroundColor: Colors.white,
+            backgroundColor: AppColors.surface,
             body: BlocProvider.value(
               value: context.read<ProfileCubit>(),
               child: BlocProvider.value(
                 value: context.read<GisCubit>(),
                 child: _AddAddressSheet(
                   existingAddress: existingAddress,
-                  pageMessenger: pageMessenger,
+                  pageContext: context,
                 ),
               ),
             ),
@@ -358,11 +366,11 @@ class AddressListPage extends StatelessWidget {
 
 class _AddAddressSheet extends StatefulWidget {
   final dynamic existingAddress;
-  final ScaffoldMessengerState pageMessenger;
+  final BuildContext pageContext;
 
   const _AddAddressSheet({
     this.existingAddress,
-    required this.pageMessenger,
+    required this.pageContext,
   });
 
   @override
@@ -392,13 +400,11 @@ class _AddAddressSheetState extends State<_AddAddressSheet> {
   String? _formError;
 
   void _showMessage(String message, {bool isError = false}) {
-    widget.pageMessenger.showSnackBar(
-      SnackBar(
-        content: Text(message),
-        backgroundColor: isError ? AppColors.error : AppColors.success,
-        behavior: SnackBarBehavior.floating,
-      ),
-    );
+    if (isError) {
+      showErrorSnackBar(widget.pageContext, message);
+    } else {
+      showSuccessSnackBar(widget.pageContext, message);
+    }
   }
 
   @override
@@ -420,7 +426,7 @@ class _AddAddressSheetState extends State<_AddAddressSheet> {
 
       _labelController.text = existingName.isNotEmpty
           ? existingName
-          : 'Alamat Tersimpan';
+          : 'profile.address_default_label'.tr();
       _phoneController.text = existingPhone.isNotEmpty ? existingPhone : '-';
       _fullAddressController.text = existingAddr.isNotEmpty
           ? existingAddr
@@ -777,7 +783,7 @@ class _AddAddressSheetState extends State<_AddAddressSheet> {
       });
 
       if (mounted && fullAddress.isNotEmpty) {
-        _showMessage('Alamat lengkap diisi dari peta');
+        _showMessage('profile.address_filled_from_map'.tr());
       }
     } finally {
       if (mounted) setState(() => _pickingMap = false);
@@ -790,14 +796,7 @@ class _AddAddressSheetState extends State<_AddAddressSheet> {
       final fix = await LocationService.instance.getCurrentFix();
       if (!mounted) return;
       if (fix == null) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text(
-              'Izin lokasi ditolak atau GPS tidak tersedia. Buka pengaturan perangkat.',
-            ),
-            backgroundColor: AppColors.error,
-          ),
-        );
+        showErrorSnackBar(widget.pageContext, 'profile.address_gps_denied');
         return;
       }
 
@@ -815,7 +814,7 @@ class _AddAddressSheetState extends State<_AddAddressSheet> {
       });
 
       if (mounted && gpsAddress.isNotEmpty) {
-        _showMessage('Alamat lengkap diisi dari GPS');
+        _showMessage('profile.address_filled_from_gps'.tr());
       }
     } finally {
       if (mounted) setState(() => _detectingGps = false);
@@ -833,7 +832,7 @@ class _AddAddressSheetState extends State<_AddAddressSheet> {
         Row(
           children: [
             Text(
-              'Pin Lokasi (OpenStreetMap)',
+              'profile.address_map_pin_title'.tr(),
               style: TextStyle(
                 fontSize: 13.sp,
                 fontWeight: FontWeight.w600,
@@ -848,7 +847,7 @@ class _AddAddressSheetState extends State<_AddAddressSheet> {
                 borderRadius: BorderRadius.circular(6.r),
               ),
               child: Text(
-                'Opsional',
+                'profile.optional_badge'.tr(),
                 style: TextStyle(
                   fontSize: 9.sp,
                   fontWeight: FontWeight.w700,
@@ -880,20 +879,20 @@ class _AddAddressSheetState extends State<_AddAddressSheet> {
                   width: double.infinity,
                   decoration: BoxDecoration(
                     borderRadius: BorderRadius.circular(12.r),
-                    color: Colors.black.withValues(alpha: 0.28),
+                    color: AppColors.black.withValues(alpha: 0.28),
                   ),
                 ),
               if (_pickingMap)
-                const CircularProgressIndicator(color: Colors.white)
+                const CircularProgressIndicator(color: AppColors.white)
               else
                 Container(
                   padding: EdgeInsets.symmetric(horizontal: 14.w, vertical: 10.h),
                   decoration: BoxDecoration(
-                    color: Colors.white.withValues(alpha: 0.95),
+                    color: AppColors.white.withValues(alpha: 0.95),
                     borderRadius: BorderRadius.circular(12.r),
                     boxShadow: [
                       BoxShadow(
-                        color: Colors.black.withValues(alpha: 0.12),
+                        color: AppColors.black.withValues(alpha: 0.12),
                         blurRadius: 8,
                         offset: const Offset(0, 2),
                       ),
@@ -909,7 +908,9 @@ class _AddAddressSheetState extends State<_AddAddressSheet> {
                       ),
                       SizedBox(width: 8.w),
                       Text(
-                        hasPin ? 'Ubah / cari di peta' : 'Ketuk untuk cari alamat',
+                        hasPin
+                            ? 'profile.address_map_change_search'.tr()
+                            : 'profile.address_map_tap_search'.tr(),
                         style: TextStyle(
                           fontSize: 12.sp,
                           fontWeight: FontWeight.w800,
@@ -954,13 +955,13 @@ class _AddAddressSheetState extends State<_AddAddressSheet> {
                 )
               : Icon(LucideIcons.locateFixed, size: 16.sp),
           label: Text(
-            'Gunakan Lokasi GPS Saya',
+            'profile.address_use_gps_button'.tr(),
             style: TextStyle(fontSize: 12.sp, fontWeight: FontWeight.w700),
           ),
         ),
         SizedBox(height: 4.h),
         Text(
-          'Opsional: ketuk peta untuk cari alamat. Hasil peta/GPS mengisi alamat lengkap.',
+          'profile.address_map_helper'.tr(),
           style: TextStyle(fontSize: 11.sp, color: AppColors.textHint, height: 1.35),
         ),
       ],
@@ -1034,8 +1035,8 @@ class _AddAddressSheetState extends State<_AddAddressSheet> {
               children: [
                 Text(
                   widget.existingAddress != null
-                      ? 'Edit Alamat'
-                      : 'Tambah Alamat Baru',
+                      ? 'profile.address_edit_title'.tr()
+                      : 'profile.address_add_title'.tr(),
                   style: TextStyle(
                     fontSize: 18.sp,
                     fontWeight: FontWeight.bold,
@@ -1068,7 +1069,7 @@ class _AddAddressSheetState extends State<_AddAddressSheet> {
                     ),
                     SizedBox(width: 8.w),
                     Text(
-                      'Memuat data wilayah...',
+                      'profile.address_loading_regions'.tr(),
                       style: TextStyle(
                         fontSize: 12.sp,
                         color: AppColors.textSecondary,
@@ -1097,7 +1098,7 @@ class _AddAddressSheetState extends State<_AddAddressSheet> {
                     SizedBox(width: 8.w),
                     Expanded(
                       child: Text(
-                        'Desa/Kelurahan belum valid. Tap dropdown Desa/Kelurahan lalu pilih ulang dari daftar.',
+                        'profile.address_village_invalid'.tr(),
                         style: TextStyle(
                           color: AppColors.warning,
                           fontSize: 12.sp,
@@ -1109,14 +1110,14 @@ class _AddAddressSheetState extends State<_AddAddressSheet> {
               ),
             SizedBox(height: 8.h),
             CustomTextField(
-              label: 'labelalamat'.tr().tr(),
-              hint: 'contohrumahkantor'.tr().tr(),
+              label: 'profile.address_label'.tr(),
+              hint: 'profile.address_label_hint'.tr(),
               controller: _labelController,
             ),
             SizedBox(height: 12.h),
             CustomTextField(
-              label: 'nomortelepon'.tr().tr(),
-              hint: '0812xxxxxxxx'.tr().tr(),
+              label: 'profile.address_phone_label'.tr(),
+              hint: 'profile.address_phone_hint'.tr(),
               controller: _phoneController,
               keyboardType: TextInputType.phone,
             ),
@@ -1124,7 +1125,7 @@ class _AddAddressSheetState extends State<_AddAddressSheet> {
 
             // GIS Dropdowns
             _buildRegionDropdown(
-              label: 'negara_1'.tr().tr(),
+              label: 'profile.address_country'.tr(),
               value: _selectedCountry,
               onChanged: (val) {
                 setState(() {
@@ -1140,7 +1141,7 @@ class _AddAddressSheetState extends State<_AddAddressSheet> {
             ),
             SizedBox(height: 12.h),
             _buildRegionDropdown(
-              label: 'provinsi_1'.tr().tr(),
+              label: 'profile.address_province'.tr(),
               value: _selectedProvince,
               enabled: _selectedCountry != null,
               onChanged: (val) {
@@ -1156,7 +1157,7 @@ class _AddAddressSheetState extends State<_AddAddressSheet> {
             ),
             SizedBox(height: 12.h),
             _buildRegionDropdown(
-              label: 'kotakabupaten'.tr().tr(),
+              label: 'profile.address_regency'.tr(),
               value: _selectedRegency,
               enabled: _selectedProvince != null,
               onChanged: (val) {
@@ -1171,7 +1172,7 @@ class _AddAddressSheetState extends State<_AddAddressSheet> {
             ),
             SizedBox(height: 12.h),
             _buildRegionDropdown(
-              label: 'kecamatan_1'.tr().tr(),
+              label: 'profile.address_district'.tr(),
               value: _selectedDistrict,
               enabled: _selectedRegency != null,
               onChanged: (val) {
@@ -1185,7 +1186,7 @@ class _AddAddressSheetState extends State<_AddAddressSheet> {
             ),
             SizedBox(height: 12.h),
             _buildRegionDropdown(
-              label: 'desakelurahan'.tr().tr(),
+              label: 'profile.address_village'.tr(),
               value: _selectedVillage,
               enabled: _selectedDistrict != null,
               onChanged: (val) {
@@ -1198,15 +1199,15 @@ class _AddAddressSheetState extends State<_AddAddressSheet> {
             SizedBox(height: 12.h),
 
             CustomTextField(
-              label: 'alamatlengkap'.tr().tr(),
-              hint: 'namajalannorumahblokdll'.tr().tr(),
+              label: 'profile.address_full_label'.tr(),
+              hint: 'profile.address_full_hint'.tr(),
               controller: _fullAddressController,
               maxLines: 3,
             ),
             SizedBox(height: 12.h),
             CustomTextField(
-              label: 'kodepos'.tr().tr(),
-              hint: 'xxxxx'.tr().tr(),
+              label: 'profile.address_zip_label'.tr(),
+              hint: 'profile.address_zip_hint'.tr(),
               controller: _zipCodeController,
               keyboardType: TextInputType.number,
             ),
@@ -1215,7 +1216,7 @@ class _AddAddressSheetState extends State<_AddAddressSheet> {
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
                 Text(
-                  'Atur sebagai alamat utama',
+                  'profile.address_set_primary_toggle'.tr(),
                   style: TextStyle(
                     fontSize: 14.sp,
                     fontWeight: FontWeight.w600,
@@ -1242,11 +1243,11 @@ class _AddAddressSheetState extends State<_AddAddressSheet> {
             width: double.infinity,
             padding: EdgeInsets.fromLTRB(0, 8.h, 0, bottomSafe + 8.h),
             decoration: BoxDecoration(
-              color: Colors.white,
+              color: AppColors.surface,
               border: Border(top: BorderSide(color: AppColors.grey200)),
               boxShadow: [
                 BoxShadow(
-                  color: Colors.black.withValues(alpha: 0.04),
+                  color: AppColors.black.withValues(alpha: 0.04),
                   blurRadius: 8,
                   offset: const Offset(0, -2),
                 ),
@@ -1254,10 +1255,10 @@ class _AddAddressSheetState extends State<_AddAddressSheet> {
             ),
             child: CustomButton(
               text: _saving
-                  ? 'Menyimpan...'
+                  ? 'profile.saving'.tr()
                   : (!_formReady || _hydratingRegions)
-                      ? 'Memuat...'
-                      : 'simpan'.tr(),
+                      ? 'profile.loading'.tr()
+                      : 'profile.address_save'.tr(),
               onPressed: (_saving || !_formReady || _hydratingRegions)
                   ? null
                   : _submit,
@@ -1323,7 +1324,7 @@ class _AddAddressSheetState extends State<_AddAddressSheet> {
           child: Container(
             padding: EdgeInsets.symmetric(horizontal: 12.w, vertical: 12.h),
             decoration: BoxDecoration(
-              color: enabled ? Colors.white : AppColors.grey100,
+              color: enabled ? AppColors.surface : AppColors.grey100,
               borderRadius: BorderRadius.circular(8.r),
               border: Border.all(color: AppColors.grey300),
             ),
@@ -1332,7 +1333,8 @@ class _AddAddressSheetState extends State<_AddAddressSheet> {
               children: [
                 Expanded(
                   child: Text(
-                    value?.name ?? 'Pilih $label',
+                    value?.name ??
+                        'profile.address_select_region'.tr(namedArgs: {'label': label}),
                     style: TextStyle(
                       color: value != null
                           ? AppColors.textPrimary
@@ -1391,19 +1393,19 @@ class _AddAddressSheetState extends State<_AddAddressSheet> {
     String? error;
     final label = _labelController.text.trim();
     if (label.isEmpty) {
-      error = 'Label alamat wajib diisi (misal: Rumah, Kantor)';
+      error = 'profile.address_error_label_required'.tr();
     } else if (_zipCodeController.text.trim().isEmpty) {
-      error = 'Kode pos wajib diisi';
+      error = 'profile.address_error_zip_required'.tr();
     } else if (_selectedCountry == null || _selectedCountry!.id.isEmpty) {
-      error = 'Negara belum dimuat. Tunggu sebentar lalu coba lagi.';
+      error = 'profile.address_error_country_loading'.tr();
     } else if (!regionsReady) {
       if (_selectedVillage == null || _selectedVillage!.id.isEmpty) {
-        error = 'Desa/Kelurahan belum dipilih dari daftar';
+        error = 'profile.address_error_village_required'.tr();
       } else {
-        error = 'Wilayah alamat belum lengkap (Negara/Provinsi/Kota/Kecamatan)';
+        error = 'profile.address_error_region_incomplete'.tr();
       }
     } else if (_fullAddressController.text.trim().isEmpty) {
-      error = 'Alamat lengkap belum diisi';
+      error = 'profile.address_error_full_required'.tr();
     }
 
     if (error != null) {
@@ -1445,7 +1447,9 @@ class _AddAddressSheetState extends State<_AddAddressSheet> {
       if (!mounted) return;
       setState(() {
         _saving = false;
-        _formError = 'Gagal menyimpan: $e';
+        _formError = 'profile.address_error_save_failed'.tr(
+          namedArgs: {'error': '$e'},
+        );
       });
       _showMessage(_formError!, isError: true);
       return;
@@ -1457,7 +1461,7 @@ class _AddAddressSheetState extends State<_AddAddressSheet> {
     if (!success) {
       final message = cubit.state.maybeWhen(
         error: (msg) => msg,
-        orElse: () => 'Gagal menyimpan alamat. Periksa data wilayah dan coba lagi.',
+        orElse: () => 'profile.address_error_save_generic'.tr(),
       );
       setState(() => _formError = message);
       _showMessage(message, isError: true);
@@ -1466,8 +1470,8 @@ class _AddAddressSheetState extends State<_AddAddressSheet> {
 
     _showMessage(
       widget.existingAddress != null
-          ? 'Alamat berhasil diperbarui'
-          : 'Alamat berhasil ditambahkan',
+          ? 'profile.address_updated_success'.tr()
+          : 'profile.address_added_success'.tr(),
     );
     if (mounted) Navigator.of(context).pop();
   }
@@ -1490,7 +1494,7 @@ class _RegionPickerSheet extends StatelessWidget {
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
               Text(
-                'Pilih $title',
+                'profile.address_select_region'.tr(namedArgs: {'label': title}),
                 style: TextStyle(fontSize: 16.sp, fontWeight: FontWeight.bold),
               ),
               IconButton(
@@ -1526,8 +1530,8 @@ class _RegionPickerSheet extends StatelessWidget {
                       );
                     },
                   ),
-                  error: (message) => Center(child: Text(message)),
-                  orElse: () =>  Center(child: Text('tidak_ada_data'.tr())),
+                  error: (message) => Center(child: Text(message.localizedFailure)),
+                  orElse: () => Center(child: Text('profile.address_no_data'.tr())),
                 );
               },
             ),

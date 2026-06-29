@@ -1,4 +1,6 @@
+import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
+import '../../../../core/i18n/failure_messages.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:go_router/go_router.dart';
@@ -58,15 +60,15 @@ class _FollowListPageState extends State<FollowListPage>
         backgroundColor: AppColors.background,
         appBar: BisaAppBar(
           backgroundColor: AppColors.surface,
-          title: 'Koneksi Saya',
+          title: 'follow.page_title'.tr(),
           bottom: TabBar(
             controller: _tabController,
             labelColor: AppColors.primary,
             unselectedLabelColor: AppColors.textSecondary,
             indicatorColor: AppColors.primary,
-            tabs: const [
-              Tab(text: 'Mengikuti'),
-              Tab(text: 'Pengikut'),
+            tabs: [
+              Tab(text: 'follow.tab_following'.tr()),
+              Tab(text: 'follow.tab_followers'.tr()),
             ],
           ),
         ),
@@ -115,7 +117,7 @@ class _FollowUserList extends StatelessWidget {
             child: Column(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                Text(state.error!),
+                Text(state.error!.localizedFailure),
                 TextButton(
                   onPressed: () {
                     if (isFollowingTab) {
@@ -124,7 +126,7 @@ class _FollowUserList extends StatelessWidget {
                       context.read<FollowCubit>().loadFollowersList();
                     }
                   },
-                  child: const Text('Coba lagi'),
+                  child: Text('follow.retry'.tr()),
                 ),
               ],
             ),
@@ -147,8 +149,8 @@ class _FollowUserList extends StatelessWidget {
                 SizedBox(height: 12.h),
                 Text(
                   isFollowingTab
-                      ? 'Belum mengikuti siapa pun'
-                      : 'Belum ada pengikut',
+                      ? 'follow.empty_following'.tr()
+                      : 'follow.empty_followers'.tr(),
                   style: TextStyle(
                     fontSize: 14.sp,
                     color: AppColors.textSecondary,
@@ -197,7 +199,7 @@ class _FollowUserTile extends StatelessWidget {
         .join(', ');
 
     return Material(
-      color: Colors.white,
+      color: AppColors.surface,
       borderRadius: BorderRadius.circular(14.r),
       child: InkWell(
         onTap: () => context.push(

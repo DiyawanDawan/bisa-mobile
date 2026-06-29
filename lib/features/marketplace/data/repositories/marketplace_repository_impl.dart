@@ -279,6 +279,56 @@ class MarketplaceRepositoryImpl implements MarketplaceRepository {
     }
   }
 
+  @override
+  Future<Either<Failure, Map<String, dynamic>>> promoteProduct(
+    String productId, {
+    int days = 7,
+  }) async {
+    try {
+      final data = await remoteDataSource.promoteProduct(productId, days: days);
+      return Right(data);
+    } on DioException catch (e) {
+      return Left(_mapDioExceptionToFailure(e));
+    } catch (e) {
+      return const Left(UnexpectedFailure());
+    }
+  }
+
+  @override
+  Future<void> recordPromoImpression(String productId) =>
+      remoteDataSource.recordPromoImpression(productId);
+
+  @override
+  Future<void> recordPromoClick(String productId) =>
+      remoteDataSource.recordPromoClick(productId);
+
+  @override
+  Future<Either<Failure, ProductEntity>> uploadProductVideo(
+    String productId,
+    String filePath,
+  ) async {
+    try {
+      final model = await remoteDataSource.uploadProductVideo(productId, filePath);
+      return Right(model.toEntity());
+    } on DioException catch (e) {
+      return Left(_mapDioExceptionToFailure(e));
+    } catch (e) {
+      return const Left(UnexpectedFailure());
+    }
+  }
+
+  @override
+  Future<Either<Failure, ProductEntity>> deleteProductVideo(String productId) async {
+    try {
+      final model = await remoteDataSource.deleteProductVideo(productId);
+      return Right(model.toEntity());
+    } on DioException catch (e) {
+      return Left(_mapDioExceptionToFailure(e));
+    } catch (e) {
+      return const Left(UnexpectedFailure());
+    }
+  }
+
   Failure _mapDioExceptionToFailure(DioException e) {
     if (e.type == DioExceptionType.connectionTimeout ||
         e.type == DioExceptionType.receiveTimeout ||
@@ -317,8 +367,8 @@ class MarketplaceRepositoryImpl implements MarketplaceRepository {
   }
 
   String _resolveApiMessage(Map<String, dynamic>? data) {
-    if (data == null) return 'Terjadi kesalahan';
-    final base = data['meta']?['message'] ?? data['message'] ?? 'Terjadi kesalahan';
+    if (data == null) return 'errors.generic';
+    final base = data['meta']?['message'] ?? data['message'] ?? 'errors.generic';
     final details = data['data'];
     if (details is List && details.isNotEmpty) {
       final first = details.first;

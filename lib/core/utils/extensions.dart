@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
+import 'money_format.dart';
 import 'safe_area_utils.dart';
 
 // ── String Extensions ─────────────────────────────────────────────────────────
@@ -93,25 +94,28 @@ extension DateTimeExt on DateTime {
 
 extension NumExt on num {
   /// Format ke Rupiah: "Rp 1.500.000"
-  String get toRupiah {
-    return NumberFormat.currency(locale: 'id_ID', symbol: 'Rp ', decimalDigits: 0)
-        .format(this);
-  }
+  @Deprecated('Use formatMoneyIdr(value) from money_format.dart')
+  String get toRupiah => formatMoneyIdr(this);
 
   /// SizedBox dengan tinggi [this]
+  @Deprecated('Use SizedBox(height: AppSpacing.*) from app_layout.dart')
   SizedBox get verticalSpace => SizedBox(height: toDouble());
 
   /// SizedBox dengan lebar [this]
+  @Deprecated('Use SizedBox(width: AppSpacing.*) from app_layout.dart')
   SizedBox get horizontalSpace => SizedBox(width: toDouble());
 
   /// EdgeInsets semua sisi
+  @Deprecated('Use AppSpacing.cardPadding or EdgeInsets.all(AppSpacing.*)')
   EdgeInsets get edgeInsetsAll => EdgeInsets.all(toDouble());
 
   /// EdgeInsets horizontal
+  @Deprecated('Use EdgeInsets.symmetric(horizontal: AppSpacing.*)')
   EdgeInsets get edgeInsetsH =>
       EdgeInsets.symmetric(horizontal: toDouble());
 
   /// EdgeInsets vertikal
+  @Deprecated('Use EdgeInsets.symmetric(vertical: AppSpacing.*)')
   EdgeInsets get edgeInsetsV =>
       EdgeInsets.symmetric(vertical: toDouble());
 }
@@ -147,4 +151,9 @@ extension ContextExt on BuildContext {
   bool get isMobile => screenWidth < 600;
   bool get isTablet => screenWidth >= 600 && screenWidth < 1200;
   bool get isDesktop => screenWidth >= 1200;
+}
+
+extension NumDisplayCurrency on num {
+  @Deprecated('Use formatMoneyDisplay(value) from money_format.dart')
+  String get toDisplayPrice => formatMoneyDisplay(this);
 }

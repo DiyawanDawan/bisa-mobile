@@ -1,4 +1,4 @@
-import 'extensions.dart';
+import 'money_format.dart';
 
 /// Aturan harga produk BISA (MVP):
 ///
@@ -52,7 +52,7 @@ class ProductPricingInfo {
 
   double totalSavingsForQuantity(double quantity) => savingsPerUnit * quantity;
 
-  String get priceLabel => '${pricePerUnit.toRupiah} / $unit';
+  String get priceLabel => '${formatMoneyDisplay(pricePerUnit)} / $unit';
 
   String get promoRuleSummary =>
       'Diskon promo berlaku per $unit. Total = jumlah × harga jual. '
@@ -62,10 +62,10 @@ class ProductPricingInfo {
     final q = formatQty(quantity);
     final total = totalForQuantity(quantity);
     if (!hasPromo) {
-      return 'Contoh: $q $unit × ${pricePerUnit.toRupiah} = ${total.toRupiah}';
+      return 'Contoh: $q $unit × ${formatMoneyDisplay(pricePerUnit)} = ${formatMoneyDisplay(total)}';
     }
     final pct = discountPercent;
-    return 'Contoh: $q $unit × ${pricePerUnit.toRupiah} = ${total.toRupiah}'
+    return 'Contoh: $q $unit × ${formatMoneyDisplay(pricePerUnit)} = ${formatMoneyDisplay(total)}'
         '${pct != null ? ' (hemat ~${pct}% per $unit, bukan diskon ganda)' : ''}';
   }
 

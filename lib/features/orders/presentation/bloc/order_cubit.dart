@@ -1,5 +1,7 @@
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:freezed_annotation/freezed_annotation.dart';
+import '../../../../core/errors/failures.dart';
+import '../../../../core/i18n/failure_messages.dart';
 import '../../../../core/utils/payment_status_utils.dart';
 import '../../domain/entities/order_entity.dart';
 import '../../domain/repositories/order_repository.dart';
@@ -20,7 +22,11 @@ class OrderCubit extends Cubit<OrderState> {
   bool get hasMoreOrders => _hasMoreOrders;
   bool get isLoadingMore => _loadingMore;
 
-  Future<void> getMyPurchases({String? search, String? status}) async {
+  Future<void> getMyPurchases({
+    String? search,
+    String? status,
+    String? orderType,
+  }) async {
     emit(const OrderState.loading());
     _listPage = 1;
     final q = search?.trim();
@@ -31,6 +37,7 @@ class OrderCubit extends Cubit<OrderState> {
       status: status != null && status != 'ALL' && status != 'REFUNDED'
           ? status
           : null,
+      orderType: orderType != null && orderType != 'ALL' ? orderType : null,
     );
     result.fold(
       (failure) => emit(OrderState.error(failure.message)),
@@ -41,7 +48,11 @@ class OrderCubit extends Cubit<OrderState> {
     );
   }
 
-  Future<void> getMySales({String? search, String? status}) async {
+  Future<void> getMySales({
+    String? search,
+    String? status,
+    String? orderType,
+  }) async {
     emit(const OrderState.loading());
     _listPage = 1;
     final q = search?.trim();
@@ -52,6 +63,7 @@ class OrderCubit extends Cubit<OrderState> {
       status: status != null && status != 'ALL' && status != 'REFUNDED'
           ? status
           : null,
+      orderType: orderType != null && orderType != 'ALL' ? orderType : null,
     );
     result.fold(
       (failure) => emit(OrderState.error(failure.message)),
@@ -62,7 +74,12 @@ class OrderCubit extends Cubit<OrderState> {
     );
   }
 
-  Future<void> loadMoreOrders({String? search, String? status, required bool isSupplier}) async {
+  Future<void> loadMoreOrders({
+    String? search,
+    String? status,
+    String? orderType,
+    required bool isSupplier,
+  }) async {
     if (!_hasMoreOrders || _loadingMore) return;
     final current = state.maybeWhen(loaded: (orders) => orders, orElse: () => null);
     if (current == null) return;
@@ -71,6 +88,8 @@ class OrderCubit extends Cubit<OrderState> {
     _listPage += 1;
     final q = search?.trim();
     final apiStatus = status != null && status != 'ALL' && status != 'REFUNDED' ? status : null;
+    final apiOrderType =
+        orderType != null && orderType != 'ALL' ? orderType : null;
     final apiSearch = q != null && q.isNotEmpty ? q : null;
 
     final result = isSupplier
@@ -79,12 +98,14 @@ class OrderCubit extends Cubit<OrderState> {
             limit: _pageSize,
             search: apiSearch,
             status: apiStatus,
+            orderType: apiOrderType,
           )
         : await _repository.getMyPurchases(
             page: _listPage,
             limit: _pageSize,
             search: apiSearch,
             status: apiStatus,
+            orderType: apiOrderType,
           );
 
     _loadingMore = false;
@@ -200,6 +221,29 @@ class OrderCubit extends Cubit<OrderState> {
     );
   }
 
+  Future<Map<String, int>> fetchOrderStatusCounts({
+    required bool isSupplier,
+    String? search,
+    String? orderType,
+  }) async {
+    final q = search?.trim();
+    final apiSearch = q != null && q.isNotEmpty ? q : null;
+    final apiOrderType =
+        orderType != null && orderType != 'ALL' ? orderType : null;
+
+    final result = isSupplier
+        ? await _repository.getMySalesStatusCounts(
+            search: apiSearch,
+            orderType: apiOrderType,
+          )
+        : await _repository.getMyPurchasesStatusCounts(
+            search: apiSearch,
+            orderType: apiOrderType,
+          );
+
+    return result.fold((_) => const {}, (counts) => counts);
+  }
+
   Future<void> releaseEscrow(String id) async {
     emit(const OrderState.loading());
     final result = await _repository.releaseEscrow(id);
@@ -265,6 +309,8 @@ class OrderCubit extends Cubit<OrderState> {
     Map<String, dynamic>? shippingSnapshot,
     List<Map<String, dynamic>>? shippingSelections,
     String? notes,
+    String? orderType,
+    String? voucherCode,
   }) async {
     final result = await _repository.createDirectOrder(
       items: items,
@@ -272,9 +318,19 @@ class OrderCubit extends Cubit<OrderState> {
       shippingSnapshot: shippingSnapshot,
       shippingSelections: shippingSelections,
       notes: notes,
+      orderType: orderType,
+      voucherCode: voucherCode,
     );
     return result.fold(
-      (failure) => DirectOrderResult.failure(failure.message),
+      (failure) {
+        if (failure is ReadinessFailure) {
+          return DirectOrderResult.failure(
+            failure.message,
+            code: failure.code,
+          );
+        }
+        return DirectOrderResult.failure(failure.message);
+      },
       (data) {
         final orders = (data['orders'] as List?) ?? const [];
         final parsed = orders
@@ -291,6 +347,7 @@ class OrderCubit extends Cubit<OrderState> {
     Map<String, dynamic>? shippingSnapshot,
     List<Map<String, dynamic>>? shippingSelections,
     String? notes,
+    String? voucherCode,
   }) async {
     final result = await _repository.previewDirectOrder(
       items: items,
@@ -298,6 +355,20 @@ class OrderCubit extends Cubit<OrderState> {
       shippingSnapshot: shippingSnapshot,
       shippingSelections: shippingSelections,
       notes: notes,
+      voucherCode: voucherCode,
+    );
+    return result.fold((_) => null, (data) => data);
+  }
+
+  Future<Map<String, dynamic>?> validateVoucher({
+    required String code,
+    required double subtotal,
+    List<String>? sellerIds,
+  }) async {
+    final result = await _repository.validateVoucher(
+      code: code,
+      subtotal: subtotal,
+      sellerIds: sellerIds,
     );
     return result.fold((_) => null, (data) => data);
   }
@@ -409,7 +480,10 @@ class ShippingDestinationSearchResult {
 
   bool get quotaExceeded {
     final msg = errorMessage?.toLowerCase() ?? '';
-    return msg.contains('kuota') || msg.contains('daily limit');
+    return msg.contains('kuota') ||
+        msg.contains('daily limit') ||
+        msg.contains('shipping quota') ||
+        msg.contains('cart.api_quota_exhausted');
   }
 }
 
@@ -417,16 +491,29 @@ class DirectOrderResult {
   final bool isSuccess;
   final List<Map<String, dynamic>> orders;
   final String? errorMessage;
+  final String? errorCode;
 
   const DirectOrderResult._({
     required this.isSuccess,
     this.orders = const [],
     this.errorMessage,
+    this.errorCode,
   });
 
   factory DirectOrderResult.success(List<Map<String, dynamic>> orders) =>
       DirectOrderResult._(isSuccess: true, orders: orders);
 
-  factory DirectOrderResult.failure(String message) =>
-      DirectOrderResult._(isSuccess: false, errorMessage: message);
+  factory DirectOrderResult.failure(
+    String message, {
+    String? code,
+  }) =>
+      DirectOrderResult._(
+        isSuccess: false,
+        errorMessage: message,
+        errorCode: code,
+      );
+
+  bool get isBuyerReadiness =>
+      errorCode == 'BUYER_NOT_READY' ||
+      (errorMessage != null && isBuyerReadinessMessage(errorMessage!));
 }

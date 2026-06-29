@@ -36,8 +36,13 @@ class ProfileCubit extends Cubit<ProfileState> {
     );
     result.fold(
       (failure) => emit(ProfileState.error(failure.message)),
-      (user) => emit(ProfileState.success('profil_berhasil_diperbarui')),
+      (user) => emit(ProfileState.loaded(user)),
     );
+  }
+
+  /// Update tampilan profil dari AuthCubit tanpa skeleton loading.
+  void applyProfile(UserEntity user) {
+    emit(ProfileState.loaded(user));
   }
 
   Future<void> submitVerification({
@@ -55,7 +60,7 @@ class ProfileCubit extends Cubit<ProfileState> {
     );
     result.fold(
       (failure) => emit(ProfileState.error(failure.message)),
-      (_) => getProfile(),
+      (_) => emit(const ProfileState.success('auth.verification_submitted')),
     );
   }
 

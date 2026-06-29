@@ -7,6 +7,7 @@ abstract class AiRemoteDataSource {
     required double waktuPembakaran,
     required double beratInput,
   });
+  Future<List<Map<String, dynamic>>> getRecentPredictions({int limit = 20, bool iotOnly = false});
   Future<String> askChatbot(String question);
 }
 
@@ -29,6 +30,22 @@ class AiRemoteDataSourceImpl implements AiRemoteDataSource {
       'beratInput': beratInput,
     });
     return response.data['data'];
+  }
+
+  @override
+  Future<List<Map<String, dynamic>>> getRecentPredictions({
+    int limit = 20,
+    bool iotOnly = false,
+  }) async {
+    final response = await dio.get(
+      '/ai/predictions/recent',
+      queryParameters: {
+        'limit': limit,
+        'iotOnly': iotOnly.toString(),
+      },
+    );
+    final List data = response.data['data']['predictions'] ?? [];
+    return data.map((e) => Map<String, dynamic>.from(e as Map)).toList();
   }
 
   @override

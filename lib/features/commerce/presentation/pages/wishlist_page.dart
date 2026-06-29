@@ -1,9 +1,11 @@
+import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:flutter_staggered_grid_view/flutter_staggered_grid_view.dart';
 import 'package:go_router/go_router.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
+import '../../../../core/constants/app_layout.dart';
 import '../../../../core/constants/app_colors.dart';
 import '../../../../injection_container.dart';
 import '../../../../shared/widgets/bisa_app_bar.dart';
@@ -72,15 +74,15 @@ class _WishlistPageState extends State<WishlistPage> {
     if (_favoriteModeFilter == 'BIOMASS_MATERIAL') {
       return WishlistModeProductGrid(
         products: biomass,
-        title: 'Favorit Biomassa',
-        emptyHint: 'Belum ada favorit Biomassa.',
+        title: 'commerce.wishlist_fav_biomass'.tr(),
+        emptyHint: 'commerce.wishlist_empty_biomass'.tr(),
       );
     }
     if (_favoriteModeFilter == 'ORGANIC_PRODUCE') {
       return WishlistModeProductGrid(
         products: organic,
-        title: 'Favorit Hasil Tani',
-        emptyHint: 'Belum ada favorit Hasil Tani.',
+        title: 'commerce.wishlist_fav_organic'.tr(),
+        emptyHint: 'commerce.wishlist_empty_organic'.tr(),
       );
     }
 
@@ -89,13 +91,19 @@ class _WishlistPageState extends State<WishlistPage> {
       children: [
         WishlistModeProductGrid(
           products: biomass,
-          title: 'Favorit Biomassa (${biomass.length})',
-          emptyHint: biomass.isEmpty ? 'Belum ada favorit Biomassa.' : null,
+          title: 'commerce.wishlist_fav_biomass_count'.tr(
+            namedArgs: {'count': '${biomass.length}'},
+          ),
+          emptyHint:
+              biomass.isEmpty ? 'commerce.wishlist_empty_biomass'.tr() : null,
         ),
         WishlistModeProductGrid(
           products: organic,
-          title: 'Favorit Hasil Tani (${organic.length})',
-          emptyHint: organic.isEmpty ? 'Belum ada favorit Hasil Tani.' : null,
+          title: 'commerce.wishlist_fav_organic_count'.tr(
+            namedArgs: {'count': '${organic.length}'},
+          ),
+          emptyHint:
+              organic.isEmpty ? 'commerce.wishlist_empty_organic'.tr() : null,
         ),
       ],
     );
@@ -105,9 +113,9 @@ class _WishlistPageState extends State<WishlistPage> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: AppColors.background,
-      appBar: const BisaAppBar(
-        title: 'Favorit Saya',
-        backgroundColor: Colors.white,
+      appBar: BisaAppBar(
+        title: 'commerce.wishlist_title'.tr(),
+        backgroundColor: AppColors.surface,
       ),
       body: BlocBuilder<CommerceCubit, CommerceState>(
         builder: (context, state) {
@@ -144,7 +152,7 @@ class _WishlistPageState extends State<WishlistPage> {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Padding(
-                          padding: EdgeInsets.fromLTRB(16.w, 0, 16.w, 4.h),
+                          padding: EdgeInsets.fromLTRB(AppSpacing.md, 0, AppSpacing.md, AppSpacing.xs),
                           child: Row(
                             children: [
                               Icon(
@@ -154,7 +162,9 @@ class _WishlistPageState extends State<WishlistPage> {
                               ),
                               SizedBox(width: 6.w),
                               Text(
-                                '${products.length} produk favorit',
+                                'commerce.wishlist_count'.tr(
+                                  namedArgs: {'count': '${products.length}'},
+                                ),
                                 style: TextStyle(
                                   fontSize: 12.sp,
                                   fontWeight: FontWeight.w600,
@@ -162,10 +172,10 @@ class _WishlistPageState extends State<WishlistPage> {
                                 ),
                               ),
                               if (state.isLoading) ...[
-                                SizedBox(width: 8.w),
+                                SizedBox(width: AppSpacing.sm),
                                 SizedBox(
-                                  width: 14.w,
-                                  height: 14.w,
+                                  width: AppSpacing.section,
+                                  height: AppSpacing.section,
                                   child: const CircularProgressIndicator(
                                     strokeWidth: 2,
                                     color: AppColors.primary,
@@ -181,7 +191,7 @@ class _WishlistPageState extends State<WishlistPage> {
                   ),
                 SliverToBoxAdapter(
                   child: Padding(
-                    padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 8.h),
+                    padding: EdgeInsets.symmetric(horizontal: AppSpacing.md, vertical: AppSpacing.sm),
                     child: Divider(height: 1, color: AppColors.grey100),
                   ),
                 ),
@@ -193,7 +203,7 @@ class _WishlistPageState extends State<WishlistPage> {
                 ),
                 SliverToBoxAdapter(
                   child: Padding(
-                    padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 8.h),
+                    padding: EdgeInsets.symmetric(horizontal: AppSpacing.md, vertical: AppSpacing.sm),
                     child: Divider(height: 1, color: AppColors.grey100),
                   ),
                 ),
@@ -203,7 +213,7 @@ class _WishlistPageState extends State<WishlistPage> {
                     limitPerMode: 20,
                   ),
                 ),
-                SliverToBoxAdapter(child: SizedBox(height: 32.h)),
+                SliverToBoxAdapter(child: SizedBox(height: AppSpacing.xxl)),
               ],
             ),
           );
@@ -217,11 +227,11 @@ class _EmptyState extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Padding(
-      padding: EdgeInsets.symmetric(horizontal: 32.w, vertical: 32.h),
+      padding: EdgeInsets.symmetric(horizontal: AppSpacing.xxl, vertical: AppSpacing.xxl),
       child: Column(
         children: [
           Container(
-            padding: EdgeInsets.all(20.r),
+            padding: EdgeInsets.all(AppSpacing.lg),
             decoration: BoxDecoration(
               color: AppColors.primaryLight.withValues(alpha: 0.6),
               shape: BoxShape.circle,
@@ -234,7 +244,7 @@ class _EmptyState extends StatelessWidget {
           ),
           SizedBox(height: 18.h),
           Text(
-            'Belum ada produk favorit',
+            'commerce.wishlist_empty_title'.tr(),
             textAlign: TextAlign.center,
             style: TextStyle(
               fontSize: 16.sp,
@@ -244,7 +254,7 @@ class _EmptyState extends StatelessWidget {
           ),
           SizedBox(height: 6.h),
           Text(
-            'Tekan ikon hati pada produk untuk menyimpannya ke daftar favorit.',
+            'commerce.wishlist_empty_hint'.tr(),
             textAlign: TextAlign.center,
             style: TextStyle(
               fontSize: 12.sp,
@@ -287,19 +297,19 @@ class _RecommendationSection extends StatelessWidget {
           return state.maybeWhen(
             initial: () => _shell(
               context,
-              subtitle: 'Memuat rekomendasi...',
+              subtitle: 'commerce.wishlist_loading_rec'.tr(),
               child: _spinner(),
             ),
             loading: () => _shell(
               context,
-              subtitle: 'Memuat rekomendasi...',
+              subtitle: 'commerce.wishlist_loading_rec'.tr(),
               child: _spinner(),
             ),
             error: (msg) => _shell(
               context,
-              subtitle: 'Gagal memuat rekomendasi',
+              subtitle: 'commerce.wishlist_rec_failed'.tr(),
               child: Padding(
-                padding: EdgeInsets.symmetric(horizontal: 16.w),
+                padding: EdgeInsets.symmetric(horizontal: AppSpacing.md),
                 child: Text(msg, style: TextStyle(fontSize: 12.sp)),
               ),
             ),
@@ -310,21 +320,21 @@ class _RecommendationSection extends StatelessWidget {
               if (filtered.isEmpty) {
                 return _shell(
                   context,
-                  subtitle: 'Belum ada rekomendasi tersedia',
+                  subtitle: 'commerce.wishlist_no_rec'.tr(),
                   child: const SizedBox.shrink(),
                 );
               }
               return _shell(
                 context,
-                subtitle: 'Populer di Biomassa & Hasil Tani',
+                subtitle: 'commerce.wishlist_rec_popular'.tr(),
                 child: Padding(
-                  padding: EdgeInsets.fromLTRB(16.w, 0, 16.w, 8.h),
+                  padding: EdgeInsets.fromLTRB(AppSpacing.md, 0, AppSpacing.md, AppSpacing.sm),
                   child: MasonryGridView.count(
                     shrinkWrap: true,
                     physics: const NeverScrollableScrollPhysics(),
                     crossAxisCount: 2,
-                    mainAxisSpacing: 12.h,
-                    crossAxisSpacing: 10.w,
+                    mainAxisSpacing: AppSpacing.md12,
+                    crossAxisSpacing: AppSpacing.sm10,
                     itemCount: filtered.length,
                     itemBuilder: (context, index) {
                       return ProductCard(product: filtered[index]);
@@ -351,14 +361,14 @@ class _RecommendationSection extends StatelessWidget {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Padding(
-          padding: EdgeInsets.fromLTRB(16.w, 12.h, 16.w, 4.h),
+          padding: EdgeInsets.fromLTRB(AppSpacing.md, AppSpacing.md12, AppSpacing.md, AppSpacing.xs),
           child: Row(
             children: [
               Icon(LucideIcons.sparkles, size: 16.sp, color: AppColors.primary),
               SizedBox(width: 6.w),
               Expanded(
                 child: Text(
-                  'Mungkin Anda Suka',
+                  'commerce.wishlist_you_may_like'.tr(),
                   style: TextStyle(
                     fontSize: 16.sp,
                     fontWeight: FontWeight.w900,
@@ -369,7 +379,7 @@ class _RecommendationSection extends StatelessWidget {
               GestureDetector(
                 onTap: () => _goToMarketplace(context),
                 child: Text(
-                  'Lihat Semua',
+                  'commerce.see_all'.tr(),
                   style: TextStyle(
                     fontSize: 12.sp,
                     fontWeight: FontWeight.w700,
@@ -381,7 +391,7 @@ class _RecommendationSection extends StatelessWidget {
           ),
         ),
         Padding(
-          padding: EdgeInsets.fromLTRB(16.w, 0, 16.w, 8.h),
+          padding: EdgeInsets.fromLTRB(AppSpacing.md, 0, AppSpacing.md, AppSpacing.sm),
           child: Text(
             subtitle,
             style: TextStyle(fontSize: 11.sp, color: AppColors.textSecondary),

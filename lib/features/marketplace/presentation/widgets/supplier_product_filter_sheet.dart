@@ -1,6 +1,8 @@
+import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
+import '../../../../core/constants/app_layout.dart';
 import '../../../../core/constants/app_colors.dart';
 import '../../data/models/category_model.dart';
 
@@ -37,7 +39,7 @@ class SupplierProductFilterSheet extends StatefulWidget {
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
-      backgroundColor: Colors.transparent,
+      backgroundColor: AppColors.transparent,
       builder: (context) => SupplierProductFilterSheet(
         initialStatus: status,
         initialCategoryId: categoryId,
@@ -58,20 +60,20 @@ class _SupplierProductFilterSheetState extends State<SupplierProductFilterSheet>
   late String? _categoryId;
   late String _sortKey;
 
-  static const _statusOptions = <String?, String>{
-    null: 'Semua Status',
-    'ACTIVE': 'Aktif',
-    'DRAFT': 'Draft',
-    'OUT_OF_STOCK': 'Stok Habis',
-    'INACTIVE': 'Non-aktif',
-  };
+  List<MapEntry<String?, String>> get _statusOptions => [
+        MapEntry(null, 'marketplace.status_all'.tr()),
+        MapEntry('ACTIVE', 'marketplace.status_active'.tr()),
+        MapEntry('DRAFT', 'marketplace.status_draft'.tr()),
+        MapEntry('OUT_OF_STOCK', 'marketplace.status_out_of_stock'.tr()),
+        MapEntry('INACTIVE', 'marketplace.status_inactive'.tr()),
+      ];
 
-  static const _sortOptions = <String, String>{
-    'newest': 'Terbaru',
-    'priceAsc': 'Harga Terendah',
-    'priceDesc': 'Harga Tertinggi',
-    'sold': 'Terlaris',
-  };
+  List<MapEntry<String, String>> get _sortOptions => [
+        MapEntry('newest', 'marketplace.sort_newest'.tr()),
+        MapEntry('priceAsc', 'marketplace.sort_price_low'.tr()),
+        MapEntry('priceDesc', 'marketplace.sort_price_high'.tr()),
+        MapEntry('sold', 'marketplace.sort_bestseller'.tr()),
+      ];
 
   @override
   void initState() {
@@ -99,7 +101,7 @@ class _SupplierProductFilterSheetState extends State<SupplierProductFilterSheet>
       padding: EdgeInsets.fromLTRB(24.w, 12.h, 24.w, 24.h + bottomPadding),
       decoration: BoxDecoration(
         color: AppColors.surface,
-        borderRadius: BorderRadius.vertical(top: Radius.circular(32.r)),
+        borderRadius: BorderRadius.vertical(top: Radius.circular(AppSpacing.xxlPx.r)),
       ),
       child: Column(
         mainAxisSize: MainAxisSize.min,
@@ -111,18 +113,18 @@ class _SupplierProductFilterSheetState extends State<SupplierProductFilterSheet>
               height: 6.h,
               decoration: BoxDecoration(
                 color: AppColors.grey300,
-                borderRadius: BorderRadius.circular(10.r),
+                borderRadius: BorderRadius.circular(AppRadius.md),
               ),
             ),
           ),
-          SizedBox(height: 20.h),
+          SizedBox(height: AppSpacing.lg),
           Row(
             children: [
               Icon(LucideIcons.listFilter, size: 22.sp, color: AppColors.primary),
-              SizedBox(width: 10.w),
+              SizedBox(width: AppSpacing.sm10),
               Expanded(
                 child: Text(
-                  'Filter Produk',
+                  'marketplace.supplier_filter_title'.tr(),
                   style: TextStyle(
                     fontSize: 20.sp,
                     fontWeight: FontWeight.w800,
@@ -133,7 +135,7 @@ class _SupplierProductFilterSheetState extends State<SupplierProductFilterSheet>
               TextButton(
                 onPressed: _reset,
                 child: Text(
-                  'Reset',
+                  'reset'.tr(),
                   style: TextStyle(
                     fontSize: 13.sp,
                     fontWeight: FontWeight.w700,
@@ -147,18 +149,18 @@ class _SupplierProductFilterSheetState extends State<SupplierProductFilterSheet>
               ),
             ],
           ),
-          SizedBox(height: 8.h),
+          SizedBox(height: AppSpacing.sm),
           Flexible(
             child: SingleChildScrollView(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  _sectionTitle('Status Produk'),
-                  SizedBox(height: 12.h),
+                  _sectionTitle('marketplace.filter_section_status'.tr()),
+                  SizedBox(height: AppSpacing.md12),
                   Wrap(
                     spacing: 10.w,
                     runSpacing: 10.h,
-                    children: _statusOptions.entries.map((entry) {
+                    children: _statusOptions.map((entry) {
                       return _filterChip(
                         entry.value,
                         _status == entry.key,
@@ -166,15 +168,15 @@ class _SupplierProductFilterSheetState extends State<SupplierProductFilterSheet>
                       );
                     }).toList(),
                   ),
-                  SizedBox(height: 24.h),
-                  _sectionTitle('Kategori'),
-                  SizedBox(height: 12.h),
+                  SizedBox(height: AppSpacing.xl),
+                  _sectionTitle('marketplace.filter_section_category'.tr()),
+                  SizedBox(height: AppSpacing.md12),
                   Wrap(
                     spacing: 10.w,
                     runSpacing: 10.h,
                     children: [
                       _filterChip(
-                        'Semua Kategori',
+                        'marketplace.category_all_products'.tr(),
                         _categoryId == null,
                         () => setState(() => _categoryId = null),
                       ),
@@ -187,13 +189,13 @@ class _SupplierProductFilterSheetState extends State<SupplierProductFilterSheet>
                       ),
                     ],
                   ),
-                  SizedBox(height: 24.h),
-                  _sectionTitle('Urutkan'),
-                  SizedBox(height: 12.h),
+                  SizedBox(height: AppSpacing.xl),
+                  _sectionTitle('marketplace.filter_section_sort'.tr()),
+                  SizedBox(height: AppSpacing.md12),
                   Wrap(
                     spacing: 10.w,
                     runSpacing: 10.h,
-                    children: _sortOptions.entries.map((entry) {
+                    children: _sortOptions.map((entry) {
                       return _filterChip(
                         entry.value,
                         _sortKey == entry.key,
@@ -201,7 +203,7 @@ class _SupplierProductFilterSheetState extends State<SupplierProductFilterSheet>
                       );
                     }).toList(),
                   ),
-                  SizedBox(height: 24.h),
+                  SizedBox(height: AppSpacing.xl),
                 ],
               ),
             ),
@@ -215,7 +217,7 @@ class _SupplierProductFilterSheetState extends State<SupplierProductFilterSheet>
                 foregroundColor: AppColors.textOnPrimary,
                 elevation: 0,
                 shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(16.r),
+                  borderRadius: BorderRadius.circular(AppRadius.xl),
                 ),
               ),
               onPressed: () {
@@ -227,7 +229,7 @@ class _SupplierProductFilterSheetState extends State<SupplierProductFilterSheet>
                 Navigator.pop(context);
               },
               child: Text(
-                'Terapkan Filter',
+                'marketplace.apply_filter'.tr(),
                 style: TextStyle(
                   fontSize: 16.sp,
                   fontWeight: FontWeight.w800,
@@ -253,18 +255,18 @@ class _SupplierProductFilterSheetState extends State<SupplierProductFilterSheet>
 
   Widget _filterChip(String label, bool isSelected, VoidCallback onTap) {
     return Material(
-      color: Colors.transparent,
+      color: AppColors.transparent,
       child: InkWell(
         onTap: onTap,
-        borderRadius: BorderRadius.circular(20.r),
+        borderRadius: BorderRadius.circular(AppRadius.pill),
         child: Container(
-          padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 10.h),
+          padding: EdgeInsets.symmetric(horizontal: AppSpacing.md, vertical: AppSpacing.sm10),
           decoration: BoxDecoration(
             color: isSelected ? AppColors.primaryLight : AppColors.grey50,
             border: Border.all(
               color: isSelected ? AppColors.primary : AppColors.grey200,
             ),
-            borderRadius: BorderRadius.circular(20.r),
+            borderRadius: BorderRadius.circular(AppRadius.pill),
           ),
           child: Text(
             label,

@@ -59,7 +59,7 @@ class ReviewInvoiceCubit extends Cubit<ReviewInvoiceState> {
         if (orderId == null || orderId.isEmpty) {
           emit(state.copyWith(
             status: ReviewInvoiceStatus.error,
-            errorMessage: 'Tagihan belum diterbitkan untuk negosiasi ini.',
+            errorMessage: 'invoice.error_not_issued_negotiation',
           ));
           return;
         }

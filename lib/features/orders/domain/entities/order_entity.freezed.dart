@@ -14,8 +14,8 @@ T _$identity<T>(T value) => value;
 /// @nodoc
 mixin _$OrderEntity {
 
- String get id; String get orderNumber; String? get checkoutBatchId; String? get checkoutBatchNumber; String get status; double get totalAmount; double get totalQuantity; double get subtotal; double get platformFee; double get logisticsFee; double get vatAmount; String? get specifications; Map<String, dynamic>? get shippingAddressSnapshot; DateTime get createdAt; List<OrderItemEntity> get items; OrderParticipantEntity get buyer; OrderParticipantEntity get seller; OrderTransactionEntity? get transaction; OrderShipmentEntity? get shipment; OrderShippingEntity? get orderShipping; OrderReviewEntity? get review;/// Data VA/QR/invoice dari backend jika pembayaran sudah diinisialisasi.
- Map<String, dynamic>? get pendingPayment; OrderDisputeEntity? get dispute; String? get negotiationId;
+ String get id; String get orderNumber; String? get checkoutBatchId; String? get checkoutBatchNumber; String get status; String get orderType; double get totalAmount; double get totalQuantity; double get subtotal; double get platformFee; double get logisticsFee; double get vatAmount; String? get specifications; Map<String, dynamic>? get shippingAddressSnapshot; DateTime get createdAt; List<OrderItemEntity> get items; OrderParticipantEntity get buyer; OrderParticipantEntity get seller; OrderTransactionEntity? get transaction; OrderShipmentEntity? get shipment; OrderShippingEntity? get orderShipping; OrderReviewEntity? get review;/// Data VA/QR/invoice dari backend jika pembayaran sudah diinisialisasi.
+ Map<String, dynamic>? get pendingPayment; OrderDisputeEntity? get dispute; String? get negotiationId; bool get isDigitalSigned; DateTime? get buyerSignedAt; DateTime? get sellerSignedAt;
 /// Create a copy of OrderEntity
 /// with the given fields replaced by the non-null parameter values.
 @JsonKey(includeFromJson: false, includeToJson: false)
@@ -26,16 +26,16 @@ $OrderEntityCopyWith<OrderEntity> get copyWith => _$OrderEntityCopyWithImpl<Orde
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is OrderEntity&&(identical(other.id, id) || other.id == id)&&(identical(other.orderNumber, orderNumber) || other.orderNumber == orderNumber)&&(identical(other.checkoutBatchId, checkoutBatchId) || other.checkoutBatchId == checkoutBatchId)&&(identical(other.checkoutBatchNumber, checkoutBatchNumber) || other.checkoutBatchNumber == checkoutBatchNumber)&&(identical(other.status, status) || other.status == status)&&(identical(other.totalAmount, totalAmount) || other.totalAmount == totalAmount)&&(identical(other.totalQuantity, totalQuantity) || other.totalQuantity == totalQuantity)&&(identical(other.subtotal, subtotal) || other.subtotal == subtotal)&&(identical(other.platformFee, platformFee) || other.platformFee == platformFee)&&(identical(other.logisticsFee, logisticsFee) || other.logisticsFee == logisticsFee)&&(identical(other.vatAmount, vatAmount) || other.vatAmount == vatAmount)&&(identical(other.specifications, specifications) || other.specifications == specifications)&&const DeepCollectionEquality().equals(other.shippingAddressSnapshot, shippingAddressSnapshot)&&(identical(other.createdAt, createdAt) || other.createdAt == createdAt)&&const DeepCollectionEquality().equals(other.items, items)&&(identical(other.buyer, buyer) || other.buyer == buyer)&&(identical(other.seller, seller) || other.seller == seller)&&(identical(other.transaction, transaction) || other.transaction == transaction)&&(identical(other.shipment, shipment) || other.shipment == shipment)&&(identical(other.orderShipping, orderShipping) || other.orderShipping == orderShipping)&&(identical(other.review, review) || other.review == review)&&const DeepCollectionEquality().equals(other.pendingPayment, pendingPayment)&&(identical(other.dispute, dispute) || other.dispute == dispute)&&(identical(other.negotiationId, negotiationId) || other.negotiationId == negotiationId));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is OrderEntity&&(identical(other.id, id) || other.id == id)&&(identical(other.orderNumber, orderNumber) || other.orderNumber == orderNumber)&&(identical(other.checkoutBatchId, checkoutBatchId) || other.checkoutBatchId == checkoutBatchId)&&(identical(other.checkoutBatchNumber, checkoutBatchNumber) || other.checkoutBatchNumber == checkoutBatchNumber)&&(identical(other.status, status) || other.status == status)&&(identical(other.orderType, orderType) || other.orderType == orderType)&&(identical(other.totalAmount, totalAmount) || other.totalAmount == totalAmount)&&(identical(other.totalQuantity, totalQuantity) || other.totalQuantity == totalQuantity)&&(identical(other.subtotal, subtotal) || other.subtotal == subtotal)&&(identical(other.platformFee, platformFee) || other.platformFee == platformFee)&&(identical(other.logisticsFee, logisticsFee) || other.logisticsFee == logisticsFee)&&(identical(other.vatAmount, vatAmount) || other.vatAmount == vatAmount)&&(identical(other.specifications, specifications) || other.specifications == specifications)&&const DeepCollectionEquality().equals(other.shippingAddressSnapshot, shippingAddressSnapshot)&&(identical(other.createdAt, createdAt) || other.createdAt == createdAt)&&const DeepCollectionEquality().equals(other.items, items)&&(identical(other.buyer, buyer) || other.buyer == buyer)&&(identical(other.seller, seller) || other.seller == seller)&&(identical(other.transaction, transaction) || other.transaction == transaction)&&(identical(other.shipment, shipment) || other.shipment == shipment)&&(identical(other.orderShipping, orderShipping) || other.orderShipping == orderShipping)&&(identical(other.review, review) || other.review == review)&&const DeepCollectionEquality().equals(other.pendingPayment, pendingPayment)&&(identical(other.dispute, dispute) || other.dispute == dispute)&&(identical(other.negotiationId, negotiationId) || other.negotiationId == negotiationId)&&(identical(other.isDigitalSigned, isDigitalSigned) || other.isDigitalSigned == isDigitalSigned)&&(identical(other.buyerSignedAt, buyerSignedAt) || other.buyerSignedAt == buyerSignedAt)&&(identical(other.sellerSignedAt, sellerSignedAt) || other.sellerSignedAt == sellerSignedAt));
 }
 
 
 @override
-int get hashCode => Object.hashAll([runtimeType,id,orderNumber,checkoutBatchId,checkoutBatchNumber,status,totalAmount,totalQuantity,subtotal,platformFee,logisticsFee,vatAmount,specifications,const DeepCollectionEquality().hash(shippingAddressSnapshot),createdAt,const DeepCollectionEquality().hash(items),buyer,seller,transaction,shipment,orderShipping,review,const DeepCollectionEquality().hash(pendingPayment),dispute,negotiationId]);
+int get hashCode => Object.hashAll([runtimeType,id,orderNumber,checkoutBatchId,checkoutBatchNumber,status,orderType,totalAmount,totalQuantity,subtotal,platformFee,logisticsFee,vatAmount,specifications,const DeepCollectionEquality().hash(shippingAddressSnapshot),createdAt,const DeepCollectionEquality().hash(items),buyer,seller,transaction,shipment,orderShipping,review,const DeepCollectionEquality().hash(pendingPayment),dispute,negotiationId,isDigitalSigned,buyerSignedAt,sellerSignedAt]);
 
 @override
 String toString() {
-  return 'OrderEntity(id: $id, orderNumber: $orderNumber, checkoutBatchId: $checkoutBatchId, checkoutBatchNumber: $checkoutBatchNumber, status: $status, totalAmount: $totalAmount, totalQuantity: $totalQuantity, subtotal: $subtotal, platformFee: $platformFee, logisticsFee: $logisticsFee, vatAmount: $vatAmount, specifications: $specifications, shippingAddressSnapshot: $shippingAddressSnapshot, createdAt: $createdAt, items: $items, buyer: $buyer, seller: $seller, transaction: $transaction, shipment: $shipment, orderShipping: $orderShipping, review: $review, pendingPayment: $pendingPayment, dispute: $dispute, negotiationId: $negotiationId)';
+  return 'OrderEntity(id: $id, orderNumber: $orderNumber, checkoutBatchId: $checkoutBatchId, checkoutBatchNumber: $checkoutBatchNumber, status: $status, orderType: $orderType, totalAmount: $totalAmount, totalQuantity: $totalQuantity, subtotal: $subtotal, platformFee: $platformFee, logisticsFee: $logisticsFee, vatAmount: $vatAmount, specifications: $specifications, shippingAddressSnapshot: $shippingAddressSnapshot, createdAt: $createdAt, items: $items, buyer: $buyer, seller: $seller, transaction: $transaction, shipment: $shipment, orderShipping: $orderShipping, review: $review, pendingPayment: $pendingPayment, dispute: $dispute, negotiationId: $negotiationId, isDigitalSigned: $isDigitalSigned, buyerSignedAt: $buyerSignedAt, sellerSignedAt: $sellerSignedAt)';
 }
 
 
@@ -46,7 +46,7 @@ abstract mixin class $OrderEntityCopyWith<$Res>  {
   factory $OrderEntityCopyWith(OrderEntity value, $Res Function(OrderEntity) _then) = _$OrderEntityCopyWithImpl;
 @useResult
 $Res call({
- String id, String orderNumber, String? checkoutBatchId, String? checkoutBatchNumber, String status, double totalAmount, double totalQuantity, double subtotal, double platformFee, double logisticsFee, double vatAmount, String? specifications, Map<String, dynamic>? shippingAddressSnapshot, DateTime createdAt, List<OrderItemEntity> items, OrderParticipantEntity buyer, OrderParticipantEntity seller, OrderTransactionEntity? transaction, OrderShipmentEntity? shipment, OrderShippingEntity? orderShipping, OrderReviewEntity? review, Map<String, dynamic>? pendingPayment, OrderDisputeEntity? dispute, String? negotiationId
+ String id, String orderNumber, String? checkoutBatchId, String? checkoutBatchNumber, String status, String orderType, double totalAmount, double totalQuantity, double subtotal, double platformFee, double logisticsFee, double vatAmount, String? specifications, Map<String, dynamic>? shippingAddressSnapshot, DateTime createdAt, List<OrderItemEntity> items, OrderParticipantEntity buyer, OrderParticipantEntity seller, OrderTransactionEntity? transaction, OrderShipmentEntity? shipment, OrderShippingEntity? orderShipping, OrderReviewEntity? review, Map<String, dynamic>? pendingPayment, OrderDisputeEntity? dispute, String? negotiationId, bool isDigitalSigned, DateTime? buyerSignedAt, DateTime? sellerSignedAt
 });
 
 
@@ -63,13 +63,14 @@ class _$OrderEntityCopyWithImpl<$Res>
 
 /// Create a copy of OrderEntity
 /// with the given fields replaced by the non-null parameter values.
-@pragma('vm:prefer-inline') @override $Res call({Object? id = null,Object? orderNumber = null,Object? checkoutBatchId = freezed,Object? checkoutBatchNumber = freezed,Object? status = null,Object? totalAmount = null,Object? totalQuantity = null,Object? subtotal = null,Object? platformFee = null,Object? logisticsFee = null,Object? vatAmount = null,Object? specifications = freezed,Object? shippingAddressSnapshot = freezed,Object? createdAt = null,Object? items = null,Object? buyer = null,Object? seller = null,Object? transaction = freezed,Object? shipment = freezed,Object? orderShipping = freezed,Object? review = freezed,Object? pendingPayment = freezed,Object? dispute = freezed,Object? negotiationId = freezed,}) {
+@pragma('vm:prefer-inline') @override $Res call({Object? id = null,Object? orderNumber = null,Object? checkoutBatchId = freezed,Object? checkoutBatchNumber = freezed,Object? status = null,Object? orderType = null,Object? totalAmount = null,Object? totalQuantity = null,Object? subtotal = null,Object? platformFee = null,Object? logisticsFee = null,Object? vatAmount = null,Object? specifications = freezed,Object? shippingAddressSnapshot = freezed,Object? createdAt = null,Object? items = null,Object? buyer = null,Object? seller = null,Object? transaction = freezed,Object? shipment = freezed,Object? orderShipping = freezed,Object? review = freezed,Object? pendingPayment = freezed,Object? dispute = freezed,Object? negotiationId = freezed,Object? isDigitalSigned = null,Object? buyerSignedAt = freezed,Object? sellerSignedAt = freezed,}) {
   return _then(_self.copyWith(
 id: null == id ? _self.id : id // ignore: cast_nullable_to_non_nullable
 as String,orderNumber: null == orderNumber ? _self.orderNumber : orderNumber // ignore: cast_nullable_to_non_nullable
 as String,checkoutBatchId: freezed == checkoutBatchId ? _self.checkoutBatchId : checkoutBatchId // ignore: cast_nullable_to_non_nullable
 as String?,checkoutBatchNumber: freezed == checkoutBatchNumber ? _self.checkoutBatchNumber : checkoutBatchNumber // ignore: cast_nullable_to_non_nullable
 as String?,status: null == status ? _self.status : status // ignore: cast_nullable_to_non_nullable
+as String,orderType: null == orderType ? _self.orderType : orderType // ignore: cast_nullable_to_non_nullable
 as String,totalAmount: null == totalAmount ? _self.totalAmount : totalAmount // ignore: cast_nullable_to_non_nullable
 as double,totalQuantity: null == totalQuantity ? _self.totalQuantity : totalQuantity // ignore: cast_nullable_to_non_nullable
 as double,subtotal: null == subtotal ? _self.subtotal : subtotal // ignore: cast_nullable_to_non_nullable
@@ -89,7 +90,10 @@ as OrderShippingEntity?,review: freezed == review ? _self.review : review // ign
 as OrderReviewEntity?,pendingPayment: freezed == pendingPayment ? _self.pendingPayment : pendingPayment // ignore: cast_nullable_to_non_nullable
 as Map<String, dynamic>?,dispute: freezed == dispute ? _self.dispute : dispute // ignore: cast_nullable_to_non_nullable
 as OrderDisputeEntity?,negotiationId: freezed == negotiationId ? _self.negotiationId : negotiationId // ignore: cast_nullable_to_non_nullable
-as String?,
+as String?,isDigitalSigned: null == isDigitalSigned ? _self.isDigitalSigned : isDigitalSigned // ignore: cast_nullable_to_non_nullable
+as bool,buyerSignedAt: freezed == buyerSignedAt ? _self.buyerSignedAt : buyerSignedAt // ignore: cast_nullable_to_non_nullable
+as DateTime?,sellerSignedAt: freezed == sellerSignedAt ? _self.sellerSignedAt : sellerSignedAt // ignore: cast_nullable_to_non_nullable
+as DateTime?,
   ));
 }
 /// Create a copy of OrderEntity
@@ -240,10 +244,10 @@ return $default(_that);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( String id,  String orderNumber,  String? checkoutBatchId,  String? checkoutBatchNumber,  String status,  double totalAmount,  double totalQuantity,  double subtotal,  double platformFee,  double logisticsFee,  double vatAmount,  String? specifications,  Map<String, dynamic>? shippingAddressSnapshot,  DateTime createdAt,  List<OrderItemEntity> items,  OrderParticipantEntity buyer,  OrderParticipantEntity seller,  OrderTransactionEntity? transaction,  OrderShipmentEntity? shipment,  OrderShippingEntity? orderShipping,  OrderReviewEntity? review,  Map<String, dynamic>? pendingPayment,  OrderDisputeEntity? dispute,  String? negotiationId)?  $default,{required TResult orElse(),}) {final _that = this;
+@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( String id,  String orderNumber,  String? checkoutBatchId,  String? checkoutBatchNumber,  String status,  String orderType,  double totalAmount,  double totalQuantity,  double subtotal,  double platformFee,  double logisticsFee,  double vatAmount,  String? specifications,  Map<String, dynamic>? shippingAddressSnapshot,  DateTime createdAt,  List<OrderItemEntity> items,  OrderParticipantEntity buyer,  OrderParticipantEntity seller,  OrderTransactionEntity? transaction,  OrderShipmentEntity? shipment,  OrderShippingEntity? orderShipping,  OrderReviewEntity? review,  Map<String, dynamic>? pendingPayment,  OrderDisputeEntity? dispute,  String? negotiationId,  bool isDigitalSigned,  DateTime? buyerSignedAt,  DateTime? sellerSignedAt)?  $default,{required TResult orElse(),}) {final _that = this;
 switch (_that) {
 case _OrderEntity() when $default != null:
-return $default(_that.id,_that.orderNumber,_that.checkoutBatchId,_that.checkoutBatchNumber,_that.status,_that.totalAmount,_that.totalQuantity,_that.subtotal,_that.platformFee,_that.logisticsFee,_that.vatAmount,_that.specifications,_that.shippingAddressSnapshot,_that.createdAt,_that.items,_that.buyer,_that.seller,_that.transaction,_that.shipment,_that.orderShipping,_that.review,_that.pendingPayment,_that.dispute,_that.negotiationId);case _:
+return $default(_that.id,_that.orderNumber,_that.checkoutBatchId,_that.checkoutBatchNumber,_that.status,_that.orderType,_that.totalAmount,_that.totalQuantity,_that.subtotal,_that.platformFee,_that.logisticsFee,_that.vatAmount,_that.specifications,_that.shippingAddressSnapshot,_that.createdAt,_that.items,_that.buyer,_that.seller,_that.transaction,_that.shipment,_that.orderShipping,_that.review,_that.pendingPayment,_that.dispute,_that.negotiationId,_that.isDigitalSigned,_that.buyerSignedAt,_that.sellerSignedAt);case _:
   return orElse();
 
 }
@@ -261,10 +265,10 @@ return $default(_that.id,_that.orderNumber,_that.checkoutBatchId,_that.checkoutB
 /// }
 /// ```
 
-@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( String id,  String orderNumber,  String? checkoutBatchId,  String? checkoutBatchNumber,  String status,  double totalAmount,  double totalQuantity,  double subtotal,  double platformFee,  double logisticsFee,  double vatAmount,  String? specifications,  Map<String, dynamic>? shippingAddressSnapshot,  DateTime createdAt,  List<OrderItemEntity> items,  OrderParticipantEntity buyer,  OrderParticipantEntity seller,  OrderTransactionEntity? transaction,  OrderShipmentEntity? shipment,  OrderShippingEntity? orderShipping,  OrderReviewEntity? review,  Map<String, dynamic>? pendingPayment,  OrderDisputeEntity? dispute,  String? negotiationId)  $default,) {final _that = this;
+@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( String id,  String orderNumber,  String? checkoutBatchId,  String? checkoutBatchNumber,  String status,  String orderType,  double totalAmount,  double totalQuantity,  double subtotal,  double platformFee,  double logisticsFee,  double vatAmount,  String? specifications,  Map<String, dynamic>? shippingAddressSnapshot,  DateTime createdAt,  List<OrderItemEntity> items,  OrderParticipantEntity buyer,  OrderParticipantEntity seller,  OrderTransactionEntity? transaction,  OrderShipmentEntity? shipment,  OrderShippingEntity? orderShipping,  OrderReviewEntity? review,  Map<String, dynamic>? pendingPayment,  OrderDisputeEntity? dispute,  String? negotiationId,  bool isDigitalSigned,  DateTime? buyerSignedAt,  DateTime? sellerSignedAt)  $default,) {final _that = this;
 switch (_that) {
 case _OrderEntity():
-return $default(_that.id,_that.orderNumber,_that.checkoutBatchId,_that.checkoutBatchNumber,_that.status,_that.totalAmount,_that.totalQuantity,_that.subtotal,_that.platformFee,_that.logisticsFee,_that.vatAmount,_that.specifications,_that.shippingAddressSnapshot,_that.createdAt,_that.items,_that.buyer,_that.seller,_that.transaction,_that.shipment,_that.orderShipping,_that.review,_that.pendingPayment,_that.dispute,_that.negotiationId);case _:
+return $default(_that.id,_that.orderNumber,_that.checkoutBatchId,_that.checkoutBatchNumber,_that.status,_that.orderType,_that.totalAmount,_that.totalQuantity,_that.subtotal,_that.platformFee,_that.logisticsFee,_that.vatAmount,_that.specifications,_that.shippingAddressSnapshot,_that.createdAt,_that.items,_that.buyer,_that.seller,_that.transaction,_that.shipment,_that.orderShipping,_that.review,_that.pendingPayment,_that.dispute,_that.negotiationId,_that.isDigitalSigned,_that.buyerSignedAt,_that.sellerSignedAt);case _:
   throw StateError('Unexpected subclass');
 
 }
@@ -281,10 +285,10 @@ return $default(_that.id,_that.orderNumber,_that.checkoutBatchId,_that.checkoutB
 /// }
 /// ```
 
-@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( String id,  String orderNumber,  String? checkoutBatchId,  String? checkoutBatchNumber,  String status,  double totalAmount,  double totalQuantity,  double subtotal,  double platformFee,  double logisticsFee,  double vatAmount,  String? specifications,  Map<String, dynamic>? shippingAddressSnapshot,  DateTime createdAt,  List<OrderItemEntity> items,  OrderParticipantEntity buyer,  OrderParticipantEntity seller,  OrderTransactionEntity? transaction,  OrderShipmentEntity? shipment,  OrderShippingEntity? orderShipping,  OrderReviewEntity? review,  Map<String, dynamic>? pendingPayment,  OrderDisputeEntity? dispute,  String? negotiationId)?  $default,) {final _that = this;
+@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( String id,  String orderNumber,  String? checkoutBatchId,  String? checkoutBatchNumber,  String status,  String orderType,  double totalAmount,  double totalQuantity,  double subtotal,  double platformFee,  double logisticsFee,  double vatAmount,  String? specifications,  Map<String, dynamic>? shippingAddressSnapshot,  DateTime createdAt,  List<OrderItemEntity> items,  OrderParticipantEntity buyer,  OrderParticipantEntity seller,  OrderTransactionEntity? transaction,  OrderShipmentEntity? shipment,  OrderShippingEntity? orderShipping,  OrderReviewEntity? review,  Map<String, dynamic>? pendingPayment,  OrderDisputeEntity? dispute,  String? negotiationId,  bool isDigitalSigned,  DateTime? buyerSignedAt,  DateTime? sellerSignedAt)?  $default,) {final _that = this;
 switch (_that) {
 case _OrderEntity() when $default != null:
-return $default(_that.id,_that.orderNumber,_that.checkoutBatchId,_that.checkoutBatchNumber,_that.status,_that.totalAmount,_that.totalQuantity,_that.subtotal,_that.platformFee,_that.logisticsFee,_that.vatAmount,_that.specifications,_that.shippingAddressSnapshot,_that.createdAt,_that.items,_that.buyer,_that.seller,_that.transaction,_that.shipment,_that.orderShipping,_that.review,_that.pendingPayment,_that.dispute,_that.negotiationId);case _:
+return $default(_that.id,_that.orderNumber,_that.checkoutBatchId,_that.checkoutBatchNumber,_that.status,_that.orderType,_that.totalAmount,_that.totalQuantity,_that.subtotal,_that.platformFee,_that.logisticsFee,_that.vatAmount,_that.specifications,_that.shippingAddressSnapshot,_that.createdAt,_that.items,_that.buyer,_that.seller,_that.transaction,_that.shipment,_that.orderShipping,_that.review,_that.pendingPayment,_that.dispute,_that.negotiationId,_that.isDigitalSigned,_that.buyerSignedAt,_that.sellerSignedAt);case _:
   return null;
 
 }
@@ -295,8 +299,8 @@ return $default(_that.id,_that.orderNumber,_that.checkoutBatchId,_that.checkoutB
 /// @nodoc
 
 
-class _OrderEntity implements OrderEntity {
-  const _OrderEntity({required this.id, required this.orderNumber, this.checkoutBatchId, this.checkoutBatchNumber, required this.status, required this.totalAmount, required this.totalQuantity, required this.subtotal, required this.platformFee, this.logisticsFee = 0, required this.vatAmount, this.specifications, final  Map<String, dynamic>? shippingAddressSnapshot, required this.createdAt, required final  List<OrderItemEntity> items, required this.buyer, required this.seller, this.transaction, this.shipment, this.orderShipping, this.review, final  Map<String, dynamic>? pendingPayment, this.dispute, this.negotiationId}): _shippingAddressSnapshot = shippingAddressSnapshot,_items = items,_pendingPayment = pendingPayment;
+class _OrderEntity extends OrderEntity {
+  const _OrderEntity({required this.id, required this.orderNumber, this.checkoutBatchId, this.checkoutBatchNumber, required this.status, this.orderType = 'STANDARD', required this.totalAmount, required this.totalQuantity, required this.subtotal, required this.platformFee, this.logisticsFee = 0, required this.vatAmount, this.specifications, final  Map<String, dynamic>? shippingAddressSnapshot, required this.createdAt, required final  List<OrderItemEntity> items, required this.buyer, required this.seller, this.transaction, this.shipment, this.orderShipping, this.review, final  Map<String, dynamic>? pendingPayment, this.dispute, this.negotiationId, this.isDigitalSigned = false, this.buyerSignedAt, this.sellerSignedAt}): _shippingAddressSnapshot = shippingAddressSnapshot,_items = items,_pendingPayment = pendingPayment,super._();
   
 
 @override final  String id;
@@ -304,6 +308,7 @@ class _OrderEntity implements OrderEntity {
 @override final  String? checkoutBatchId;
 @override final  String? checkoutBatchNumber;
 @override final  String status;
+@override@JsonKey() final  String orderType;
 @override final  double totalAmount;
 @override final  double totalQuantity;
 @override final  double subtotal;
@@ -347,6 +352,9 @@ class _OrderEntity implements OrderEntity {
 
 @override final  OrderDisputeEntity? dispute;
 @override final  String? negotiationId;
+@override@JsonKey() final  bool isDigitalSigned;
+@override final  DateTime? buyerSignedAt;
+@override final  DateTime? sellerSignedAt;
 
 /// Create a copy of OrderEntity
 /// with the given fields replaced by the non-null parameter values.
@@ -358,16 +366,16 @@ _$OrderEntityCopyWith<_OrderEntity> get copyWith => __$OrderEntityCopyWithImpl<_
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is _OrderEntity&&(identical(other.id, id) || other.id == id)&&(identical(other.orderNumber, orderNumber) || other.orderNumber == orderNumber)&&(identical(other.checkoutBatchId, checkoutBatchId) || other.checkoutBatchId == checkoutBatchId)&&(identical(other.checkoutBatchNumber, checkoutBatchNumber) || other.checkoutBatchNumber == checkoutBatchNumber)&&(identical(other.status, status) || other.status == status)&&(identical(other.totalAmount, totalAmount) || other.totalAmount == totalAmount)&&(identical(other.totalQuantity, totalQuantity) || other.totalQuantity == totalQuantity)&&(identical(other.subtotal, subtotal) || other.subtotal == subtotal)&&(identical(other.platformFee, platformFee) || other.platformFee == platformFee)&&(identical(other.logisticsFee, logisticsFee) || other.logisticsFee == logisticsFee)&&(identical(other.vatAmount, vatAmount) || other.vatAmount == vatAmount)&&(identical(other.specifications, specifications) || other.specifications == specifications)&&const DeepCollectionEquality().equals(other._shippingAddressSnapshot, _shippingAddressSnapshot)&&(identical(other.createdAt, createdAt) || other.createdAt == createdAt)&&const DeepCollectionEquality().equals(other._items, _items)&&(identical(other.buyer, buyer) || other.buyer == buyer)&&(identical(other.seller, seller) || other.seller == seller)&&(identical(other.transaction, transaction) || other.transaction == transaction)&&(identical(other.shipment, shipment) || other.shipment == shipment)&&(identical(other.orderShipping, orderShipping) || other.orderShipping == orderShipping)&&(identical(other.review, review) || other.review == review)&&const DeepCollectionEquality().equals(other._pendingPayment, _pendingPayment)&&(identical(other.dispute, dispute) || other.dispute == dispute)&&(identical(other.negotiationId, negotiationId) || other.negotiationId == negotiationId));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is _OrderEntity&&(identical(other.id, id) || other.id == id)&&(identical(other.orderNumber, orderNumber) || other.orderNumber == orderNumber)&&(identical(other.checkoutBatchId, checkoutBatchId) || other.checkoutBatchId == checkoutBatchId)&&(identical(other.checkoutBatchNumber, checkoutBatchNumber) || other.checkoutBatchNumber == checkoutBatchNumber)&&(identical(other.status, status) || other.status == status)&&(identical(other.orderType, orderType) || other.orderType == orderType)&&(identical(other.totalAmount, totalAmount) || other.totalAmount == totalAmount)&&(identical(other.totalQuantity, totalQuantity) || other.totalQuantity == totalQuantity)&&(identical(other.subtotal, subtotal) || other.subtotal == subtotal)&&(identical(other.platformFee, platformFee) || other.platformFee == platformFee)&&(identical(other.logisticsFee, logisticsFee) || other.logisticsFee == logisticsFee)&&(identical(other.vatAmount, vatAmount) || other.vatAmount == vatAmount)&&(identical(other.specifications, specifications) || other.specifications == specifications)&&const DeepCollectionEquality().equals(other._shippingAddressSnapshot, _shippingAddressSnapshot)&&(identical(other.createdAt, createdAt) || other.createdAt == createdAt)&&const DeepCollectionEquality().equals(other._items, _items)&&(identical(other.buyer, buyer) || other.buyer == buyer)&&(identical(other.seller, seller) || other.seller == seller)&&(identical(other.transaction, transaction) || other.transaction == transaction)&&(identical(other.shipment, shipment) || other.shipment == shipment)&&(identical(other.orderShipping, orderShipping) || other.orderShipping == orderShipping)&&(identical(other.review, review) || other.review == review)&&const DeepCollectionEquality().equals(other._pendingPayment, _pendingPayment)&&(identical(other.dispute, dispute) || other.dispute == dispute)&&(identical(other.negotiationId, negotiationId) || other.negotiationId == negotiationId)&&(identical(other.isDigitalSigned, isDigitalSigned) || other.isDigitalSigned == isDigitalSigned)&&(identical(other.buyerSignedAt, buyerSignedAt) || other.buyerSignedAt == buyerSignedAt)&&(identical(other.sellerSignedAt, sellerSignedAt) || other.sellerSignedAt == sellerSignedAt));
 }
 
 
 @override
-int get hashCode => Object.hashAll([runtimeType,id,orderNumber,checkoutBatchId,checkoutBatchNumber,status,totalAmount,totalQuantity,subtotal,platformFee,logisticsFee,vatAmount,specifications,const DeepCollectionEquality().hash(_shippingAddressSnapshot),createdAt,const DeepCollectionEquality().hash(_items),buyer,seller,transaction,shipment,orderShipping,review,const DeepCollectionEquality().hash(_pendingPayment),dispute,negotiationId]);
+int get hashCode => Object.hashAll([runtimeType,id,orderNumber,checkoutBatchId,checkoutBatchNumber,status,orderType,totalAmount,totalQuantity,subtotal,platformFee,logisticsFee,vatAmount,specifications,const DeepCollectionEquality().hash(_shippingAddressSnapshot),createdAt,const DeepCollectionEquality().hash(_items),buyer,seller,transaction,shipment,orderShipping,review,const DeepCollectionEquality().hash(_pendingPayment),dispute,negotiationId,isDigitalSigned,buyerSignedAt,sellerSignedAt]);
 
 @override
 String toString() {
-  return 'OrderEntity(id: $id, orderNumber: $orderNumber, checkoutBatchId: $checkoutBatchId, checkoutBatchNumber: $checkoutBatchNumber, status: $status, totalAmount: $totalAmount, totalQuantity: $totalQuantity, subtotal: $subtotal, platformFee: $platformFee, logisticsFee: $logisticsFee, vatAmount: $vatAmount, specifications: $specifications, shippingAddressSnapshot: $shippingAddressSnapshot, createdAt: $createdAt, items: $items, buyer: $buyer, seller: $seller, transaction: $transaction, shipment: $shipment, orderShipping: $orderShipping, review: $review, pendingPayment: $pendingPayment, dispute: $dispute, negotiationId: $negotiationId)';
+  return 'OrderEntity(id: $id, orderNumber: $orderNumber, checkoutBatchId: $checkoutBatchId, checkoutBatchNumber: $checkoutBatchNumber, status: $status, orderType: $orderType, totalAmount: $totalAmount, totalQuantity: $totalQuantity, subtotal: $subtotal, platformFee: $platformFee, logisticsFee: $logisticsFee, vatAmount: $vatAmount, specifications: $specifications, shippingAddressSnapshot: $shippingAddressSnapshot, createdAt: $createdAt, items: $items, buyer: $buyer, seller: $seller, transaction: $transaction, shipment: $shipment, orderShipping: $orderShipping, review: $review, pendingPayment: $pendingPayment, dispute: $dispute, negotiationId: $negotiationId, isDigitalSigned: $isDigitalSigned, buyerSignedAt: $buyerSignedAt, sellerSignedAt: $sellerSignedAt)';
 }
 
 
@@ -378,7 +386,7 @@ abstract mixin class _$OrderEntityCopyWith<$Res> implements $OrderEntityCopyWith
   factory _$OrderEntityCopyWith(_OrderEntity value, $Res Function(_OrderEntity) _then) = __$OrderEntityCopyWithImpl;
 @override @useResult
 $Res call({
- String id, String orderNumber, String? checkoutBatchId, String? checkoutBatchNumber, String status, double totalAmount, double totalQuantity, double subtotal, double platformFee, double logisticsFee, double vatAmount, String? specifications, Map<String, dynamic>? shippingAddressSnapshot, DateTime createdAt, List<OrderItemEntity> items, OrderParticipantEntity buyer, OrderParticipantEntity seller, OrderTransactionEntity? transaction, OrderShipmentEntity? shipment, OrderShippingEntity? orderShipping, OrderReviewEntity? review, Map<String, dynamic>? pendingPayment, OrderDisputeEntity? dispute, String? negotiationId
+ String id, String orderNumber, String? checkoutBatchId, String? checkoutBatchNumber, String status, String orderType, double totalAmount, double totalQuantity, double subtotal, double platformFee, double logisticsFee, double vatAmount, String? specifications, Map<String, dynamic>? shippingAddressSnapshot, DateTime createdAt, List<OrderItemEntity> items, OrderParticipantEntity buyer, OrderParticipantEntity seller, OrderTransactionEntity? transaction, OrderShipmentEntity? shipment, OrderShippingEntity? orderShipping, OrderReviewEntity? review, Map<String, dynamic>? pendingPayment, OrderDisputeEntity? dispute, String? negotiationId, bool isDigitalSigned, DateTime? buyerSignedAt, DateTime? sellerSignedAt
 });
 
 
@@ -395,13 +403,14 @@ class __$OrderEntityCopyWithImpl<$Res>
 
 /// Create a copy of OrderEntity
 /// with the given fields replaced by the non-null parameter values.
-@override @pragma('vm:prefer-inline') $Res call({Object? id = null,Object? orderNumber = null,Object? checkoutBatchId = freezed,Object? checkoutBatchNumber = freezed,Object? status = null,Object? totalAmount = null,Object? totalQuantity = null,Object? subtotal = null,Object? platformFee = null,Object? logisticsFee = null,Object? vatAmount = null,Object? specifications = freezed,Object? shippingAddressSnapshot = freezed,Object? createdAt = null,Object? items = null,Object? buyer = null,Object? seller = null,Object? transaction = freezed,Object? shipment = freezed,Object? orderShipping = freezed,Object? review = freezed,Object? pendingPayment = freezed,Object? dispute = freezed,Object? negotiationId = freezed,}) {
+@override @pragma('vm:prefer-inline') $Res call({Object? id = null,Object? orderNumber = null,Object? checkoutBatchId = freezed,Object? checkoutBatchNumber = freezed,Object? status = null,Object? orderType = null,Object? totalAmount = null,Object? totalQuantity = null,Object? subtotal = null,Object? platformFee = null,Object? logisticsFee = null,Object? vatAmount = null,Object? specifications = freezed,Object? shippingAddressSnapshot = freezed,Object? createdAt = null,Object? items = null,Object? buyer = null,Object? seller = null,Object? transaction = freezed,Object? shipment = freezed,Object? orderShipping = freezed,Object? review = freezed,Object? pendingPayment = freezed,Object? dispute = freezed,Object? negotiationId = freezed,Object? isDigitalSigned = null,Object? buyerSignedAt = freezed,Object? sellerSignedAt = freezed,}) {
   return _then(_OrderEntity(
 id: null == id ? _self.id : id // ignore: cast_nullable_to_non_nullable
 as String,orderNumber: null == orderNumber ? _self.orderNumber : orderNumber // ignore: cast_nullable_to_non_nullable
 as String,checkoutBatchId: freezed == checkoutBatchId ? _self.checkoutBatchId : checkoutBatchId // ignore: cast_nullable_to_non_nullable
 as String?,checkoutBatchNumber: freezed == checkoutBatchNumber ? _self.checkoutBatchNumber : checkoutBatchNumber // ignore: cast_nullable_to_non_nullable
 as String?,status: null == status ? _self.status : status // ignore: cast_nullable_to_non_nullable
+as String,orderType: null == orderType ? _self.orderType : orderType // ignore: cast_nullable_to_non_nullable
 as String,totalAmount: null == totalAmount ? _self.totalAmount : totalAmount // ignore: cast_nullable_to_non_nullable
 as double,totalQuantity: null == totalQuantity ? _self.totalQuantity : totalQuantity // ignore: cast_nullable_to_non_nullable
 as double,subtotal: null == subtotal ? _self.subtotal : subtotal // ignore: cast_nullable_to_non_nullable
@@ -421,7 +430,10 @@ as OrderShippingEntity?,review: freezed == review ? _self.review : review // ign
 as OrderReviewEntity?,pendingPayment: freezed == pendingPayment ? _self._pendingPayment : pendingPayment // ignore: cast_nullable_to_non_nullable
 as Map<String, dynamic>?,dispute: freezed == dispute ? _self.dispute : dispute // ignore: cast_nullable_to_non_nullable
 as OrderDisputeEntity?,negotiationId: freezed == negotiationId ? _self.negotiationId : negotiationId // ignore: cast_nullable_to_non_nullable
-as String?,
+as String?,isDigitalSigned: null == isDigitalSigned ? _self.isDigitalSigned : isDigitalSigned // ignore: cast_nullable_to_non_nullable
+as bool,buyerSignedAt: freezed == buyerSignedAt ? _self.buyerSignedAt : buyerSignedAt // ignore: cast_nullable_to_non_nullable
+as DateTime?,sellerSignedAt: freezed == sellerSignedAt ? _self.sellerSignedAt : sellerSignedAt // ignore: cast_nullable_to_non_nullable
+as DateTime?,
   ));
 }
 

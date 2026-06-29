@@ -56,4 +56,15 @@ abstract class MarketplaceRepository {
   Future<Either<Failure, List<ProductEntity>>> getProductsByCollection(
       String slug, {int page = 1, int limit = 10});
   Future<Either<Failure, ProductEngagementData>> getSupplierProductEngagement();
+  Future<Either<Failure, Map<String, dynamic>>> promoteProduct(
+    String productId, {
+    int days = 7,
+  });
+  Future<void> recordPromoImpression(String productId);
+  Future<void> recordPromoClick(String productId);
+  Future<Either<Failure, ProductEntity>> uploadProductVideo(
+    String productId,
+    String filePath,
+  );
+  Future<Either<Failure, ProductEntity>> deleteProductVideo(String productId);
 }

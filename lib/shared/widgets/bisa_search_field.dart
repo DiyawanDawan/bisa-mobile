@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
+import '../../core/constants/app_layout.dart';
 import '../../core/constants/app_colors.dart';
 
 /// Search input konsisten design-system (grey100, radius-card).
@@ -44,7 +45,7 @@ class _BisaSearchFieldState extends State<BisaSearchField> {
     return Container(
       decoration: BoxDecoration(
         color: AppColors.grey100,
-        borderRadius: BorderRadius.circular(16.r),
+        borderRadius: BorderRadius.circular(AppRadius.xl),
       ),
       child: TextField(
         controller: widget.controller,
@@ -72,7 +73,7 @@ class _BisaSearchFieldState extends State<BisaSearchField> {
                 )
               : null,
           border: InputBorder.none,
-          contentPadding: EdgeInsets.symmetric(vertical: 12.h),
+          contentPadding: EdgeInsets.symmetric(vertical: AppSpacing.md12),
         ),
       ),
     );

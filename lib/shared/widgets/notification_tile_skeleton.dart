@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:skeletonizer/skeletonizer.dart';
 
+import '../../core/constants/app_layout.dart';
 import '../../core/constants/app_colors.dart';
 import 'shimmer_loading.dart';
 
@@ -11,10 +12,10 @@ class NotificationTileSkeleton extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding: EdgeInsets.all(16.r),
+      padding: EdgeInsets.all(AppSpacing.md),
       decoration: BoxDecoration(
-        color: AppColors.white,
-        borderRadius: BorderRadius.circular(20.r),
+        color: AppColors.surface,
+        borderRadius: BorderRadius.circular(AppRadius.pill),
         border: Border.all(color: AppColors.grey100),
       ),
       child: Row(
@@ -23,17 +24,17 @@ class NotificationTileSkeleton extends StatelessWidget {
           Bone(
             width: 44.r,
             height: 44.r,
-            borderRadius: BorderRadius.circular(14.r),
+            borderRadius: BorderRadius.circular(AppRadius.tile),
           ),
-          SizedBox(width: 12.w),
+          SizedBox(width: AppSpacing.md12),
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Bone(width: double.infinity, height: 14.h),
-                SizedBox(height: 8.h),
+                SizedBox(height: AppSpacing.sm),
                 Bone.multiText(lines: 2),
-                SizedBox(height: 8.h),
+                SizedBox(height: AppSpacing.sm),
                 Bone(width: 64.w, height: 10.h),
               ],
             ),
@@ -53,10 +54,15 @@ class ShimmerNotificationListPlaceholder extends StatelessWidget {
   Widget build(BuildContext context) {
     return ShimmerLoading(
       child: ListView.separated(
-        padding: EdgeInsets.fromLTRB(20.w, 12.h, 20.w, 40.h),
+        padding: EdgeInsets.fromLTRB(
+          AppSpacing.lg,
+          AppSpacing.md12,
+          AppSpacing.lg,
+          AppSpacing.xxxl,
+        ),
         physics: const AlwaysScrollableScrollPhysics(),
         itemCount: itemCount,
-        separatorBuilder: (_, __) => SizedBox(height: 12.h),
+        separatorBuilder: (_, __) => SizedBox(height: AppSpacing.md12),
         itemBuilder: (_, __) => const NotificationTileSkeleton(),
       ),
     );

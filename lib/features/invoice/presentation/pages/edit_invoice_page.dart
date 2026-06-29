@@ -1,8 +1,11 @@
+import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:go_router/go_router.dart';
 import 'package:mobile_bisa/core/constants/app_colors.dart';
+import 'package:mobile_bisa/core/i18n/failure_messages.dart';
+import 'package:mobile_bisa/core/utils/app_feedback.dart';
 import 'package:mobile_bisa/features/invoice/domain/entities/invoice_draft.dart';
 import 'package:mobile_bisa/features/invoice/domain/entities/invoice_pdf_data.dart';
 import 'package:mobile_bisa/features/orders/domain/entities/order_entity.dart';
@@ -43,8 +46,8 @@ class _EditInvoicePageState extends State<EditInvoicePage> {
       child: Scaffold(
         backgroundColor: AppColors.background,
         appBar: BisaAppBar(
-          title: 'Edit Tagihan',
-          backgroundColor: Colors.white,
+          title: 'invoice.edit_title'.tr(),
+          backgroundColor: AppColors.surface,
           centerTitle: false,
           actions: [
             BlocBuilder<EditInvoiceCubit, EditInvoiceState>(
@@ -55,13 +58,14 @@ class _EditInvoicePageState extends State<EditInvoicePage> {
                   return const SizedBox.shrink();
                 }
                 return IconButton(
-                  tooltip: 'Export PDF',
+                  tooltip: 'invoice.export_tooltip'.tr(),
                   icon: const Icon(Icons.picture_as_pdf_outlined),
                   onPressed: state.status == EditInvoiceStatus.submitting
                       ? null
                       : () => InvoiceExportHelper.exportPdfData(
                             context,
                             InvoicePdfData.fromOrderDraft(order, draft),
+                            order: order,
                           ),
                 );
               },
@@ -76,22 +80,12 @@ class _EditInvoicePageState extends State<EditInvoicePage> {
               _specsController.text = state.draft!.specifications;
             }
             if (state.status == EditInvoiceStatus.success) {
-              ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(
-                  content: Text('Tagihan berhasil diperbarui'),
-                  backgroundColor: AppColors.secondary,
-                ),
-              );
+              showSuccessSnackBar(context, 'invoice.update_success'.tr());
               context.pop(true);
             } else if (state.status == EditInvoiceStatus.error &&
                 state.errorMessage != null &&
                 state.order != null) {
-              ScaffoldMessenger.of(context).showSnackBar(
-                SnackBar(
-                  content: Text(state.errorMessage!),
-                  backgroundColor: AppColors.error,
-                ),
-              );
+              showFailureSnackBarFromMessage(context, state.errorMessage!);
             }
           },
           builder: (context, state) {
@@ -104,13 +98,17 @@ class _EditInvoicePageState extends State<EditInvoicePage> {
             }
 
             if (state.status == EditInvoiceStatus.error && state.order == null) {
-              return _errorState(state.errorMessage ?? 'Gagal memuat tagihan');
+              return _errorState(
+                localizeFailureMessage(
+                  state.errorMessage ?? 'invoice.error_load',
+                ),
+              );
             }
 
             final order = state.order;
             final draft = state.draft;
             if (order == null || draft == null) {
-              return _errorState('Data tagihan tidak tersedia');
+              return _errorState('invoice.error_preview_unavailable'.tr());
             }
 
             final product = order.items.isNotEmpty ? order.items.first : null;
@@ -129,26 +127,34 @@ class _EditInvoicePageState extends State<EditInvoicePage> {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         InvoiceStatusBanner(
-                          title: canEdit ? 'Perbaiki Tagihan' : 'Tagihan Terkunci',
+                          title: canEdit
+                              ? 'invoice.edit_banner_fix_title'.tr()
+                              : 'invoice.edit_banner_locked_title'.tr(),
                           subtitle: canEdit
-                              ? 'Perbaiki typo alamat atau catatan sebelum pembeli bayar.'
-                              : 'Tagihan sudah diproses dan tidak bisa diubah lagi.',
+                              ? 'invoice.edit_banner_fix_subtitle'.tr()
+                              : 'invoice.edit_banner_locked_subtitle'.tr(),
                           color: canEdit ? AppColors.primary : AppColors.textHint,
                         ),
                         SizedBox(height: 14.h),
                         _infoCard([
-                          _infoRow('No. Tagihan', order.orderNumber),
+                          _infoRow(
+                            'invoice.label_invoice_number'.tr(),
+                            order.orderNumber,
+                          ),
                           if (product != null) ...[
-                            _infoRow('Produk', product.productName),
                             _infoRow(
-                              'Jumlah',
+                              'invoice.label_product'.tr(),
+                              product.productName,
+                            ),
+                            _infoRow(
+                              'invoice.label_qty'.tr(),
                               '${product.quantity.toStringAsFixed(0)} unit',
                             ),
                           ],
                         ]),
                         SizedBox(height: 14.h),
                         InvoiceBreakdownCard(
-                          title: 'Rincian Tagihan',
+                          title: 'invoice.breakdown_title'.tr(),
                           subtotal: order.subtotal,
                           platformFee: order.platformFee,
                           logisticsFee: order.logisticsFee,
@@ -160,7 +166,7 @@ class _EditInvoicePageState extends State<EditInvoicePage> {
                           draft: draft,
                           readOnly: !canEdit,
                           hintText: canEdit
-                              ? 'Perbaiki alamat jika ada typo sebelum pembeli bayar'
+                              ? 'invoice.edit_shipping_hint'.tr()
                               : null,
                           onChanged: canEdit
                               ? (updated) {
@@ -172,7 +178,7 @@ class _EditInvoicePageState extends State<EditInvoicePage> {
                         ),
                         SizedBox(height: 14.h),
                         Text(
-                          'Catatan / Spesifikasi',
+                          'invoice.notes_section'.tr(),
                           style: TextStyle(
                             fontWeight: FontWeight.w800,
                             fontSize: 14.sp,
@@ -183,13 +189,13 @@ class _EditInvoicePageState extends State<EditInvoicePage> {
                           width: double.infinity,
                           padding: EdgeInsets.all(14.w),
                           decoration: BoxDecoration(
-                            color: Colors.white,
+                            color: AppColors.surface,
                             borderRadius: BorderRadius.circular(14.r),
                             border: Border.all(color: AppColors.grey200),
                           ),
                           child: CustomTextField(
-                            label: 'Ketentuan tambahan tagihan',
-                            hint: 'Contoh: kadar air max 12%, pengiriman FOB Surabaya',
+                            label: 'invoice.notes_label'.tr(),
+                            hint: 'invoice.notes_hint'.tr(),
                             controller: _specsController,
                             maxLines: 4,
                             enabled: canEdit,
@@ -206,9 +212,8 @@ class _EditInvoicePageState extends State<EditInvoicePage> {
                           SizedBox(height: 14.h),
                           InvoiceIssueChecklistCard(
                             readiness: saveReadiness,
-                            readyText: 'Alamat lengkap — siap disimpan',
-                            pendingTitle:
-                                'Lengkapi data berikut sebelum simpan',
+                            readyText: 'invoice.issue_save_ready'.tr(),
+                            pendingTitle: 'invoice.issue_save_pending'.tr(),
                           ),
                         ],
                       ],
@@ -241,11 +246,11 @@ class _EditInvoicePageState extends State<EditInvoicePage> {
   }) {
     return DecoratedBox(
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: AppColors.surface,
         border: Border(top: BorderSide(color: AppColors.grey200)),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withValues(alpha: 0.06),
+            color: AppColors.black.withValues(alpha: 0.06),
             blurRadius: 16,
             offset: const Offset(0, -4),
           ),
@@ -261,7 +266,9 @@ class _EditInvoicePageState extends State<EditInvoicePage> {
             children: [
               if (canEdit) ...[
                 CustomButton(
-                  text: isSubmitting ? 'Menyimpan...' : 'Simpan Perubahan',
+                  text: isSubmitting
+                      ? 'invoice.edit_saving'.tr()
+                      : 'invoice.edit_save_button'.tr(),
                   useGradient: canSave,
                   height: 48.h,
                   onPressed: canSave
@@ -270,7 +277,7 @@ class _EditInvoicePageState extends State<EditInvoicePage> {
                 ),
                 SizedBox(height: 6.h),
                 Text(
-                  'Perbaiki typo alamat sebelum pembeli melakukan pembayaran',
+                  'invoice.edit_footer_note'.tr(),
                   textAlign: TextAlign.center,
                   style: TextStyle(
                     fontSize: 11.sp,
@@ -281,7 +288,7 @@ class _EditInvoicePageState extends State<EditInvoicePage> {
                 SizedBox(height: 12.h),
               ],
               CustomButton(
-                text: 'Download PDF',
+                text: 'invoice.action_download_pdf'.tr(),
                 height: 44.h,
                 isOutlined: true,
                 onPressed: isSubmitting
@@ -289,6 +296,7 @@ class _EditInvoicePageState extends State<EditInvoicePage> {
                     : () => InvoiceExportHelper.exportPdfData(
                           context,
                           InvoicePdfData.fromOrderDraft(order, draft),
+                          order: order,
                         ),
               ),
               SizedBox(height: 4.h),
@@ -305,7 +313,7 @@ class _EditInvoicePageState extends State<EditInvoicePage> {
                     Icon(Icons.arrow_back_rounded, size: 18.sp),
                     SizedBox(width: 6.w),
                     Text(
-                      'Kembali ke Chat',
+                      'invoice.action_back_to_chat'.tr(),
                       style: TextStyle(
                         fontWeight: FontWeight.w700,
                         fontSize: 13.sp,
@@ -326,7 +334,7 @@ class _EditInvoicePageState extends State<EditInvoicePage> {
       width: double.infinity,
       padding: EdgeInsets.all(14.w),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: AppColors.surface,
         borderRadius: BorderRadius.circular(14.r),
         border: Border.all(color: AppColors.grey200),
       ),
@@ -368,7 +376,10 @@ class _EditInvoicePageState extends State<EditInvoicePage> {
               style: TextStyle(fontSize: 14.sp, color: AppColors.textSecondary),
             ),
             SizedBox(height: 16.h),
-            CustomButton(text: 'Kembali', onPressed: () => context.pop()),
+            CustomButton(
+              text: 'invoice.action_back'.tr(),
+              onPressed: () => context.pop(),
+            ),
           ],
         ),
       ),

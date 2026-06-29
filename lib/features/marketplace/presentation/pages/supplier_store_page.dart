@@ -1,12 +1,14 @@
+import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
+import '../../../../core/constants/app_layout.dart';
 import '../../../../core/constants/app_colors.dart';
 import '../../../../core/readiness/readiness_gate.dart';
-import '../../../../core/utils/extensions.dart';
+import '../../../../core/utils/money_format.dart';
 import '../../../../core/utils/media_url_utils.dart';
 import '../../../../injection_container.dart';
 import '../../domain/entities/product_entity.dart';
@@ -36,8 +38,8 @@ class SupplierStorePage extends StatelessWidget {
 
     if (user == null) {
       return Scaffold(
-        appBar: BisaAppBar(title: 'Manajemen Toko'),
-        body: const Center(child: Text('Silakan masuk terlebih dahulu')),
+        appBar: BisaAppBar(title: 'marketplace.store_management_title'.tr()),
+        body: Center(child: Text('marketplace.login_required'.tr())),
       );
     }
 
@@ -102,7 +104,7 @@ class _StoreManagementBody extends StatelessWidget {
       backgroundColor: AppColors.background,
       appBar: BisaAppBar(
         backgroundColor: AppColors.surface,
-        title: 'Manajemen Toko',
+        title: 'marketplace.store_management_title'.tr(),
         actions: const [NotificationBellButton()],
       ),
       body: BlocBuilder<MarketplaceCubit, MarketplaceState>(
@@ -134,14 +136,14 @@ class _StoreManagementBody extends StatelessWidget {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   const StoreBannerSection(),
-                  SizedBox(height: 10.h),
+                  SizedBox(height: AppSpacing.sm10),
                   _StoreHeader(
                     user: user,
                     onEdit: () => _openEditProfile(context),
                   ),
-                  SizedBox(height: 12.h),
+                  SizedBox(height: AppSpacing.md12),
                   _StoreStats(products: products, isLoading: isLoading),
-                  SizedBox(height: 14.h),
+                  SizedBox(height: AppSpacing.section),
                   _StoreProductPreview(
                     products: products,
                     isLoading: isLoading,
@@ -150,39 +152,39 @@ class _StoreManagementBody extends StatelessWidget {
                     onProductTap: (product) =>
                         context.push('/product-manage/${product.id}'),
                   ),
-                  SizedBox(height: 14.h),
+                  SizedBox(height: AppSpacing.section),
                   Supplier3DSectionCard(
-                    title: 'Kelola Toko',
+                    title: 'marketplace.store_section_manage'.tr(),
                     child: Column(
                       children: [
                         Supplier3DMenuTile(
                           icon: LucideIcons.pencil,
-                          title: 'Ubah Nama & Profil Toko',
-                          subtitle: 'Nama toko, foto profil, dan nomor telepon',
+                          title: 'marketplace.store_edit_profile'.tr(),
+                          subtitle: 'marketplace.store_edit_profile_sub'.tr(),
                           color: AppColors.primaryDark,
                           onTap: () => _openEditProfile(context),
                         ),
-                        SizedBox(height: 8.h),
+                        SizedBox(height: AppSpacing.sm),
                         Supplier3DMenuTile(
                           icon: LucideIcons.package,
-                          title: 'Kelola Produk',
-                          subtitle: 'Atur daftar, stok, dan status produk',
+                          title: 'marketplace.store_manage_products'.tr(),
+                          subtitle: 'marketplace.store_manage_products_sub'.tr(),
                           color: AppColors.primary,
                           onTap: () => context.push('/product-management'),
                         ),
-                        SizedBox(height: 8.h),
+                        SizedBox(height: AppSpacing.sm),
                         Supplier3DMenuTile(
                           icon: LucideIcons.plus,
-                          title: 'Tambah Produk',
-                          subtitle: 'Publikasikan produk baru ke marketplace',
+                          title: 'marketplace.add_product'.tr(),
+                          subtitle: 'marketplace.store_add_product_sub'.tr(),
                           color: AppColors.success,
                           onTap: () => ReadinessGate.pushAddProduct(context),
                         ),
-                        SizedBox(height: 8.h),
+                        SizedBox(height: AppSpacing.sm),
                         Supplier3DMenuTile(
                           icon: LucideIcons.eye,
-                          title: 'Pratinjau Toko Publik',
-                          subtitle: 'Lihat tampilan toko seperti pembeli',
+                          title: 'marketplace.store_preview_public'.tr(),
+                          subtitle: 'marketplace.store_preview_public_sub'.tr(),
                           color: AppColors.grey600,
                           onTap: () => context.push(
                             '/supplier/${user.id}',
@@ -192,31 +194,31 @@ class _StoreManagementBody extends StatelessWidget {
                       ],
                     ),
                   ),
-                  SizedBox(height: 14.h),
+                  SizedBox(height: AppSpacing.section),
                   Supplier3DSectionCard(
-                    title: 'Kelola Bisnis',
+                    title: 'marketplace.store_section_business'.tr(),
                     child: Column(
                       children: [
                         Supplier3DMenuTile(
                           icon: LucideIcons.chartBar,
-                          title: 'Analitik Penjualan',
-                          subtitle: 'Pantau performa dan tren penjualan',
+                          title: 'marketplace.store_sales_analytics'.tr(),
+                          subtitle: 'marketplace.store_sales_analytics_sub'.tr(),
                           color: AppColors.info,
                           onTap: () => context.push('/sales-analytics'),
                         ),
-                        SizedBox(height: 8.h),
+                        SizedBox(height: AppSpacing.sm),
                         Supplier3DMenuTile(
                           icon: LucideIcons.heart,
-                          title: 'Minat Produk',
-                          subtitle: 'Produk disukai & di keranjang pembeli',
+                          title: 'marketplace.action_product_engagement'.tr(),
+                          subtitle: 'marketplace.store_engagement_sub'.tr(),
                           color: AppColors.error,
                           onTap: () => context.push('/product-engagement'),
                         ),
-                        SizedBox(height: 8.h),
+                        SizedBox(height: AppSpacing.sm),
                         Supplier3DMenuTile(
                           icon: LucideIcons.wallet,
-                          title: 'Dompet BISA',
-                          subtitle: 'Saldo, penarikan, dan riwayat transaksi',
+                          title: 'marketplace.store_wallet'.tr(),
+                          subtitle: 'marketplace.store_wallet_sub'.tr(),
                           color: AppColors.warning,
                           onTap: () => context.push('/wallet'),
                         ),
@@ -224,7 +226,7 @@ class _StoreManagementBody extends StatelessWidget {
                     ),
                   ),
                   if (!user.isVerified) ...[
-                    SizedBox(height: 14.h),
+                    SizedBox(height: AppSpacing.section),
                     _VerificationBanner(
                       onTap: () => context.push('/verification'),
                     ),
@@ -256,10 +258,10 @@ class _StoreHeader extends StatelessWidget {
 
     return Container(
       width: double.infinity,
-      padding: EdgeInsets.all(20.r),
+      padding: EdgeInsets.all(AppSpacing.lg),
       decoration: BoxDecoration(
         gradient: AppColors.primaryGradient,
-        borderRadius: BorderRadius.circular(20.r),
+        borderRadius: BorderRadius.circular(AppRadius.pill),
         boxShadow: [
           BoxShadow(
             color: AppColors.primary.withOpacity(0.25),
@@ -274,18 +276,18 @@ class _StoreHeader extends StatelessWidget {
             padding: EdgeInsets.all(3.r),
             decoration: BoxDecoration(
               shape: BoxShape.circle,
-              border: Border.all(color: Colors.white.withOpacity(0.4), width: 2),
+              border: Border.all(color: AppColors.white.withOpacity(0.4), width: 2),
             ),
             child: CircleAvatar(
-              radius: 32.r,
-              backgroundColor: Colors.white.withOpacity(0.2),
+              radius: AppSpacing.xxlPx.r,
+              backgroundColor: AppColors.surface.withOpacity(0.2),
               backgroundImage: resolveMediaImageProvider(user.avatar),
               child: user.avatar == null
-                  ? Icon(LucideIcons.store, color: Colors.white, size: 28.sp)
+                  ? Icon(LucideIcons.store, color: AppColors.textOnPrimary, size: 28.sp)
                   : null,
             ),
           ),
-          SizedBox(width: 14.w),
+          SizedBox(width: AppSpacing.section),
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -293,7 +295,7 @@ class _StoreHeader extends StatelessWidget {
                 Text(
                   storeName,
                   style: TextStyle(
-                    color: Colors.white,
+                    color: AppColors.surface,
                     fontSize: 18.sp,
                     fontWeight: FontWeight.w900,
                   ),
@@ -302,9 +304,11 @@ class _StoreHeader extends StatelessWidget {
                 ),
                 SizedBox(height: 4.h),
                 Text(
-                  hasStoreName ? 'Pemilik: ${user.name}' : user.email,
+                  hasStoreName
+                      ? 'marketplace.store_owner'.tr(namedArgs: {'name': user.name})
+                      : user.email,
                   style: TextStyle(
-                    color: Colors.white.withOpacity(0.85),
+                    color: AppColors.textOnPrimary.withOpacity(0.85),
                     fontSize: 12.sp,
                   ),
                   maxLines: 1,
@@ -313,15 +317,15 @@ class _StoreHeader extends StatelessWidget {
                 if (!hasStoreName) ...[
                   SizedBox(height: 6.h),
                   Text(
-                    'Atur nama toko agar tampil di marketplace',
+                    'marketplace.store_name_hint'.tr(),
                     style: TextStyle(
-                      color: Colors.white.withOpacity(0.75),
+                      color: AppColors.textOnPrimary.withOpacity(0.75),
                       fontSize: 11.sp,
                       fontStyle: FontStyle.italic,
                     ),
                   ),
                 ],
-                SizedBox(height: 8.h),
+                SizedBox(height: AppSpacing.sm),
                 Wrap(
                   spacing: 6.w,
                   runSpacing: 6.h,
@@ -330,31 +334,35 @@ class _StoreHeader extends StatelessWidget {
                       icon: user.isVerified
                           ? LucideIcons.badgeCheck
                           : LucideIcons.shieldAlert,
-                      label: user.isVerified ? 'Terverifikasi' : 'Belum Verifikasi',
+                      label: user.isVerified
+                          ? 'marketplace.verified'.tr()
+                          : 'marketplace.not_verified'.tr(),
                       filled: user.isVerified,
                     ),
                     _HeaderBadge(
                       icon: LucideIcons.calendar,
                       label:
-                          'Bergabung ${DateFormat('MMM yyyy').format(user.createdAt)}',
+                          'marketplace.joined'.tr(namedArgs: {
+                            'date': DateFormat('MMM yyyy').format(user.createdAt),
+                          }),
                     ),
                   ],
                 ),
               ],
             ),
           ),
-          SizedBox(width: 8.w),
+          SizedBox(width: AppSpacing.sm),
           Material(
-            color: Colors.white.withOpacity(0.18),
-            borderRadius: BorderRadius.circular(12.r),
+            color: AppColors.white.withOpacity(0.18),
+            borderRadius: BorderRadius.circular(AppRadius.lg),
             child: InkWell(
               onTap: onEdit,
-              borderRadius: BorderRadius.circular(12.r),
+              borderRadius: BorderRadius.circular(AppRadius.lg),
               child: Padding(
-                padding: EdgeInsets.all(10.r),
+                padding: EdgeInsets.all(AppSpacing.sm10),
                 child: Icon(
                   LucideIcons.pencil,
-                  color: Colors.white,
+                  color: AppColors.surface,
                   size: 18.sp,
                 ),
               ),
@@ -380,23 +388,23 @@ class _HeaderBadge extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding: EdgeInsets.symmetric(horizontal: 8.w, vertical: 4.h),
+      padding: EdgeInsets.symmetric(horizontal: AppSpacing.sm, vertical: AppSpacing.xs),
       decoration: BoxDecoration(
         color: filled
-            ? Colors.white.withOpacity(0.25)
-            : Colors.white.withOpacity(0.12),
-        borderRadius: BorderRadius.circular(8.r),
-        border: Border.all(color: Colors.white.withOpacity(0.2)),
+            ? AppColors.white.withOpacity(0.25)
+            : AppColors.white.withOpacity(0.12),
+        borderRadius: BorderRadius.circular(AppRadius.button),
+        border: Border.all(color: AppColors.white.withOpacity(0.2)),
       ),
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
-          Icon(icon, size: 12.sp, color: Colors.white),
+          Icon(icon, size: 12.sp, color: AppColors.white),
           SizedBox(width: 4.w),
           Text(
             label,
             style: TextStyle(
-              color: Colors.white,
+              color: AppColors.surface,
               fontSize: 10.sp,
               fontWeight: FontWeight.w700,
             ),
@@ -427,14 +435,14 @@ class _StoreStats extends StatelessWidget {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(
-          'Ringkasan Produk',
+          'marketplace.product_summary'.tr(),
           style: TextStyle(
             fontSize: 15.sp,
             fontWeight: FontWeight.w800,
             color: AppColors.textPrimary,
           ),
         ),
-        SizedBox(height: 10.h),
+        SizedBox(height: AppSpacing.sm10),
         if (isLoading && products.isEmpty)
           const Center(child: ShimmerListPlaceholder(itemCount: 3, itemHeight: 72))
         else
@@ -442,16 +450,16 @@ class _StoreStats extends StatelessWidget {
             children: [
               Expanded(
                 child: Supplier3DStatCard(
-                  label: 'Total',
+                  label: 'marketplace.stat_total'.tr(),
                   value: '$total',
                   color: AppColors.primary,
                   icon: LucideIcons.layers,
                 ),
               ),
-              SizedBox(width: 8.w),
+              SizedBox(width: AppSpacing.sm),
               Expanded(
                 child: Supplier3DStatCard(
-                  label: 'Aktif',
+                  label: 'marketplace.stat_active'.tr(),
                   value: '$active',
                   color: AppColors.success,
                   icon: LucideIcons.circleCheck,
@@ -460,21 +468,21 @@ class _StoreStats extends StatelessWidget {
             ],
           ),
         if (!isLoading || products.isNotEmpty) ...[
-          SizedBox(height: 8.h),
+          SizedBox(height: AppSpacing.sm),
           Row(
             children: [
               Expanded(
                 child: Supplier3DStatCard(
-                  label: 'Draft',
+                  label: 'marketplace.stat_draft'.tr(),
                   value: '$draft',
                   color: AppColors.warning,
                   icon: LucideIcons.filePen,
                 ),
               ),
-              SizedBox(width: 8.w),
+              SizedBox(width: AppSpacing.sm),
               Expanded(
                 child: Supplier3DStatCard(
-                  label: 'Stok Habis',
+                  label: 'marketplace.stat_out_of_stock'.tr(),
                   value: '$outOfStock',
                   color: AppColors.error,
                   icon: LucideIcons.packageX,
@@ -515,7 +523,7 @@ class _StoreProductPreview extends StatelessWidget {
           children: [
             Expanded(
               child: Text(
-                'Produk Toko',
+                'marketplace.store_products'.tr(),
                 style: TextStyle(
                   fontSize: 13.sp,
                   fontWeight: FontWeight.w700,
@@ -527,12 +535,14 @@ class _StoreProductPreview extends StatelessWidget {
               TextButton(
                 onPressed: onViewAll,
                 style: TextButton.styleFrom(
-                  padding: EdgeInsets.symmetric(horizontal: 8.w),
+                  padding: EdgeInsets.symmetric(horizontal: AppSpacing.sm),
                   minimumSize: Size.zero,
                   tapTargetSize: MaterialTapTargetSize.shrinkWrap,
                 ),
                 child: Text(
-                  hasMore ? 'Lihat semua produk' : 'Kelola produk',
+                  hasMore
+                      ? 'marketplace.view_all_products'.tr()
+                      : 'marketplace.manage_products_link'.tr(),
                   style: TextStyle(
                     fontSize: 12.sp,
                     fontWeight: FontWeight.w700,
@@ -573,21 +583,21 @@ class _ProductPreviewTile extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Material(
-      color: Colors.white,
-      borderRadius: BorderRadius.circular(12.r),
+      color: AppColors.surface,
+      borderRadius: BorderRadius.circular(AppRadius.lg),
       child: InkWell(
         onTap: onTap,
-        borderRadius: BorderRadius.circular(12.r),
+        borderRadius: BorderRadius.circular(AppRadius.lg),
         child: Container(
-          padding: EdgeInsets.all(10.w),
+          padding: EdgeInsets.all(AppSpacing.sm10),
           decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(12.r),
+            borderRadius: BorderRadius.circular(AppRadius.lg),
             border: Border.all(color: AppColors.grey100),
           ),
           child: Row(
             children: [
               ClipRRect(
-                borderRadius: BorderRadius.circular(8.r),
+                borderRadius: BorderRadius.circular(AppRadius.button),
                 child: product.thumbnailUrl != null &&
                         product.thumbnailUrl!.isNotEmpty
                     ? BisaNetworkImage(
@@ -599,7 +609,7 @@ class _ProductPreviewTile extends StatelessWidget {
                       )
                     : _thumbPlaceholder(),
               ),
-              SizedBox(width: 10.w),
+              SizedBox(width: AppSpacing.sm10),
               Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
@@ -616,7 +626,7 @@ class _ProductPreviewTile extends StatelessWidget {
                     ),
                     SizedBox(height: 4.h),
                     Text(
-                      product.pricePerUnit.toRupiah,
+                      formatMoneyDisplay(product.pricePerUnit),
                       style: TextStyle(
                         fontSize: 12.sp,
                         fontWeight: FontWeight.w800,
@@ -625,7 +635,10 @@ class _ProductPreviewTile extends StatelessWidget {
                     ),
                     SizedBox(height: 2.h),
                     Text(
-                      'Stok ${product.stock.toStringAsFixed(0)} ${product.unit}',
+                      'marketplace.stock_line'.tr(namedArgs: {
+                        'stock': product.stock.toStringAsFixed(0),
+                        'unit': product.unit,
+                      }),
                       style: TextStyle(
                         fontSize: 10.sp,
                         color: AppColors.textHint,
@@ -665,26 +678,29 @@ class _EmptyProducts extends StatelessWidget {
   Widget build(BuildContext context) {
     return Container(
       width: double.infinity,
-      padding: EdgeInsets.all(16.w),
+      padding: EdgeInsets.all(AppSpacing.md),
       decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(12.r),
+        color: AppColors.surface,
+        borderRadius: BorderRadius.circular(AppRadius.lg),
         border: Border.all(color: AppColors.grey100),
       ),
       child: Column(
         children: [
           Icon(LucideIcons.packageOpen, size: 32.sp, color: AppColors.grey300),
-          SizedBox(height: 8.h),
+          SizedBox(height: AppSpacing.sm),
           Text(
-            'Belum ada produk',
+            'marketplace.no_products_yet'.tr(),
             style: TextStyle(
               fontSize: 13.sp,
               fontWeight: FontWeight.w700,
               color: AppColors.textSecondary,
             ),
           ),
-          SizedBox(height: 8.h),
-          TextButton(onPressed: onAdd, child: const Text('Tambah Produk')),
+          SizedBox(height: AppSpacing.sm),
+          TextButton(
+            onPressed: onAdd,
+            child: Text('marketplace.add_product'.tr()),
+          ),
         ],
       ),
     );
@@ -700,22 +716,22 @@ class _VerificationBanner extends StatelessWidget {
   Widget build(BuildContext context) {
     return Material(
       color: AppColors.warning.withOpacity(0.1),
-      borderRadius: BorderRadius.circular(14.r),
+      borderRadius: BorderRadius.circular(AppRadius.tile),
       child: InkWell(
         onTap: onTap,
-        borderRadius: BorderRadius.circular(14.r),
+        borderRadius: BorderRadius.circular(AppRadius.tile),
         child: Padding(
-          padding: EdgeInsets.all(14.r),
+          padding: EdgeInsets.all(AppSpacing.section),
           child: Row(
             children: [
               Icon(LucideIcons.shieldAlert, color: AppColors.warning, size: 22.sp),
-              SizedBox(width: 12.w),
+              SizedBox(width: AppSpacing.md12),
               Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      'Verifikasi Toko',
+                      'marketplace.verify_store_title'.tr(),
                       style: TextStyle(
                         fontSize: 13.sp,
                         fontWeight: FontWeight.w800,
@@ -723,7 +739,7 @@ class _VerificationBanner extends StatelessWidget {
                       ),
                     ),
                     Text(
-                      'Lengkapi verifikasi agar toko lebih dipercaya pembeli',
+                      'marketplace.verify_store_body'.tr(),
                       style: TextStyle(
                         fontSize: 11.sp,
                         color: AppColors.textSecondary,

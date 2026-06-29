@@ -3,10 +3,12 @@ import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
 
+import '../../../../core/constants/app_layout.dart';
 import '../../../../core/constants/app_colors.dart';
 import '../../../../shared/widgets/bisa_network_image.dart';
 import '../../../../shared/widgets/custom_button.dart';
 import '../../domain/entities/order_entity.dart';
+import '../utils/order_dispute_i18n.dart';
 
 class OrderDisputeSection extends StatelessWidget {
   const OrderDisputeSection({
@@ -33,10 +35,10 @@ class OrderDisputeSection extends StatelessWidget {
 
     return Container(
       width: double.infinity,
-      padding: EdgeInsets.all(16.w),
+      padding: EdgeInsets.all(AppSpacing.md),
       decoration: BoxDecoration(
         color: AppColors.surface,
-        borderRadius: BorderRadius.circular(16.r),
+        borderRadius: BorderRadius.circular(AppRadius.xl),
         border: Border.all(color: AppColors.error.withValues(alpha: 0.25)),
         boxShadow: AppColors.softShadow,
       ),
@@ -46,7 +48,7 @@ class OrderDisputeSection extends StatelessWidget {
           Row(
             children: [
               Container(
-                padding: EdgeInsets.all(10.r),
+                padding: EdgeInsets.all(AppSpacing.sm10),
                 decoration: BoxDecoration(
                   color: AppColors.error.withValues(alpha: 0.1),
                   shape: BoxShape.circle,
@@ -57,13 +59,13 @@ class OrderDisputeSection extends StatelessWidget {
                   size: 20.sp,
                 ),
               ),
-              SizedBox(width: 12.w),
+              SizedBox(width: AppSpacing.md12),
               Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      'Sengketa Aktif',
+                      'orders.dispute_active_title'.tr(),
                       style: TextStyle(
                         fontSize: 16.sp,
                         fontWeight: FontWeight.w900,
@@ -72,7 +74,7 @@ class OrderDisputeSection extends StatelessWidget {
                     ),
                     SizedBox(height: 4.h),
                     Text(
-                      dispute.statusLabel,
+                      disputeStatusLabel(dispute),
                       style: TextStyle(
                         fontSize: 12.sp,
                         fontWeight: FontWeight.w600,
@@ -84,21 +86,21 @@ class OrderDisputeSection extends StatelessWidget {
               ),
             ],
           ),
-          SizedBox(height: 12.h),
+          SizedBox(height: AppSpacing.md12),
           Container(
             width: double.infinity,
-            padding: EdgeInsets.all(12.w),
+            padding: EdgeInsets.all(AppSpacing.md12),
             decoration: BoxDecoration(
               color: AppColors.warning.withValues(alpha: 0.08),
-              borderRadius: BorderRadius.circular(12.r),
+              borderRadius: BorderRadius.circular(AppRadius.lg),
             ),
             child: Row(
               children: [
                 Icon(LucideIcons.lock, size: 16.sp, color: AppColors.warning),
-                SizedBox(width: 8.w),
+                SizedBox(width: AppSpacing.sm),
                 Expanded(
                   child: Text(
-                    'Dana escrow ditahan sampai admin BISA menyelesaikan sengketa.',
+                    'orders.dispute_escrow_held'.tr(),
                     style: TextStyle(
                       fontSize: 12.sp,
                       color: AppColors.textPrimary,
@@ -109,84 +111,87 @@ class OrderDisputeSection extends StatelessWidget {
               ],
             ),
           ),
-          SizedBox(height: 16.h),
-          _labelValue('Alasan', dispute.reason),
+          SizedBox(height: AppSpacing.md),
+          _labelValue('orders.dispute_reason'.tr(), dispute.reason),
           if (dispute.description != null && dispute.description!.isNotEmpty) ...[
-            SizedBox(height: 10.h),
-            _labelValue('Detail Masalah', dispute.description!),
+            SizedBox(height: AppSpacing.sm10),
+            _labelValue('orders.dispute_detail'.tr(), dispute.description!),
           ],
-          SizedBox(height: 10.h),
+          SizedBox(height: AppSpacing.sm10),
           _labelValue(
-            'Diajukan',
+            'orders.dispute_filed_at'.tr(),
             dateFormat.format(dispute.createdAt),
           ),
           if (dispute.isMediationActive || dispute.isReadyToResolve) ...[
-            SizedBox(height: 10.h),
-            _labelValue('Fase Mediasi', dispute.mediationPhaseLabel),
+            SizedBox(height: AppSpacing.sm10),
+            _labelValue(
+              'orders.dispute_mediation_phase'.tr(),
+              disputeMediationPhaseLabel(dispute),
+            ),
             if (dispute.mediationStartedAt != null) ...[
-              SizedBox(height: 10.h),
+              SizedBox(height: AppSpacing.sm10),
               _labelValue(
-                'Mediasi dimulai',
+                'orders.dispute_mediation_started'.tr(),
                 dateFormat.format(dispute.mediationStartedAt!),
               ),
             ],
             if (dispute.readyToResolveAt != null) ...[
-              SizedBox(height: 10.h),
+              SizedBox(height: AppSpacing.sm10),
               _labelValue(
-                'Siap diselesaikan',
+                'orders.dispute_ready_resolve'.tr(),
                 dateFormat.format(dispute.readyToResolveAt!),
               ),
             ],
           ],
           if (dispute.evidenceUrls.isNotEmpty) ...[
-            SizedBox(height: 14.h),
+            SizedBox(height: AppSpacing.section),
             Text(
-              'Bukti Buyer',
+              'orders.dispute_buyer_evidence'.tr(),
               style: TextStyle(
                 fontSize: 12.sp,
                 fontWeight: FontWeight.w800,
                 color: AppColors.textSecondary,
               ),
             ),
-            SizedBox(height: 8.h),
+            SizedBox(height: AppSpacing.sm),
             _EvidenceGrid(urls: dispute.evidenceUrls),
           ],
           if (dispute.sellerResponse != null &&
               dispute.sellerResponse!.isNotEmpty) ...[
-            SizedBox(height: 16.h),
+            SizedBox(height: AppSpacing.md),
             Divider(color: AppColors.grey100, height: 1),
-            SizedBox(height: 16.h),
-            _labelValue('Tanggapan Supplier', dispute.sellerResponse!),
+            SizedBox(height: AppSpacing.md),
+            _labelValue('orders.dispute_supplier_response'.tr(), dispute.sellerResponse!),
             if (dispute.sellerRespondedAt != null) ...[
-              SizedBox(height: 10.h),
+              SizedBox(height: AppSpacing.sm10),
               _labelValue(
-                'Ditanggapi',
+                'orders.dispute_responded_at'.tr(),
                 dateFormat.format(dispute.sellerRespondedAt!),
               ),
             ],
             if (dispute.sellerEvidenceUrls.isNotEmpty) ...[
-              SizedBox(height: 14.h),
+              SizedBox(height: AppSpacing.section),
               Text(
-                'Bukti Supplier',
+                'orders.dispute_supplier_evidence'.tr(),
                 style: TextStyle(
                   fontSize: 12.sp,
                   fontWeight: FontWeight.w800,
                   color: AppColors.textSecondary,
                 ),
               ),
-              SizedBox(height: 8.h),
+              SizedBox(height: AppSpacing.sm),
               _EvidenceGrid(urls: dispute.sellerEvidenceUrls),
             ],
           ],
           if (dispute.resolutionNote != null &&
               dispute.resolutionNote!.isNotEmpty) ...[
-            SizedBox(height: 16.h),
-            _labelValue('Keputusan Admin', dispute.resolutionNote!),
+            SizedBox(height: AppSpacing.md),
+            _labelValue('orders.dispute_admin_decision'.tr(), dispute.resolutionNote!),
           ],
           if (isBuyer && dispute.isActive) ...[
-            SizedBox(height: 12.h),
+            SizedBox(height: AppSpacing.md12),
             Text(
-              'Tim BISA sedang meninjau bukti Anda. Anda akan mendapat notifikasi setelah ada keputusan.',
+              'orders.dispute_buyer_waiting'.tr(),
               style: TextStyle(
                 fontSize: 12.sp,
                 color: AppColors.textHint,
@@ -195,9 +200,9 @@ class OrderDisputeSection extends StatelessWidget {
             ),
           ],
           if (isSupplier && dispute.supplierCanRespond && onSupplierRespond != null) ...[
-            SizedBox(height: 16.h),
+            SizedBox(height: AppSpacing.md),
             CustomButton(
-              text: 'Berikan Tanggapan',
+              text: 'orders.dispute_respond_button'.tr(),
               onPressed: onSupplierRespond,
               backgroundColor: AppColors.primary,
             ),
@@ -206,9 +211,9 @@ class OrderDisputeSection extends StatelessWidget {
               !dispute.supplierCanRespond &&
               dispute.isActive &&
               dispute.sellerResponse != null) ...[
-            SizedBox(height: 12.h),
+            SizedBox(height: AppSpacing.md12),
             Text(
-              'Tanggapan Anda sudah dikirim. Menunggu keputusan admin.',
+              'orders.dispute_supplier_waiting'.tr(),
               style: TextStyle(
                 fontSize: 12.sp,
                 color: AppColors.textHint,
@@ -256,11 +261,11 @@ class _EvidenceGrid extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Wrap(
-      spacing: 8.w,
-      runSpacing: 8.h,
+      spacing: AppSpacing.sm,
+      runSpacing: AppSpacing.sm,
       children: urls.map((url) {
         return ClipRRect(
-          borderRadius: BorderRadius.circular(10.r),
+          borderRadius: BorderRadius.circular(AppRadius.md),
           child: BisaNetworkImage(
             imageUrl: url,
             width: 72.w,

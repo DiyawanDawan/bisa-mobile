@@ -1,3 +1,4 @@
+import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
@@ -26,7 +27,7 @@ class ProfileAllMenuPage extends StatelessWidget {
       backgroundColor: AppColors.background,
       appBar: BisaAppBar(
         backgroundColor: AppColors.surface,
-        title: 'Semua Menu',
+        title: 'profile.menu_all_menu'.tr(),
       ),
       body: ListView(
         padding: EdgeInsets.fromLTRB(16.w, 12.h, 16.w, 24.h),
@@ -35,7 +36,7 @@ class ProfileAllMenuPage extends StatelessWidget {
             items: [
               _MenuGridItem(
                 icon: LucideIcons.sparkles,
-                label: 'Fitur Penting',
+                label: 'profile.menu_important_features'.tr(),
                 color: AppColors.primary,
                 onTap: () => context.push('/important-features'),
               ),
@@ -43,49 +44,49 @@ class ProfileAllMenuPage extends StatelessWidget {
           ),
           SizedBox(height: 14.h),
           if (isAuthenticated) ...[
-            _sectionTitle('Akun'),
+            _sectionTitle('profile.all_menu_section_account'.tr()),
             _MenuGrid(
               items: [
                 _MenuGridItem(
                   icon: LucideIcons.user,
-                  label: 'Ubah Profil',
+                  label: 'profile.menu_edit_profile'.tr(),
                   color: AppColors.primary,
                   onTap: () => context.push('/edit-profile', extra: user),
                 ),
                 _MenuGridItem(
                   icon: LucideIcons.shieldCheck,
-                  label: 'Verifikasi',
+                  label: 'profile.menu_verification'.tr(),
                   color: AppColors.success,
                   onTap: () => context.push('/verification'),
                 ),
                 _MenuGridItem(
                   icon: LucideIcons.mapPin,
-                  label: 'Alamat',
+                  label: 'profile.menu_short_addresses'.tr(),
                   color: AppColors.info,
                   onTap: () => context.push('/addresses'),
                 ),
                 if (!isSupplier)
                   _MenuGridItem(
                     icon: LucideIcons.creditCard,
-                    label: 'Metode Bayar',
+                    label: 'profile.menu_short_payment'.tr(),
                     color: AppColors.warning,
                     onTap: () => context.push('/payment-methods'),
                   ),
                 _MenuGridItem(
                   icon: LucideIcons.lock,
-                  label: 'Kata Sandi',
+                  label: 'profile.menu_short_password'.tr(),
                   color: AppColors.warning,
                   onTap: () => context.push('/change-password'),
                 ),
                 _MenuGridItem(
                   icon: LucideIcons.users,
-                  label: 'Koneksi',
+                  label: 'profile.menu_connections'.tr(),
                   color: AppColors.primary,
                   onTap: () => context.push('/follows'),
                 ),
                 _MenuGridItem(
                   icon: LucideIcons.bell,
-                  label: 'Notifikasi',
+                  label: 'profile.menu_notifications'.tr(),
                   color: AppColors.error,
                   onTap: () => context.push('/notifications'),
                 ),
@@ -94,30 +95,30 @@ class ProfileAllMenuPage extends StatelessWidget {
           ],
           if (isAuthenticated && !isSupplier) ...[
             SizedBox(height: 14.h),
-            _sectionTitle('Belanja & Produk'),
+            _sectionTitle('profile.all_menu_section_shopping'.tr()),
             _MenuGrid(
               items: [
                 _MenuGridItem(
                   icon: LucideIcons.package,
-                  label: 'Produk Saya',
+                  label: 'profile.menu_my_products'.tr(),
                   color: AppColors.primary,
                   onTap: () => context.push('/buyer-products'),
                 ),
                 _MenuGridItem(
                   icon: LucideIcons.heart,
-                  label: 'Favorit',
+                  label: 'profile.menu_short_wishlist'.tr(),
                   color: AppColors.error,
                   onTap: () => context.push('/wishlist'),
                 ),
                 _MenuGridItem(
                   icon: LucideIcons.shoppingCart,
-                  label: 'Keranjang',
+                  label: 'profile.menu_cart'.tr(),
                   color: AppColors.success,
                   onTap: () => context.push('/cart'),
                 ),
                 _MenuGridItem(
                   icon: LucideIcons.messageSquare,
-                  label: 'Negosiasi',
+                  label: 'profile.menu_negotiations'.tr(),
                   color: AppColors.info,
                   onTap: () {
                     MainShellScope.maybeOf(context)?.selectTab(1);
@@ -126,7 +127,7 @@ class ProfileAllMenuPage extends StatelessWidget {
                 ),
                 _MenuGridItem(
                   icon: LucideIcons.shoppingBag,
-                  label: 'Pesanan',
+                  label: 'profile.menu_orders'.tr(),
                   color: AppColors.secondary,
                   onTap: () {
                     MainShellScope.maybeOf(context)?.selectTab(3);
@@ -138,18 +139,18 @@ class ProfileAllMenuPage extends StatelessWidget {
           ],
           if (isAuthenticated && isSupplier) ...[
             SizedBox(height: 14.h),
-            _sectionTitle('Manajemen Bisnis'),
+            _sectionTitle('profile.section_business'.tr()),
             _MenuGrid(
               items: [
                 _MenuGridItem(
                   icon: LucideIcons.store,
-                  label: 'Manajemen Toko',
+                  label: 'profile.menu_store_management'.tr(),
                   color: AppColors.primary,
                   onTap: () => context.push('/store-management'),
                 ),
                 _MenuGridItem(
                   icon: LucideIcons.package,
-                  label: 'Kelola Produk',
+                  label: 'profile.menu_manage_products'.tr(),
                   color: AppColors.success,
                   onTap: () {
                     MainShellScope.maybeOf(context)?.selectTab(0);
@@ -158,31 +159,31 @@ class ProfileAllMenuPage extends StatelessWidget {
                 ),
                 _MenuGridItem(
                   icon: LucideIcons.plus,
-                  label: 'Tambah Produk',
+                  label: 'profile.menu_add_product'.tr(),
                   color: AppColors.info,
                   onTap: () => context.push('/add-product'),
                 ),
                 _MenuGridItem(
                   icon: LucideIcons.chartBar,
-                  label: 'Analitik PRO',
+                  label: 'profile.menu_sales_analytics'.tr(),
                   color: AppColors.warning,
                   onTap: () => context.push('/sales-analytics'),
                 ),
                 _MenuGridItem(
                   icon: LucideIcons.heart,
-                  label: 'Minat Produk',
+                  label: 'profile.menu_product_engagement'.tr(),
                   color: AppColors.error,
                   onTap: () => context.push('/product-engagement'),
                 ),
                 _MenuGridItem(
                   icon: LucideIcons.wallet,
-                  label: 'Dompet BISA',
+                  label: 'profile.menu_wallet'.tr(),
                   color: AppColors.secondary,
                   onTap: () => context.push('/wallet'),
                 ),
                 _MenuGridItem(
                   icon: LucideIcons.creditCard,
-                  label: 'Metode Bayar',
+                  label: 'profile.menu_short_payment'.tr(),
                   color: AppColors.textSecondary,
                   onTap: () => context.push('/payment-methods'),
                 ),
@@ -190,12 +191,12 @@ class ProfileAllMenuPage extends StatelessWidget {
             ),
           ],
           SizedBox(height: 14.h),
-          _sectionTitle('Komunitas & Aktivitas'),
+          _sectionTitle('profile.all_menu_section_community'.tr()),
           _MenuGrid(
             items: [
               _MenuGridItem(
                 icon: LucideIcons.users,
-                label: 'Forum',
+                label: 'profile.menu_forum'.tr(),
                 color: AppColors.primary,
                 onTap: () {
                   MainShellScope.maybeOf(context)?.selectTab(2);
@@ -205,14 +206,14 @@ class ProfileAllMenuPage extends StatelessWidget {
               if (isAuthenticated)
                 _MenuGridItem(
                   icon: LucideIcons.fileText,
-                  label: 'Postingan Saya',
+                  label: 'profile.menu_my_posts'.tr(),
                   color: AppColors.warning,
                   onTap: () => context.push('/my-forum-posts'),
                 ),
               if (isAuthenticated && isSupplier)
                 _MenuGridItem(
                   icon: LucideIcons.messageSquare,
-                  label: 'Negosiasi',
+                  label: 'profile.menu_negotiations'.tr(),
                   color: AppColors.info,
                   onTap: () {
                     MainShellScope.maybeOf(context)?.selectTab(1);
@@ -222,7 +223,7 @@ class ProfileAllMenuPage extends StatelessWidget {
               if (isAuthenticated)
                 _MenuGridItem(
                   icon: LucideIcons.shoppingBag,
-                  label: 'Pesanan',
+                  label: 'profile.menu_orders'.tr(),
                   color: AppColors.success,
                   onTap: () {
                     MainShellScope.maybeOf(context)?.selectTab(3);
@@ -232,63 +233,62 @@ class ProfileAllMenuPage extends StatelessWidget {
             ],
           ),
           SizedBox(height: 14.h),
-          _sectionTitle('Wawasan Pasar'),
+          _sectionTitle('profile.section_market_insight'.tr()),
           _MenuGrid(
             items: [
               _MenuGridItem(
                 icon: LucideIcons.trendingUp,
-                label: 'Market AI',
+                label: 'profile.menu_market_ai'.tr(),
                 color: AppColors.primary,
                 onTap: () => context.push('/market-insight'),
               ),
               if (isSupplier)
                 _MenuGridItem(
                   icon: LucideIcons.cpu,
-                  label: 'Monitoring IoT',
+                  label: 'profile.menu_iot_monitoring'.tr(),
                   color: AppColors.info,
                   onTap: () => context.push('/iot-dashboard'),
                 ),
               _MenuGridItem(
                 icon: LucideIcons.map,
-                label: 'Peta Limbah',
+                label: 'profile.menu_short_waste_map'.tr(),
                 color: AppColors.success,
                 onTap: () => context.push('/waste-mapping'),
               ),
-              // BISA Pro upsell hanya untuk Supplier (Pro = IoT/Analitik bisnis).
               if (isSupplier)
                 _MenuGridItem(
                   icon: LucideIcons.sparkles,
-                  label: 'BISA Pro',
+                  label: 'profile.menu_bisa_pro'.tr(),
                   color: AppColors.warning,
                   onTap: () => context.push('/iot-subscription'),
                 ),
             ],
           ),
           SizedBox(height: 14.h),
-          _sectionTitle('Bantuan & Legal'),
+          _sectionTitle('profile.all_menu_section_help_legal'.tr()),
           _MenuGrid(
             items: [
               _MenuGridItem(
                 icon: LucideIcons.handHelping,
-                label: 'Pusat Bantuan',
+                label: 'profile.menu_help_center'.tr(),
                 color: AppColors.info,
                 onTap: () => context.push('/help-center'),
               ),
               _MenuGridItem(
                 icon: LucideIcons.fileText,
-                label: 'Syarat & Ketentuan',
+                label: 'profile.menu_terms'.tr(),
                 color: AppColors.textSecondary,
                 onTap: () => context.push('/terms'),
               ),
               _MenuGridItem(
                 icon: LucideIcons.shieldAlert,
-                label: 'Privasi',
+                label: 'profile.menu_short_privacy'.tr(),
                 color: AppColors.textSecondary,
                 onTap: () => context.push('/privacy'),
               ),
               _MenuGridItem(
                 icon: LucideIcons.settings,
-                label: 'Pengaturan',
+                label: 'profile.settings_title'.tr(),
                 color: AppColors.primary,
                 onTap: () => context.push('/settings'),
               ),

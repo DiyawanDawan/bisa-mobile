@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
+import '../../../../core/constants/app_layout.dart';
 import '../../../../core/constants/app_colors.dart';
 import '../../data/models/iot_alert_model.dart';
 
@@ -19,13 +20,13 @@ class IotAlertTile extends StatelessWidget {
     final isUnread = !alert.isRead;
 
     return Container(
-      margin: EdgeInsets.only(bottom: 10.h),
-      padding: EdgeInsets.all(12.w),
+      margin: EdgeInsets.only(bottom: AppSpacing.sm10),
+      padding: EdgeInsets.all(AppSpacing.md12),
       decoration: BoxDecoration(
         color: isUnread
             ? AppColors.error.withValues(alpha: 0.06)
             : AppColors.white,
-        borderRadius: BorderRadius.circular(12.r),
+        borderRadius: BorderRadius.circular(AppRadius.lg),
         border: Border.all(
           color: isUnread
               ? AppColors.error.withValues(alpha: 0.25)
@@ -40,7 +41,7 @@ class IotAlertTile extends StatelessWidget {
             size: 18.sp,
             color: isUnread ? AppColors.error : AppColors.grey400,
           ),
-          SizedBox(width: 10.w),
+          SizedBox(width: AppSpacing.sm10),
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,

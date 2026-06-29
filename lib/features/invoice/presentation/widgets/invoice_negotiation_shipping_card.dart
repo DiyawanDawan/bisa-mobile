@@ -1,8 +1,9 @@
+import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:mobile_bisa/core/constants/app_colors.dart';
-import 'package:mobile_bisa/core/utils/extensions.dart';
+import 'package:mobile_bisa/core/utils/money_format.dart';
 import 'package:mobile_bisa/features/invoice/presentation/bloc/create_invoice_cubit.dart';
 import 'package:mobile_bisa/features/orders/presentation/bloc/order_cubit.dart';
 import 'package:mobile_bisa/shared/widgets/custom_button.dart';
@@ -57,7 +58,7 @@ class _InvoiceNegotiationShippingCardState
       );
       if (search.quotaExceeded) {
         throw Exception(
-          search.errorMessage ?? 'Kuota harian API ongkir habis. Coba lagi besok.',
+          search.errorMessage ?? 'cart.api_quota_exhausted'.tr(),
         );
       }
       if (search.items.isEmpty) continue;
@@ -72,8 +73,7 @@ class _InvoiceNegotiationShippingCardState
     final draft = cubit.state.draft;
     if (!CreateInvoiceCubit.isDestinationReady(draft)) {
       setState(() {
-        _error =
-            'Lengkapi alamat tujuan di atas (min. 10 karakter + kab/kota atau provinsi) sebelum hitung ongkir.';
+        _error = 'invoice.shipping_dest_incomplete_detail'.tr();
       });
       return;
     }
@@ -87,10 +87,7 @@ class _InvoiceNegotiationShippingCardState
       final orderCubit = context.read<OrderCubit>();
       final originId = await _resolveOriginId(orderCubit, cubit);
       if (originId == null) {
-        throw Exception(
-          'Asal pengiriman tidak ditemukan. Lengkapi alamat bisnis/toko di Profil '
-          'atau atur lokasi ongkir di menu Pengiriman.',
-        );
+        throw Exception('invoice.shipping_origin_not_found'.tr());
       }
 
       final snapshot = draft!.toShippingSnapshot();
@@ -100,9 +97,7 @@ class _InvoiceNegotiationShippingCardState
         snapshot['address']?.toString(),
       ].where((e) => e != null && e.trim().isNotEmpty).join(', ');
       if (destQuery.length < 3) {
-        throw Exception(
-          'Alamat tujuan belum lengkap. Isi kab/kota atau provinsi di bagian alamat pengiriman.',
-        );
+        throw Exception('invoice.shipping_dest_region_missing'.tr());
       }
 
       final destinationSearch = await orderCubit.searchShippingDestinations(
@@ -111,17 +106,16 @@ class _InvoiceNegotiationShippingCardState
       );
       if (destinationSearch.quotaExceeded) {
         throw Exception(
-          destinationSearch.errorMessage ??
-              'Kuota harian API ongkir habis. Coba lagi besok.',
+          destinationSearch.errorMessage ?? 'cart.api_quota_exhausted'.tr(),
         );
       }
       if (destinationSearch.items.isEmpty) {
-        throw Exception('Lokasi tujuan ongkir tidak ditemukan. Periksa kab/kota tujuan.');
+        throw Exception('invoice.shipping_dest_not_found'.tr());
       }
       final destination = destinationSearch.items.first;
       final destinationId = int.tryParse(destination['id']?.toString() ?? '');
       if (destinationId == null) {
-        throw Exception('ID tujuan ongkir tidak valid.');
+        throw Exception('invoice.shipping_dest_id_invalid'.tr());
       }
 
       final qty = draft.quantity;
@@ -134,13 +128,13 @@ class _InvoiceNegotiationShippingCardState
       );
       if (!mounted) return;
       if (options.isEmpty) {
-        throw Exception('Opsi kurir tidak tersedia untuk rute ini.');
+        throw Exception('invoice.shipping_courier_unavailable'.tr());
       }
 
       final selected = await showModalBottomSheet<Map<String, dynamic>>(
         context: context,
         isScrollControlled: true,
-        backgroundColor: Colors.white,
+        backgroundColor: AppColors.surface,
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.vertical(top: Radius.circular(16.r)),
         ),
@@ -153,7 +147,7 @@ class _InvoiceNegotiationShippingCardState
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
-                    'Pilih Layanan Kurir',
+                    'invoice.shipping_select_courier'.tr(),
                     style: TextStyle(
                       fontSize: 16.sp,
                       fontWeight: FontWeight.w800,
@@ -162,7 +156,7 @@ class _InvoiceNegotiationShippingCardState
                   ),
                   SizedBox(height: 8.h),
                   Text(
-                    'Tujuan: $destQuery',
+                    'invoice.shipping_dest_query'.tr(namedArgs: {'query': destQuery}),
                     style: TextStyle(fontSize: 11.sp, color: AppColors.textHint),
                     maxLines: 2,
                     overflow: TextOverflow.ellipsis,
@@ -191,7 +185,7 @@ class _InvoiceNegotiationShippingCardState
                             ),
                           ),
                           subtitle: Text(
-                            '${opt['etd'] ?? ''} · ${cost.toRupiah}',
+                            '${opt['etd'] ?? ''} · ${formatMoneyIdr(cost)}',
                             style: TextStyle(fontSize: 12.sp),
                           ),
                           onTap: () => Navigator.pop(ctx, opt),
@@ -252,7 +246,7 @@ class _InvoiceNegotiationShippingCardState
       width: double.infinity,
       padding: EdgeInsets.all(14.w),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: AppColors.surface,
         borderRadius: BorderRadius.circular(14.r),
         border: Border.all(
           color: destinationReady ? AppColors.grey200 : AppColors.warning.withValues(alpha: 0.5),
@@ -262,7 +256,7 @@ class _InvoiceNegotiationShippingCardState
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
-            'Pengiriman & Ongkir BISA',
+            'invoice.shipping_title'.tr(),
             style: TextStyle(
               fontWeight: FontWeight.w800,
               fontSize: 14.sp,
@@ -272,8 +266,8 @@ class _InvoiceNegotiationShippingCardState
           SizedBox(height: 6.h),
           Text(
             destinationReady
-                ? 'Langkah 2: hitung ongkir berdasarkan alamat tujuan di atas.'
-                : 'Langkah 2: isi alamat tujuan di atas terlebih dahulu (min. 10 karakter + kab/kota atau provinsi).',
+                ? 'invoice.shipping_step2_dest'.tr()
+                : 'invoice.shipping_step2_incomplete'.tr(),
             style: TextStyle(
               fontSize: 11.sp,
               color: destinationReady ? AppColors.textHint : AppColors.warning,
@@ -284,24 +278,28 @@ class _InvoiceNegotiationShippingCardState
               cubit.state.sellerOriginLabel!.trim().isNotEmpty) ...[
             SizedBox(height: 6.h),
             Text(
-              'Asal ongkir: ${cubit.state.sellerOriginLabel}',
+              'invoice.shipping_origin_chip'.tr(namedArgs: {
+                'label': cubit.state.sellerOriginLabel!,
+              }),
               style: TextStyle(fontSize: 11.sp, color: AppColors.textSecondary),
             ),
           ],
           if (destinationReady && draft != null) ...[
             SizedBox(height: 6.h),
             Text(
-              'Tujuan: ${[
-                draft.regency,
-                draft.province,
-              ].where((e) => e.trim().isNotEmpty).join(', ')}',
+              'invoice.shipping_dest_query'.tr(namedArgs: {
+                'query': [
+                  draft.regency,
+                  draft.province,
+                ].where((e) => e.trim().isNotEmpty).join(', '),
+              }),
               style: TextStyle(fontSize: 11.sp, color: AppColors.textSecondary),
             ),
           ],
           if (!originReady) ...[
             SizedBox(height: 6.h),
             Text(
-              'Asal toko belum terdeteksi — lengkapi alamat bisnis di Profil supplier.',
+              'invoice.shipping_origin_missing'.tr(),
               style: TextStyle(
                 fontSize: 11.sp,
                 color: AppColors.warning,
@@ -326,7 +324,9 @@ class _InvoiceNegotiationShippingCardState
             ),
             SizedBox(height: 4.h),
             Text(
-              'Biaya ongkir: ${logisticsFee.toRupiah}',
+              'invoice.shipping_cost'.tr(namedArgs: {
+                'amount': formatMoneyIdr(logisticsFee),
+              }),
               style: TextStyle(
                 fontSize: 13.sp,
                 fontWeight: FontWeight.w700,
@@ -363,7 +363,7 @@ class _InvoiceNegotiationShippingCardState
                               shrinkWrap: true,
                               children: [
                                 ListTile(
-                                  title: const Text('Semua Kurir Aktif'),
+                                  title: Text('invoice.all_couriers_active'.tr()),
                                   onTap: () => Navigator.of(ctx).pop(''),
                                 ),
                                 ...couriers.map(
@@ -384,13 +384,17 @@ class _InvoiceNegotiationShippingCardState
                 icon: const Icon(Icons.local_shipping_outlined),
                 label: Text(
                   _courierCode == null
-                      ? 'Kurir: semua aktif'
-                      : 'Kurir: ${_courierCode!.toUpperCase()}',
+                      ? 'invoice.shipping_courier_all'.tr()
+                      : 'invoice.shipping_courier_code'.tr(namedArgs: {
+                          'code': _courierCode!.toUpperCase(),
+                        }),
                 ),
               ),
             ),
           CustomButton(
-            text: selection == null ? 'Hitung & Pilih Ongkir' : 'Ubah Ongkir',
+            text: selection == null
+                ? 'invoice.calculate_shipping'.tr()
+                : 'invoice.change_shipping'.tr(),
             onPressed: (!destinationReady || _loading) ? null : _pickShipping,
             isLoading: _loading,
             isOutlined: true,

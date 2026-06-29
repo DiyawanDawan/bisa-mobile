@@ -1,8 +1,11 @@
+import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:go_router/go_router.dart';
 import 'package:mobile_bisa/core/constants/app_colors.dart';
+import 'package:mobile_bisa/core/i18n/failure_messages.dart';
+import 'package:mobile_bisa/core/utils/app_feedback.dart';
 import 'package:mobile_bisa/core/utils/media_url_utils.dart';
 import 'package:mobile_bisa/features/invoice/domain/entities/invoice_preview_entity.dart';
 import 'package:mobile_bisa/features/invoice/presentation/bloc/create_invoice_cubit.dart';
@@ -65,8 +68,8 @@ class _CreateInvoicePageState extends State<CreateInvoicePage> {
       child: Scaffold(
         backgroundColor: AppColors.background,
         appBar: BisaAppBar(
-          title: 'Buat Tagihan',
-          backgroundColor: Colors.white,
+          title: 'invoice.create_title'.tr(),
+          backgroundColor: AppColors.surface,
           centerTitle: false,
           actions: [
             BlocBuilder<CreateInvoiceCubit, CreateInvoiceState>(
@@ -74,7 +77,7 @@ class _CreateInvoicePageState extends State<CreateInvoicePage> {
                 final exportPreview = state.previewWithDraft;
                 if (exportPreview == null) return const SizedBox.shrink();
                 return IconButton(
-                  tooltip: 'Export PDF',
+                  tooltip: 'invoice.export_tooltip'.tr(),
                   icon: const Icon(Icons.picture_as_pdf_outlined),
                   onPressed: state.status == CreateInvoiceStatus.submitting
                       ? null
@@ -101,21 +104,11 @@ class _CreateInvoicePageState extends State<CreateInvoicePage> {
               _specsController.text = state.draft!.specifications;
             }
             if (state.status == CreateInvoiceStatus.success) {
-              ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(
-                  content: Text('Tagihan berhasil diterbitkan'),
-                  backgroundColor: AppColors.secondary,
-                ),
-              );
+              showSuccessSnackBar(context, 'invoice.issue_success'.tr());
               context.pop(true);
             } else if (state.status == CreateInvoiceStatus.error &&
                 state.errorMessage != null) {
-              ScaffoldMessenger.of(context).showSnackBar(
-                SnackBar(
-                  content: Text(state.errorMessage!),
-                  backgroundColor: AppColors.error,
-                ),
-              );
+              showFailureSnackBarFromMessage(context, state.errorMessage!);
             }
           },
           builder: (context, state) {
@@ -129,13 +122,17 @@ class _CreateInvoicePageState extends State<CreateInvoicePage> {
 
             if (state.status == CreateInvoiceStatus.error &&
                 state.preview == null) {
-              return _errorState(state.errorMessage ?? 'Gagal memuat preview');
+              return _errorState(
+                localizeFailureMessage(
+                  state.errorMessage ?? 'invoice.error_load',
+                ),
+              );
             }
 
             final preview = state.preview;
             final draft = state.draft;
             if (preview == null || draft == null) {
-              return _errorState('Data preview tidak tersedia');
+              return _errorState('invoice.error_preview_unavailable'.tr());
             }
 
             final buyerLabel =
@@ -158,21 +155,23 @@ class _CreateInvoicePageState extends State<CreateInvoicePage> {
                       children: [
                         _headerCard(preview, buyerLabel),
                         SizedBox(height: 14.h),
-                        _sectionTitle('Ringkasan Kesepakatan'),
+                        _sectionTitle('invoice.deal_summary'.tr()),
                         SizedBox(height: 8.h),
                         Container(
                           width: double.infinity,
                           padding: EdgeInsets.all(14.w),
                           decoration: BoxDecoration(
-                            color: Colors.white,
+                            color: AppColors.surface,
                             borderRadius: BorderRadius.circular(14.r),
                             border: Border.all(color: AppColors.grey200),
                           ),
                           child: Column(
                             children: [
                               CustomTextField(
-                                label: 'Jumlah (${preview.productUnit})',
-                                hint: 'Sesuaikan jumlah sebelum terbit',
+                                label: 'invoice.qty_adjust_label'.tr(
+                                  namedArgs: {'unit': preview.productUnit},
+                                ),
+                                hint: 'invoice.qty_adjust_hint'.tr(),
                                 controller: _qtyController,
                                 keyboardType: TextInputType.number,
                                 onChanged: (v) {
@@ -185,8 +184,10 @@ class _CreateInvoicePageState extends State<CreateInvoicePage> {
                               ),
                               SizedBox(height: 12.h),
                               CustomTextField(
-                                label: 'Harga per ${preview.productUnit}',
-                                hint: 'Sesuaikan harga sebelum terbit',
+                                label: 'invoice.price_adjust_label'.tr(
+                                  namedArgs: {'unit': preview.productUnit},
+                                ),
+                                hint: 'invoice.price_adjust_hint'.tr(),
                                 controller: _priceController,
                                 keyboardType: TextInputType.number,
                                 onChanged: (v) {
@@ -207,7 +208,7 @@ class _CreateInvoicePageState extends State<CreateInvoicePage> {
                           ),
                         ],
                         SizedBox(height: 14.h),
-                        _sectionTitle('Alamat Pengiriman'),
+                        _sectionTitle('invoice.shipping_section'.tr()),
                         SizedBox(height: 8.h),
                         InvoiceShippingRouteOverview(
                           sellerSnapshot: state.sellerShippingSnapshot ??
@@ -220,7 +221,7 @@ class _CreateInvoicePageState extends State<CreateInvoicePage> {
                               null,
                         ),
                         SizedBox(height: 12.h),
-                        _sectionTitle('Alamat Penerima (Pembeli)'),
+                        _sectionTitle('invoice.buyer_shipping_title'.tr()),
                         SizedBox(height: 8.h),
                         InvoiceBuyerShippingPanel(
                           negotiationId: widget.negotiationId,
@@ -239,7 +240,7 @@ class _CreateInvoicePageState extends State<CreateInvoicePage> {
                         ),
                         SizedBox(height: 14.h),
                         InvoiceBreakdownCard(
-                          title: 'Rincian Tagihan',
+                          title: 'invoice.breakdown_title'.tr(),
                           subtotal: exportPreview.subtotal,
                           platformFee: exportPreview.platformFee,
                           logisticsFee: exportPreview.logisticsFee,
@@ -247,19 +248,19 @@ class _CreateInvoicePageState extends State<CreateInvoicePage> {
                           totalAmount: exportPreview.totalAmount,
                         ),
                         SizedBox(height: 14.h),
-                        _sectionTitle('Catatan / Spesifikasi'),
+                        _sectionTitle('invoice.notes_section'.tr()),
                         SizedBox(height: 8.h),
                         Container(
                           width: double.infinity,
                           padding: EdgeInsets.all(14.w),
                           decoration: BoxDecoration(
-                            color: Colors.white,
+                            color: AppColors.surface,
                             borderRadius: BorderRadius.circular(14.r),
                             border: Border.all(color: AppColors.grey200),
                           ),
                           child: CustomTextField(
-                            label: 'Ketentuan tambahan tagihan',
-                            hint: 'Contoh: kadar air max 12%, pengiriman FOB Surabaya',
+                            label: 'invoice.notes_label'.tr(),
+                            hint: 'invoice.notes_hint'.tr(),
                             controller: _specsController,
                             maxLines: 4,
                             onChanged: (v) {
@@ -300,11 +301,11 @@ class _CreateInvoicePageState extends State<CreateInvoicePage> {
     final canIssue = readiness.canIssue && !isSubmitting;
     return DecoratedBox(
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: AppColors.surface,
         border: Border(top: BorderSide(color: AppColors.grey200)),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withValues(alpha: 0.06),
+            color: AppColors.black.withValues(alpha: 0.06),
             blurRadius: 16,
             offset: const Offset(0, -4),
           ),
@@ -319,7 +320,9 @@ class _CreateInvoicePageState extends State<CreateInvoicePage> {
             mainAxisSize: MainAxisSize.min,
             children: [
               CustomButton(
-                text: isSubmitting ? 'Menerbitkan...' : 'Terbitkan Tagihan',
+                text: isSubmitting
+                    ? 'invoice.issue_updating'.tr()
+                    : 'invoice.issue_button'.tr(),
                 useGradient: canIssue,
                 height: 48.h,
                 onPressed: canIssue
@@ -330,7 +333,7 @@ class _CreateInvoicePageState extends State<CreateInvoicePage> {
               ),
               SizedBox(height: 6.h),
               Text(
-                'Setelah diterbitkan, tagihan masih bisa diedit sebelum pembayaran',
+                'invoice.issue_footer_note'.tr(),
                 textAlign: TextAlign.center,
                 style: TextStyle(
                   fontSize: 11.sp,
@@ -343,7 +346,7 @@ class _CreateInvoicePageState extends State<CreateInvoicePage> {
                 children: [
                   Expanded(
                     child: CustomButton(
-                      text: 'Export PDF',
+                      text: 'invoice.action_export_pdf'.tr(),
                       height: 44.h,
                       isOutlined: true,
                       onPressed: isSubmitting
@@ -363,7 +366,7 @@ class _CreateInvoicePageState extends State<CreateInvoicePage> {
                   SizedBox(width: 10.w),
                   Expanded(
                     child: CustomButton(
-                      text: 'Kirim ke Chat',
+                      text: 'invoice.action_send_to_chat'.tr(),
                       height: 44.h,
                       isOutlined: true,
                       onPressed: isSubmitting
@@ -391,7 +394,7 @@ class _CreateInvoicePageState extends State<CreateInvoicePage> {
                     Icon(Icons.arrow_back_rounded, size: 18.sp),
                     SizedBox(width: 6.w),
                     Text(
-                      'Kembali ke Chat',
+                      'invoice.action_back_to_chat'.tr(),
                       style: TextStyle(
                         fontSize: 14.sp,
                         fontWeight: FontWeight.w700,
@@ -412,7 +415,7 @@ class _CreateInvoicePageState extends State<CreateInvoicePage> {
       width: double.infinity,
       padding: EdgeInsets.all(14.w),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: AppColors.surface,
         borderRadius: BorderRadius.circular(14.r),
         border: Border.all(color: AppColors.grey200),
       ),
@@ -462,7 +465,7 @@ class _CreateInvoicePageState extends State<CreateInvoicePage> {
                     borderRadius: BorderRadius.circular(6.r),
                   ),
                   child: Text(
-                    'Tawaran Diterima',
+                    'invoice.status_accepted_badge'.tr(),
                     style: TextStyle(
                       fontSize: 10.sp,
                       fontWeight: FontWeight.w700,
@@ -505,7 +508,7 @@ class _CreateInvoicePageState extends State<CreateInvoicePage> {
             ),
             SizedBox(height: 16.h),
             CustomButton(
-              text: 'Kembali',
+              text: 'invoice.action_back'.tr(),
               onPressed: () => context.pop(),
             ),
           ],

@@ -1,9 +1,11 @@
 import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
+import '../../../../core/utils/app_feedback.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
+import '../../../../core/constants/app_layout.dart';
 import '../../../../core/constants/app_colors.dart';
 import '../../../../core/media/media_upload_progress_banner.dart';
 import '../../../../core/media/media_upload_progress_controller.dart';
@@ -28,8 +30,10 @@ final _mentionRe = RegExp(r'(?<![A-Za-z0-9_])@([A-Za-z0-9_-]{2,60})');
 ///   bisa diubah, status bisa di-toggle PUBLISHED ↔ DRAFT.
 class AddPostPage extends StatefulWidget {
   final ForumPostEntity? editPost;
+  final String? groupId;
+  final String? groupName;
 
-  const AddPostPage({super.key, this.editPost});
+  const AddPostPage({super.key, this.editPost, this.groupId, this.groupName});
 
   bool get isEditMode => editPost != null;
 
@@ -120,16 +124,9 @@ class _AddPostPageState extends State<AddPostPage> {
     final cubit = ctx.read<ForumCubit>();
     final publishing = targetStatus == 'PUBLISHED';
     if (!_isValid(publishing: publishing)) {
-      ScaffoldMessenger.of(ctx).showSnackBar(
-        SnackBar(
-          content: Text(
-            publishing
-                ? 'Judul min. 5 karakter, isi min. 10 karakter atau lampirkan media'
-                : 'Judul minimal 5 karakter untuk disimpan sebagai draft',
-          ),
-          backgroundColor: AppColors.warning,
-          behavior: SnackBarBehavior.floating,
-        ),
+      showWarningSnackBar(
+        ctx,
+        publishing ? 'forum.validation_publish' : 'forum.validation_draft',
       );
       return;
     }
@@ -152,6 +149,7 @@ class _AddPostPageState extends State<AddPostPage> {
         title,
         content,
         _selectedCategoryId,
+        groupId: widget.groupId,
         attachments: List.from(_attachments),
         status: targetStatus,
       );
@@ -163,28 +161,24 @@ class _AddPostPageState extends State<AddPostPage> {
     return BlocProvider(
       create: (context) => sl<ForumCubit>()..getCategories(),
       child: Scaffold(
-        backgroundColor: AppColors.white,
+        backgroundColor: AppColors.surface,
         appBar: BisaAppBar(
-          backgroundColor: AppColors.white,
-          title: widget.isEditMode ? 'Edit Diskusi' : 'Buat Diskusi Baru',
+          backgroundColor: AppColors.surface,
+          title: widget.isEditMode
+              ? 'forum.title_edit'.tr()
+              : (widget.groupName != null
+                    ? '${'forum.title_create'.tr()} • ${widget.groupName}'
+                    : 'forum.title_create'.tr()),
         ),
         body: BlocConsumer<ForumCubit, ForumState>(
           listener: (context, state) {
             state.maybeWhen(
               success: () {
-                ScaffoldMessenger.of(context).showSnackBar(
-                  SnackBar(
-                    content: Text(
-                      widget.isEditMode
-                          ? 'Diskusi berhasil diperbarui'
-                          : 'postingan_berhasil_dibuat'.tr(),
-                    ),
-                    backgroundColor: AppColors.success,
-                    behavior: SnackBarBehavior.floating,
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                  ),
+                showSuccessSnackBar(
+                  context,
+                  widget.isEditMode
+                      ? 'forum.success_update'
+                      : 'postingan_berhasil_dibuat',
                 );
                 Navigator.pop(context, true);
               },
@@ -193,18 +187,7 @@ class _AddPostPageState extends State<AddPostPage> {
                   _categories = cats;
                 });
               },
-              error: (msg) {
-                ScaffoldMessenger.of(context).showSnackBar(
-                  SnackBar(
-                    content: Text(msg),
-                    backgroundColor: AppColors.error,
-                    behavior: SnackBarBehavior.floating,
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                  ),
-                );
-              },
+              error: (msg) => showErrorSnackBar(context, msg),
               orElse: () {},
             );
           },
@@ -231,24 +214,24 @@ class _AddPostPageState extends State<AddPostPage> {
                       children: [
                         if (widget.isEditMode) _buildStatusBanner(),
                         _buildCategorySelector(),
-                        SizedBox(height: 24.h),
+                        SizedBox(height: AppSpacing.xl),
                         CustomTextField(
-                          label: 'Judul Diskusi',
-                          hint: 'Apa topik pembicaraan Anda?',
+                          label: 'forum.label_title'.tr(),
+                          hint: 'forum.hint_title'.tr(),
                           controller: _titleController,
                           maxLines: 2,
                         ),
-                        SizedBox(height: 16.h),
+                        SizedBox(height: AppSpacing.md),
                         CustomTextField(
-                          label: 'Isi Diskusi',
-                          hint: 'Ceritakan lebih detail di sini...',
+                          label: 'forum.label_content'.tr(),
+                          hint: 'forum.hint_content'.tr(),
                           controller: _contentController,
                           maxLines: 10,
                         ),
-                        SizedBox(height: 16.h),
+                        SizedBox(height: AppSpacing.md),
                         if (_existingMedia.isNotEmpty) ...[
                           _buildExistingMediaList(),
-                          SizedBox(height: 12.h),
+                          SizedBox(height: AppSpacing.md12),
                         ],
                         ForumMediaPickerRow(
                           attachments: _attachments,
@@ -258,7 +241,7 @@ class _AddPostPageState extends State<AddPostPage> {
                           onPickImage: _pickImages,
                           onPickVideo: _pickVideo,
                         ),
-                        SizedBox(height: 16.h),
+                        SizedBox(height: AppSpacing.md),
                         _buildTagHintAndPreview(),
                       ],
                     ),
@@ -277,22 +260,22 @@ class _AddPostPageState extends State<AddPostPage> {
     final isDraft = _status == 'DRAFT';
     final isArchived = _status == 'ARCHIVED';
     final label = isArchived
-        ? 'Diarsipkan'
+        ? 'forum.status_archived'.tr()
         : isDraft
-            ? 'Draft (belum dipublikasikan)'
-            : 'Sudah dipublikasikan';
+            ? 'forum.status_draft'.tr()
+            : 'forum.status_published'.tr();
     final color = isArchived
         ? AppColors.grey400
         : isDraft
             ? AppColors.warning
             : AppColors.success;
     return Padding(
-      padding: EdgeInsets.only(bottom: 16.h),
+      padding: EdgeInsets.only(bottom: AppSpacing.md),
       child: Container(
-        padding: EdgeInsets.symmetric(horizontal: 14.w, vertical: 10.h),
+        padding: EdgeInsets.symmetric(horizontal: AppSpacing.section, vertical: AppSpacing.sm10),
         decoration: BoxDecoration(
           color: color.withValues(alpha: 0.1),
-          borderRadius: BorderRadius.circular(10.r),
+          borderRadius: BorderRadius.circular(AppRadius.md),
           border: Border.all(color: color.withValues(alpha: 0.4)),
         ),
         child: Row(
@@ -302,10 +285,10 @@ class _AddPostPageState extends State<AddPostPage> {
               size: 16.sp,
               color: color,
             ),
-            SizedBox(width: 8.w),
+            SizedBox(width: AppSpacing.sm),
             Expanded(
               child: Text(
-                'Status: $label',
+                'forum.status_prefix'.tr(namedArgs: {'label': label}),
                 style: TextStyle(
                   fontSize: 12.sp,
                   fontWeight: FontWeight.w800,
@@ -323,10 +306,10 @@ class _AddPostPageState extends State<AddPostPage> {
   /// Bantuan visual supaya user paham fitur tanpa harus tap "?" / help.
   Widget _buildTagHintAndPreview() {
     return Container(
-      padding: EdgeInsets.all(12.w),
+      padding: EdgeInsets.all(AppSpacing.md12),
       decoration: BoxDecoration(
         color: AppColors.primary.withValues(alpha: 0.05),
-        borderRadius: BorderRadius.circular(12.r),
+        borderRadius: BorderRadius.circular(AppRadius.lg),
         border: Border.all(
           color: AppColors.primary.withValues(alpha: 0.2),
         ),
@@ -340,7 +323,7 @@ class _AddPostPageState extends State<AddPostPage> {
               SizedBox(width: 6.w),
               Expanded(
                 child: Text(
-                  'Tip: pakai #tag untuk topik & @nama-produk untuk tautkan produk',
+                  'forum.tip_tags'.tr(),
                   style: TextStyle(
                     fontSize: 11.sp,
                     fontWeight: FontWeight.w700,
@@ -351,7 +334,7 @@ class _AddPostPageState extends State<AddPostPage> {
             ],
           ),
           if (_detectedTags.isNotEmpty || _detectedMentions.isNotEmpty) ...[
-            SizedBox(height: 10.h),
+            SizedBox(height: AppSpacing.sm10),
             Wrap(
               spacing: 6.w,
               runSpacing: 6.h,
@@ -375,8 +358,10 @@ class _AddPostPageState extends State<AddPostPage> {
             SizedBox(height: 4.h),
             Text(
               _detectedMentions.isNotEmpty
-                  ? 'Produk akan otomatis dicocokkan dengan @${_detectedMentions.first}'
-                  : 'Tag akan otomatis disimpan sebagai topik',
+                  ? 'forum.mention_preview'.tr(
+                      namedArgs: {'name': _detectedMentions.first},
+                    )
+                  : 'forum.tag_preview'.tr(),
               style: TextStyle(
                 fontSize: 10.sp,
                 color: AppColors.textHint,
@@ -395,10 +380,10 @@ class _AddPostPageState extends State<AddPostPage> {
     required Color color,
   }) {
     return Container(
-      padding: EdgeInsets.symmetric(horizontal: 8.w, vertical: 4.h),
+      padding: EdgeInsets.symmetric(horizontal: AppSpacing.sm, vertical: AppSpacing.xs),
       decoration: BoxDecoration(
         color: color.withValues(alpha: 0.12),
-        borderRadius: BorderRadius.circular(16.r),
+        borderRadius: BorderRadius.circular(AppRadius.xl),
       ),
       child: Row(
         mainAxisSize: MainAxisSize.min,
@@ -423,17 +408,17 @@ class _AddPostPageState extends State<AddPostPage> {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(
-          'Media tersimpan',
+          'forum.saved_media'.tr(),
           style: TextStyle(
             fontSize: 12.sp,
             fontWeight: FontWeight.w800,
             color: AppColors.textSecondary,
           ),
         ),
-        SizedBox(height: 8.h),
+        SizedBox(height: AppSpacing.sm),
         Wrap(
-          spacing: 8.w,
-          runSpacing: 8.h,
+          spacing: AppSpacing.sm,
+          runSpacing: AppSpacing.sm,
           children: _existingMedia.asMap().entries.map((entry) {
             final index = entry.key;
             final m = entry.value;
@@ -444,7 +429,7 @@ class _AddPostPageState extends State<AddPostPage> {
                   height: 72.w,
                   decoration: BoxDecoration(
                     color: AppColors.grey100,
-                    borderRadius: BorderRadius.circular(10.r),
+                    borderRadius: BorderRadius.circular(AppRadius.md),
                   ),
                   clipBehavior: Clip.antiAlias,
                   child: m.isImage
@@ -476,7 +461,7 @@ class _AddPostPageState extends State<AddPostPage> {
                       ),
                       child: const Icon(
                         Icons.close,
-                        color: Colors.white,
+                        color: AppColors.surface,
                         size: 14,
                       ),
                     ),
@@ -493,8 +478,10 @@ class _AddPostPageState extends State<AddPostPage> {
   Widget _buildBottomActionBar(BuildContext context, bool isLoading) {
     final isDraft = _status == 'DRAFT';
     final publishLabel = widget.isEditMode
-        ? (isDraft ? 'Terbitkan' : 'Simpan Perubahan')
-        : 'Posting';
+        ? (isDraft
+            ? 'forum.publish_now'.tr()
+            : 'forum.publish_changes'.tr())
+        : 'forum.publish'.tr();
     return SafeArea(
       top: false,
       child: Padding(
@@ -503,7 +490,7 @@ class _AddPostPageState extends State<AddPostPage> {
           children: [
             Expanded(
               child: CustomButton(
-                text: 'Simpan Draft',
+                text: 'forum.save_draft'.tr(),
                 isOutlined: true,
                 isLoading: false,
                 onPressed: isLoading
@@ -511,7 +498,7 @@ class _AddPostPageState extends State<AddPostPage> {
                     : () => _submit(context, targetStatus: 'DRAFT'),
               ),
             ),
-            SizedBox(width: 12.w),
+            SizedBox(width: AppSpacing.md12),
             Expanded(
               flex: 2,
               child: CustomButton(
@@ -562,9 +549,9 @@ class _AddPostPageState extends State<AddPostPage> {
         Row(
           children: [
             Icon(LucideIcons.tag, size: 16.sp, color: AppColors.primary),
-            SizedBox(width: 8.w),
+            SizedBox(width: AppSpacing.sm),
             Text(
-              'Pilih Kategori',
+              'forum.select_category'.tr(),
               style: TextStyle(
                 fontSize: 14.sp,
                 color: AppColors.textPrimary,
@@ -573,14 +560,14 @@ class _AddPostPageState extends State<AddPostPage> {
             ),
           ],
         ),
-        SizedBox(height: 16.h),
+        SizedBox(height: AppSpacing.md),
         SizedBox(
           height: 40.h,
           child: ListView(
             scrollDirection: Axis.horizontal,
             physics: const BouncingScrollPhysics(),
             children: [
-              _buildCatChip(null, 'Umum'),
+              _buildCatChip(null, 'forum.category_general'.tr()),
               ..._categories.map((cat) => _buildCatChip(cat.id, cat.name)),
             ],
           ),
@@ -596,14 +583,14 @@ class _AddPostPageState extends State<AddPostPage> {
       child: AnimatedContainer(
         duration: const Duration(milliseconds: 200),
         margin: EdgeInsets.only(right: 10.w),
-        padding: EdgeInsets.symmetric(horizontal: 20.w),
+        padding: EdgeInsets.symmetric(horizontal: AppSpacing.lg),
         alignment: Alignment.center,
         decoration: BoxDecoration(
           gradient: isSelected ? AppColors.primaryGradient : null,
           color: isSelected ? null : AppColors.grey50,
-          borderRadius: BorderRadius.circular(14.r),
+          borderRadius: BorderRadius.circular(AppRadius.tile),
           border: Border.all(
-            color: isSelected ? Colors.transparent : AppColors.grey200,
+            color: isSelected ? AppColors.transparent : AppColors.grey200,
             width: 1,
           ),
           boxShadow: isSelected
@@ -620,7 +607,7 @@ class _AddPostPageState extends State<AddPostPage> {
           name,
           style: TextStyle(
             fontSize: 13.sp,
-            color: isSelected ? Colors.white : AppColors.textSecondary,
+            color: isSelected ? AppColors.textOnPrimary : AppColors.textSecondary,
             fontWeight: isSelected ? FontWeight.w700 : FontWeight.w600,
           ),
         ),

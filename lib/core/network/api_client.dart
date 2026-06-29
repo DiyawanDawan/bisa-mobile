@@ -3,7 +3,9 @@ import 'dart:async';
 import 'package:dio/dio.dart';
 import 'package:flutter/foundation.dart';
 import 'package:talker_dio_logger/talker_dio_logger.dart';
+import '../errors/exceptions.dart';
 import 'auth_session_bridge.dart';
+import 'ngrok_support.dart';
 import 'request_telemetry.dart';
 import 'token_repository.dart';
 
@@ -45,16 +47,19 @@ class ApiClient {
   Dio get dio => _dio;
 
   void _init() {
+    final headers = <String, dynamic>{
+      'Accept': 'application/json',
+      'Content-Type': 'application/json',
+      ...NgrokSupport.requestHeaders(_baseUrl),
+    };
+
     _dio = Dio(
       BaseOptions(
         baseUrl: _baseUrl,
         connectTimeout: ApiConstants.connectTimeout,
         receiveTimeout: ApiConstants.receiveTimeout,
         sendTimeout: ApiConstants.sendTimeout,
-        headers: {
-          'Accept': 'application/json',
-          'Content-Type': 'application/json',
-        },
+        headers: headers,
       ),
     );
 
@@ -74,6 +79,7 @@ class ApiClient {
     _dio.interceptors.add(
       InterceptorsWrapper(
         onRequest: (options, handler) async {
+          options.headers.addAll(NgrokSupport.requestHeaders(_baseUrl));
           final token = await _tokenRepository.getAccessToken();
           if (token != null) {
             options.headers['Authorization'] = 'Bearer $token';
@@ -81,11 +87,35 @@ class ApiClient {
           return handler.next(options);
         },
         onResponse: (response, handler) {
+          if (NgrokSupport.isNgrokErrorBody(response.data)) {
+            return handler.reject(
+              DioException(
+                requestOptions: response.requestOptions,
+                response: response,
+                type: DioExceptionType.badResponse,
+                error: NetworkException(
+                  NgrokSupport.errorMessageKey(response.data),
+                ),
+              ),
+            );
+          }
           RequestTelemetry.onSuccess(response);
           return handler.next(response);
         },
         onError: (DioException err, handler) async {
           RequestTelemetry.onError(err);
+          if (NgrokSupport.isNgrokErrorBody(err.response?.data)) {
+            return handler.reject(
+              DioException(
+                requestOptions: err.requestOptions,
+                response: err.response,
+                type: DioExceptionType.badResponse,
+                error: NetworkException(
+                  NgrokSupport.errorMessageKey(err.response?.data),
+                ),
+              ),
+            );
+          }
           if (err.response?.statusCode == 401 &&
               !err.requestOptions.path.contains('/auth/login') &&
               !err.requestOptions.path.contains('/auth/refresh-token')) {
@@ -104,7 +134,7 @@ class ApiClient {
                       data: {
                         'meta': {
                           'message':
-                              'Sesi diperbarui. Silakan tekan Simpan lagi.',
+                              'errors.session_refresh_retry',
                         },
                       },
                     ),
@@ -154,6 +184,11 @@ class ApiClient {
         baseUrl: _baseUrl,
         connectTimeout: ApiConstants.connectTimeout,
         receiveTimeout: ApiConstants.receiveTimeout,
+        headers: {
+          'Accept': 'application/json',
+          'Content-Type': 'application/json',
+          ...NgrokSupport.requestHeaders(_baseUrl),
+        },
       ));
 
       final response = await refreshDio.post(

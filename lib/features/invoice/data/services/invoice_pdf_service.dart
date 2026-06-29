@@ -9,6 +9,7 @@ import 'package:pdf/widgets.dart' as pw;
 import 'package:share_plus/share_plus.dart';
 import '../../../../core/constants/app_assets.dart';
 import '../../domain/entities/invoice_pdf_data.dart';
+import '../../domain/entities/invoice_pdf_labels.dart';
 
 class InvoicePdfGenerator {
   static const PdfColor _primary = PdfColor.fromInt(0xFF135122);
@@ -16,9 +17,6 @@ class InvoicePdfGenerator {
 
   /// Selaras dengan splash / branding aplikasi.
   static const String _brandName = 'BISA';
-  static const String _brandTagline =
-      'Biochart indonesia Sirkular Agritectur';
-  static const String _documentTitle = 'Tagihan B2B Biomassa';
 
   /// Font bawaan PDF tidak mendukung em dash / emoji — normalisasi teks.
   static String _pdfSafeText(String? text) {
@@ -46,12 +44,16 @@ class InvoicePdfGenerator {
     return '${s.substring(0, maxLen)}...';
   }
 
-  static Future<List<int>> generate(InvoicePdfData data) async {
+  static Future<List<int>> generate(
+    InvoicePdfData data, {
+    required InvoicePdfLabels labels,
+    String intlLocale = 'id_ID',
+  }) async {
     final doc = pw.Document();
     final logoBytes = await _loadLogoBytes();
-    final dateFmt = DateFormat('d MMMM yyyy, HH:mm', 'id_ID');
+    final dateFmt = DateFormat('d MMMM yyyy, HH:mm', intlLocale);
     final currencyFmt = NumberFormat.currency(
-      locale: 'id_ID',
+      locale: intlLocale,
       symbol: 'Rp ',
       decimalDigits: 0,
     );
@@ -74,24 +76,24 @@ class InvoicePdfGenerator {
               crossAxisAlignment: pw.CrossAxisAlignment.stretch,
               mainAxisSize: pw.MainAxisSize.min,
               children: [
-                _header(data, dateFmt, logoBytes),
+                _header(data, dateFmt, logoBytes, labels),
                 pw.SizedBox(height: _gapM),
-                _partiesSection(data),
+                _partiesSection(data, labels),
                 pw.SizedBox(height: _gapM),
-                _productSection(data, currencyFmt),
+                _productSection(data, currencyFmt, labels),
                 pw.SizedBox(height: _gapM),
-                _breakdownSection(data, currencyFmt),
+                _breakdownSection(data, currencyFmt, labels),
                 pw.SizedBox(height: _gapM),
-                _shippingSection(data),
+                _shippingSection(data, labels),
                 if (data.specifications != null &&
                     data.specifications!.trim().isNotEmpty) ...[
                   pw.SizedBox(height: _gapM),
-                  _notesSection(data.specifications!),
+                  _notesSection(data.specifications!, labels),
                 ],
                 pw.SizedBox(height: _gapM),
-                _qrSection(data),
+                _qrSection(data, labels),
                 pw.SizedBox(height: _gapS),
-                _footer(),
+                _footer(labels),
               ],
             ),
           ),
@@ -115,6 +117,7 @@ class InvoicePdfGenerator {
     InvoicePdfData data,
     DateFormat dateFmt,
     Uint8List? logoBytes,
+    InvoicePdfLabels labels,
   ) {
     return pw.Container(
       padding: const pw.EdgeInsets.all(_boxPad + 2),
@@ -151,12 +154,12 @@ class InvoicePdfGenerator {
                   ),
                   pw.SizedBox(height: 2),
                   pw.Text(
-                    _brandTagline,
+                    labels.brandTagline,
                     style: const pw.TextStyle(fontSize: 7, color: _textMuted),
                   ),
                   pw.SizedBox(height: 3),
                   pw.Text(
-                    _documentTitle,
+                    labels.documentTitle,
                     style: const pw.TextStyle(fontSize: 8, color: _textMuted),
                   ),
                 ],
@@ -196,13 +199,13 @@ class InvoicePdfGenerator {
     );
   }
 
-  static pw.Widget _partiesSection(InvoicePdfData data) {
+  static pw.Widget _partiesSection(InvoicePdfData data, InvoicePdfLabels labels) {
     return pw.Row(
       crossAxisAlignment: pw.CrossAxisAlignment.start,
       children: [
         pw.Expanded(
           child: _partyBox(
-            'Supplier (Penjual)',
+            labels.supplierLabel,
             data.supplierName,
             email: data.supplierEmail,
           ),
@@ -210,7 +213,7 @@ class InvoicePdfGenerator {
         pw.SizedBox(width: _gapM),
         pw.Expanded(
           child: _partyBox(
-            'Pembeli',
+            labels.buyerLabel,
             data.buyerName,
             email: data.buyerEmail,
             company: data.buyerCompany,
@@ -260,12 +263,16 @@ class InvoicePdfGenerator {
     );
   }
 
-  static pw.Widget _productSection(InvoicePdfData data, NumberFormat currencyFmt) {
+  static pw.Widget _productSection(
+    InvoicePdfData data,
+    NumberFormat currencyFmt,
+    InvoicePdfLabels labels,
+  ) {
     return pw.Column(
       crossAxisAlignment: pw.CrossAxisAlignment.start,
       children: [
         pw.Text(
-          'Detail Produk',
+          labels.productDetail,
           style: pw.TextStyle(fontWeight: pw.FontWeight.bold, fontSize: 9),
         ),
         pw.SizedBox(height: _gapS),
@@ -281,10 +288,10 @@ class InvoicePdfGenerator {
             pw.TableRow(
               decoration: const pw.BoxDecoration(color: PdfColors.grey200),
               children: [
-                _cell('Produk', bold: true),
-                _cell('Qty', bold: true),
-                _cell('Harga/${data.productUnit}', bold: true),
-                _cell('Subtotal', bold: true),
+                _cell(labels.colProduct, bold: true),
+                _cell(labels.colQty, bold: true),
+                _cell(labels.colPrice(data.productUnit), bold: true),
+                _cell(labels.colSubtotal, bold: true),
               ],
             ),
             pw.TableRow(
@@ -301,7 +308,11 @@ class InvoicePdfGenerator {
     );
   }
 
-  static pw.Widget _breakdownSection(InvoicePdfData data, NumberFormat currencyFmt) {
+  static pw.Widget _breakdownSection(
+    InvoicePdfData data,
+    NumberFormat currencyFmt,
+    InvoicePdfLabels labels,
+  ) {
     return pw.Container(
       width: double.infinity,
       padding: const pw.EdgeInsets.all(_boxPad),
@@ -311,14 +322,14 @@ class InvoicePdfGenerator {
       ),
       child: pw.Column(
         children: [
-          _breakdownRow('Subtotal Barang', currencyFmt.format(data.subtotal)),
-          _breakdownRow('Biaya Platform', currencyFmt.format(data.platformFee)),
+          _breakdownRow(labels.subtotalGoods, currencyFmt.format(data.subtotal)),
+          _breakdownRow(labels.platformFee, currencyFmt.format(data.platformFee)),
           if (data.logisticsFee > 0)
-            _breakdownRow('Biaya Ongkir (BISA)', currencyFmt.format(data.logisticsFee)),
-          _breakdownRow('PPN', currencyFmt.format(data.vatAmount)),
+            _breakdownRow(labels.shippingFee, currencyFmt.format(data.logisticsFee)),
+          _breakdownRow(labels.vat, currencyFmt.format(data.vatAmount)),
           pw.Divider(color: PdfColors.grey400),
           _breakdownRow(
-            'Total Tagihan',
+            labels.total,
             currencyFmt.format(data.totalAmount),
             bold: true,
             valueColor: _primary,
@@ -351,11 +362,11 @@ class InvoicePdfGenerator {
     );
   }
 
-  static pw.Widget _shippingSection(InvoicePdfData data) {
+  static pw.Widget _shippingSection(InvoicePdfData data, InvoicePdfLabels labels) {
     final destSnap = data.shippingSnapshot;
     final originSnap = data.sellerShippingSnapshot ??
         InvoicePdfData.originFromSnapshot(destSnap);
-    final methodLines = _shippingMethodLines(data);
+    final methodLines = _shippingMethodLines(data, labels);
     final hasDestination = destSnap != null && destSnap.isNotEmpty;
     final hasOrigin = originSnap != null && originSnap.isNotEmpty;
 
@@ -367,7 +378,7 @@ class InvoicePdfGenerator {
       crossAxisAlignment: pw.CrossAxisAlignment.start,
       children: [
         pw.Text(
-          'Pengiriman BISA',
+          labels.shippingTitle,
           style: pw.TextStyle(fontWeight: pw.FontWeight.bold, fontSize: 9),
         ),
         pw.SizedBox(height: _gapS),
@@ -377,11 +388,12 @@ class InvoicePdfGenerator {
             if (hasOrigin)
               pw.Expanded(
                 child: _shippingAddressBox(
-                  'Asal - Pengirim',
+                  labels.originTitle,
                   originSnap,
+                  labels: labels,
                   footer: data.sellerOriginLabel != null &&
                           data.sellerOriginLabel!.isNotEmpty
-                      ? 'Lokasi ongkir: ${data.sellerOriginLabel}'
+                      ? labels.originFeeLocation(data.sellerOriginLabel!)
                       : null,
                 ),
               ),
@@ -389,8 +401,9 @@ class InvoicePdfGenerator {
             if (hasDestination)
               pw.Expanded(
                 child: _shippingAddressBox(
-                  'Tujuan - Penerima',
+                  labels.destinationTitle,
                   destSnap,
+                  labels: labels,
                 ),
               ),
           ],
@@ -409,13 +422,14 @@ class InvoicePdfGenerator {
   static pw.Widget _shippingAddressBox(
     String title,
     Map<String, dynamic> snap, {
+    required InvoicePdfLabels labels,
     String? footer,
   }) {
     final lines = <String>[
       if (snap['recipient'] != null && snap['recipient'].toString().isNotEmpty)
         snap['recipient'].toString(),
       if (snap['phone'] != null && snap['phone'].toString().isNotEmpty)
-        'Telp: ${snap['phone']}',
+        labels.phoneLine(snap['phone'].toString()),
       if (snap['address'] != null && snap['address'].toString().isNotEmpty)
         snap['address'].toString(),
       if (snap['regency'] != null ||
@@ -458,7 +472,10 @@ class InvoicePdfGenerator {
     );
   }
 
-  static List<String> _shippingMethodLines(InvoicePdfData data) {
+  static List<String> _shippingMethodLines(
+    InvoicePdfData data,
+    InvoicePdfLabels labels,
+  ) {
     final lines = <String>[];
     final snap = data.shippingSnapshot;
     Map<String, dynamic>? logistics;
@@ -481,32 +498,33 @@ class InvoicePdfGenerator {
     final etd = (logistics?['etd'] ?? os?.etd)?.toString();
 
     if (courier != null && courier.isNotEmpty) {
-      lines.add(
-        'Kurir: ${courierName != null && courierName.isNotEmpty ? '$courierName ($courier)' : courier.toUpperCase()}',
-      );
+      final detail = courierName != null && courierName.isNotEmpty
+          ? '$courierName ($courier)'
+          : courier.toUpperCase();
+      lines.add(labels.courierLine(detail));
     }
     if (service != null && service.isNotEmpty) {
-      lines.add('Layanan: $service');
+      lines.add(labels.serviceLine(service));
     }
     if (origin != null && origin.isNotEmpty) {
-      lines.add('Asal ongkir: $origin');
+      lines.add(labels.shippingOriginLine(origin));
     }
     if (destination != null && destination.isNotEmpty) {
-      lines.add('Tujuan ongkir: $destination');
+      lines.add(labels.shippingDestinationLine(destination));
     }
     if (etd != null && etd.isNotEmpty) {
-      lines.add('Estimasi: $etd');
+      lines.add(labels.etaLine(etd));
     }
 
     return lines;
   }
 
-  static pw.Widget _notesSection(String notes) {
+  static pw.Widget _notesSection(String notes, InvoicePdfLabels labels) {
     return pw.Column(
       crossAxisAlignment: pw.CrossAxisAlignment.start,
       children: [
         pw.Text(
-          'Catatan',
+          labels.notes,
           style: pw.TextStyle(fontWeight: pw.FontWeight.bold, fontSize: 8),
         ),
         pw.SizedBox(height: 2),
@@ -518,7 +536,7 @@ class InvoicePdfGenerator {
     );
   }
 
-  static pw.Widget _qrSection(InvoicePdfData data) {
+  static pw.Widget _qrSection(InvoicePdfData data, InvoicePdfLabels labels) {
     final payload = _qrPayload(data);
     return pw.Container(
       width: double.infinity,
@@ -543,7 +561,7 @@ class InvoicePdfGenerator {
               crossAxisAlignment: pw.CrossAxisAlignment.start,
               children: [
                 pw.Text(
-                  'Kontrak Digital',
+                  labels.digitalContract,
                   style: pw.TextStyle(
                     fontWeight: pw.FontWeight.bold,
                     fontSize: 8,
@@ -560,7 +578,7 @@ class InvoicePdfGenerator {
                 ),
                 pw.SizedBox(height: 2),
                 pw.Text(
-                  'Scan QR untuk verifikasi tagihan resmi BISA.',
+                  labels.qrHint,
                   style: const pw.TextStyle(fontSize: 6, color: _textMuted),
                 ),
               ],
@@ -571,18 +589,18 @@ class InvoicePdfGenerator {
     );
   }
 
-  static pw.Widget _footer() {
+  static pw.Widget _footer(InvoicePdfLabels labels) {
     return pw.Column(
       crossAxisAlignment: pw.CrossAxisAlignment.start,
       children: [
         pw.Divider(color: PdfColors.grey400, height: 0.5),
         pw.SizedBox(height: _gapS),
         pw.Text(
-          'Tagihan resmi BISA · pembayaran escrow · pastikan data sesuai sebelum bayar.',
+          labels.footerDisclaimer,
           style: const pw.TextStyle(fontSize: 6, color: _textMuted),
         ),
         pw.Text(
-          '© BISA - Biomassa Indonesia Sustainable Alliance',
+          labels.copyright,
           style: const pw.TextStyle(fontSize: 6, color: _textMuted),
         ),
       ],
@@ -604,8 +622,16 @@ class InvoicePdfGenerator {
 }
 
 class InvoicePdfExporter {
-  static Future<File> generateTempFile(InvoicePdfData data) async {
-    final bytes = await InvoicePdfGenerator.generate(data);
+  static Future<File> generateTempFile(
+    InvoicePdfData data, {
+    required InvoicePdfLabels labels,
+    String intlLocale = 'id_ID',
+  }) async {
+    final bytes = await InvoicePdfGenerator.generate(
+      data,
+      labels: labels,
+      intlLocale: intlLocale,
+    );
     final dir = await getTemporaryDirectory();
     final safeName = data.invoiceNumber.replaceAll(RegExp(r'[#/\\:*?"<>|]'), '-');
     final file = File('${dir.path}/tagihan-$safeName.pdf');
@@ -613,15 +639,23 @@ class InvoicePdfExporter {
     return file;
   }
 
-  static Future<void> share(InvoicePdfData data) async {
-    final file = await generateTempFile(data);
+  static Future<void> share(
+    InvoicePdfData data, {
+    required InvoicePdfLabels labels,
+    String intlLocale = 'id_ID',
+  }) async {
+    final file = await generateTempFile(
+      data,
+      labels: labels,
+      intlLocale: intlLocale,
+    );
     final safeName = data.invoiceNumber.replaceAll(RegExp(r'[#/\\:*?"<>|]'), '-');
 
     await SharePlus.instance.share(
       ShareParams(
         files: [XFile(file.path, mimeType: 'application/pdf', name: 'tagihan-$safeName.pdf')],
-        subject: 'Tagihan BISA ${data.invoiceNumber}',
-        text: 'Tagihan BISA - ${data.invoiceNumber}',
+        subject: labels.shareSubject(data.invoiceNumber),
+        text: labels.shareText(data.invoiceNumber),
       ),
     );
   }

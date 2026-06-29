@@ -1,6 +1,8 @@
+import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:mobile_bisa/core/constants/app_colors.dart';
+import 'package:mobile_bisa/core/i18n/failure_messages.dart';
 import '../utils/invoice_issue_readiness.dart';
 
 /// Daftar syarat sebelum tagihan bisa diterbitkan.
@@ -8,16 +10,20 @@ class InvoiceIssueChecklistCard extends StatelessWidget {
   const InvoiceIssueChecklistCard({
     super.key,
     required this.readiness,
-    this.readyText = 'Data lengkap — tagihan siap diterbitkan',
-    this.pendingTitle = 'Lengkapi data berikut sebelum terbitkan tagihan',
+    this.readyText,
+    this.pendingTitle,
   });
 
   final InvoiceIssueReadiness readiness;
-  final String readyText;
-  final String pendingTitle;
+  final String? readyText;
+  final String? pendingTitle;
 
   @override
   Widget build(BuildContext context) {
+    final resolvedReadyText = readyText ?? 'invoice.issue_ready'.tr();
+    final resolvedPendingTitle =
+        pendingTitle ?? 'invoice.issue_pending_title'.tr();
+
     if (readiness.canIssue) {
       return Container(
         width: double.infinity,
@@ -33,7 +39,7 @@ class InvoiceIssueChecklistCard extends StatelessWidget {
             SizedBox(width: 8.w),
             Expanded(
               child: Text(
-                readyText,
+                resolvedReadyText,
                 style: TextStyle(
                   fontSize: 12.sp,
                   fontWeight: FontWeight.w700,
@@ -63,7 +69,7 @@ class InvoiceIssueChecklistCard extends StatelessWidget {
               SizedBox(width: 8.w),
               Expanded(
                 child: Text(
-                  pendingTitle,
+                  resolvedPendingTitle,
                   style: TextStyle(
                     fontSize: 12.sp,
                     fontWeight: FontWeight.w800,
@@ -83,7 +89,7 @@ class InvoiceIssueChecklistCard extends StatelessWidget {
                   Text('• ', style: TextStyle(fontSize: 12.sp, color: AppColors.error)),
                   Expanded(
                     child: Text(
-                      item,
+                      localizeFailureMessage(item),
                       style: TextStyle(
                         fontSize: 11.sp,
                         color: AppColors.textSecondary,

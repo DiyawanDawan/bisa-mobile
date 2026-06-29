@@ -21,14 +21,19 @@ import 'package:mobile_bisa/features/orders/presentation/bloc/order_cubit.dart';
 import 'package:mobile_bisa/features/commerce/presentation/bloc/commerce_cubit.dart';
 import 'package:mobile_bisa/features/follow/presentation/bloc/follow_cubit.dart';
 import 'package:mobile_bisa/features/notifications/presentation/bloc/notification_cubit.dart';
+import 'package:mobile_bisa/features/marketplace/presentation/bloc/compare_cubit.dart';
 import 'package:mobile_bisa/core/utils/router.dart';
 import 'package:mobile_bisa/injection_container.dart' as di;
 import 'package:mobile_bisa/core/constants/app_colors.dart';
+import 'package:mobile_bisa/core/constants/app_text_styles.dart';
+import 'package:mobile_bisa/core/i18n/bootstrap_localization.dart';
 import 'package:mobile_bisa/core/services/notification_service.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'package:mobile_bisa/core/config/app_config.dart';
 import 'package:mobile_bisa/core/network/auth_session_bridge.dart';
 import 'package:mobile_bisa/core/services/session_manager.dart';
 import 'package:mobile_bisa/shared/pages/config_error_page.dart';
+import 'package:timeago/timeago.dart' as timeago;
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -36,11 +41,18 @@ void main() async {
   // Set Status Bar to Transparent
   SystemChrome.setSystemUIOverlayStyle(
     const SystemUiOverlayStyle(
-      statusBarColor: Colors.transparent,
+      statusBarColor: AppColors.transparent,
       statusBarIconBrightness: Brightness.dark,
     ),
   );
   
+  await AppConfig.bootstrap();
+  if (kDebugMode) {
+    debugPrint('══════════════════════════════════════');
+    debugPrint('BISA API → ${AppConfig.effectiveApiUrl}');
+    debugPrint('══════════════════════════════════════');
+  }
+
   if (!AppConfig.isApiConfigured && !kDebugMode) {
     runApp(const ConfigErrorPage());
     return;
@@ -54,9 +66,13 @@ void main() async {
         ctx.read<AuthCubit>().sessionExpired();
         break;
       }
-    }
+    };
   };
   await EasyLocalization.ensureInitialized();
+  timeago.setLocaleMessages('id', timeago.IdMessages());
+  timeago.setLocaleMessages('id_short', timeago.IdMessages());
+  timeago.setLocaleMessages('en', timeago.EnMessages());
+  timeago.setLocaleMessages('en_short', timeago.EnShortMessages());
 
   HydratedBloc.storage = await HydratedStorage.build(
     storageDirectory: kIsWeb
@@ -71,6 +87,7 @@ void main() async {
       supportedLocales: const [Locale('en', 'US'), Locale('id', 'ID')],
       path: 'assets/translations',
       fallbackLocale: const Locale('id', 'ID'),
+      saveLocale: true,
       child: MultiBlocProvider(
         providers: [
           BlocProvider(create: (context) => di.sl<AuthCubit>()..checkAuth()),
@@ -84,8 +101,10 @@ void main() async {
           BlocProvider(create: (context) => di.sl<CommerceCubit>()),
           BlocProvider(create: (context) => di.sl<FollowCubit>()),
           BlocProvider(create: (context) => di.sl<NotificationCubit>()),
+          BlocProvider(create: (context) => di.sl<CompareCubit>()),
         ],
-        child: const MyApp(),
+        // Jangan const — agar MaterialApp ikut rebuild saat ganti locale.
+        child: MyApp(),
       ),
     ),
   );
@@ -94,9 +113,21 @@ void main() async {
   unawaited(_bootstrapBackgroundServices());
 }
 
+Locale _localeFromSavedPreference(String? raw) {
+  if (raw == null || raw.isEmpty) return const Locale('id', 'ID');
+  final parts = raw.split('_');
+  if (parts.length == 2) return Locale(parts[0], parts[1]);
+  if (raw == 'en') return const Locale('en', 'US');
+  if (raw == 'id') return const Locale('id', 'ID');
+  return const Locale('id', 'ID');
+}
+
 Future<void> _bootstrapBackgroundServices() async {
   try {
     await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
+    final prefs = await SharedPreferences.getInstance();
+    final savedLocale = _localeFromSavedPreference(prefs.getString('locale'));
+    await bootstrapLocalization(savedLocale);
     await NotificationService.initialize();
     await FirebaseAnalytics.instance.logAppOpen();
   } catch (e, st) {
@@ -109,6 +140,7 @@ class MyApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final locale = context.locale;
     return BlocListener<AuthCubit, AuthState>(
       listener: (context, state) {
         state.maybeWhen(
@@ -130,7 +162,7 @@ class MyApp extends StatelessWidget {
       splitScreenMode: true,
       builder: (context, child) {
         return MaterialApp.router(
-          title: 'Mobile BISA',
+          title: 'app_title'.tr(),
           debugShowCheckedModeBanner: false,
           theme: ThemeData(
             useMaterial3: true,
@@ -145,12 +177,20 @@ class MyApp extends StatelessWidget {
             textTheme: Typography.englishLike2021.apply(
               bodyColor: AppColors.textPrimary,
               displayColor: AppColors.textPrimary,
+            ).copyWith(
+              titleLarge: AppTextStyles.pageTitle(),
+              titleMedium: AppTextStyles.sectionTitle(),
+              bodyLarge: AppTextStyles.body(),
+              bodyMedium: AppTextStyles.bodySm(),
+              bodySmall: AppTextStyles.bodySecondary(),
+              labelLarge: AppTextStyles.button(),
+              labelSmall: AppTextStyles.chip(),
             ),
           ),
           routerConfig: goRouter,
           localizationsDelegates: context.localizationDelegates,
           supportedLocales: context.supportedLocales,
-          locale: context.locale,
+          locale: locale,
           
           
         );

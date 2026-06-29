@@ -8,5 +8,6 @@ abstract class AiRepository {
     required double waktuPembakaran,
     required double beratInput,
   });
+  Future<Either<Failure, List<Map<String, dynamic>>>> getRecentIotPredictions({int limit = 20});
   Future<Either<Failure, String>> askChatbot(String question);
 }

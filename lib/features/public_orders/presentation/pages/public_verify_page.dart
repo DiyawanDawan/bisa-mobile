@@ -1,8 +1,10 @@
+import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:go_router/go_router.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
 import 'package:url_launcher/url_launcher.dart';
+import '../../../../core/constants/app_layout.dart';
 import '../../../../core/constants/app_colors.dart';
 import '../../../../core/utils/contract_verify_url.dart';
 import '../../../../shared/widgets/bisa_app_bar.dart';
@@ -58,7 +60,7 @@ class _PublicVerifyPageState extends State<PublicVerifyPage> {
     } catch (_) {
       if (!mounted) return;
       setState(() {
-        _error = 'Kontrak tidak ditemukan atau nomor tidak valid.';
+        _error = 'public.verify_not_found'.tr();
         _loading = false;
       });
     }
@@ -68,35 +70,35 @@ class _PublicVerifyPageState extends State<PublicVerifyPage> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: AppColors.background,
-      appBar: const BisaAppBar(
-        title: 'Verifikasi Kontrak',
-        backgroundColor: Colors.white,
+      appBar: BisaAppBar(
+        title: 'public.verify_title'.tr(),
+        backgroundColor: AppColors.surface,
       ),
       body: SingleChildScrollView(
-        padding: EdgeInsets.all(20.w),
+        padding: EdgeInsets.all(AppSpacing.lg),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
             TextField(
               controller: _controller,
               decoration: InputDecoration(
-                hintText: 'Nomor pesanan / kontrak',
+                hintText: 'public.verify_hint'.tr(),
                 filled: true,
-                fillColor: Colors.white,
+                fillColor: AppColors.surface,
                 border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(12.r),
+                  borderRadius: BorderRadius.circular(AppRadius.lg),
                 ),
               ),
             ),
-            SizedBox(height: 12.h),
+            SizedBox(height: AppSpacing.md12),
             ElevatedButton(
               onPressed: _loading ? null : () => _load(_controller.text),
               style: ElevatedButton.styleFrom(
                 backgroundColor: AppColors.primary,
-                foregroundColor: Colors.white,
+                foregroundColor: AppColors.textOnPrimary,
                 minimumSize: Size(double.infinity, 48.h),
                 shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(12.r),
+                  borderRadius: BorderRadius.circular(AppRadius.lg),
                 ),
               ),
               child: _loading
@@ -105,31 +107,31 @@ class _PublicVerifyPageState extends State<PublicVerifyPage> {
                       height: 22.w,
                       child: const CircularProgressIndicator(
                         strokeWidth: 2,
-                        color: Colors.white,
+                        color: AppColors.surface,
                       ),
                     )
-                  : const Text('Verifikasi'),
+                  : Text('public.verify_button'.tr()),
             ),
             if (_error != null) ...[
-              SizedBox(height: 16.h),
-              Text(_error!, style: TextStyle(color: Colors.red.shade700, fontSize: 13.sp)),
+              SizedBox(height: AppSpacing.md),
+              Text(_error!, style: TextStyle(color: AppColors.error, fontSize: 13.sp)),
             ],
             if (_result != null) ...[
-              SizedBox(height: 20.h),
+              SizedBox(height: AppSpacing.lg),
               Container(
-                padding: EdgeInsets.all(16.w),
+                padding: EdgeInsets.all(AppSpacing.md),
                 decoration: BoxDecoration(
                   color: AppColors.primaryLight,
-                  borderRadius: BorderRadius.circular(12.r),
+                  borderRadius: BorderRadius.circular(AppRadius.lg),
                   border: Border.all(color: AppColors.primary.withValues(alpha: 0.3)),
                 ),
                 child: Row(
                   children: [
                     Icon(LucideIcons.badgeCheck, color: AppColors.primary, size: 28.sp),
-                    SizedBox(width: 12.w),
+                    SizedBox(width: AppSpacing.md12),
                     Expanded(
                       child: Text(
-                        'Terverifikasi oleh BISA B2B',
+                        'public.verify_badge'.tr(),
                         style: TextStyle(
                           fontWeight: FontWeight.w800,
                           fontSize: 14.sp,
@@ -140,18 +142,18 @@ class _PublicVerifyPageState extends State<PublicVerifyPage> {
                   ],
                 ),
               ),
-              SizedBox(height: 12.h),
+              SizedBox(height: AppSpacing.md12),
               _infoCard(_result!),
-              SizedBox(height: 12.h),
+              SizedBox(height: AppSpacing.md12),
               OutlinedButton.icon(
                 onPressed: () {
                   final no = _result!['orderNumber']?.toString() ?? _controller.text;
                   context.push('/track/${Uri.encodeComponent(no)}');
                 },
                 icon: Icon(LucideIcons.truck, size: 18.sp),
-                label: const Text('Lacak pengiriman'),
+                label: Text('public.verify_track_shipment'.tr()),
               ),
-              SizedBox(height: 8.h),
+              SizedBox(height: AppSpacing.sm),
               TextButton.icon(
                 onPressed: () async {
                   final no = _result!['orderNumber']?.toString() ?? _controller.text;
@@ -161,7 +163,7 @@ class _PublicVerifyPageState extends State<PublicVerifyPage> {
                   }
                 },
                 icon: Icon(LucideIcons.externalLink, size: 16.sp),
-                label: const Text('Buka di browser'),
+                label: Text('public.track_open_browser'.tr()),
               ),
             ],
           ],
@@ -178,27 +180,44 @@ class _PublicVerifyPageState extends State<PublicVerifyPage> {
         : null;
 
     return Container(
-      padding: EdgeInsets.all(16.w),
+      padding: EdgeInsets.all(AppSpacing.md),
       decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(14.r),
+        color: AppColors.surface,
+        borderRadius: BorderRadius.circular(AppRadius.tile),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          _row('Nomor kontrak', data['orderNumber']?.toString() ?? '—'),
-          _row('Status', data['status']?.toString() ?? '—'),
-          _row('Supplier', seller?['fullName']?.toString() ?? '—'),
+          _row('public.verify_label_contract_number'.tr(), data['orderNumber']?.toString() ?? '—'),
+          _row('public.verify_label_status'.tr(), data['status']?.toString() ?? '—'),
+          _row('public.verify_label_supplier'.tr(), seller?['fullName']?.toString() ?? '—'),
           if (firstProduct != null)
-            _row('Produk', firstProduct['name']?.toString() ?? '—'),
+            _row('public.verify_label_product'.tr(), firstProduct['name']?.toString() ?? '—'),
+          _row(
+            'public.verify_label_digital_sign'.tr(),
+            data['isDigitalSigned'] == true
+                ? 'public.verify_signed'.tr()
+                : 'public.verify_unsigned'.tr(),
+          ),
+          if (data['buyerSignedAt'] != null)
+            _row('public.verify_signed_buyer'.tr(), _formatSignDate(data['buyerSignedAt'])),
+          if (data['sellerSignedAt'] != null)
+            _row('public.verify_signed_seller'.tr(), _formatSignDate(data['sellerSignedAt'])),
         ],
       ),
     );
   }
 
+  String _formatSignDate(dynamic raw) {
+    if (raw == null) return '—';
+    final parsed = DateTime.tryParse(raw.toString());
+    if (parsed == null) return raw.toString();
+    return DateFormat.yMMMd().add_jm().format(parsed.toLocal());
+  }
+
   Widget _row(String label, String value) {
     return Padding(
-      padding: EdgeInsets.only(bottom: 10.h),
+      padding: EdgeInsets.only(bottom: AppSpacing.sm10),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [

@@ -68,6 +68,13 @@ abstract class MarketplaceRemoteDataSource {
     String? search,
   });
   Future<Map<String, dynamic>> getSupplierProductEngagement();
+  Future<String> downloadBulkProductTemplate();
+  Future<Map<String, dynamic>> uploadBulkProducts(String filePath);
+  Future<Map<String, dynamic>> promoteProduct(String productId, {int days = 7});
+  Future<void> recordPromoImpression(String productId);
+  Future<void> recordPromoClick(String productId);
+  Future<ProductModel> uploadProductVideo(String productId, String filePath);
+  Future<ProductModel> deleteProductVideo(String productId);
 }
 
 class MarketplaceRemoteDataSourceImpl implements MarketplaceRemoteDataSource {
@@ -316,5 +323,67 @@ class MarketplaceRemoteDataSourceImpl implements MarketplaceRemoteDataSource {
   Future<Map<String, dynamic>> getSupplierProductEngagement() async {
     final response = await dio.get('/products/engagement');
     return Map<String, dynamic>.from(response.data['data'] as Map);
+  }
+
+  @override
+  Future<String> downloadBulkProductTemplate() async {
+    final response = await dio.get(
+      '/products/bulk/template',
+      options: Options(responseType: ResponseType.plain),
+    );
+    return response.data?.toString() ?? '';
+  }
+
+  @override
+  Future<Map<String, dynamic>> uploadBulkProducts(String filePath) async {
+    final formData = FormData.fromMap({
+      'file': await MultipartFile.fromFile(
+        filePath,
+        filename: filePath.split(RegExp(r'[/\\]')).last,
+      ),
+    });
+    final response = await dio.post('/products/bulk', data: formData);
+    return Map<String, dynamic>.from(response.data['data'] as Map);
+  }
+
+  @override
+  Future<Map<String, dynamic>> promoteProduct(String productId, {int days = 7}) async {
+    final response = await dio.post(
+      '/products/$productId/promote',
+      data: {'days': days},
+    );
+    return Map<String, dynamic>.from(response.data['data'] as Map);
+  }
+
+  @override
+  Future<void> recordPromoImpression(String productId) async {
+    try {
+      await dio.post('/products/$productId/promo-impression');
+    } catch (_) {}
+  }
+
+  @override
+  Future<void> recordPromoClick(String productId) async {
+    try {
+      await dio.post('/products/$productId/promo-click');
+    } catch (_) {}
+  }
+
+  @override
+  Future<ProductModel> uploadProductVideo(String productId, String filePath) async {
+    final formData = FormData.fromMap({
+      'video': await MultipartFile.fromFile(
+        filePath,
+        filename: filePath.split(RegExp(r'[/\\]')).last,
+      ),
+    });
+    final response = await dio.post('/products/$productId/video', data: formData);
+    return ProductModel.fromJson(response.data['data']);
+  }
+
+  @override
+  Future<ProductModel> deleteProductVideo(String productId) async {
+    final response = await dio.delete('/products/$productId/video');
+    return ProductModel.fromJson(response.data['data']);
   }
 }

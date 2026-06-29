@@ -8,14 +8,18 @@ import 'package:flutter_map/flutter_map.dart';
 import 'package:latlong2/latlong.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
+import 'package:mobile_bisa/core/constants/app_layout.dart';
 import 'package:mobile_bisa/core/constants/app_colors.dart';
+import 'package:mobile_bisa/core/utils/app_feedback.dart';
 import 'package:mobile_bisa/core/utils/safe_area_utils.dart';
 import 'package:mobile_bisa/features/gis/domain/entities/waste_point_entity.dart';
 import 'package:mobile_bisa/features/gis/presentation/bloc/gis_cubit.dart';
 import 'package:mobile_bisa/shared/widgets/bisa_app_bar.dart';
+import 'package:mobile_bisa/core/network/api_client.dart';
 import 'package:mobile_bisa/injection_container.dart';
 import 'package:mobile_bisa/shared/widgets/shimmer_loading.dart';
 import 'package:geolocator/geolocator.dart';
+import 'package:go_router/go_router.dart';
 
 class WasteMappingPage extends StatefulWidget {
   const WasteMappingPage({super.key});
@@ -41,6 +45,7 @@ class _WasteMappingPageState extends State<WasteMappingPage> {
   bool _geoJsonLoaded = false;
   bool _geoJsonParsed = false; // Flag to prevent infinite parsing loops
   Map<String, double> _provinceStats = {};
+  List<WastePointEntity> _cachedWastePoints = [];
 
   final List<Map<String, dynamic>> _typeFilters = [
     {
@@ -53,13 +58,13 @@ class _WasteMappingPageState extends State<WasteMappingPage> {
       'key': 'SEKAM_PADI',
       'label': 'Sekam Padi',
       'icon': LucideIcons.wheat,
-      'color': Colors.orange,
+      'color': AppColors.mapFilterRiceHusk,
     },
     {
       'key': 'TONGKOL_JAGUNG',
       'label': 'Jagung',
       'icon': LucideIcons.sprout,
-      'color': Colors.yellow.shade800,
+      'color': AppColors.mapFilterCorn,
     },
     {
       'key': 'TEMPURUNG_KELAPA',
@@ -71,9 +76,24 @@ class _WasteMappingPageState extends State<WasteMappingPage> {
       'key': 'BIOCHAR',
       'label': 'Biochar',
       'icon': LucideIcons.flame,
-      'color': Colors.deepOrange,
+      'color': AppColors.mapFilterBiochar,
     },
   ];
+
+  String _typeFilterLabel(String key) {
+    switch (key) {
+      case 'SEKAM_PADI':
+        return 'gis.filter_rice_husk'.tr();
+      case 'TONGKOL_JAGUNG':
+        return 'gis.filter_corn'.tr();
+      case 'TEMPURUNG_KELAPA':
+        return 'gis.filter_coconut'.tr();
+      case 'BIOCHAR':
+        return 'gis.filter_biochar'.tr();
+      default:
+        return 'gis.filter_all'.tr();
+    }
+  }
 
   String get _tileUrl => _isSatellite
       ? 'https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}'
@@ -113,7 +133,7 @@ class _WasteMappingPageState extends State<WasteMappingPage> {
           final volume = _provinceStats[propName] ?? 0.0;
           final color = _getChoroplethColor(
             volume.toDouble(),
-          ).withOpacity(0.65);
+          ).withValues(alpha: 0.65);
 
           final geometry = feature['geometry'];
           if (geometry == null) continue;
@@ -128,7 +148,7 @@ class _WasteMappingPageState extends State<WasteMappingPage> {
                 Polygon<String>(
                   points: points,
                   color: color,
-                  borderColor: Colors.white,
+                  borderColor: AppColors.white,
                   borderStrokeWidth: 1.5,
                   hitValue: propName,
                 ),
@@ -142,7 +162,7 @@ class _WasteMappingPageState extends State<WasteMappingPage> {
                   Polygon<String>(
                     points: points,
                     color: color,
-                    borderColor: Colors.white,
+                    borderColor: AppColors.white,
                     borderStrokeWidth: 1.5,
                     hitValue: propName,
                   ),
@@ -223,20 +243,20 @@ class _WasteMappingPageState extends State<WasteMappingPage> {
     return BlocProvider(
       create: (context) => sl<GisCubit>()..getWastePoints(),
       child: Scaffold(
-        backgroundColor: Colors.black,
+        backgroundColor: AppColors.black,
         appBar: BisaAppBar(
-          title: 'Peta Sebaran Limbah',
-          backgroundColor: Colors.white,
+          title: 'gis.page_title'.tr(),
+          backgroundColor: AppColors.surface,
           actions: [
             IconButton(
               onPressed: () =>
                   setState(() => _showChoropleth = !_showChoropleth),
               icon: Icon(
                 LucideIcons.layers,
-                color: _showChoropleth ? AppColors.primary : Colors.grey,
+                color: _showChoropleth ? AppColors.primary : AppColors.grey400,
                 size: 20.sp,
               ),
-              tooltip: 'Toggle Wilayah',
+              tooltip: 'gis.toggle_region_tooltip'.tr(),
             ),
             IconButton(
               onPressed: () => setState(() => _isSatellite = !_isSatellite),
@@ -245,7 +265,9 @@ class _WasteMappingPageState extends State<WasteMappingPage> {
                 color: AppColors.primary,
                 size: 20.sp,
               ),
-              tooltip: _isSatellite ? 'Peta Standar' : 'Peta Satelit',
+              tooltip: _isSatellite
+                  ? 'gis.map_standard_tooltip'.tr()
+                  : 'gis.map_satellite_tooltip'.tr(),
             ),
           ],
         ),
@@ -259,7 +281,7 @@ class _WasteMappingPageState extends State<WasteMappingPage> {
                     itemCount: 4,
                     itemHeight: 72.h,
                     scrollable: true,
-                    padding: EdgeInsets.fromLTRB(16.w, 24.h, 16.w, 0),
+                    padding: EdgeInsets.fromLTRB(AppSpacing.md, AppSpacing.xl, AppSpacing.md, 0),
                   ),
                 ],
               ),
@@ -270,17 +292,18 @@ class _WasteMappingPageState extends State<WasteMappingPage> {
                     Icon(
                       LucideIcons.mapPinOff,
                       size: 40.sp,
-                      color: Colors.grey,
+                      color: AppColors.grey400,
                     ),
-                    SizedBox(height: 12.h),
+                    SizedBox(height: AppSpacing.md12),
                     Text(
                       msg,
-                      style: TextStyle(color: Colors.grey, fontSize: 13.sp),
+                      style: TextStyle(color: AppColors.grey400, fontSize: 13.sp),
                     ),
                   ],
                 ),
               ),
               wasteMapLoaded: (points) {
+                _cachedWastePoints = points;
                 final filtered = _applyFilter(points);
                 _recalcStats(points); // always use all points for choropleth
 
@@ -301,13 +324,15 @@ class _WasteMappingPageState extends State<WasteMappingPage> {
                 return _buildMap(context, filtered, topStats);
               },
               matchLoaded: (data) {
-                // Show match results in a bottom sheet
                 WidgetsBinding.instance.addPostFrameCallback((_) {
                   if (mounted) _showMatchResultsSheet(context, data);
                 });
-                return const Center(
-                  child: Text('Hasil pencocokan suplai berhasil dimuat.'),
-                );
+                if (_cachedWastePoints.isEmpty) {
+                  return const Center(child: CircularProgressIndicator());
+                }
+                final filtered = _applyFilter(_cachedWastePoints);
+                final topStats = _calcTopStats(_cachedWastePoints);
+                return _buildMap(context, filtered, topStats);
               },
               orElse: () => const SizedBox.shrink(),
             );
@@ -380,9 +405,9 @@ class _WasteMappingPageState extends State<WasteMappingPage> {
 
         // ── TYPE FILTER CHIPS ──
         Positioned(
-          top: 12.h,
-          left: 12.w,
-          right: 12.w,
+          top: AppSpacing.md12,
+          left: AppSpacing.md12,
+          right: AppSpacing.md12,
           child: SingleChildScrollView(
             scrollDirection: Axis.horizontal,
             child: Row(
@@ -398,17 +423,17 @@ class _WasteMappingPageState extends State<WasteMappingPage> {
                   }),
                   child: AnimatedContainer(
                     duration: const Duration(milliseconds: 200),
-                    margin: EdgeInsets.only(right: 8.w),
+                    margin: EdgeInsets.only(right: AppSpacing.sm),
                     padding: EdgeInsets.symmetric(
-                      horizontal: 14.w,
-                      vertical: 8.h,
+                      horizontal: AppSpacing.section,
+                      vertical: AppSpacing.sm,
                     ),
                     decoration: BoxDecoration(
-                      color: isSelected ? color : Colors.white,
-                      borderRadius: BorderRadius.circular(20.r),
+                      color: isSelected ? color : AppColors.white,
+                      borderRadius: BorderRadius.circular(AppRadius.pill),
                       boxShadow: [
                         BoxShadow(
-                          color: Colors.black.withOpacity(0.15),
+                          color: AppColors.black.withValues(alpha: 0.15),
                           blurRadius: 8,
                           offset: const Offset(0, 2),
                         ),
@@ -420,15 +445,15 @@ class _WasteMappingPageState extends State<WasteMappingPage> {
                         Icon(
                           filter['icon'] as IconData,
                           size: 14.sp,
-                          color: isSelected ? Colors.white : color,
+                          color: isSelected ? AppColors.textOnPrimary : color,
                         ),
                         SizedBox(width: 6.w),
                         Text(
-                          filter['label'] as String,
+                          _typeFilterLabel(filter['key'] as String),
                           style: TextStyle(
                             fontSize: 12.sp,
                             fontWeight: FontWeight.bold,
-                            color: isSelected ? Colors.white : Colors.black87,
+                            color: isSelected ? AppColors.textOnPrimary : AppColors.textPrimary,
                           ),
                         ),
                       ],
@@ -443,17 +468,17 @@ class _WasteMappingPageState extends State<WasteMappingPage> {
         // ── STATS BADGE ──
         Positioned(
           top: 62.h,
-          right: 12.w,
+          right: AppSpacing.md12,
           child: GestureDetector(
             onTap: () => _showStatsSheet(context, topStats, filtered.length),
             child: Container(
-              padding: EdgeInsets.symmetric(horizontal: 12.w, vertical: 8.h),
+              padding: EdgeInsets.symmetric(horizontal: AppSpacing.md12, vertical: AppSpacing.sm),
               decoration: BoxDecoration(
-                color: Colors.white,
-                borderRadius: BorderRadius.circular(12.r),
+                color: AppColors.surface,
+                borderRadius: BorderRadius.circular(AppRadius.lg),
                 boxShadow: [
                   BoxShadow(
-                    color: Colors.black.withOpacity(0.15),
+                    color: AppColors.black.withValues(alpha: 0.15),
                     blurRadius: 8,
                     offset: const Offset(0, 2),
                   ),
@@ -489,7 +514,7 @@ class _WasteMappingPageState extends State<WasteMappingPage> {
               context,
               panelOpen: _showBottomPanel,
             ),
-            left: 12.w,
+            left: AppSpacing.md12,
             child: _buildLegend(),
           ),
 
@@ -521,20 +546,20 @@ class _WasteMappingPageState extends State<WasteMappingPage> {
             context,
             panelOpen: _showBottomPanel,
           ),
-          right: 12.w,
+          right: AppSpacing.md12,
           child: FloatingActionButton.extended(
             heroTag: 'supply_match',
             backgroundColor: AppColors.primary,
             onPressed: () => _triggerSupplyMatching(context),
             icon: Icon(
               LucideIcons.radar,
-              color: Colors.white,
+              color: AppColors.surface,
               size: 18.sp,
             ),
             label: Text(
-              'Cari Suplai Terdekat',
+              'gis.find_nearest_supply'.tr(),
               style: TextStyle(
-                color: Colors.white,
+                color: AppColors.surface,
                 fontSize: 12.sp,
                 fontWeight: FontWeight.bold,
               ),
@@ -545,10 +570,10 @@ class _WasteMappingPageState extends State<WasteMappingPage> {
         // ── FAB Recenter ──
         Positioned(
           bottom: _showBottomPanel ? 220.h : 20.h,
-          right: 12.w,
+          right: AppSpacing.md12,
           child: FloatingActionButton.small(
             heroTag: 'recenter',
-            backgroundColor: Colors.white,
+            backgroundColor: AppColors.surface,
             onPressed: () {
               _mapController.move(const LatLng(-2.5, 118.0), 5.0);
               setState(() {
@@ -570,13 +595,13 @@ class _WasteMappingPageState extends State<WasteMappingPage> {
 
   Widget _buildLegend() {
     return Container(
-      padding: EdgeInsets.symmetric(horizontal: 10.w, vertical: 8.h),
+      padding: EdgeInsets.symmetric(horizontal: AppSpacing.sm10, vertical: AppSpacing.sm),
       decoration: BoxDecoration(
-        color: Colors.white.withOpacity(0.92),
-        borderRadius: BorderRadius.circular(10.r),
+        color: AppColors.white.withValues(alpha: 0.92),
+        borderRadius: BorderRadius.circular(AppRadius.md),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.1),
+            color: AppColors.black.withValues(alpha: 0.1),
             blurRadius: 6,
             offset: const Offset(0, 2),
           ),
@@ -587,20 +612,20 @@ class _WasteMappingPageState extends State<WasteMappingPage> {
         mainAxisSize: MainAxisSize.min,
         children: [
           Text(
-            'Volume Biomassa',
+            'gis.volume_biomass_title'.tr(),
             style: TextStyle(
               fontSize: 9.sp,
               fontWeight: FontWeight.bold,
-              color: Colors.grey[700],
+              color: AppColors.grey700,
             ),
           ),
           SizedBox(height: 5.h),
           ...[
-            {'color': AppColors.mapVolumeHighest, 'label': '≥400K ton'},
-            {'color': AppColors.secondary, 'label': '200K–400K'},
-            {'color': AppColors.mapVolumeMid, 'label': '100K–200K'},
-            {'color': AppColors.mapVolumeLow, 'label': '<100K'},
-            {'color': AppColors.grey300, 'label': 'Tidak ada'},
+            {'color': AppColors.mapVolumeHighest, 'label': 'gis.volume_legend_highest'.tr()},
+            {'color': AppColors.secondary, 'label': 'gis.volume_legend_high'.tr()},
+            {'color': AppColors.mapVolumeMid, 'label': 'gis.volume_legend_mid'.tr()},
+            {'color': AppColors.mapVolumeLow, 'label': 'gis.volume_legend_low'.tr()},
+            {'color': AppColors.grey300, 'label': 'gis.no_data_label'.tr()},
           ].map(
             (item) => Padding(
               padding: EdgeInsets.only(bottom: 3.h),
@@ -608,8 +633,8 @@ class _WasteMappingPageState extends State<WasteMappingPage> {
                 mainAxisSize: MainAxisSize.min,
                 children: [
                   Container(
-                    width: 10.w,
-                    height: 10.w,
+                    width: AppSpacing.sm10,
+                    height: AppSpacing.sm10,
                     decoration: BoxDecoration(
                       color: item['color'] as Color,
                       borderRadius: BorderRadius.circular(2.r),
@@ -618,7 +643,7 @@ class _WasteMappingPageState extends State<WasteMappingPage> {
                   SizedBox(width: 5.w),
                   Text(
                     item['label'] as String,
-                    style: TextStyle(fontSize: 9.sp, color: Colors.black87),
+                    style: TextStyle(fontSize: 9.sp, color: AppColors.textPrimary),
                   ),
                 ],
               ),
@@ -634,16 +659,16 @@ class _WasteMappingPageState extends State<WasteMappingPage> {
     IconData icon = LucideIcons.leaf;
 
     if (type.contains('SEKAM_PADI')) {
-      color = Colors.orange;
+      color = AppColors.mapFilterRiceHusk;
       icon = LucideIcons.wheat;
     } else if (type.contains('TONGKOL_JAGUNG')) {
-      color = Colors.yellow.shade800;
+      color = AppColors.mapFilterCorn;
       icon = LucideIcons.sprout;
     } else if (type.contains('TEMPURUNG_KELAPA')) {
       color = AppColors.mapLandBrown;
       icon = LucideIcons.nut;
     } else if (type.contains('BIOCHAR')) {
-      color = Colors.deepOrange;
+      color = AppColors.mapFilterBiochar;
       icon = LucideIcons.flame;
     }
 
@@ -652,17 +677,17 @@ class _WasteMappingPageState extends State<WasteMappingPage> {
       decoration: BoxDecoration(
         color: color,
         shape: BoxShape.circle,
-        border: Border.all(color: Colors.white, width: isSelected ? 3 : 2),
+        border: Border.all(color: AppColors.white, width: isSelected ? 3 : 2),
         boxShadow: [
           BoxShadow(
-            color: color.withOpacity(isSelected ? 0.6 : 0.35),
+            color: color.withValues(alpha: isSelected ? 0.6 : 0.35),
             blurRadius: isSelected ? 14 : 6,
             spreadRadius: isSelected ? 3 : 0,
             offset: const Offset(0, 2),
           ),
         ],
       ),
-      child: Icon(icon, color: Colors.white, size: isSelected ? 22.sp : 17.sp),
+      child: Icon(icon, color: AppColors.textOnPrimary, size: isSelected ? 22.sp : 17.sp),
     );
   }
 
@@ -671,14 +696,14 @@ class _WasteMappingPageState extends State<WasteMappingPage> {
     final Color typeColor = _getTypeColor(point.biomassaType);
 
     return Container(
-      margin: EdgeInsets.all(12.r),
-      padding: EdgeInsets.all(20.r),
+      margin: EdgeInsets.all(AppSpacing.md12),
+      padding: EdgeInsets.all(AppSpacing.lg),
       decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(24.r),
+        color: AppColors.surface,
+        borderRadius: BorderRadius.circular(AppSpacing.xlPx.r),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.2),
+            color: AppColors.black.withValues(alpha: 0.2),
             blurRadius: 20,
             offset: const Offset(0, -4),
           ),
@@ -692,9 +717,9 @@ class _WasteMappingPageState extends State<WasteMappingPage> {
             child: Container(
               width: 40.w,
               height: 4.h,
-              margin: EdgeInsets.only(bottom: 16.h),
+              margin: EdgeInsets.only(bottom: AppSpacing.md),
               decoration: BoxDecoration(
-                color: Colors.grey[300],
+                color: AppColors.grey300,
                 borderRadius: BorderRadius.circular(2.r),
               ),
             ),
@@ -705,8 +730,8 @@ class _WasteMappingPageState extends State<WasteMappingPage> {
                 width: 48.w,
                 height: 48.w,
                 decoration: BoxDecoration(
-                  color: typeColor.withOpacity(0.1),
-                  borderRadius: BorderRadius.circular(14.r),
+                  color: typeColor.withValues(alpha: 0.1),
+                  borderRadius: BorderRadius.circular(AppRadius.tile),
                 ),
                 child: Icon(
                   _getTypeIcon(point.biomassaType),
@@ -714,7 +739,7 @@ class _WasteMappingPageState extends State<WasteMappingPage> {
                   size: 24.sp,
                 ),
               ),
-              SizedBox(width: 12.w),
+              SizedBox(width: AppSpacing.md12),
               Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
@@ -730,11 +755,11 @@ class _WasteMappingPageState extends State<WasteMappingPage> {
                     Container(
                       margin: EdgeInsets.only(top: 4.h),
                       padding: EdgeInsets.symmetric(
-                        horizontal: 8.w,
+                        horizontal: AppSpacing.sm,
                         vertical: 2.h,
                       ),
                       decoration: BoxDecoration(
-                        color: typeColor.withOpacity(0.1),
+                        color: typeColor.withValues(alpha: 0.1),
                         borderRadius: BorderRadius.circular(6.r),
                       ),
                       child: Text(
@@ -754,48 +779,48 @@ class _WasteMappingPageState extends State<WasteMappingPage> {
                   _showBottomPanel = false;
                   _selectedPoint = null;
                 }),
-                child: Icon(LucideIcons.x, size: 20.sp, color: Colors.grey),
+                child: Icon(LucideIcons.x, size: 20.sp, color: AppColors.grey400),
               ),
             ],
           ),
-          SizedBox(height: 16.h),
+          SizedBox(height: AppSpacing.md),
           Row(
             children: [
               _statBox(
                 LucideIcons.package,
-                'Volume',
+                'gis.detail_volume'.tr(),
                 '${(point.volumeTon / 1000).toStringAsFixed(1)}K Ton',
                 AppColors.primary,
               ),
-              SizedBox(width: 12.w),
+              SizedBox(width: AppSpacing.md12),
               _statBox(
                 LucideIcons.calendarDays,
                 'Tahun',
                 point.year.toString(),
-                Colors.blue,
+                AppColors.info,
               ),
             ],
           ),
-          SizedBox(height: 16.h),
+          SizedBox(height: AppSpacing.md),
           SizedBox(
             width: double.infinity,
             height: 48.h,
             child: ElevatedButton.icon(
-              onPressed: () => Navigator.pop(context),
+              onPressed: () => _openNearbyProducts(context, point),
               icon: Icon(
-                LucideIcons.phoneCall,
-                color: Colors.white,
+                LucideIcons.shoppingBag,
+                color: AppColors.surface,
                 size: 16.sp,
               ),
               label: Text(
-                'hubungi_supplier'.tr(),
+                'gis.view_marketplace_products'.tr(),
                 style: TextStyle(fontWeight: FontWeight.bold),
               ),
               style: ElevatedButton.styleFrom(
                 backgroundColor: AppColors.primary,
-                foregroundColor: Colors.white,
+                foregroundColor: AppColors.textOnPrimary,
                 shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(14.r),
+                  borderRadius: BorderRadius.circular(AppRadius.tile),
                 ),
               ),
             ),
@@ -810,14 +835,14 @@ class _WasteMappingPageState extends State<WasteMappingPage> {
     final volume = _provinceStats[province] ?? 0;
 
     return Container(
-      margin: EdgeInsets.all(12.r),
-      padding: EdgeInsets.all(20.r),
+      margin: EdgeInsets.all(AppSpacing.md12),
+      padding: EdgeInsets.all(AppSpacing.lg),
       decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(24.r),
+        color: AppColors.surface,
+        borderRadius: BorderRadius.circular(AppSpacing.xlPx.r),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.2),
+            color: AppColors.black.withValues(alpha: 0.2),
             blurRadius: 20,
             offset: const Offset(0, -4),
           ),
@@ -831,9 +856,9 @@ class _WasteMappingPageState extends State<WasteMappingPage> {
             child: Container(
               width: 40.w,
               height: 4.h,
-              margin: EdgeInsets.only(bottom: 16.h),
+              margin: EdgeInsets.only(bottom: AppSpacing.md),
               decoration: BoxDecoration(
-                color: Colors.grey[300],
+                color: AppColors.grey300,
                 borderRadius: BorderRadius.circular(2.r),
               ),
             ),
@@ -844,8 +869,8 @@ class _WasteMappingPageState extends State<WasteMappingPage> {
                 width: 48.w,
                 height: 48.w,
                 decoration: BoxDecoration(
-                  color: AppColors.primary.withOpacity(0.1),
-                  borderRadius: BorderRadius.circular(14.r),
+                  color: AppColors.primary.withValues(alpha: 0.1),
+                  borderRadius: BorderRadius.circular(AppRadius.tile),
                 ),
                 child: Icon(
                   LucideIcons.map,
@@ -853,7 +878,7 @@ class _WasteMappingPageState extends State<WasteMappingPage> {
                   size: 24.sp,
                 ),
               ),
-              SizedBox(width: 12.w),
+              SizedBox(width: AppSpacing.md12),
               Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
@@ -869,15 +894,15 @@ class _WasteMappingPageState extends State<WasteMappingPage> {
                     Container(
                       margin: EdgeInsets.only(top: 4.h),
                       padding: EdgeInsets.symmetric(
-                        horizontal: 8.w,
+                        horizontal: AppSpacing.sm,
                         vertical: 2.h,
                       ),
                       decoration: BoxDecoration(
-                        color: AppColors.primary.withOpacity(0.1),
+                        color: AppColors.primary.withValues(alpha: 0.1),
                         borderRadius: BorderRadius.circular(6.r),
                       ),
                       child: Text(
-                        'Wilayah Terpilih',
+                        'gis.region_selected_title'.tr(),
                         style: TextStyle(
                           color: AppColors.primary,
                           fontSize: 10.sp,
@@ -893,17 +918,17 @@ class _WasteMappingPageState extends State<WasteMappingPage> {
                   _showBottomPanel = false;
                   _selectedProvince = null;
                 }),
-                child: Icon(LucideIcons.x, size: 20.sp, color: Colors.grey),
+                child: Icon(LucideIcons.x, size: 20.sp, color: AppColors.grey400),
               ),
             ],
           ),
-          SizedBox(height: 16.h),
+          SizedBox(height: AppSpacing.md),
           Row(
             children: [
               Expanded(
                 child: _statBox(
                   LucideIcons.package,
-                  'Total Volume',
+                  'gis.total_volume_title'.tr(),
                   '${(volume / 1000).toStringAsFixed(1)}K Ton',
                   AppColors.primary,
                 ),
@@ -918,11 +943,11 @@ class _WasteMappingPageState extends State<WasteMappingPage> {
   Widget _statBox(IconData icon, String label, String value, Color color) {
     return Expanded(
       child: Container(
-        padding: EdgeInsets.all(12.r),
+        padding: EdgeInsets.all(AppSpacing.md12),
         decoration: BoxDecoration(
-          color: color.withOpacity(0.05),
-          borderRadius: BorderRadius.circular(12.r),
-          border: Border.all(color: color.withOpacity(0.15)),
+          color: color.withValues(alpha: 0.05),
+          borderRadius: BorderRadius.circular(AppRadius.lg),
+          border: Border.all(color: color.withValues(alpha: 0.15)),
         ),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -965,11 +990,11 @@ class _WasteMappingPageState extends State<WasteMappingPage> {
     showModalBottomSheet(
       context: context,
       useSafeArea: true,
-      backgroundColor: Colors.transparent,
+      backgroundColor: AppColors.transparent,
       builder: (context) => Container(
-        padding: EdgeInsets.all(24.r),
+        padding: EdgeInsets.all(AppSpacing.xl),
         decoration: BoxDecoration(
-          color: Colors.white,
+          color: AppColors.surface,
           borderRadius: BorderRadius.vertical(top: Radius.circular(28.r)),
         ),
         child: Column(
@@ -980,9 +1005,9 @@ class _WasteMappingPageState extends State<WasteMappingPage> {
               child: Container(
                 width: 40.w,
                 height: 4.h,
-                margin: EdgeInsets.only(bottom: 20.h),
+                margin: EdgeInsets.only(bottom: AppSpacing.lg),
                 decoration: BoxDecoration(
-                  color: Colors.grey[300],
+                  color: AppColors.grey300,
                   borderRadius: BorderRadius.circular(2.r),
                 ),
               ),
@@ -994,9 +1019,9 @@ class _WasteMappingPageState extends State<WasteMappingPage> {
                   color: AppColors.primary,
                   size: 20.sp,
                 ),
-                SizedBox(width: 8.w),
+                SizedBox(width: AppSpacing.sm),
                 Text(
-                  'Statistik Sebaran',
+                  'gis.stats_distribution_title'.tr(),
                   style: TextStyle(
                     fontWeight: FontWeight.bold,
                     fontSize: 16.sp,
@@ -1009,8 +1034,8 @@ class _WasteMappingPageState extends State<WasteMappingPage> {
                     vertical: 4.h,
                   ),
                   decoration: BoxDecoration(
-                    color: AppColors.primary.withOpacity(0.1),
-                    borderRadius: BorderRadius.circular(20.r),
+                    color: AppColors.primary.withValues(alpha: 0.1),
+                    borderRadius: BorderRadius.circular(AppRadius.pill),
                   ),
                   child: Text(
                     '$total titik',
@@ -1023,11 +1048,11 @@ class _WasteMappingPageState extends State<WasteMappingPage> {
                 ),
               ],
             ),
-            SizedBox(height: 20.h),
+            SizedBox(height: AppSpacing.lg),
             if (topStats.isEmpty)
               Center(
                 child: Padding(
-                  padding: EdgeInsets.all(20.r),
+                  padding: EdgeInsets.all(AppSpacing.lg),
                   child: Text(
                     'tidak_ada_data'.tr(),
                     style: TextStyle(color: AppColors.textSecondary),
@@ -1040,7 +1065,7 @@ class _WasteMappingPageState extends State<WasteMappingPage> {
                 return topStats.entries.map((entry) {
                   final pct = maxVal > 0 ? entry.value / maxVal : 0.0;
                   return Padding(
-                    padding: EdgeInsets.only(bottom: 12.h),
+                    padding: EdgeInsets.only(bottom: AppSpacing.md12),
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
@@ -1081,19 +1106,19 @@ class _WasteMappingPageState extends State<WasteMappingPage> {
                   );
                 }).toList();
               })(),
-            SizedBox(height: 16.h),
+            SizedBox(height: AppSpacing.md),
             // Choropleth Color Scale
             Container(
-              padding: EdgeInsets.all(12.r),
+              padding: EdgeInsets.all(AppSpacing.md12),
               decoration: BoxDecoration(
-                color: Colors.grey[50],
-                borderRadius: BorderRadius.circular(12.r),
+                color: AppColors.grey50,
+                borderRadius: BorderRadius.circular(AppRadius.lg),
               ),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
-                    'Skala Warna Wilayah',
+                    'gis.scale_color_title'.tr(),
                     style: TextStyle(
                       fontSize: 11.sp,
                       fontWeight: FontWeight.bold,
@@ -1101,7 +1126,7 @@ class _WasteMappingPageState extends State<WasteMappingPage> {
                       letterSpacing: 0.5,
                     ),
                   ),
-                  SizedBox(height: 8.h),
+                  SizedBox(height: AppSpacing.sm),
                   Row(
                     children:
                         [
@@ -1113,7 +1138,7 @@ class _WasteMappingPageState extends State<WasteMappingPage> {
                             ]
                             .map(
                               (c) => Expanded(
-                                child: Container(height: 12.h, color: c),
+                                child: Container(height: AppSpacing.md12, color: c),
                               ),
                             )
                             .toList(),
@@ -1123,19 +1148,19 @@ class _WasteMappingPageState extends State<WasteMappingPage> {
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
                       Text(
-                        'Rendah',
-                        style: TextStyle(fontSize: 9.sp, color: Colors.grey),
+                        'gis.scale_low'.tr(),
+                        style: TextStyle(fontSize: 9.sp, color: AppColors.grey400),
                       ),
                       Text(
-                        'Tinggi',
-                        style: TextStyle(fontSize: 9.sp, color: Colors.grey),
+                        'gis.scale_high'.tr(),
+                        style: TextStyle(fontSize: 9.sp, color: AppColors.grey400),
                       ),
                     ],
                   ),
                 ],
               ),
             ),
-            SizedBox(height: 16.h),
+            SizedBox(height: AppSpacing.md),
           ],
         ),
       ),
@@ -1143,10 +1168,10 @@ class _WasteMappingPageState extends State<WasteMappingPage> {
   }
 
   Color _getTypeColor(String type) {
-    if (type.contains('SEKAM_PADI')) return Colors.orange;
-    if (type.contains('TONGKOL_JAGUNG')) return Colors.yellow.shade800;
+    if (type.contains('SEKAM_PADI')) return AppColors.mapFilterRiceHusk;
+    if (type.contains('TONGKOL_JAGUNG')) return AppColors.mapFilterCorn;
     if (type.contains('TEMPURUNG_KELAPA')) return AppColors.mapLandBrown;
-    if (type.contains('BIOCHAR')) return Colors.deepOrange;
+    if (type.contains('BIOCHAR')) return AppColors.mapFilterBiochar;
     return AppColors.primary;
   }
 
@@ -1168,23 +1193,17 @@ class _WasteMappingPageState extends State<WasteMappingPage> {
 
       if (permission == LocationPermission.deniedForever) {
         if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(
-              content: Text('Izin lokasi ditolak secara permanen. Aktifkan di pengaturan perangkat.'),
-              backgroundColor: Colors.red,
-            ),
-          );
+          showErrorSnackBar(context, 'gis.location_denied_permanent'.tr());
         }
         return;
       }
 
       if (permission == LocationPermission.denied) {
         if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(
-              content: Text('Izin lokasi diperlukan untuk fitur ini.'),
-              backgroundColor: Colors.orange,
-            ),
+          showCustomSnackBar(
+            context,
+            content: Text('gis.location_denied'.tr()),
+            backgroundColor: AppColors.mapFilterRiceHusk,
           );
         }
         return;
@@ -1192,25 +1211,24 @@ class _WasteMappingPageState extends State<WasteMappingPage> {
 
       // Get current position
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Row(
-              children: [
-                SizedBox(
-                  width: 16.w,
-                  height: 16.w,
-                  child: const CircularProgressIndicator(
-                    strokeWidth: 2,
-                    color: Colors.white,
-                  ),
+        showCustomSnackBar(
+          context,
+          content: Row(
+            children: [
+              SizedBox(
+                width: AppSpacing.md,
+                height: AppSpacing.md,
+                child: const CircularProgressIndicator(
+                  strokeWidth: 2,
+                  color: AppColors.surface,
                 ),
-                SizedBox(width: 12.w),
-                const Text('Mendapatkan lokasi GPS Anda...'),
-              ],
-            ),
-            backgroundColor: AppColors.primary,
-            duration: const Duration(seconds: 3),
+              ),
+              SizedBox(width: AppSpacing.md12),
+              Text('gis.location_fetching'.tr()),
+            ],
           ),
+          backgroundColor: AppColors.primary,
+          duration: const Duration(seconds: 3),
         );
       }
 
@@ -1234,13 +1252,30 @@ class _WasteMappingPageState extends State<WasteMappingPage> {
       }
     } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('Gagal mendapatkan lokasi: $e'),
-            backgroundColor: Colors.red,
-          ),
+        showErrorSnackBar(
+          context,
+          'gis.location_error'.tr(namedArgs: {'error': '$e'}),
         );
       }
+    }
+  }
+
+  Future<void> _openNearbyProducts(BuildContext context, WastePointEntity point) async {
+    try {
+      final res = await sl<ApiClient>().dio.post('/gis/match', data: {
+        'lat': point.lat,
+        'lng': point.lng,
+        'radius': 100,
+        'biomassaType': point.biomassaType,
+        'regency': point.regency,
+        'province': point.province,
+      });
+      if (!mounted) return;
+      final data = Map<String, dynamic>.from(res.data['data'] as Map);
+      _showMatchResultsSheet(context, data);
+    } catch (e) {
+      if (!mounted) return;
+      showErrorSnackBar(context, 'gis.match_load_failed'.tr());
     }
   }
 
@@ -1251,13 +1286,13 @@ class _WasteMappingPageState extends State<WasteMappingPage> {
     showModalBottomSheet(
       context: context,
       useSafeArea: true,
-      backgroundColor: Colors.transparent,
+      backgroundColor: AppColors.transparent,
       isScrollControlled: true,
       builder: (context) => Container(
         constraints: BoxConstraints(maxHeight: MediaQuery.of(context).size.height * 0.6),
-        padding: EdgeInsets.all(24.r),
+        padding: EdgeInsets.all(AppSpacing.xl),
         decoration: BoxDecoration(
-          color: Colors.white,
+          color: AppColors.surface,
           borderRadius: BorderRadius.vertical(top: Radius.circular(28.r)),
         ),
         child: Column(
@@ -1268,9 +1303,9 @@ class _WasteMappingPageState extends State<WasteMappingPage> {
               child: Container(
                 width: 40.w,
                 height: 4.h,
-                margin: EdgeInsets.only(bottom: 20.h),
+                margin: EdgeInsets.only(bottom: AppSpacing.lg),
                 decoration: BoxDecoration(
-                  color: Colors.grey[300],
+                  color: AppColors.grey300,
                   borderRadius: BorderRadius.circular(2.r),
                 ),
               ),
@@ -1278,10 +1313,12 @@ class _WasteMappingPageState extends State<WasteMappingPage> {
             Row(
               children: [
                 Icon(LucideIcons.radar, color: AppColors.primary, size: 22.sp),
-                SizedBox(width: 8.w),
+                SizedBox(width: AppSpacing.sm),
                 Expanded(
                   child: Text(
-                    'Suplai Terdekat (radius ${radius}km)',
+                    'gis.match_nearest_title'.tr(
+                      namedArgs: {'radius': '$radius'},
+                    ),
                     style: TextStyle(
                       fontWeight: FontWeight.bold,
                       fontSize: 16.sp,
@@ -1289,10 +1326,10 @@ class _WasteMappingPageState extends State<WasteMappingPage> {
                   ),
                 ),
                 Container(
-                  padding: EdgeInsets.symmetric(horizontal: 10.w, vertical: 4.h),
+                  padding: EdgeInsets.symmetric(horizontal: AppSpacing.sm10, vertical: AppSpacing.xs),
                   decoration: BoxDecoration(
-                    color: AppColors.primary.withOpacity(0.1),
-                    borderRadius: BorderRadius.circular(20.r),
+                    color: AppColors.primary.withValues(alpha: 0.1),
+                    borderRadius: BorderRadius.circular(AppRadius.pill),
                   ),
                   child: Text(
                     '${matches.length} hasil',
@@ -1305,17 +1342,17 @@ class _WasteMappingPageState extends State<WasteMappingPage> {
                 ),
               ],
             ),
-            SizedBox(height: 16.h),
+            SizedBox(height: AppSpacing.md),
             if (matches.isEmpty)
               Center(
                 child: Padding(
-                  padding: EdgeInsets.all(32.r),
+                  padding: EdgeInsets.all(AppSpacing.xxl),
                   child: Column(
                     children: [
-                      Icon(LucideIcons.searchX, size: 48.sp, color: Colors.grey[300]),
-                      SizedBox(height: 12.h),
+                      Icon(LucideIcons.searchX, size: 48.sp, color: AppColors.grey300),
+                      SizedBox(height: AppSpacing.md12),
                       Text(
-                        'Tidak ditemukan suplai dalam radius ini.',
+                        'gis.match_empty'.tr(),
                         style: TextStyle(color: AppColors.textSecondary, fontSize: 13.sp),
                         textAlign: TextAlign.center,
                       ),
@@ -1336,45 +1373,61 @@ class _WasteMappingPageState extends State<WasteMappingPage> {
                     final biomassType = (match['biomassType'] ?? match['type'] ?? '').toString().replaceAll('_', ' ');
                     final volume = match['volume'] ?? match['volumeTon'] ?? 0;
 
+                    final productId = match['productId']?.toString();
+                    final supplierId = match['supplierId']?.toString();
+                    final productName =
+                        match['productName']?.toString() ?? name.toString();
+
                     return ListTile(
                       contentPadding: EdgeInsets.symmetric(horizontal: 4.w, vertical: 4.h),
+                      onTap: () {
+                        Navigator.pop(context);
+                        if (productId != null && productId.isNotEmpty) {
+                          context.push('/product/$productId');
+                        } else if (supplierId != null && supplierId.isNotEmpty) {
+                          context.push(
+                            '/supplier/$supplierId',
+                            extra: {'name': name.toString()},
+                          );
+                        }
+                      },
                       leading: Container(
                         width: 44.w,
                         height: 44.w,
                         decoration: BoxDecoration(
-                          color: AppColors.primary.withOpacity(0.1),
-                          borderRadius: BorderRadius.circular(12.r),
+                          color: AppColors.primary.withValues(alpha: 0.1),
+                          borderRadius: BorderRadius.circular(AppRadius.lg),
                         ),
                         child: Icon(
-                          LucideIcons.warehouse,
+                          LucideIcons.package,
                           color: AppColors.primary,
                           size: 20.sp,
                         ),
                       ),
                       title: Text(
-                        name.toString(),
+                        productName,
                         style: TextStyle(
                           fontWeight: FontWeight.bold,
                           fontSize: 13.sp,
                         ),
                       ),
                       subtitle: Text(
-                        '$biomassType • ${volume}T',
+                        '$name • $biomassType • ${volume}T',
                         style: TextStyle(
                           fontSize: 11.sp,
                           color: AppColors.textSecondary,
                         ),
                       ),
                       trailing: Container(
-                        padding: EdgeInsets.symmetric(horizontal: 8.w, vertical: 4.h),
+                        padding: EdgeInsets.symmetric(horizontal: AppSpacing.sm, vertical: AppSpacing.xs),
                         decoration: BoxDecoration(
-                          color: Colors.blue.withOpacity(0.1),
-                          borderRadius: BorderRadius.circular(8.r),
+                          color: AppColors.info.withValues(alpha: 0.1),
+                          borderRadius: BorderRadius.circular(AppRadius.button),
                         ),
                         child: Text(
                           '${distance is num ? distance.toStringAsFixed(1) : distance} km',
                           style: TextStyle(
-                            color: Colors.blue,
+                            color: AppColors.info,
                             fontWeight: FontWeight.bold,
                             fontSize: 11.sp,
                           ),

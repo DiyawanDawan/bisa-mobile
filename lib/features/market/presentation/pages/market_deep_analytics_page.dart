@@ -1,12 +1,15 @@
+import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
-import 'package:fl_chart/fl_chart.dart';
 import 'package:go_router/go_router.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
 import 'package:mobile_bisa/core/constants/app_colors.dart';
+import 'package:mobile_bisa/features/market/data/models/market_supply_demand_model.dart';
 import 'package:mobile_bisa/features/market/data/models/market_trend_model.dart';
+import 'package:mobile_bisa/features/market/domain/repositories/market_repository.dart';
 import 'package:mobile_bisa/features/market/presentation/bloc/market_cubit.dart';
+import 'package:mobile_bisa/features/market/presentation/widgets/market_supply_demand_card.dart';
 import 'package:mobile_bisa/injection_container.dart';
 import 'package:mobile_bisa/shared/widgets/bisa_app_bar.dart';
 import 'package:mobile_bisa/shared/widgets/shimmer_loading.dart';
@@ -20,14 +23,36 @@ class MarketDeepAnalyticsPage extends StatefulWidget {
 }
 
 class _MarketDeepAnalyticsPageState extends State<MarketDeepAnalyticsPage> {
+  MarketSupplyDemandOverviewModel? _supplyDemand;
+  bool _loadingSd = true;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadSupplyDemand();
+  }
+
+  Future<void> _loadSupplyDemand() async {
+    setState(() => _loadingSd = true);
+    final result = await sl<MarketRepository>().getSupplyDemandOverview();
+    if (!mounted) return;
+    result.fold(
+      (_) => setState(() => _loadingSd = false),
+      (data) => setState(() {
+        _supplyDemand = data;
+        _loadingSd = false;
+      }),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return BlocProvider(
       create: (_) => sl<MarketCubit>()..getMarketTrends(),
       child: Scaffold(
         backgroundColor: AppColors.background,
-        appBar: const BisaAppBar(
-          title: 'Analitik Mendalam',
+        appBar: BisaAppBar(
+          title: 'market.deep_analytics_title'.tr(),
           backgroundColor: AppColors.surface,
         ),
         body: BlocBuilder<MarketCubit, MarketState>(
@@ -39,18 +64,44 @@ class _MarketDeepAnalyticsPageState extends State<MarketDeepAnalyticsPage> {
               ),
               error: (message) => _buildError(context, message),
               loaded: (trends) => RefreshIndicator(
-                onRefresh: () async =>
-                    context.read<MarketCubit>().getMarketTrends(),
+                onRefresh: () async {
+                  await context.read<MarketCubit>().getMarketTrends();
+                  await _loadSupplyDemand();
+                },
                 child: SingleChildScrollView(
                   physics: const AlwaysScrollableScrollPhysics(),
                   padding: EdgeInsets.all(20.w),
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      _buildHeroCard(trends.length),
+                      _buildHeroCard(trends.length, _supplyDemand),
                       SizedBox(height: 24.h),
                       Text(
-                        'Prediksi AI per Komoditas',
+                        'market.sd_section_title'.tr(),
+                        style: TextStyle(
+                          fontSize: 16.sp,
+                          fontWeight: FontWeight.bold,
+                          color: AppColors.textPrimary,
+                        ),
+                      ),
+                      SizedBox(height: 8.h),
+                      if (_loadingSd)
+                        const ShimmerListPlaceholder(itemCount: 2, itemHeight: 120)
+                      else if (_supplyDemand != null)
+                        ..._supplyDemand!.commodities.map(
+                          (c) => Padding(
+                            padding: EdgeInsets.only(bottom: 12.h),
+                            child: MarketSupplyDemandCard(data: c),
+                          ),
+                        )
+                      else
+                        Text(
+                          'market.sd_load_failed'.tr(),
+                          style: TextStyle(color: AppColors.textSecondary, fontSize: 13.sp),
+                        ),
+                      SizedBox(height: 24.h),
+                      Text(
+                        'market.deep_ai_by_commodity'.tr(),
                         style: TextStyle(
                           fontSize: 16.sp,
                           fontWeight: FontWeight.bold,
@@ -71,7 +122,7 @@ class _MarketDeepAnalyticsPageState extends State<MarketDeepAnalyticsPage> {
     );
   }
 
-  Widget _buildHeroCard(int count) {
+  Widget _buildHeroCard(int count, MarketSupplyDemandOverviewModel? sd) {
     return Container(
       padding: EdgeInsets.all(20.r),
       decoration: BoxDecoration(
@@ -104,7 +155,7 @@ class _MarketDeepAnalyticsPageState extends State<MarketDeepAnalyticsPage> {
           ),
           SizedBox(height: 12.h),
           Text(
-            'Analitik Pasar Mendalam',
+            'market.deep_hero_title'.tr(),
             style: TextStyle(
               color: AppColors.textOnPrimary,
               fontSize: 22.sp,
@@ -114,13 +165,28 @@ class _MarketDeepAnalyticsPageState extends State<MarketDeepAnalyticsPage> {
           ),
           SizedBox(height: 8.h),
           Text(
-            'Prediksi harga 3 bulan, proyeksi AI, dan insight bisnis untuk $count komoditas biomassa.',
+            'market.deep_hero_subtitle'.tr(namedArgs: {'count': '$count'}),
             style: TextStyle(
               color: AppColors.textOnPrimary.withValues(alpha: 0.9),
               fontSize: 13.sp,
               height: 1.5,
             ),
           ),
+          if (sd != null) ...[
+            SizedBox(height: 12.h),
+            Text(
+              'market.sd_hero_totals'.tr(namedArgs: {
+                'products': '${sd.totalProductCount}',
+                'supply': _formatTon(sd.totalStockTon),
+                'demand': _formatTon(sd.totalDemandTon90d),
+              }),
+              style: TextStyle(
+                color: AppColors.textOnPrimary.withValues(alpha: 0.95),
+                fontSize: 12.sp,
+                height: 1.45,
+              ),
+            ),
+          ],
         ],
       ),
     );
@@ -179,7 +245,7 @@ class _MarketDeepAnalyticsPageState extends State<MarketDeepAnalyticsPage> {
                     ),
                     SizedBox(height: 4.h),
                     Text(
-                      'Lihat prediksi & insight AI →',
+                      'market.deep_view_prediction_cta'.tr(),
                       style: TextStyle(
                         color: AppColors.primary,
                         fontSize: 11.sp,
@@ -189,37 +255,7 @@ class _MarketDeepAnalyticsPageState extends State<MarketDeepAnalyticsPage> {
                   ],
                 ),
               ),
-              if (trend.historyData.isNotEmpty)
-                SizedBox(
-                  width: 56.w,
-                  height: 28.h,
-                  child: LineChart(
-                    LineChartData(
-                      gridData: FlGridData(show: false),
-                      titlesData: FlTitlesData(show: false),
-                      borderData: FlBorderData(show: false),
-                      lineBarsData: [
-                        LineChartBarData(
-                          spots: trend.historyData
-                              .asMap()
-                              .entries
-                              .map(
-                                (e) => FlSpot(
-                                  e.key.toDouble(),
-                                  e.value.y.toDouble(),
-                                ),
-                              )
-                              .toList(),
-                          isCurved: true,
-                          color: trendColor,
-                          barWidth: 2,
-                          dotData: FlDotData(show: false),
-                          belowBarData: BarAreaData(show: false),
-                        ),
-                      ],
-                    ),
-                  ),
-                ),
+              Icon(LucideIcons.chevronRight, color: AppColors.grey400, size: 20.sp),
             ],
           ),
         ),
@@ -234,24 +270,13 @@ class _MarketDeepAnalyticsPageState extends State<MarketDeepAnalyticsPage> {
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Icon(
-              LucideIcons.circleAlert,
-              size: 48.sp,
-              color: AppColors.error,
-            ),
+            Icon(LucideIcons.circleAlert, color: AppColors.error, size: 40.sp),
             SizedBox(height: 12.h),
-            Text(
-              message,
-              textAlign: TextAlign.center,
-              style: TextStyle(
-                color: AppColors.textSecondary,
-                fontSize: 14.sp,
-              ),
-            ),
+            Text(message, textAlign: TextAlign.center),
             SizedBox(height: 16.h),
             TextButton(
               onPressed: () => context.read<MarketCubit>().getMarketTrends(),
-              child: const Text('Coba lagi'),
+              child: Text('market.retry'.tr()),
             ),
           ],
         ),
@@ -263,5 +288,9 @@ class _MarketDeepAnalyticsPageState extends State<MarketDeepAnalyticsPage> {
     if (trendType == 'UP') return AppColors.success;
     if (trendType == 'STABLE') return AppColors.warning;
     return AppColors.error;
+  }
+
+  String _formatTon(double ton) {
+    return NumberFormat('#,##0.0', 'id_ID').format(ton);
   }
 }
