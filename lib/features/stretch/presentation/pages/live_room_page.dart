@@ -1,8 +1,11 @@
+import 'dart:io' show Platform;
 import 'package:easy_localization/easy_localization.dart';
+import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:go_router/go_router.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
+import 'package:url_launcher/url_launcher.dart';
 import 'package:webview_flutter/webview_flutter.dart';
 import '../../../../core/constants/app_layout.dart';
 import '../../../../core/constants/app_colors.dart';
@@ -65,13 +68,59 @@ class _LiveRoomPageState extends State<LiveRoomPage> {
     );
   }
 
+  bool get _isWebViewSupported {
+    if (kIsWeb) return false;
+    try {
+      return Platform.isAndroid || Platform.isIOS || Platform.isMacOS;
+    } catch (_) {
+      return false;
+    }
+  }
+
   Widget _streamArea() {
     final url = _session?['streamUrl']?.toString();
     if (url != null && url.isNotEmpty) {
-      final controller = WebViewController()
-        ..setJavaScriptMode(JavaScriptMode.unrestricted)
-        ..loadRequest(Uri.parse(url));
-      return SizedBox(height: 220.h, child: WebViewWidget(controller: controller));
+      if (_isWebViewSupported) {
+        final controller = WebViewController()
+          ..setJavaScriptMode(JavaScriptMode.unrestricted)
+          ..loadRequest(Uri.parse(url));
+        return SizedBox(height: 220.h, child: WebViewWidget(controller: controller));
+      } else {
+        return Container(
+          height: 220.h,
+          width: double.infinity,
+          color: AppColors.grey900,
+          alignment: Alignment.center,
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Icon(LucideIcons.radio, color: AppColors.primary, size: 40.sp),
+              SizedBox(height: AppSpacing.sm),
+              Text(
+                'Stream URL: $url',
+                style: TextStyle(color: AppColors.surface, fontSize: 11.sp),
+                textAlign: TextAlign.center,
+              ),
+              SizedBox(height: 12.h),
+              ElevatedButton.icon(
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: AppColors.primary,
+                  foregroundColor: AppColors.surface,
+                  padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 8.h),
+                ),
+                onPressed: () async {
+                  final uri = Uri.tryParse(url);
+                  if (uri != null && await canLaunchUrl(uri)) {
+                    await launchUrl(uri, mode: LaunchMode.externalApplication);
+                  }
+                },
+                icon: Icon(LucideIcons.externalLink, size: 14.sp),
+                label: const Text('Buka Stream di Browser'),
+              ),
+            ],
+          ),
+        );
+      }
     }
     return Container(
       height: 220.h,

@@ -1,5 +1,6 @@
 import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:go_router/go_router.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
@@ -53,32 +54,40 @@ class _AiChatPageState extends State<AiChatPage> {
   Widget build(BuildContext context) {
     return BlocProvider(
       create: (context) => sl<AiCubit>(),
-      child: Scaffold(
-        backgroundColor: AppColors.background,
-        appBar: BisaAppBar(
-          backgroundColor: AppColors.surface,
-          titleWidget: Row(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              ClipOval(
-                child: Container(
-                  color: AppColors.surface,
-                  padding: EdgeInsets.all(4.r),
-                  child: BisaLogo(size: 24.r),
-                ),
+      child: Builder(
+        builder: (context) {
+          return Scaffold(
+            backgroundColor: AppColors.background,
+            appBar: BisaAppBar(
+              backgroundColor: AppColors.surface,
+              titleWidget: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  ClipOval(
+                    child: Container(
+                      color: AppColors.surface,
+                      padding: EdgeInsets.all(4.r),
+                      child: BisaLogo(size: 24.r),
+                    ),
+                  ),
+                  SizedBox(width: 10.w),
+                  Text(
+                    'ai.title'.tr(),
+                    style: TextStyle(
+                      color: AppColors.textPrimary,
+                      fontSize: 16.sp,
+                      fontWeight: FontWeight.w800,
+                    ),
+                  ),
+                ],
               ),
-              SizedBox(width: 10.w),
-              Text(
-                'ai.title'.tr(),
-                style: TextStyle(
-                  color: AppColors.textPrimary,
-                  fontSize: 16.sp,
-                  fontWeight: FontWeight.w800,
+              actions: [
+                IconButton(
+                  icon: const Icon(LucideIcons.trash2, color: AppColors.textSecondary),
+                  onPressed: () => _showClearChatConfirmation(context),
                 ),
-              ),
-            ],
-          ),
-        ),
+              ],
+            ),
         body: Column(
           children: [
             Expanded(
@@ -86,14 +95,17 @@ class _AiChatPageState extends State<AiChatPage> {
                 builder: (context, state) {
                   return state.maybeWhen(
                     initial: () => _buildEmptyState(),
-                    chatLoaded: (messages) {
+                    chatLoaded: (messages, isTyping) {
                       WidgetsBinding.instance.addPostFrameCallback((_) => _scrollToBottom());
                       return ListView.builder(
                         controller: _scrollController,
                         padding: EdgeInsets.all(16.w),
-                        itemCount: messages.length,
+                        itemCount: messages.length + (isTyping ? 1 : 0),
                         itemBuilder: (context, index) {
-                          return _buildChatBubble(messages[index]);
+                          if (index == messages.length && isTyping) {
+                            return const _TypingIndicator();
+                          }
+                          return _buildChatBubble(context, messages[index]);
                         },
                       );
                     },
@@ -155,9 +167,11 @@ class _AiChatPageState extends State<AiChatPage> {
             _buildInputArea(),
           ],
         ),
-      ),
-    );
-  }
+      );
+    },
+  ),
+);
+}
 
   void _sendSuggestedPrompt(BuildContext context, String text) {
     context.read<AiCubit>().sendMessage(text);
@@ -304,37 +318,278 @@ class _AiChatPageState extends State<AiChatPage> {
     );
   }
 
-  Widget _buildChatBubble(ChatMessage message) {
+  Widget _buildSwipeBackground(bool isUser) {
+    return Container(
+      margin: EdgeInsets.only(bottom: 12.h, left: 16.w, right: 16.w),
+      padding: EdgeInsets.symmetric(horizontal: 20.w),
+      decoration: BoxDecoration(
+        color: AppColors.error.withOpacity(0.9),
+        borderRadius: BorderRadius.circular(12.r),
+      ),
+      alignment: isUser ? Alignment.centerRight : Alignment.centerLeft,
+      child: const Icon(
+        LucideIcons.trash2,
+        color: AppColors.white,
+      ),
+    );
+  }
+
+  Widget _buildChatBubble(BuildContext context, ChatMessage message) {
     return Align(
       alignment: message.isUser ? Alignment.centerRight : Alignment.centerLeft,
-      child: Container(
-        margin: EdgeInsets.only(bottom: 12.h),
-        padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 10.h),
-        constraints: BoxConstraints(maxWidth: 0.75.sw),
-        decoration: BoxDecoration(
-          color: message.isUser ? AppColors.primary : AppColors.surface,
-          borderRadius: BorderRadius.only(
-            topLeft: Radius.circular(12.r),
-            topRight: Radius.circular(12.r),
-            bottomLeft: message.isUser ? Radius.circular(12.r) : Radius.zero,
-            bottomRight: message.isUser ? Radius.zero : Radius.circular(12.r),
-          ),
-          boxShadow: [
-            BoxShadow(
-              color: AppColors.black.withOpacity(0.02),
-              blurRadius: 5,
-              offset: const Offset(0, 2),
+      child: Dismissible(
+        key: ValueKey(message.id),
+        direction: message.isUser
+            ? DismissDirection.endToStart
+            : DismissDirection.startToEnd,
+        background: _buildSwipeBackground(message.isUser),
+        onDismissed: (direction) {
+          context.read<AiCubit>().deleteMessage(message.id);
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('Pesan berhasil dihapus'),
+              duration: Duration(seconds: 1),
             ),
-          ],
-        ),
-        child: Text(
-          message.text,
-          style: TextStyle(
-            color: message.isUser ? AppColors.white : AppColors.textPrimary,
-            fontSize: 14.sp,
+          );
+        },
+        child: GestureDetector(
+          onLongPress: () => _showMessageOptions(context, message),
+          child: Container(
+            margin: EdgeInsets.only(bottom: 12.h, left: 16.w, right: 16.w),
+            padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 10.h),
+            constraints: BoxConstraints(maxWidth: 0.70.sw),
+            decoration: BoxDecoration(
+              color: message.isUser ? AppColors.primary : AppColors.surface,
+              borderRadius: BorderRadius.only(
+                topLeft: Radius.circular(12.r),
+                topRight: Radius.circular(12.r),
+                bottomLeft: message.isUser ? Radius.circular(12.r) : Radius.zero,
+                bottomRight: message.isUser ? Radius.zero : Radius.circular(12.r),
+              ),
+              boxShadow: [
+                BoxShadow(
+                  color: AppColors.black.withOpacity(0.02),
+                  blurRadius: 5,
+                  offset: const Offset(0, 2),
+                ),
+              ],
+            ),
+            child: Text(
+              message.text,
+              style: TextStyle(
+                color: message.isUser ? AppColors.white : AppColors.textPrimary,
+                fontSize: 14.sp,
+              ),
+            ),
           ),
         ),
       ),
+    );
+  }
+
+  void _showMessageOptions(BuildContext context, ChatMessage message) {
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: Colors.transparent,
+      builder: (bottomSheetContext) {
+        return Container(
+          decoration: const BoxDecoration(
+            color: AppColors.surface,
+            borderRadius: BorderRadius.only(
+              topLeft: Radius.circular(20),
+              topRight: Radius.circular(20),
+            ),
+          ),
+          padding: EdgeInsets.symmetric(horizontal: 20.w, vertical: 24.h),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Container(
+                width: 40.w,
+                height: 4.h,
+                margin: EdgeInsets.only(bottom: 20.h),
+                decoration: BoxDecoration(
+                  color: AppColors.grey300,
+                  borderRadius: BorderRadius.circular(10),
+                ),
+              ),
+              Align(
+                alignment: Alignment.centerLeft,
+                child: Text(
+                  'Opsi Pesan',
+                  style: TextStyle(
+                    fontSize: 16.sp,
+                    fontWeight: FontWeight.w800,
+                    color: AppColors.textPrimary,
+                  ),
+                ),
+              ),
+              SizedBox(height: 16.h),
+              ListTile(
+                leading: const Icon(LucideIcons.copy, color: AppColors.primary),
+                title: Text(
+                  'Salin Pesan',
+                  style: TextStyle(
+                    fontSize: 14.sp,
+                    fontWeight: FontWeight.w600,
+                    color: AppColors.textPrimary,
+                  ),
+                ),
+                onTap: () {
+                  Clipboard.setData(ClipboardData(text: message.text));
+                  Navigator.pop(bottomSheetContext);
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(
+                      content: Text('Pesan disalin ke papan klip'),
+                      duration: Duration(seconds: 2),
+                    ),
+                  );
+                },
+              ),
+              const Divider(color: AppColors.grey200, height: 1),
+              ListTile(
+                leading: const Icon(LucideIcons.pencil, color: AppColors.secondary),
+                title: Text(
+                  'Edit Pesan',
+                  style: TextStyle(
+                    fontSize: 14.sp,
+                    fontWeight: FontWeight.w600,
+                    color: AppColors.textPrimary,
+                  ),
+                ),
+                onTap: () {
+                  Navigator.pop(bottomSheetContext);
+                  _showEditMessageDialog(context, message);
+                },
+              ),
+              const Divider(color: AppColors.grey200, height: 1),
+              ListTile(
+                leading: const Icon(LucideIcons.trash2, color: AppColors.error),
+                title: Text(
+                  'Hapus Pesan',
+                  style: TextStyle(
+                    fontSize: 14.sp,
+                    fontWeight: FontWeight.w600,
+                    color: AppColors.error,
+                  ),
+                ),
+                onTap: () {
+                  Navigator.pop(bottomSheetContext);
+                  context.read<AiCubit>().deleteMessage(message.id);
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(
+                      content: Text('Pesan berhasil dihapus'),
+                      duration: Duration(seconds: 1),
+                    ),
+                  );
+                },
+              ),
+            ],
+          ),
+        );
+      },
+    );
+  }
+
+  void _showEditMessageDialog(BuildContext context, ChatMessage message) {
+    final controller = TextEditingController(text: message.text);
+    showDialog(
+      context: context,
+      builder: (dialogContext) {
+        return AlertDialog(
+          backgroundColor: AppColors.surface,
+          title: Text(
+            'Edit Pesan',
+            style: TextStyle(
+              fontSize: 16.sp,
+              fontWeight: FontWeight.w800,
+              color: AppColors.textPrimary,
+            ),
+          ),
+          content: TextField(
+            controller: controller,
+            maxLines: null,
+            decoration: const InputDecoration(
+              hintText: 'Edit pesan Anda...',
+              border: OutlineInputBorder(),
+            ),
+            style: TextStyle(
+              fontSize: 14.sp,
+              color: AppColors.textPrimary,
+            ),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(dialogContext),
+              child: const Text('Batal'),
+            ),
+            TextButton(
+              onPressed: () {
+                final newText = controller.text.trim();
+                if (newText.isNotEmpty) {
+                  context.read<AiCubit>().editMessage(message.id, newText);
+                }
+                Navigator.pop(dialogContext);
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(content: Text('Pesan diperbarui')),
+                );
+              },
+              child: const Text(
+                'Simpan',
+                style: TextStyle(
+                  color: AppColors.primary,
+                  fontWeight: FontWeight.w700,
+                ),
+              ),
+            ),
+          ],
+        );
+      },
+    );
+  }
+
+  void _showClearChatConfirmation(BuildContext context) {
+    showDialog(
+      context: context,
+      builder: (dialogContext) {
+        return AlertDialog(
+          backgroundColor: AppColors.surface,
+          title: Text(
+            'Hapus Semua Chat?',
+            style: TextStyle(
+              fontSize: 16.sp,
+              fontWeight: FontWeight.w800,
+              color: AppColors.textPrimary,
+            ),
+          ),
+          content: Text(
+            'Tindakan ini akan menghapus seluruh riwayat percakapan Anda dengan asisten.',
+            style: TextStyle(
+              fontSize: 14.sp,
+              color: AppColors.textSecondary,
+            ),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(dialogContext),
+              child: const Text('Batal'),
+            ),
+            TextButton(
+              onPressed: () {
+                Navigator.pop(dialogContext);
+                context.read<AiCubit>().clearChat();
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(content: Text('Riwayat chat dihapus')),
+                );
+              },
+              child: const Text(
+                'Hapus',
+                style: TextStyle(color: AppColors.error),
+              ),
+            ),
+          ],
+        );
+      },
     );
   }
 
@@ -470,6 +725,102 @@ class _SuggestedPromptCard extends StatelessWidget {
               ),
             ],
           ),
+        ),
+      ),
+    );
+  }
+}
+
+/// Animated typing indicator with 3 bouncing dots
+class _TypingIndicator extends StatefulWidget {
+  const _TypingIndicator();
+
+  @override
+  State<_TypingIndicator> createState() => _TypingIndicatorState();
+}
+
+class _TypingIndicatorState extends State<_TypingIndicator>
+    with TickerProviderStateMixin {
+  late final List<AnimationController> _controllers;
+  late final List<Animation<double>> _animations;
+
+  @override
+  void initState() {
+    super.initState();
+    _controllers = List.generate(3, (i) {
+      return AnimationController(
+        vsync: this,
+        duration: const Duration(milliseconds: 600),
+      );
+    });
+
+    _animations = _controllers.map((c) {
+      return Tween<double>(begin: 0, end: -8).animate(
+        CurvedAnimation(parent: c, curve: Curves.easeInOut),
+      );
+    }).toList();
+
+    // Stagger the animations
+    for (int i = 0; i < _controllers.length; i++) {
+      Future.delayed(Duration(milliseconds: i * 180), () {
+        if (mounted) _controllers[i].repeat(reverse: true);
+      });
+    }
+  }
+
+  @override
+  void dispose() {
+    for (final c in _controllers) {
+      c.dispose();
+    }
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Align(
+      alignment: Alignment.centerLeft,
+      child: Container(
+        margin: EdgeInsets.only(bottom: 12.h),
+        padding: EdgeInsets.symmetric(horizontal: 18.w, vertical: 14.h),
+        decoration: BoxDecoration(
+          color: AppColors.surface,
+          borderRadius: BorderRadius.only(
+            topLeft: Radius.circular(12.r),
+            topRight: Radius.circular(12.r),
+            bottomRight: Radius.circular(12.r),
+          ),
+          boxShadow: [
+            BoxShadow(
+              color: AppColors.black.withOpacity(0.02),
+              blurRadius: 5,
+              offset: const Offset(0, 2),
+            ),
+          ],
+        ),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: List.generate(3, (i) {
+            return AnimatedBuilder(
+              animation: _animations[i],
+              builder: (context, child) {
+                return Container(
+                  margin: EdgeInsets.symmetric(horizontal: 3.w),
+                  child: Transform.translate(
+                    offset: Offset(0, _animations[i].value),
+                    child: Container(
+                      width: 8.w,
+                      height: 8.w,
+                      decoration: BoxDecoration(
+                        color: AppColors.primary.withOpacity(0.5),
+                        shape: BoxShape.circle,
+                      ),
+                    ),
+                  ),
+                );
+              },
+            );
+          }),
         ),
       ),
     );

@@ -2,8 +2,8 @@ import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
-import 'package:go_router/go_router.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
+import 'package:go_router/go_router.dart';
 
 import '../../../../core/constants/app_layout.dart';
 import '../../../../core/constants/app_colors.dart';
@@ -16,8 +16,15 @@ import '../bloc/compare_cubit.dart';
 import '../utils/product_specs_mapper.dart';
 import '../widgets/compare_lists_sheet.dart';
 
-class CompareProductsPage extends StatelessWidget {
+class CompareProductsPage extends StatefulWidget {
   const CompareProductsPage({super.key});
+
+  @override
+  State<CompareProductsPage> createState() => _CompareProductsPageState();
+}
+
+class _CompareProductsPageState extends State<CompareProductsPage> {
+  final Set<String> _selectedProductIds = {};
 
   @override
   Widget build(BuildContext context) {
@@ -63,11 +70,13 @@ class CompareProductsPage extends StatelessWidget {
             );
           }
 
-          final specRows = _buildSpecRows(state.products);
           final needMore = state.products.length < 2;
+          final selectedCount = _selectedProductIds.length;
+          final selectedProducts = state.products
+              .where((p) => _selectedProductIds.contains(p.id))
+              .toList();
 
           return Column(
-            crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
               if (needMore)
                 Material(
@@ -101,35 +110,175 @@ class CompareProductsPage extends StatelessWidget {
                 ),
               Expanded(
                 child: SingleChildScrollView(
-            scrollDirection: Axis.horizontal,
-            child: SingleChildScrollView(
-              child: DataTable(
-                headingRowColor: WidgetStateProperty.all(AppColors.surface),
-                columns: [
-                  DataColumn(
-                    label: Text(
-                      'product.compare_spec'.tr(),
-                      style: AppTextStyles.caption(fontWeight: FontWeight.w800),
-                    ),
+                  padding: EdgeInsets.symmetric(
+                    vertical: AppSpacing.sm,
                   ),
-                  ...state.products.map(
-                    (p) => DataColumn(
-                      label: SizedBox(
-                        width: 140.w,
-                        child: _ProductHeader(
-                          product: p,
-                          onRemove: () =>
-                              context.read<CompareCubit>().remove(p.id),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      // Comparison Table (Fixed Specs + Scrollable Products
+                      Padding(
+                        padding: EdgeInsets.symmetric(horizontal: AppSpacing.md),
+                        child: Row(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            // Fixed Left Column (Spesifikasi - Fixed)
+                            Container(
+                              width: 120.w,
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.stretch,
+                                children: [
+                                  Container(
+                                    height: 190.h,
+                                    decoration: const BoxDecoration(
+                                      color: AppColors.surface,
+                                      border: Border(
+                                        bottom: BorderSide(color: AppColors.grey200, width: 2),
+                                        right: BorderSide(color: AppColors.grey200, width: 1.5),
+                                      ),
+                                    ),
+                                    padding: EdgeInsets.all(AppSpacing.sm),
+                                    child: Column(
+                                      crossAxisAlignment: CrossAxisAlignment.start,
+                                      mainAxisAlignment: MainAxisAlignment.center,
+                                      children: [
+                                        Icon(
+                                          LucideIcons.columns3,
+                                          color: AppColors.primary,
+                                          size: 20.sp,
+                                        ),
+                                        SizedBox(height: AppSpacing.sm),
+                                        Text(
+                                          'Spesifikasi',
+                                          style: AppTextStyles.caption(
+                                            fontWeight: FontWeight.w800,
+                                            color: AppColors.primary,
+                                          ),
+                                        ),
+                                        SizedBox(height: AppSpacing.xs),
+                                        Text(
+                                          'Bandingkan detail produk',
+                                          style: AppTextStyles.caption(
+                                            color: AppColors.textSecondary,
+                                          ).copyWith(
+                                            fontSize: 9.sp,
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                                  ..._buildFixedSpecLabels(state.products),
+                                ],
+                              ),
+                            ),
+                            // Scrollable Right Column (Products)
+                            Expanded(
+                              child: SingleChildScrollView(
+                                scrollDirection: Axis.horizontal,
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Row(
+                                      children: [
+                                        ...state.products.map((product) {
+                                          final isSelected = _selectedProductIds.contains(product.id);
+                                          return Container(
+                                            width: 140.w,
+                                            child: _ProductHeaderCell(
+                                              product: product,
+                                              isSelected: isSelected,
+                                              onRemove: () => context.read<CompareCubit>().remove(product.id),
+                                              onSelect: (selected) {
+                                                setState(() {
+                                                  if (selected) {
+                                                    _selectedProductIds.add(product.id);
+                                                  } else {
+                                                    _selectedProductIds.remove(product.id);
+                                                  }
+                                                });
+                                              },
+                                            ),
+                                          );
+                                        }),
+                                        Container(
+                                          width: 140.w,
+                                          child: _AddProductCell(onTap: () => context.pop()),
+                                        ),
+                                      ],
+                                    ),
+                                    ..._buildScrollableSpecValues(state.products),
+                                  ],
+                                ),
+                              ),
+                            ),
+                          ],
                         ),
                       ),
-                    ),
+                      if (selectedCount >= 2) ...[
+                        SizedBox(height: AppSpacing.lg),
+                        // Strategi Negosiasi
+                        Padding(
+                          padding: EdgeInsets.symmetric(horizontal: AppSpacing.md),
+                          child: _BuildNegotiationStrategy(),
+                        ),
+                        SizedBox(height: AppSpacing.lg),
+                        // Draft Negosiasi
+                        Padding(
+                          padding: EdgeInsets.symmetric(horizontal: AppSpacing.md),
+                          child: _BuildDraftNegotiation(
+                            selectedCount: selectedCount,
+                            selectedProducts: selectedProducts,
+                          ),
+                        ),
+                      ],
+                      SizedBox(height: AppSpacing.lg),
+                    ],
                   ),
-                ],
-                rows: specRows,
+                ),
               ),
-            ),
-          ),
-              ),
+              // Bottom Bar
+              if (state.products.isNotEmpty)
+                Container(
+                  decoration: BoxDecoration(
+                    color: AppColors.surface,
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.black.withValues(alpha: 0.1),
+                        blurRadius: 4,
+                        offset: Offset(0, -2),
+                      ),
+                    ],
+                  ),
+                  padding: EdgeInsets.symmetric(
+                    horizontal: AppSpacing.md,
+                    vertical: AppSpacing.sm,
+                  ),
+                  child: Row(
+                    children: [
+                      Expanded(
+                        child: OutlinedButton(
+                          onPressed: () {
+                            // TODO: Implement Simpan Draft
+                          },
+                          child: Text('Simpan Draft'),
+                        ),
+                      ),
+                      SizedBox(width: AppSpacing.md),
+                      Expanded(
+                        child: FilledButton.icon(
+                          onPressed: selectedCount >= 2
+                              ? () {
+                                  // TODO: Implement Buat Surat Negosiasi
+                                }
+                              : null,
+                          icon: Icon(LucideIcons.mail),
+                          label: Text('Buat Surat Negosiasi'),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
             ],
           );
         },
@@ -137,7 +286,22 @@ class CompareProductsPage extends StatelessWidget {
     );
   }
 
-  List<DataRow> _buildSpecRows(List<ProductEntity> products) {
+  List<Widget> _buildFixedSpecLabels(List<ProductEntity> products) {
+    final widgets = <Widget>[];
+
+    // Price
+    widgets.add(_specLabelCell('Harga Satuan', isEven: true));
+
+    // Min Order
+    widgets.add(_specLabelCell('Min. Order (MOQ)', isEven: false));
+
+    // Rating
+    widgets.add(_specLabelCell('Rating', isEven: true));
+
+    // Stock
+    widgets.add(_specLabelCell('Stock', isEven: false));
+
+    // Additional Specs
     final labels = <String>{};
     for (final p in products) {
       for (final s in p.specs) {
@@ -146,45 +310,121 @@ class CompareProductsPage extends StatelessWidget {
     }
     final ordered = labels.toList()..sort();
 
-    final rows = <DataRow>[
-      _valueRow('product.compare_price'.tr(), products, (p) {
-        final price = p.samplePricePerUnit ?? p.pricePerUnit;
-        return '${formatMoneyDisplay(price)} / ${p.unit}';
-      }),
-      _valueRow('product.compare_moq'.tr(), products, (p) {
-        return '${ProductPricingInfo.formatQty(p.minOrder)} ${p.unit}';
-      }),
-      _valueRow('product.compare_rating'.tr(), products,
-          (p) => '${p.averageRating} (${p.totalReviews})'),
-      _valueRow('product.compare_stock'.tr(), products,
-          (p) => '${p.stock} ${p.unit}'),
-    ];
-
+    int index = 4;
     for (final label in ordered) {
-      rows.add(
-        _valueRow(ProductSpecsMapper.displayLabel(label), products, (p) {
-          final match = p.specs.where((s) => s.label.trim() == label);
-          if (match.isEmpty) return '—';
-          return ProductSpecsMapper.displayValue(match.first.value);
-        }),
-      );
+      widgets.add(_specLabelCell(ProductSpecsMapper.displayLabel(label), isEven: index % 2 == 0));
+      index++;
     }
-    return rows;
+
+    return widgets;
   }
 
-  DataRow _valueRow(
-    String label,
+  List<Widget> _buildScrollableSpecValues(List<ProductEntity> products) {
+    final widgetRows = <Widget>[];
+    final specGetters = <String Function(ProductEntity)>[];
+
+    // Price
+    specGetters.add((p) {
+      final price = p.samplePricePerUnit ?? p.pricePerUnit;
+      return '${formatMoneyDisplay(price)} / ${p.unit}';
+    });
+
+    // Min Order
+    specGetters.add((p) => '${ProductPricingInfo.formatQty(p.minOrder)} ${p.unit}');
+
+    // Rating
+    specGetters.add((p) => '${p.averageRating} (${p.totalReviews})');
+
+    // Stock
+    specGetters.add((p) => '${p.stock} ${p.unit}');
+
+    // Additional Specs
+    final labels = <String>{};
+    for (final p in products) {
+      for (final s in p.specs) {
+        if (s.label.trim().isNotEmpty) labels.add(s.label.trim());
+      }
+    }
+    final ordered = labels.toList()..sort();
+
+    for (final label in ordered) {
+      specGetters.add((p) {
+        final match = p.specs.where((s) => s.label.trim() == label);
+        if (match.isEmpty) return '—';
+        return ProductSpecsMapper.displayValue(match.first.value);
+      });
+    }
+
+    // Build each spec row
+    int index = 0;
+    for (final getter in specGetters) {
+      widgetRows.add(_specValuesRow(products, getter, isEven: index % 2 == 0));
+      index++;
+    }
+
+    return widgetRows;
+  }
+
+  Widget _specLabelCell(String label, {required bool isEven}) {
+    return Container(
+      height: 52.h,
+      decoration: BoxDecoration(
+        color: isEven ? AppColors.surface : AppColors.grey50,
+        border: const Border(
+          bottom: BorderSide(color: AppColors.grey100),
+          right: BorderSide(color: AppColors.grey200, width: 1.5),
+        ),
+      ),
+      padding: EdgeInsets.symmetric(horizontal: AppSpacing.sm, vertical: AppSpacing.xs),
+      alignment: Alignment.centerLeft,
+      child: Text(
+        label,
+        maxLines: 2,
+        overflow: TextOverflow.ellipsis,
+        style: AppTextStyles.caption(
+          fontWeight: FontWeight.w600,
+          color: AppColors.textSecondary,
+        ),
+      ),
+    );
+  }
+
+  Widget _specValuesRow(
     List<ProductEntity> products,
-    String Function(ProductEntity) getter,
-  ) {
-    return DataRow(
-      cells: [
-        DataCell(Text(label, style: AppTextStyles.caption())),
-        ...products.map(
-          (p) => DataCell(
-            Text(
+    String Function(ProductEntity) getter, {
+    required bool isEven,
+  }) {
+    return Row(
+      children: [
+        ...products.map((p) {
+          return Container(
+            width: 140.w,
+            height: 52.h,
+            padding: EdgeInsets.symmetric(horizontal: AppSpacing.sm, vertical: AppSpacing.xs),
+            decoration: BoxDecoration(
+              color: isEven ? AppColors.surface : AppColors.grey50,
+              border: const Border(
+                bottom: BorderSide(color: AppColors.grey100),
+                right: BorderSide(color: AppColors.grey100),
+              ),
+            ),
+            alignment: Alignment.centerLeft,
+            child: Text(
               getter(p),
+              maxLines: 2,
+              overflow: TextOverflow.ellipsis,
               style: AppTextStyles.caption(),
+            ),
+          );
+        }),
+        Container(
+          width: 140.w,
+          height: 52.h,
+          decoration: BoxDecoration(
+            color: isEven ? AppColors.surface : AppColors.grey50,
+            border: const Border(
+              bottom: BorderSide(color: AppColors.grey100),
+              right: BorderSide(color: AppColors.grey100),
             ),
           ),
         ),
@@ -193,70 +433,418 @@ class CompareProductsPage extends StatelessWidget {
   }
 }
 
-class _ProductHeader extends StatelessWidget {
-  const _ProductHeader({
+class _ProductHeaderCell extends StatelessWidget {
+  const _ProductHeaderCell({
     required this.product,
+    required this.isSelected,
     required this.onRemove,
+    required this.onSelect,
   });
 
   final ProductEntity product;
+  final bool isSelected;
   final VoidCallback onRemove;
+  final Function(bool) onSelect;
 
   @override
   Widget build(BuildContext context) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Stack(
-          children: [
-            ClipRRect(
-              borderRadius: BorderRadius.circular(AppRadius.button),
-              child: BisaNetworkImage(
-                imageUrl: product.thumbnailUrl,
-                width: 120.w,
-                height: 72.h,
-                fit: BoxFit.cover,
-              ),
-            ),
-            Positioned(
-              top: 2,
-              right: 2,
-              child: InkWell(
-                onTap: onRemove,
-                child: Container(
-                  padding: EdgeInsets.all(4.w),
-                  decoration: BoxDecoration(
-                    color: AppColors.surface.withValues(alpha: 0.9),
-                    shape: BoxShape.circle,
-                  ),
-                  child: Icon(LucideIcons.x, size: 14.sp),
+    return Container(
+      height: 190.h,
+      decoration: const BoxDecoration(
+        color: AppColors.surface,
+        border: Border(
+          bottom: BorderSide(color: AppColors.grey200, width: 2),
+          right: BorderSide(color: AppColors.grey100),
+        ),
+      ),
+      padding: EdgeInsets.all(AppSpacing.sm),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Stack(
+            children: [
+              ClipRRect(
+                borderRadius: BorderRadius.circular(6.r),
+                child: BisaNetworkImage(
+                  imageUrl: product.thumbnailUrl,
+                  width: double.infinity,
+                  height: 90.h,
+                  fit: BoxFit.cover,
                 ),
               ),
-            ),
-          ],
-        ),
-        SizedBox(height: 6.h),
-        Text(
-          product.name,
-          maxLines: 2,
-          overflow: TextOverflow.ellipsis,
-          style: AppTextStyles.caption(fontWeight: FontWeight.w800),
-        ),
-        TextButton(
-          onPressed: () => context.push('/product/${product.id}'),
-          style: TextButton.styleFrom(
-            padding: EdgeInsets.zero,
-            minimumSize: Size.zero,
-            tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+              Positioned(
+                top: 2.h,
+                left: 2.w,
+                child: SizedBox(
+                  width: 20.w,
+                  height: 20.h,
+                  child: Checkbox(
+                    value: isSelected,
+                    activeColor: AppColors.primary,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(4.r),
+                    ),
+                    side: const BorderSide(color: AppColors.grey400, width: 1.5),
+                    onChanged: (value) {
+                      if (value != null) {
+                        onSelect(value);
+                      }
+                    },
+                  ),
+                ),
+              ),
+              Positioned(
+                top: 2.h,
+                right: 2.w,
+                child: Material(
+                  color: AppColors.black.withOpacity(0.6),
+                  shape: const CircleBorder(),
+                  child: InkWell(
+                    onTap: onRemove,
+                    borderRadius: BorderRadius.circular(20.r),
+                    child: Padding(
+                      padding: EdgeInsets.all(4.w),
+                      child: Icon(
+                        LucideIcons.x,
+                        size: 12.sp,
+                        color: AppColors.surface,
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+            ],
           ),
-          child: Text('product.compare_view_detail'.tr()),
-        ),
-      ],
+          SizedBox(height: AppSpacing.xs),
+          Expanded(
+            child: Text(
+              product.name,
+              maxLines: 2,
+              overflow: TextOverflow.ellipsis,
+              style: AppTextStyles.caption(fontWeight: FontWeight.w700),
+            ),
+          ),
+          TextButton(
+            onPressed: () => context.push('/product/${product.id}'),
+            style: TextButton.styleFrom(
+              padding: EdgeInsets.zero,
+              minimumSize: Size.zero,
+              tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+              visualDensity: VisualDensity.compact,
+            ),
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Text(
+                  'product.compare_view_detail'.tr(),
+                  style: AppTextStyles.caption(
+                    color: AppColors.primary,
+                    fontWeight: FontWeight.w700,
+                  ),
+                ),
+                Icon(
+                  LucideIcons.chevronRight,
+                  size: 10.sp,
+                  color: AppColors.primary,
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
     );
   }
 }
 
-/// Minimal pricing helper for compare page (avoids importing negotiation widgets).
+class _AddProductCell extends StatelessWidget {
+  const _AddProductCell({required this.onTap});
+
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      height: 190.h,
+      decoration: const BoxDecoration(
+        color: AppColors.surface,
+        border: Border(
+          bottom: BorderSide(color: AppColors.grey200, width: 2),
+          right: BorderSide(color: AppColors.grey100),
+        ),
+      ),
+      padding: EdgeInsets.all(AppSpacing.sm),
+      child: Center(
+        child: InkWell(
+          onTap: onTap,
+          borderRadius: BorderRadius.circular(8.r),
+          child: Container(
+            width: double.infinity,
+            height: double.infinity,
+            decoration: BoxDecoration(
+              color: AppColors.grey50,
+              borderRadius: BorderRadius.circular(8.r),
+              border: Border.all(color: AppColors.grey200),
+            ),
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Container(
+                  width: 44.w,
+                  height: 44.h,
+                  decoration: const BoxDecoration(
+                    color: AppColors.primaryLight,
+                    shape: BoxShape.circle,
+                  ),
+                  child: Icon(
+                    LucideIcons.plus,
+                    size: 20.sp,
+                    color: AppColors.primary,
+                  ),
+                ),
+                SizedBox(height: AppSpacing.sm),
+                Text(
+                  'Tambah',
+                  style: AppTextStyles.caption(
+                    color: AppColors.primary,
+                    fontWeight: FontWeight.w700,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _BuildNegotiationStrategy extends StatelessWidget {
+  const _BuildNegotiationStrategy();
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      decoration: BoxDecoration(
+        color: AppColors.surface,
+        borderRadius: BorderRadius.circular(12.r),
+        border: Border.all(color: AppColors.primary),
+      ),
+      padding: EdgeInsets.all(AppSpacing.md),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Icon(LucideIcons.lightbulb, color: AppColors.primary),
+              SizedBox(width: AppSpacing.sm),
+              Text(
+                'Strategi Negosiasi Terdeteksi',
+                style: AppTextStyles.body(
+                  fontWeight: FontWeight.w700,
+                  color: AppColors.primary,
+                ),
+              ),
+            ],
+          ),
+          SizedBox(height: AppSpacing.md),
+          Row(
+            children: [
+              Expanded(
+                child: Container(
+                  decoration: BoxDecoration(
+                    color: AppColors.primaryLight,
+                    border: Border(left: BorderSide(color: AppColors.primary, width: 3)),
+                  ),
+                  padding: EdgeInsets.all(AppSpacing.sm),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        'Potensi Penghematan',
+                        style: AppTextStyles.caption(
+                          fontWeight: FontWeight.w700,
+                        ),
+                      ),
+                      SizedBox(height: AppSpacing.xs),
+                      Text(
+                        'Pabrik Baja Utama menawarkan diskon volume terbesar. Cocok untuk proyek jangka panjang.',
+                        style: AppTextStyles.caption(
+                          color: AppColors.textSecondary,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+              SizedBox(width: AppSpacing.md),
+              Expanded(
+                child: Container(
+                  decoration: BoxDecoration(
+                    color: AppColors.primaryLight,
+                    border: Border(left: BorderSide(color: AppColors.primary, width: 3)),
+                  ),
+                  padding: EdgeInsets.all(AppSpacing.sm),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        'Kecepatan Logistik',
+                        style: AppTextStyles.caption(
+                          fontWeight: FontWeight.w700,
+                        ),
+                      ),
+                      SizedBox(height: AppSpacing.xs),
+                      Text(
+                        'Logam Hijau Lestari memiliki lead time tercepat (7 hari). Gunakan ini untuk vendor lain.',
+                        style: AppTextStyles.caption(
+                          color: AppColors.textSecondary,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _BuildDraftNegotiation extends StatelessWidget {
+  const _BuildDraftNegotiation({
+    required this.selectedCount,
+    required this.selectedProducts,
+  });
+
+  final int selectedCount;
+  final List<ProductEntity> selectedProducts;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      decoration: BoxDecoration(
+        color: AppColors.primary,
+        borderRadius: BorderRadius.circular(12.r),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.2),
+            blurRadius: 8,
+            offset: Offset(0, 4),
+          ),
+        ],
+      ),
+      padding: EdgeInsets.all(AppSpacing.md),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            'Draft Negosiasi',
+            style: AppTextStyles.body(
+              fontWeight: FontWeight.w700,
+              color: Colors.white,
+            ),
+          ),
+          SizedBox(height: AppSpacing.xs),
+          Text(
+            'Anda telah memilih $selectedCount produk untuk proses negosiasi lanjutan.',
+            style: AppTextStyles.caption(
+              color: Colors.white.withValues(alpha: 0.9),
+            ),
+          ),
+          SizedBox(height: AppSpacing.md),
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                '$selectedCount',
+                style: AppTextStyles.sheetTitle(
+                  color: Colors.white,
+                ),
+              ),
+              SizedBox(width: AppSpacing.sm),
+              Expanded(
+                child: Padding(
+                  padding: EdgeInsets.only(top: AppSpacing.xs),
+                  child: Text(
+                    'PRODUK TERPILIH',
+                    style: AppTextStyles.caption(
+                      color: Colors.white,
+                      fontWeight: FontWeight.w700,
+                    ),
+                  ),
+                ),
+              ),
+              Material(
+                color: AppColors.surface.withValues(alpha: 0.2),
+                shape: CircleBorder(),
+                child: InkWell(
+                  onTap: () {},
+                  borderRadius: BorderRadius.circular(20.r),
+                  child: Padding(
+                    padding: EdgeInsets.all(AppSpacing.sm),
+                    child: Icon(
+                      LucideIcons.pencil,
+                      size: 18.sp,
+                      color: Colors.white,
+                    ),
+                  ),
+                ),
+              ),
+            ],
+          ),
+          SizedBox(height: AppSpacing.md),
+          Row(
+            children: [
+              for (int i = 0; i < selectedProducts.length && i < 2; i++)
+                Padding(
+                  padding: EdgeInsets.only(right: AppSpacing.sm),
+                  child: ClipRRect(
+                    borderRadius: BorderRadius.circular(12.r),
+                    child: BisaNetworkImage(
+                      imageUrl: selectedProducts[i].thumbnailUrl,
+                      width: 60.w,
+                      height: 60.h,
+                      fit: BoxFit.cover,
+                    ),
+                  ),
+                ),
+              if (selectedProducts.length > 2)
+                Container(
+                  width: 60.w,
+                  height: 60.h,
+                  decoration: BoxDecoration(
+                    color: AppColors.surface.withValues(alpha: 0.3),
+                    borderRadius: BorderRadius.circular(12.r),
+                  ),
+                  child: Center(
+                    child: Text(
+                      '+${selectedProducts.length - 2}',
+                      style: AppTextStyles.body(
+                        fontWeight: FontWeight.w700,
+                        color: Colors.white,
+                      ),
+                    ),
+                  ),
+                ),
+              SizedBox(width: AppSpacing.sm),
+              Expanded(
+                child: Text(
+                  'Menunggu untuk dinegosiasikan...',
+                  style: AppTextStyles.caption(
+                    color: Colors.white,
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+}
+
 class ProductPricingInfo {
   static String formatQty(double qty) {
     if (qty == qty.roundToDouble()) return qty.toInt().toString();

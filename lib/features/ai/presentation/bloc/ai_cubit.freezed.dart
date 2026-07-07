@@ -128,12 +128,12 @@ return error(_that);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult maybeWhen<TResult extends Object?>({TResult Function()?  initial,TResult Function()?  loading,TResult Function( List<ChatMessage> messages)?  chatLoaded,TResult Function( String message)?  error,required TResult orElse(),}) {final _that = this;
+@optionalTypeArgs TResult maybeWhen<TResult extends Object?>({TResult Function()?  initial,TResult Function()?  loading,TResult Function( List<ChatMessage> messages,  bool isTyping)?  chatLoaded,TResult Function( String message)?  error,required TResult orElse(),}) {final _that = this;
 switch (_that) {
 case _Initial() when initial != null:
 return initial();case _Loading() when loading != null:
 return loading();case _ChatLoaded() when chatLoaded != null:
-return chatLoaded(_that.messages);case _Error() when error != null:
+return chatLoaded(_that.messages,_that.isTyping);case _Error() when error != null:
 return error(_that.message);case _:
   return orElse();
 
@@ -152,12 +152,12 @@ return error(_that.message);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult when<TResult extends Object?>({required TResult Function()  initial,required TResult Function()  loading,required TResult Function( List<ChatMessage> messages)  chatLoaded,required TResult Function( String message)  error,}) {final _that = this;
+@optionalTypeArgs TResult when<TResult extends Object?>({required TResult Function()  initial,required TResult Function()  loading,required TResult Function( List<ChatMessage> messages,  bool isTyping)  chatLoaded,required TResult Function( String message)  error,}) {final _that = this;
 switch (_that) {
 case _Initial():
 return initial();case _Loading():
 return loading();case _ChatLoaded():
-return chatLoaded(_that.messages);case _Error():
+return chatLoaded(_that.messages,_that.isTyping);case _Error():
 return error(_that.message);case _:
   throw StateError('Unexpected subclass');
 
@@ -175,12 +175,12 @@ return error(_that.message);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>({TResult? Function()?  initial,TResult? Function()?  loading,TResult? Function( List<ChatMessage> messages)?  chatLoaded,TResult? Function( String message)?  error,}) {final _that = this;
+@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>({TResult? Function()?  initial,TResult? Function()?  loading,TResult? Function( List<ChatMessage> messages,  bool isTyping)?  chatLoaded,TResult? Function( String message)?  error,}) {final _that = this;
 switch (_that) {
 case _Initial() when initial != null:
 return initial();case _Loading() when loading != null:
 return loading();case _ChatLoaded() when chatLoaded != null:
-return chatLoaded(_that.messages);case _Error() when error != null:
+return chatLoaded(_that.messages,_that.isTyping);case _Error() when error != null:
 return error(_that.message);case _:
   return null;
 
@@ -257,7 +257,7 @@ String toString() {
 
 
 class _ChatLoaded implements AiState {
-  const _ChatLoaded(final  List<ChatMessage> messages): _messages = messages;
+  const _ChatLoaded(final  List<ChatMessage> messages, {this.isTyping = false}): _messages = messages;
   
 
  final  List<ChatMessage> _messages;
@@ -267,6 +267,7 @@ class _ChatLoaded implements AiState {
   return EqualUnmodifiableListView(_messages);
 }
 
+@JsonKey() final  bool isTyping;
 
 /// Create a copy of AiState
 /// with the given fields replaced by the non-null parameter values.
@@ -278,16 +279,16 @@ _$ChatLoadedCopyWith<_ChatLoaded> get copyWith => __$ChatLoadedCopyWithImpl<_Cha
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is _ChatLoaded&&const DeepCollectionEquality().equals(other._messages, _messages));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is _ChatLoaded&&const DeepCollectionEquality().equals(other._messages, _messages)&&(identical(other.isTyping, isTyping) || other.isTyping == isTyping));
 }
 
 
 @override
-int get hashCode => Object.hash(runtimeType,const DeepCollectionEquality().hash(_messages));
+int get hashCode => Object.hash(runtimeType,const DeepCollectionEquality().hash(_messages),isTyping);
 
 @override
 String toString() {
-  return 'AiState.chatLoaded(messages: $messages)';
+  return 'AiState.chatLoaded(messages: $messages, isTyping: $isTyping)';
 }
 
 
@@ -298,7 +299,7 @@ abstract mixin class _$ChatLoadedCopyWith<$Res> implements $AiStateCopyWith<$Res
   factory _$ChatLoadedCopyWith(_ChatLoaded value, $Res Function(_ChatLoaded) _then) = __$ChatLoadedCopyWithImpl;
 @useResult
 $Res call({
- List<ChatMessage> messages
+ List<ChatMessage> messages, bool isTyping
 });
 
 
@@ -315,10 +316,11 @@ class __$ChatLoadedCopyWithImpl<$Res>
 
 /// Create a copy of AiState
 /// with the given fields replaced by the non-null parameter values.
-@pragma('vm:prefer-inline') $Res call({Object? messages = null,}) {
+@pragma('vm:prefer-inline') $Res call({Object? messages = null,Object? isTyping = null,}) {
   return _then(_ChatLoaded(
 null == messages ? _self._messages : messages // ignore: cast_nullable_to_non_nullable
-as List<ChatMessage>,
+as List<ChatMessage>,isTyping: null == isTyping ? _self.isTyping : isTyping // ignore: cast_nullable_to_non_nullable
+as bool,
   ));
 }
 

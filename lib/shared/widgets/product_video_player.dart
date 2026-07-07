@@ -1,9 +1,13 @@
+import 'dart:io' show Platform;
 import 'package:easy_localization/easy_localization.dart';
+import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
+import 'package:url_launcher/url_launcher.dart';
 import 'package:webview_flutter/webview_flutter.dart';
 import '../../core/constants/app_colors.dart';
+import 'web_video_helper/web_video_helper.dart';
 
 /// Lightweight HTML5 video player (recorded product video, not live stream).
 class ProductVideoPlayer extends StatefulWidget {
@@ -46,19 +50,31 @@ class ProductVideoPlayer extends StatefulWidget {
 class _ProductVideoPlayerState extends State<ProductVideoPlayer> {
   late final WebViewController _controller;
   bool _loading = true;
+  bool _useWebView = false;
+
+  bool get _isWebViewSupported {
+    if (kIsWeb) return false;
+    try {
+      return Platform.isAndroid || Platform.isIOS || Platform.isMacOS;
+    } catch (_) {
+      return false;
+    }
+  }
 
   @override
   void initState() {
     super.initState();
-    _controller = WebViewController()
-      ..setJavaScriptMode(JavaScriptMode.unrestricted)
-      ..setBackgroundColor(AppColors.black)
-      ..setNavigationDelegate(
-        NavigationDelegate(onPageFinished: (_) {
-          if (mounted) setState(() => _loading = false);
-        }),
-      )
-      ..loadHtmlString('''
+    _useWebView = _isWebViewSupported;
+    if (_useWebView) {
+      _controller = WebViewController()
+        ..setJavaScriptMode(JavaScriptMode.unrestricted)
+        ..setBackgroundColor(AppColors.black)
+        ..setNavigationDelegate(
+          NavigationDelegate(onPageFinished: (_) {
+            if (mounted) setState(() => _loading = false);
+          }),
+        )
+        ..loadHtmlString('''
 <!DOCTYPE html>
 <html>
 <head>
@@ -70,10 +86,13 @@ class _ProductVideoPlayerState extends State<ProductVideoPlayer> {
 </style>
 </head>
 <body>
-  <video controls playsinline preload="metadata" src="${widget.videoUrl.replaceAll('"', '&quot;')}"></video>
+  <video autoplay muted loop controls playsinline preload="metadata" src="${widget.videoUrl.replaceAll('"', '&quot;')}"></video>
 </body>
 </html>
 ''');
+    } else {
+      _loading = false;
+    }
   }
 
   @override
@@ -85,8 +104,13 @@ class _ProductVideoPlayerState extends State<ProductVideoPlayer> {
       child: Stack(
         fit: StackFit.expand,
         children: [
-          WebViewWidget(controller: _controller),
-          if (_loading)
+          if (kIsWeb)
+            buildWebVideoPlayer(widget.videoUrl, h)
+          else if (_useWebView)
+            WebViewWidget(controller: _controller)
+          else
+            _buildFallbackPlayer(),
+          if (_loading && _useWebView)
             Container(
               color: AppColors.black,
               alignment: Alignment.center,
@@ -102,6 +126,68 @@ class _ProductVideoPlayerState extends State<ProductVideoPlayer> {
                 ],
               ),
             ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildFallbackPlayer() {
+    final videoPlayerText = 'marketplace.video_player'.tr();
+    final displayVideoPlayerText = videoPlayerText == 'marketplace.video_player' ? 'Video Player' : videoPlayerText;
+
+    final tapToPlayText = 'marketplace.tap_to_play'.tr();
+    final displayTapToPlayText = tapToPlayText == 'marketplace.tap_to_play' ? 'Klik untuk memutar video di browser' : tapToPlayText;
+
+    final playVideoText = 'marketplace.play_video'.tr();
+    final displayPlayVideoText = playVideoText == 'marketplace.play_video' ? 'Putar Video' : playVideoText;
+
+    return Container(
+      color: AppColors.black,
+      alignment: Alignment.center,
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Icon(
+            LucideIcons.video,
+            color: AppColors.primary,
+            size: 40.sp,
+          ),
+          SizedBox(height: 8.h),
+          Text(
+            displayVideoPlayerText,
+            style: TextStyle(
+              color: AppColors.surface,
+              fontSize: 14.sp,
+              fontWeight: FontWeight.bold,
+            ),
+          ),
+          SizedBox(height: 4.h),
+          Text(
+            displayTapToPlayText,
+            style: TextStyle(
+              color: AppColors.textSecondary,
+              fontSize: 11.sp,
+          ),
+          ),
+          SizedBox(height: 12.h),
+          ElevatedButton.icon(
+            style: ElevatedButton.styleFrom(
+              backgroundColor: AppColors.primary,
+              foregroundColor: AppColors.surface,
+              padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 8.h),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(8.r),
+              ),
+            ),
+            onPressed: () async {
+              final uri = Uri.tryParse(widget.videoUrl);
+              if (uri != null && await canLaunchUrl(uri)) {
+                await launchUrl(uri, mode: LaunchMode.externalApplication);
+              }
+            },
+            icon: Icon(LucideIcons.play, size: 14.sp),
+            label: Text(displayPlayVideoText),
+          ),
         ],
       ),
     );

@@ -24,9 +24,9 @@ class IotRepositoryImpl implements IotRepository {
   }
 
   @override
-  Future<Either<Failure, IotDeviceModel>> registerDevice(String deviceId, String name) async {
+  Future<Either<Failure, IotDeviceModel>> claimDevice(String deviceSecret, String name) async {
     try {
-      final result = await remoteDataSource.registerDevice(deviceId, name);
+      final result = await remoteDataSource.claimDevice(deviceSecret, name);
       return Right(result);
     } on DioException catch (e) {
       return Left(_handleDioError(e));

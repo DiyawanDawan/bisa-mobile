@@ -1,3 +1,5 @@
+import 'dart:convert';
+
 import 'package:easy_localization/easy_localization.dart';
 import 'package:go_router/go_router.dart';
 import 'package:flutter/material.dart';
@@ -27,6 +29,30 @@ class IotDashboardPage extends StatefulWidget {
 }
 
 class _IotDashboardPageState extends State<IotDashboardPage> {
+  String? _extractDeviceSecret(String rawValue) {
+    final value = rawValue.trim();
+    if (value.isEmpty) return null;
+
+    final hex64 = RegExp(r'^[a-fA-F0-9]{64}$');
+    if (hex64.hasMatch(value)) {
+      return value;
+    }
+
+    try {
+      final decoded = jsonDecode(value);
+      if (decoded is Map<String, dynamic>) {
+        final secret = decoded['deviceSecret']?.toString().trim();
+        if (secret != null && RegExp(r'^[a-fA-F0-9]{64}$').hasMatch(secret)) {
+          return secret;
+        }
+      }
+    } catch (_) {
+      return null;
+    }
+
+    return null;
+  }
+
   @override
   Widget build(BuildContext context) {
     return ProGate(
@@ -635,9 +661,15 @@ class _IotDashboardPageState extends State<IotDashboardPage> {
         ),
       ],
       onSubmit: () {
-        if (idController.text.isEmpty) return false;
-        context.read<IotCubit>().registerDevice(
-              idController.text,
+        final deviceSecret = _extractDeviceSecret(idController.text);
+        if (deviceSecret == null) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text('iot.invalid_qr_message'.tr())),
+          );
+          return false;
+        }
+        context.read<IotCubit>().claimDevice(
+              deviceSecret,
               nameController.text.isEmpty
                   ? 'iot.add_device_default_name'.tr()
                   : nameController.text,

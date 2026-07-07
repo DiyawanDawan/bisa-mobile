@@ -66,9 +66,9 @@ class IotCubit extends Cubit<IotState> {
     return _repository.exportDeviceReadingsCsv(deviceId, range: range);
   }
 
-  Future<void> registerDevice(String deviceId, String name) async {
+  Future<void> claimDevice(String deviceSecret, String name) async {
     emit(const IotState.loading());
-    final result = await _repository.registerDevice(deviceId, name);
+    final result = await _repository.claimDevice(deviceSecret, name);
     result.fold(
       (failure) => emit(IotState.error(failure.message)),
       (_) => getDevices(),

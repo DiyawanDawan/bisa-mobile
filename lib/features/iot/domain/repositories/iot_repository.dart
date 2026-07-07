@@ -5,7 +5,7 @@ import '../entities/iot_dashboard_entity.dart';
 
 abstract class IotRepository {
   Future<Either<Failure, List<IotDeviceModel>>> getDevices();
-  Future<Either<Failure, IotDeviceModel>> registerDevice(String deviceId, String name);
+  Future<Either<Failure, IotDeviceModel>> claimDevice(String deviceSecret, String name);
   Future<Either<Failure, List<IotReadingModel>>> getDeviceHistory(String deviceId, {int page = 1, int limit = 20});
   Future<Either<Failure, IotDashboardEntity>> getDeviceDashboard(
     String deviceId, {

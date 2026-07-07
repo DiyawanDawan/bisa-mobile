@@ -5,7 +5,7 @@ import '../../domain/entities/iot_dashboard_entity.dart';
 
 abstract class IotRemoteDataSource {
   Future<List<IotDeviceModel>> getDevices();
-  Future<IotDeviceModel> registerDevice(String deviceId, String name);
+  Future<IotDeviceModel> claimDevice(String deviceSecret, String name);
   Future<List<IotReadingModel>> getDeviceHistory(String deviceId, {int page = 1, int limit = 20});
   Future<IotDashboardEntity> getDeviceDashboard(
     String deviceId, {
@@ -52,9 +52,9 @@ class IotRemoteDataSourceImpl implements IotRemoteDataSource {
   }
 
   @override
-  Future<IotDeviceModel> registerDevice(String deviceId, String name) async {
-    final response = await dio.post('/iot/devices', data: {
-      'deviceId': deviceId,
+  Future<IotDeviceModel> claimDevice(String deviceSecret, String name) async {
+    final response = await dio.post('/iot/devices/claim', data: {
+      'deviceSecret': deviceSecret,
       'name': name,
     });
     return IotDeviceModel.fromJson(response.data['data']);
