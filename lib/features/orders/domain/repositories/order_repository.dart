@@ -108,4 +108,5 @@ abstract class OrderRepository {
     required String pickupVehicle,
     required List<String> orderNumbers,
   });
+  Future<Either<Failure, void>> uploadPaymentProof(String orderId, String paymentProofUrl);
 }

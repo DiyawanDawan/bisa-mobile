@@ -45,6 +45,9 @@ abstract class AuthRepository {
     String? nibPath,
     String? selfiePath,
     String? siupPath,
+    String? businessName,
+    String? taxId,
+    String? businessAddress,
     void Function(String status)? onUploadStatus,
   });
   Future<Either<Failure, List<AddressEntity>>> getAddresses();

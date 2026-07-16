@@ -25,6 +25,7 @@ import 'package:mobile_bisa/features/marketplace/presentation/bloc/compare_cubit
 import 'package:mobile_bisa/core/utils/router.dart';
 import 'package:mobile_bisa/injection_container.dart' as di;
 import 'package:mobile_bisa/core/constants/app_colors.dart';
+import 'package:mobile_bisa/core/constants/app_font_scale.dart';
 import 'package:mobile_bisa/core/constants/app_text_styles.dart';
 import 'package:mobile_bisa/core/i18n/bootstrap_localization.dart';
 import 'package:mobile_bisa/core/services/notification_service.dart';
@@ -156,8 +157,8 @@ class MyApp extends StatelessWidget {
         );
       },
       child: ScreenUtilInit(
-      // Baseline disetel ke ukuran referensi UI agar skala font/komponen lebih proporsional.
-      designSize: const Size(393, 852),
+      // Baseline disetel sedikit lebih kecil agar font/komponen ~6% lebih besar di APK.
+      designSize: Size(AppFontScale.designWidth, AppFontScale.designHeight),
       minTextAdapt: true,
       splitScreenMode: true,
       builder: (context, child) {

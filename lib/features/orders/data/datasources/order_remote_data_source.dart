@@ -110,6 +110,7 @@ abstract class OrderRemoteDataSource {
     required String pickupVehicle,
     required List<String> orderNumbers,
   });
+  Future<void> uploadPaymentProof(String orderId, String paymentProofUrl);
 }
 
 class OrderRemoteDataSourceImpl implements OrderRemoteDataSource {
@@ -545,5 +546,12 @@ class OrderRemoteDataSourceImpl implements OrderRemoteDataSource {
     return raw
         .map((item) => Map<String, dynamic>.from(item as Map))
         .toList();
+  }
+
+  @override
+  Future<void> uploadPaymentProof(String orderId, String paymentProofUrl) async {
+    await dio.post('/orders/$orderId/payment-proof', data: {
+      'paymentProofUrl': paymentProofUrl,
+    });
   }
 }

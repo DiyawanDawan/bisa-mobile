@@ -67,7 +67,7 @@ class _PaymentMethodPickerSheetState extends State<PaymentMethodPickerSheet> {
   String? _selectedCode;
 
   @override
-  void initState() {
+void initState() {
     super.initState();
     _selectedCode = widget.initialCode;
     _fetch();

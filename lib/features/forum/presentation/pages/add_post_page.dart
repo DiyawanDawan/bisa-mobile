@@ -1,6 +1,7 @@
 import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 import '../../../../core/utils/app_feedback.dart';
+import '../../../../core/utils/text_recognition_util.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:image_picker/image_picker.dart';
@@ -51,6 +52,7 @@ class _AddPostPageState extends State<AddPostPage> {
   // Media yang sudah ada di server (edit mode) — bisa di-remove satu-satu.
   late final List<ForumMediaItem> _existingMedia;
   late String _status;
+  bool _isModerating = false;
 
   @override
   void initState() {
@@ -120,7 +122,7 @@ class _AddPostPageState extends State<AddPostPage> {
     return title.length >= 5;
   }
 
-  void _submit(BuildContext ctx, {required String targetStatus}) {
+  Future<void> _submit(BuildContext ctx, {required String targetStatus}) async {
     final cubit = ctx.read<ForumCubit>();
     final publishing = targetStatus == 'PUBLISHED';
     if (!_isValid(publishing: publishing)) {
@@ -133,6 +135,71 @@ class _AddPostPageState extends State<AddPostPage> {
 
     final title = _titleController.text.trim();
     final content = _contentController.text.trim();
+
+    if (publishing) {
+      final combinedText = '$title $content'.toLowerCase();
+      final bannedKeywords = [
+        'judi',
+        'slot',
+        'gacor',
+        'narkoba',
+        'senjata',
+        'bom',
+        'teroris',
+        'porn',
+        'bokep'
+      ];
+
+      // 1. Check title & body text
+      for (final keyword in bannedKeywords) {
+        if (combinedText.contains(keyword)) {
+          showErrorSnackBar(
+            ctx,
+            'forum.banned_word_detected'.tr(namedArgs: {'word': keyword}),
+          );
+          return;
+        }
+      }
+
+      // 2. Check images using OCR
+      final imagesToScan = _attachments
+          .where((a) => a.type == 'image' && a.localPath != null)
+          .map((a) => a.localPath!)
+          .toList();
+
+      if (imagesToScan.isNotEmpty) {
+        setState(() {
+          _isModerating = true;
+        });
+
+        try {
+          for (final path in imagesToScan) {
+            final lines = await TextRecognitionUtil.extractLines(path);
+            final lowerText = lines.join(' ').toLowerCase();
+            for (final keyword in bannedKeywords) {
+              if (lowerText.contains(keyword)) {
+                if (mounted) {
+                  showErrorSnackBar(
+                    context,
+                    'forum.banned_word_detected'.tr(namedArgs: {'word': keyword}),
+                  );
+                }
+                setState(() {
+                  _isModerating = false;
+                });
+                return;
+              }
+            }
+          }
+        } catch (e) {
+          debugPrint('Local image moderation failed: $e');
+        }
+
+        setState(() {
+          _isModerating = false;
+        });
+      }
+    }
 
     if (widget.isEditMode) {
       cubit.updatePost(
@@ -482,6 +549,7 @@ class _AddPostPageState extends State<AddPostPage> {
             ? 'forum.publish_now'.tr()
             : 'forum.publish_changes'.tr())
         : 'forum.publish'.tr();
+    final isBusy = isLoading || _isModerating;
     return SafeArea(
       top: false,
       child: Padding(
@@ -493,7 +561,7 @@ class _AddPostPageState extends State<AddPostPage> {
                 text: 'forum.save_draft'.tr(),
                 isOutlined: true,
                 isLoading: false,
-                onPressed: isLoading
+                onPressed: isBusy
                     ? null
                     : () => _submit(context, targetStatus: 'DRAFT'),
               ),
@@ -504,8 +572,8 @@ class _AddPostPageState extends State<AddPostPage> {
               child: CustomButton(
                 text: publishLabel,
                 useGradient: true,
-                isLoading: isLoading,
-                onPressed: isLoading
+                isLoading: isBusy,
+                onPressed: isBusy
                     ? null
                     : () => _submit(context, targetStatus: 'PUBLISHED'),
               ),

@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:go_router/go_router.dart';
+import 'package:image_picker/image_picker.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
 
 import '../../../../core/constants/app_colors.dart';
@@ -16,6 +17,7 @@ import '../../../../shared/widgets/custom_button.dart';
 import '../../../auth/presentation/bloc/auth_cubit.dart';
 import '../../domain/repositories/ai_repository.dart';
 import '../utils/predict_quality_quota.dart';
+import '../utils/temperature_ocr_util.dart';
 import '../../../marketplace/presentation/utils/prediction_product_mapper.dart';
 import 'predict_result_table.dart';
 
@@ -69,6 +71,7 @@ class _PredictQualitySheetState extends State<PredictQualitySheet> {
   String _biomassaType = 'BIOCHAR';
   BatchWeightUnit _weightUnit = BatchWeightUnit.ton;
   bool _loading = false;
+  bool _scanningTemp = false;
   Map<String, dynamic>? _result;
   String? _error;
   int _remaining = 3;
@@ -187,6 +190,86 @@ class _PredictQualitySheetState extends State<PredictQualitySheet> {
     );
   }
 
+  Future<void> _scanTemperatureFromPhoto() async {
+    final source = await showModalBottomSheet<ImageSource>(
+      context: context,
+      backgroundColor: AppColors.surface,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(16.r)),
+      ),
+      builder: (ctx) => SafeArea(
+        child: Padding(
+          padding: EdgeInsets.fromLTRB(16.w, 12.h, 16.w, 8.h),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Text(
+                trSafe(
+                  'ai.scan_temp_source_title',
+                  fallback: 'Foto termometer digital',
+                ),
+                style: TextStyle(fontSize: 15.sp, fontWeight: FontWeight.w700),
+              ),
+              SizedBox(height: 12.h),
+              ListTile(
+                leading: Icon(LucideIcons.camera, color: AppColors.primary),
+                title: Text(trSafe('ai.scan_temp_camera', fallback: 'Ambil foto')),
+                onTap: () => Navigator.pop(ctx, ImageSource.camera),
+              ),
+              ListTile(
+                leading: Icon(LucideIcons.image, color: AppColors.primary),
+                title: Text(trSafe('ai.scan_temp_gallery', fallback: 'Pilih dari galeri')),
+                onTap: () => Navigator.pop(ctx, ImageSource.gallery),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+    if (source == null || !mounted) return;
+
+    final picked = await ImagePicker().pickImage(source: source, imageQuality: 85);
+    if (picked == null || !mounted) return;
+
+    setState(() => _scanningTemp = true);
+    double? value;
+    try {
+      value = await TemperatureOcrUtil.extractTemperature(picked.path);
+    } catch (_) {
+      value = null;
+    }
+    if (!mounted) return;
+
+    setState(() => _scanningTemp = false);
+    if (value == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            trSafe(
+              'ai.scan_temp_failed',
+              fallback: 'Suhu tidak terbaca dari foto. Silakan isi manual.',
+            ),
+          ),
+        ),
+      );
+      return;
+    }
+
+    setState(() {
+      _tempCtrl.text = value!.round().toString();
+    });
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(
+          trSafe(
+            'ai.scan_temp_success',
+            fallback: 'Suhu terdeteksi, silakan cek ulang sebelum lanjut.',
+          ),
+        ),
+      ),
+    );
+  }
+
   String _biomassLabel(String type) => type.replaceAll('_', ' ');
 
   @override
@@ -265,6 +348,8 @@ class _PredictQualitySheetState extends State<PredictQualitySheet> {
                     hint: '500',
                     controller: _tempCtrl,
                     suffix: '°C',
+                    onCameraTap: _scanTemperatureFromPhoto,
+                    cameraLoading: _scanningTemp,
                   ),
                 ),
                 SizedBox(width: 8.w),
@@ -355,12 +440,16 @@ class _CompactNumField extends StatelessWidget {
     required this.hint,
     required this.controller,
     this.suffix,
+    this.onCameraTap,
+    this.cameraLoading = false,
   });
 
   final String label;
   final String hint;
   final TextEditingController controller;
   final String? suffix;
+  final VoidCallback? onCameraTap;
+  final bool cameraLoading;
 
   @override
   Widget build(BuildContext context) {
@@ -378,6 +467,22 @@ class _CompactNumField extends StatelessWidget {
           fontWeight: FontWeight.w600,
           color: AppColors.textSecondary,
         ),
+        suffixIcon: onCameraTap == null
+            ? null
+            : cameraLoading
+                ? Padding(
+                    padding: EdgeInsets.all(12.w),
+                    child: SizedBox(
+                      width: 16.w,
+                      height: 16.w,
+                      child: const CircularProgressIndicator(strokeWidth: 2),
+                    ),
+                  )
+                : IconButton(
+                    icon: Icon(LucideIcons.camera, size: 18.sp, color: AppColors.primary),
+                    tooltip: trSafe('ai.scan_temp_tooltip', fallback: 'Foto termometer'),
+                    onPressed: onCameraTap,
+                  ),
         contentPadding: EdgeInsets.symmetric(horizontal: 12.w, vertical: 10.h),
         border: OutlineInputBorder(borderRadius: BorderRadius.circular(8.r)),
         enabledBorder: OutlineInputBorder(

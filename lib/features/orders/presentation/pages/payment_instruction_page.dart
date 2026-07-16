@@ -1,3 +1,4 @@
+import 'dart:io';
 import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
@@ -5,6 +6,7 @@ import 'package:mobile_bisa/core/i18n/failure_messages.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:go_router/go_router.dart';
+import 'package:image_picker/image_picker.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
 import 'package:qr_flutter/qr_flutter.dart';
 import 'package:url_launcher/url_launcher.dart' as url_launcher;
@@ -14,10 +16,12 @@ import 'package:mobile_bisa/core/utils/payment_status_utils.dart';
 import 'package:mobile_bisa/core/utils/safe_area_utils.dart';
 import 'package:mobile_bisa/features/orders/domain/repositories/order_repository.dart';
 import 'package:mobile_bisa/features/orders/presentation/utils/checkout_navigation.dart';
+import 'package:mobile_bisa/features/orders/presentation/utils/payment_proof_ocr_util.dart';
 import 'package:mobile_bisa/features/orders/presentation/utils/payment_result_utils.dart';
 import 'package:mobile_bisa/features/orders/presentation/widgets/payment_expiry_banner.dart';
 import 'package:mobile_bisa/features/orders/presentation/widgets/payment_method_picker_sheet.dart';
 import 'package:mobile_bisa/injection_container.dart';
+import 'package:mobile_bisa/core/media/media_upload_queue.dart';
 import 'package:mobile_bisa/shared/widgets/bisa_app_bar.dart';
 import 'package:mobile_bisa/shared/widgets/custom_button.dart';
 
@@ -52,6 +56,13 @@ class _PaymentInstructionPageState extends State<PaymentInstructionPage> {
   bool _paymentConfirmed = false;
   /// Cegah tap "bocor" ke tombol kembali saat layout footer berubah setelah simulasi.
   bool _blockExitTap = false;
+
+  // — State bukti transfer manual —
+  File? _proofFile;
+  bool _ocrScanning = false;
+  bool _proofUploading = false;
+  PaymentProofOcrResult? _ocrResult;
+  bool _proofSubmitted = false;
 
   bool get _hasPayableInstructionData =>
       paymentInstructionsReady(_paymentResult);
@@ -438,6 +449,10 @@ class _PaymentInstructionPageState extends State<PaymentInstructionPage> {
                   _instructionCard(context),
                   SizedBox(height: AppSpacing.section),
                   _stepsCard(),
+                  if (!_paymentConfirmed) ...[
+                    SizedBox(height: AppSpacing.section),
+                    _paymentProofCard(),
+                  ],
                   if (!_paymentConfirmed &&
                       (_isMockPayment ||
                           (_showSimulateButton && _hasRealPaymentRequest))) ...[
@@ -1226,5 +1241,425 @@ class _PaymentInstructionPageState extends State<PaymentInstructionPage> {
       chunks.add(reversed.skip(i).take(3).join());
     }
     return chunks.join('.').split('').reversed.join();
+  }
+
+  // ─── Bukti Transfer Manual ──────────────────────────────────────────────────
+
+  /// Pilih gambar bukti transfer dari galeri atau kamera, lalu jalankan OCR.
+  Future<void> _pickAndScanProof(ImageSource source) async {
+    final picker = ImagePicker();
+    final picked = await picker.pickImage(source: source, imageQuality: 88);
+    if (picked == null || !mounted) return;
+
+    final file = File(picked.path);
+    setState(() {
+      _proofFile = file;
+      _ocrScanning = true;
+      _ocrResult = null;
+      _proofSubmitted = false;
+    });
+
+    try {
+      final result = await PaymentProofOcrUtil.processReceipt(
+        picked.path,
+        widget.amount.toDouble(),
+      );
+      if (mounted) setState(() => _ocrResult = result);
+    } catch (_) {
+      // OCR gagal — tetap izinkan upload manual
+    } finally {
+      if (mounted) setState(() => _ocrScanning = false);
+    }
+  }
+
+  /// Upload gambar ke CDN lalu kirim URL ke backend.
+  Future<void> _submitProof() async {
+    if (_proofFile == null) return;
+    setState(() => _proofUploading = true);
+    try {
+      // 1. Upload file ke CDN via MediaUploadQueue
+      final queue = sl<MediaUploadQueue>();
+      final uploaded = await queue.uploadFile(
+        localPath: _proofFile!.path,
+        folder: 'payment-proofs',
+      );
+      final uploadedUrl = uploaded.url!;
+
+      // 2. Simpan URL ke backend
+      final repo = sl<OrderRepository>();
+      final result = await repo.uploadPaymentProof(widget.orderId, uploadedUrl);
+      if (!mounted) return;
+
+      result.fold(
+        (failure) {
+          _showPaymentSnack(
+            failure.localizedMessage,
+            backgroundColor: AppColors.error,
+          );
+        },
+        (_) {
+          setState(() {
+            _proofSubmitted = true;
+          });
+          _showPaymentSnack('orders.proof_upload_success'.tr());
+        },
+      );
+    } catch (e) {
+      if (mounted) {
+        _showPaymentSnack('orders.proof_upload_failed'.tr(), backgroundColor: AppColors.error);
+      }
+    } finally {
+      if (mounted) setState(() => _proofUploading = false);
+    }
+  }
+
+  /// Kartu upload bukti transfer manual dengan scan OCR on-device.
+  Widget _paymentProofCard() {
+    final bool hasFile = _proofFile != null;
+    final bool hasMismatch =
+        _ocrResult != null && !_ocrResult!.isAmountMatch && _ocrResult!.detectedAmount != null;
+    final bool hasNoAmount =
+        _ocrResult != null && _ocrResult!.detectedAmount == null;
+
+    return Container(
+      decoration: BoxDecoration(
+        color: AppColors.surface,
+        borderRadius: BorderRadius.circular(16.r),
+        border: Border.all(
+          color: _proofSubmitted
+              ? AppColors.primary.withValues(alpha: 0.4)
+              : AppColors.grey200,
+        ),
+        boxShadow: [
+          BoxShadow(
+            color: AppColors.black.withValues(alpha: 0.04),
+            blurRadius: 12,
+            offset: const Offset(0, 4),
+          ),
+        ],
+      ),
+      padding: EdgeInsets.all(AppSpacing.md),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          // Header
+          Row(
+            children: [
+              Container(
+                padding: EdgeInsets.all(8.r),
+                decoration: BoxDecoration(
+                  color: AppColors.primary.withValues(alpha: 0.1),
+                  borderRadius: BorderRadius.circular(10.r),
+                ),
+                child: Icon(
+                  LucideIcons.receipt,
+                  color: AppColors.primary,
+                  size: 18.r,
+                ),
+              ),
+              SizedBox(width: AppSpacing.sm10),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      'orders.proof_card_title'.tr(),
+                      style: TextStyle(
+                        fontSize: 14.sp,
+                        fontWeight: FontWeight.w700,
+                        color: AppColors.textPrimary,
+                      ),
+                    ),
+                    Text(
+                      'orders.proof_card_subtitle'.tr(),
+                      style: TextStyle(
+                        fontSize: 11.sp,
+                        color: AppColors.textSecondary,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              if (_proofSubmitted)
+                Container(
+                  padding: EdgeInsets.symmetric(horizontal: 8.w, vertical: 4.h),
+                  decoration: BoxDecoration(
+                    color: Colors.green.shade50,
+                    borderRadius: BorderRadius.circular(20.r),
+                    border: Border.all(color: Colors.green.shade200),
+                  ),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Icon(LucideIcons.circleCheck, size: 12.r, color: Colors.green.shade700),
+                      SizedBox(width: 4.w),
+                      Text(
+                        'orders.proof_sent'.tr(),
+                        style: TextStyle(fontSize: 10.sp, color: Colors.green.shade700, fontWeight: FontWeight.w600),
+                      ),
+                    ],
+                  ),
+                ),
+            ],
+          ),
+
+          SizedBox(height: AppSpacing.md12),
+
+          // Preview gambar atau area pilih
+          if (hasFile) ...[
+            Stack(
+              children: [
+                ClipRRect(
+                  borderRadius: BorderRadius.circular(12.r),
+                  child: Image.file(
+                    _proofFile!,
+                    width: double.infinity,
+                    height: 180.h,
+                    fit: BoxFit.cover,
+                  ),
+                ),
+                if (_ocrScanning)
+                  Positioned.fill(
+                    child: Container(
+                      decoration: BoxDecoration(
+                        color: AppColors.black.withValues(alpha: 0.55),
+                        borderRadius: BorderRadius.circular(12.r),
+                      ),
+                      child: Column(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          SizedBox(
+                            width: 28.r, height: 28.r,
+                            child: CircularProgressIndicator(
+                              strokeWidth: 2.5,
+                              color: AppColors.surface,
+                            ),
+                          ),
+                          SizedBox(height: 8.h),
+                          Text(
+                            'orders.proof_scanning'.tr(),
+                            style: TextStyle(color: AppColors.surface, fontSize: 12.sp),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                // Ganti foto
+                if (!_ocrScanning && !_proofSubmitted)
+                  Positioned(
+                    top: 8.h, right: 8.w,
+                    child: GestureDetector(
+                      onTap: () => _pickAndScanProof(ImageSource.gallery),
+                      child: Container(
+                        padding: EdgeInsets.all(6.r),
+                        decoration: BoxDecoration(
+                          color: AppColors.surface,
+                          shape: BoxShape.circle,
+                          boxShadow: [
+                            BoxShadow(
+                              color: AppColors.black.withValues(alpha: 0.15),
+                              blurRadius: 6,
+                            ),
+                          ],
+                        ),
+                        child: Icon(LucideIcons.refreshCcw, size: 14.r, color: AppColors.primary),
+                      ),
+                    ),
+                  ),
+              ],
+            ),
+            SizedBox(height: AppSpacing.sm10),
+
+            // OCR Result chip
+            if (!_ocrScanning && _ocrResult != null) ...[
+              // Nominal match/mismatch
+              if (_ocrResult!.isAmountMatch)
+                _ocrChip(
+                  icon: LucideIcons.circleCheck,
+                  color: Colors.green.shade700,
+                  bgColor: Colors.green.shade50,
+                  text: 'orders.proof_ocr_match'.tr(
+                    namedArgs: {'amount': 'Rp ${_formatAmount(_ocrResult!.detectedAmount!)}'},
+                  ),
+                )
+              else if (hasMismatch)
+                _ocrChip(
+                  icon: LucideIcons.triangleAlert,
+                  color: Colors.orange.shade700,
+                  bgColor: Colors.orange.shade50,
+                  text: 'orders.proof_ocr_mismatch'.tr(
+                    namedArgs: {
+                      'detected': 'Rp ${_formatAmount(_ocrResult!.detectedAmount!)}',
+                      'expected': 'Rp ${_formatAmount(widget.amount)}',
+                    },
+                  ),
+                )
+              else if (hasNoAmount)
+                _ocrChip(
+                  icon: LucideIcons.scanLine,
+                  color: AppColors.textSecondary,
+                  bgColor: AppColors.grey100,
+                  text: 'orders.proof_ocr_no_amount'.tr(),
+                ),
+              // Bank name
+              if (_ocrResult!.detectedBank != null) ...[
+                SizedBox(height: 6.h),
+                _ocrChip(
+                  icon: LucideIcons.landmark,
+                  color: AppColors.primary,
+                  bgColor: AppColors.primary.withValues(alpha: 0.08),
+                  text: _ocrResult!.detectedBank!,
+                ),
+              ],
+              SizedBox(height: AppSpacing.sm10),
+            ],
+          ] else ...[
+            // Area pilih bukti — dua opsi: galeri & kamera
+            Row(
+              children: [
+                Expanded(
+                  child: _pickSourceButton(
+                    icon: LucideIcons.image,
+                    label: 'orders.proof_pick_gallery'.tr(),
+                    onTap: () => _pickAndScanProof(ImageSource.gallery),
+                  ),
+                ),
+                SizedBox(width: AppSpacing.sm10),
+                Expanded(
+                  child: _pickSourceButton(
+                    icon: LucideIcons.camera,
+                    label: 'orders.proof_pick_camera'.tr(),
+                    onTap: () => _pickAndScanProof(ImageSource.camera),
+                  ),
+                ),
+              ],
+            ),
+            SizedBox(height: AppSpacing.sm10),
+          ],
+
+          // Peringatan nominal tidak cocok
+          if (hasMismatch && !_proofSubmitted) ...[
+            Container(
+              padding: EdgeInsets.all(10.r),
+              decoration: BoxDecoration(
+                color: Colors.orange.shade50,
+                borderRadius: BorderRadius.circular(10.r),
+                border: Border.all(color: Colors.orange.shade200),
+              ),
+              child: Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Icon(LucideIcons.triangleAlert, size: 14.r, color: Colors.orange.shade700),
+                  SizedBox(width: 6.w),
+                  Expanded(
+                    child: Text(
+                      'orders.proof_mismatch_warning'.tr(
+                        namedArgs: {'expected': 'Rp ${_formatAmount(widget.amount)}'},
+                      ),
+                      style: TextStyle(fontSize: 11.sp, color: Colors.orange.shade800, height: 1.5),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            SizedBox(height: AppSpacing.sm10),
+          ],
+
+          // Tombol kirim
+          if (hasFile && !_proofSubmitted)
+            CustomButton(
+              text: _proofUploading
+                  ? 'common.uploading'.tr()
+                  : 'orders.proof_submit'.tr(),
+              isLoading: _proofUploading,
+              onPressed: _proofUploading ? null : _submitProof,
+              backgroundColor: hasMismatch ? Colors.orange.shade600 : AppColors.primary,
+            ),
+
+          // Sudah terkirim — info
+          if (_proofSubmitted)
+            Container(
+              padding: EdgeInsets.all(10.r),
+              decoration: BoxDecoration(
+                color: Colors.green.shade50,
+                borderRadius: BorderRadius.circular(10.r),
+                border: Border.all(color: Colors.green.shade200),
+              ),
+              child: Row(
+                children: [
+                  Icon(LucideIcons.circleCheck, size: 14.r, color: Colors.green.shade700),
+                  SizedBox(width: 6.w),
+                  Expanded(
+                    child: Text(
+                      'orders.proof_submitted_info'.tr(),
+                      style: TextStyle(fontSize: 11.sp, color: Colors.green.shade800),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+        ],
+      ),
+    );
+  }
+
+  Widget _ocrChip({
+    required IconData icon,
+    required Color color,
+    required Color bgColor,
+    required String text,
+  }) {
+    return Container(
+      padding: EdgeInsets.symmetric(horizontal: 10.w, vertical: 6.h),
+      decoration: BoxDecoration(
+        color: bgColor,
+        borderRadius: BorderRadius.circular(20.r),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(icon, size: 13.r, color: color),
+          SizedBox(width: 5.w),
+          Flexible(
+            child: Text(
+              text,
+              style: TextStyle(fontSize: 11.sp, color: color, fontWeight: FontWeight.w600),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _pickSourceButton({
+    required IconData icon,
+    required String label,
+    required VoidCallback onTap,
+  }) {
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        padding: EdgeInsets.symmetric(vertical: 16.h),
+        decoration: BoxDecoration(
+          color: AppColors.grey100,
+          borderRadius: BorderRadius.circular(12.r),
+          border: Border.all(color: AppColors.grey200),
+        ),
+        child: Column(
+          children: [
+            Icon(icon, size: 22.r, color: AppColors.primary),
+            SizedBox(height: 6.h),
+            Text(
+              label,
+              style: TextStyle(
+                fontSize: 12.sp,
+                color: AppColors.textSecondary,
+                fontWeight: FontWeight.w500,
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
   }
 }

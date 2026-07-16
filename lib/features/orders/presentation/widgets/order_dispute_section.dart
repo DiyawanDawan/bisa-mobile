@@ -191,7 +191,25 @@ class OrderDisputeSection extends StatelessWidget {
           if (isBuyer && dispute.isActive) ...[
             SizedBox(height: AppSpacing.md12),
             Text(
-              'orders.dispute_buyer_waiting'.tr(),
+              dispute.isMediationActive
+                  ? 'orders.dispute_buyer_mediation_hint'.tr()
+                  : 'orders.dispute_buyer_waiting'.tr(),
+              style: TextStyle(
+                fontSize: 12.sp,
+                color: AppColors.textHint,
+                height: 1.45,
+              ),
+            ),
+          ],
+          if (isSupplier &&
+              !dispute.supplierCanRespond &&
+              dispute.isActive &&
+              dispute.sellerResponse != null) ...[
+            SizedBox(height: AppSpacing.md12),
+            Text(
+              dispute.isMediationActive
+                  ? 'orders.dispute_supplier_mediation_hint'.tr()
+                  : 'orders.dispute_supplier_waiting'.tr(),
               style: TextStyle(
                 fontSize: 12.sp,
                 color: AppColors.textHint,
@@ -205,20 +223,6 @@ class OrderDisputeSection extends StatelessWidget {
               text: 'orders.dispute_respond_button'.tr(),
               onPressed: onSupplierRespond,
               backgroundColor: AppColors.primary,
-            ),
-          ],
-          if (isSupplier &&
-              !dispute.supplierCanRespond &&
-              dispute.isActive &&
-              dispute.sellerResponse != null) ...[
-            SizedBox(height: AppSpacing.md12),
-            Text(
-              'orders.dispute_supplier_waiting'.tr(),
-              style: TextStyle(
-                fontSize: 12.sp,
-                color: AppColors.textHint,
-                height: 1.45,
-              ),
             ),
           ],
         ],

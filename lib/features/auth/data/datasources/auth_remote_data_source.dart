@@ -41,6 +41,9 @@ abstract class AuthRemoteDataSource {
     String? nibPath,
     String? selfiePath,
     String? siupPath,
+    String? businessName,
+    String? taxId,
+    String? businessAddress,
     void Function(String status)? onUploadStatus,
   });
   Future<List<Map<String, dynamic>>> getAddresses();
@@ -221,9 +224,13 @@ class AuthRemoteDataSourceImpl implements AuthRemoteDataSource {
     String? nibPath,
     String? selfiePath,
     String? siupPath,
+    String? businessName,
+    String? taxId,
+    String? businessAddress,
     void Function(String status)? onUploadStatus,
   }) async {
     final body = <String, dynamic>{};
+    var hasDocument = false;
 
     Future<void> addDoc(String? localPath, String field, String statusCode) async {
       if (localPath == null) return;
@@ -234,6 +241,7 @@ class AuthRemoteDataSourceImpl implements AuthRemoteDataSource {
         forceFresh: true,
       );
       body[field] = uploaded.path;
+      hasDocument = true;
     }
 
     await addDoc(ktpPath, 'ktpUrl', 'ktp');
@@ -241,7 +249,17 @@ class AuthRemoteDataSourceImpl implements AuthRemoteDataSource {
     await addDoc(selfiePath, 'selfieUrl', 'selfie');
     await addDoc(siupPath, 'siupUrl', 'siup');
 
-    if (body.isEmpty) {
+    if (businessName != null && businessName.trim().isNotEmpty) {
+      body['businessName'] = businessName.trim();
+    }
+    if (taxId != null && taxId.trim().isNotEmpty) {
+      body['taxId'] = taxId.trim();
+    }
+    if (businessAddress != null && businessAddress.trim().isNotEmpty) {
+      body['businessAddress'] = businessAddress.trim();
+    }
+
+    if (!hasDocument) {
       throw Exception('Missing required verification documents');
     }
 

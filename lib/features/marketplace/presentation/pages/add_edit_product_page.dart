@@ -1,6 +1,7 @@
 import 'package:easy_localization/easy_localization.dart';
 import 'dart:convert';
 import 'package:flutter/material.dart';
+import 'package:dio/dio.dart';
 import '../../../../core/utils/app_feedback.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
@@ -66,6 +67,8 @@ class _AddEditProductPageState extends State<AddEditProductPage> {
 
   List<ProductImageDraft> _imageDrafts = [];
   final _imageEditorKey = GlobalKey<ProductImageEditorState>();
+
+  bool _isGeneratingDesc = false;
 
   @override
   void initState() {
@@ -158,6 +161,73 @@ class _AddEditProductPageState extends State<AddEditProductPage> {
       initial: _specsData,
     );
     if (result != null) setState(() => _specsData = result);
+  }
+
+  /// Kirim foto produk pertama ke backend → Gemini Vision → prefill deskripsi.
+  /// Prompt sudah dikunci ketat di backend — hanya output deskripsi biomassa.
+  Future<void> _generateDescription() async {
+    final drafts = _imageEditorKey.currentState?.items ?? _imageDrafts;
+    if (drafts.isEmpty) {
+      showErrorSnackBar(context, 'marketplace.generate_desc_no_image'.tr());
+      return;
+    }
+
+    // Ambil gambar pertama yang sudah ada file lokalnya, fallback ke yang pertama
+    final draft = drafts.firstWhere(
+      (d) => d.localFile != null,
+      orElse: () => drafts.first,
+    );
+
+    setState(() => _isGeneratingDesc = true);
+    try {
+      String imageBase64;
+      String mimeType = 'image/jpeg';
+
+      if (draft.localFile != null) {
+        // Gambar baru dari kamera/galeri — encode langsung
+        final bytes = await draft.localFile!.readAsBytes();
+        imageBase64 = base64Encode(bytes);
+        final ext = draft.localFile!.path.split('.').last.toLowerCase();
+        if (ext == 'png') mimeType = 'image/png';
+        if (ext == 'webp') mimeType = 'image/webp';
+      } else if (draft.remoteUrl != null) {
+        // Gambar existing dari server — download sebagai bytes
+        final dio = sl<Dio>();
+        final resp = await dio.get<List<int>>(
+          draft.remoteUrl!,
+          options: Options(responseType: ResponseType.bytes),
+        );
+        imageBase64 = base64Encode(resp.data!);
+      } else {
+        showErrorSnackBar(context, 'marketplace.generate_desc_no_image'.tr());
+        return;
+      }
+
+      final dio = sl<Dio>();
+      final response = await dio.post<Map<String, dynamic>>(
+        '/ai/generate-product-description',
+        data: {'imageBase64': imageBase64, 'mimeType': mimeType},
+      );
+
+      final description = response.data?['data']?['description'] as String? ?? '';
+
+      if (description == 'BUKAN_PRODUK_BIOMASSA') {
+        if (mounted) {
+          showErrorSnackBar(context, 'marketplace.generate_desc_not_biomass'.tr());
+        }
+        return;
+      }
+
+      if (description.isNotEmpty && mounted) {
+        setState(() => _descriptionController.text = description);
+      }
+    } catch (e) {
+      if (mounted) {
+        showErrorSnackBar(context, 'marketplace.generate_desc_error'.tr());
+      }
+    } finally {
+      if (mounted) setState(() => _isGeneratingDesc = false);
+    }
   }
 
   void _onBiomassaTypeChanged(BuildContext context, String? v) {
@@ -480,11 +550,81 @@ class _AddEditProductPageState extends State<AddEditProductPage> {
                           ),
                         ],
                       ),
-                      CustomTextField(
-                        label: 'deskripsi'.tr(),
-                        controller: _descriptionController,
-                        maxLines: 3,
-                        hint: 'jelaskan_kualitas_produk'.tr(),
+                      // Description field with ✨ Auto-generate button
+                      Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                            children: [
+                              Text(
+                                'deskripsi'.tr(),
+                                style: TextStyle(
+                                  fontSize: 13.sp,
+                                  fontWeight: FontWeight.w600,
+                                  color: AppColors.textPrimary,
+                                ),
+                              ),
+                              GestureDetector(
+                                onTap: _isGeneratingDesc ? null : _generateDescription,
+                                child: AnimatedOpacity(
+                                  opacity: _isGeneratingDesc ? 0.5 : 1.0,
+                                  duration: const Duration(milliseconds: 200),
+                                  child: Container(
+                                    padding: EdgeInsets.symmetric(
+                                      horizontal: AppSpacing.sm,
+                                      vertical: 4.h,
+                                    ),
+                                    decoration: BoxDecoration(
+                                      gradient: const LinearGradient(
+                                        colors: [Color(0xFF6366F1), Color(0xFF8B5CF6)],
+                                      ),
+                                      borderRadius: BorderRadius.circular(20),
+                                    ),
+                                    child: _isGeneratingDesc
+                                        ? Row(
+                                            mainAxisSize: MainAxisSize.min,
+                                            children: [
+                                              SizedBox(
+                                                width: 10.sp,
+                                                height: 10.sp,
+                                                child: const CircularProgressIndicator(
+                                                  strokeWidth: 1.5,
+                                                  color: Colors.white,
+                                                ),
+                                              ),
+                                              SizedBox(width: 4.w),
+                                              Text(
+                                                'marketplace.generate_desc_loading'.tr(),
+                                                style: TextStyle(
+                                                  fontSize: 11.sp,
+                                                  color: Colors.white,
+                                                  fontWeight: FontWeight.w600,
+                                                ),
+                                              ),
+                                            ],
+                                          )
+                                        : Text(
+                                            'marketplace.generate_desc_btn'.tr(),
+                                            style: TextStyle(
+                                              fontSize: 11.sp,
+                                              color: Colors.white,
+                                              fontWeight: FontWeight.w600,
+                                            ),
+                                          ),
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
+                          SizedBox(height: 4.h),
+                          CustomTextField(
+                            label: '',
+                            controller: _descriptionController,
+                            maxLines: 3,
+                            hint: 'jelaskan_kualitas_produk'.tr(),
+                          ),
+                        ],
                       ),
                       _buildDropdown(
                         label: 'status_produk'.tr(),

@@ -597,4 +597,19 @@ class OrderRepositoryImpl implements OrderRepository {
     }
     return const UnexpectedFailure();
   }
+
+  @override
+  Future<Either<Failure, void>> uploadPaymentProof(
+    String orderId,
+    String paymentProofUrl,
+  ) async {
+    try {
+      await remoteDataSource.uploadPaymentProof(orderId, paymentProofUrl);
+      return const Right(null);
+    } on DioException catch (e) {
+      return Left(_mapDioExceptionToFailure(e));
+    } catch (e) {
+      return const Left(UnexpectedFailure());
+    }
+  }
 }

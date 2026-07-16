@@ -154,6 +154,7 @@ _OrderTransactionModel _$OrderTransactionModelFromJson(
   paymentUrl: json['paymentUrl'] as String?,
   paidAt: json['paidAt'] as String?,
   paymentChannel: json['paymentChannel'] as Map<String, dynamic>?,
+  paymentProofUrl: json['paymentProofUrl'] as String?,
 );
 
 Map<String, dynamic> _$OrderTransactionModelToJson(
@@ -164,6 +165,7 @@ Map<String, dynamic> _$OrderTransactionModelToJson(
   'paymentUrl': instance.paymentUrl,
   'paidAt': instance.paidAt,
   'paymentChannel': instance.paymentChannel,
+  'paymentProofUrl': instance.paymentProofUrl,
 };
 
 _OrderShipmentModel _$OrderShipmentModelFromJson(Map<String, dynamic> json) =>

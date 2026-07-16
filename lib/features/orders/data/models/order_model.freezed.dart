@@ -1372,7 +1372,7 @@ as Map<String, dynamic>?,
 /// @nodoc
 mixin _$OrderTransactionModel {
 
- String get status; String? get paymentStatus; String? get paymentUrl; String? get paidAt; Map<String, dynamic>? get paymentChannel;
+ String get status; String? get paymentStatus; String? get paymentUrl; String? get paidAt; Map<String, dynamic>? get paymentChannel; String? get paymentProofUrl;
 /// Create a copy of OrderTransactionModel
 /// with the given fields replaced by the non-null parameter values.
 @JsonKey(includeFromJson: false, includeToJson: false)
@@ -1385,16 +1385,16 @@ $OrderTransactionModelCopyWith<OrderTransactionModel> get copyWith => _$OrderTra
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is OrderTransactionModel&&(identical(other.status, status) || other.status == status)&&(identical(other.paymentStatus, paymentStatus) || other.paymentStatus == paymentStatus)&&(identical(other.paymentUrl, paymentUrl) || other.paymentUrl == paymentUrl)&&(identical(other.paidAt, paidAt) || other.paidAt == paidAt)&&const DeepCollectionEquality().equals(other.paymentChannel, paymentChannel));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is OrderTransactionModel&&(identical(other.status, status) || other.status == status)&&(identical(other.paymentStatus, paymentStatus) || other.paymentStatus == paymentStatus)&&(identical(other.paymentUrl, paymentUrl) || other.paymentUrl == paymentUrl)&&(identical(other.paidAt, paidAt) || other.paidAt == paidAt)&&const DeepCollectionEquality().equals(other.paymentChannel, paymentChannel)&&(identical(other.paymentProofUrl, paymentProofUrl) || other.paymentProofUrl == paymentProofUrl));
 }
 
 @JsonKey(includeFromJson: false, includeToJson: false)
 @override
-int get hashCode => Object.hash(runtimeType,status,paymentStatus,paymentUrl,paidAt,const DeepCollectionEquality().hash(paymentChannel));
+int get hashCode => Object.hash(runtimeType,status,paymentStatus,paymentUrl,paidAt,const DeepCollectionEquality().hash(paymentChannel),paymentProofUrl);
 
 @override
 String toString() {
-  return 'OrderTransactionModel(status: $status, paymentStatus: $paymentStatus, paymentUrl: $paymentUrl, paidAt: $paidAt, paymentChannel: $paymentChannel)';
+  return 'OrderTransactionModel(status: $status, paymentStatus: $paymentStatus, paymentUrl: $paymentUrl, paidAt: $paidAt, paymentChannel: $paymentChannel, paymentProofUrl: $paymentProofUrl)';
 }
 
 
@@ -1405,7 +1405,7 @@ abstract mixin class $OrderTransactionModelCopyWith<$Res>  {
   factory $OrderTransactionModelCopyWith(OrderTransactionModel value, $Res Function(OrderTransactionModel) _then) = _$OrderTransactionModelCopyWithImpl;
 @useResult
 $Res call({
- String status, String? paymentStatus, String? paymentUrl, String? paidAt, Map<String, dynamic>? paymentChannel
+ String status, String? paymentStatus, String? paymentUrl, String? paidAt, Map<String, dynamic>? paymentChannel, String? paymentProofUrl
 });
 
 
@@ -1422,14 +1422,15 @@ class _$OrderTransactionModelCopyWithImpl<$Res>
 
 /// Create a copy of OrderTransactionModel
 /// with the given fields replaced by the non-null parameter values.
-@pragma('vm:prefer-inline') @override $Res call({Object? status = null,Object? paymentStatus = freezed,Object? paymentUrl = freezed,Object? paidAt = freezed,Object? paymentChannel = freezed,}) {
+@pragma('vm:prefer-inline') @override $Res call({Object? status = null,Object? paymentStatus = freezed,Object? paymentUrl = freezed,Object? paidAt = freezed,Object? paymentChannel = freezed,Object? paymentProofUrl = freezed,}) {
   return _then(_self.copyWith(
 status: null == status ? _self.status : status // ignore: cast_nullable_to_non_nullable
 as String,paymentStatus: freezed == paymentStatus ? _self.paymentStatus : paymentStatus // ignore: cast_nullable_to_non_nullable
 as String?,paymentUrl: freezed == paymentUrl ? _self.paymentUrl : paymentUrl // ignore: cast_nullable_to_non_nullable
 as String?,paidAt: freezed == paidAt ? _self.paidAt : paidAt // ignore: cast_nullable_to_non_nullable
 as String?,paymentChannel: freezed == paymentChannel ? _self.paymentChannel : paymentChannel // ignore: cast_nullable_to_non_nullable
-as Map<String, dynamic>?,
+as Map<String, dynamic>?,paymentProofUrl: freezed == paymentProofUrl ? _self.paymentProofUrl : paymentProofUrl // ignore: cast_nullable_to_non_nullable
+as String?,
   ));
 }
 
@@ -1514,10 +1515,10 @@ return $default(_that);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( String status,  String? paymentStatus,  String? paymentUrl,  String? paidAt,  Map<String, dynamic>? paymentChannel)?  $default,{required TResult orElse(),}) {final _that = this;
+@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( String status,  String? paymentStatus,  String? paymentUrl,  String? paidAt,  Map<String, dynamic>? paymentChannel,  String? paymentProofUrl)?  $default,{required TResult orElse(),}) {final _that = this;
 switch (_that) {
 case _OrderTransactionModel() when $default != null:
-return $default(_that.status,_that.paymentStatus,_that.paymentUrl,_that.paidAt,_that.paymentChannel);case _:
+return $default(_that.status,_that.paymentStatus,_that.paymentUrl,_that.paidAt,_that.paymentChannel,_that.paymentProofUrl);case _:
   return orElse();
 
 }
@@ -1535,10 +1536,10 @@ return $default(_that.status,_that.paymentStatus,_that.paymentUrl,_that.paidAt,_
 /// }
 /// ```
 
-@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( String status,  String? paymentStatus,  String? paymentUrl,  String? paidAt,  Map<String, dynamic>? paymentChannel)  $default,) {final _that = this;
+@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( String status,  String? paymentStatus,  String? paymentUrl,  String? paidAt,  Map<String, dynamic>? paymentChannel,  String? paymentProofUrl)  $default,) {final _that = this;
 switch (_that) {
 case _OrderTransactionModel():
-return $default(_that.status,_that.paymentStatus,_that.paymentUrl,_that.paidAt,_that.paymentChannel);case _:
+return $default(_that.status,_that.paymentStatus,_that.paymentUrl,_that.paidAt,_that.paymentChannel,_that.paymentProofUrl);case _:
   throw StateError('Unexpected subclass');
 
 }
@@ -1555,10 +1556,10 @@ return $default(_that.status,_that.paymentStatus,_that.paymentUrl,_that.paidAt,_
 /// }
 /// ```
 
-@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( String status,  String? paymentStatus,  String? paymentUrl,  String? paidAt,  Map<String, dynamic>? paymentChannel)?  $default,) {final _that = this;
+@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( String status,  String? paymentStatus,  String? paymentUrl,  String? paidAt,  Map<String, dynamic>? paymentChannel,  String? paymentProofUrl)?  $default,) {final _that = this;
 switch (_that) {
 case _OrderTransactionModel() when $default != null:
-return $default(_that.status,_that.paymentStatus,_that.paymentUrl,_that.paidAt,_that.paymentChannel);case _:
+return $default(_that.status,_that.paymentStatus,_that.paymentUrl,_that.paidAt,_that.paymentChannel,_that.paymentProofUrl);case _:
   return null;
 
 }
@@ -1570,7 +1571,7 @@ return $default(_that.status,_that.paymentStatus,_that.paymentUrl,_that.paidAt,_
 @JsonSerializable()
 
 class _OrderTransactionModel extends OrderTransactionModel {
-  const _OrderTransactionModel({required this.status, this.paymentStatus, this.paymentUrl, this.paidAt, final  Map<String, dynamic>? paymentChannel}): _paymentChannel = paymentChannel,super._();
+  const _OrderTransactionModel({required this.status, this.paymentStatus, this.paymentUrl, this.paidAt, final  Map<String, dynamic>? paymentChannel, this.paymentProofUrl}): _paymentChannel = paymentChannel,super._();
   factory _OrderTransactionModel.fromJson(Map<String, dynamic> json) => _$OrderTransactionModelFromJson(json);
 
 @override final  String status;
@@ -1586,6 +1587,7 @@ class _OrderTransactionModel extends OrderTransactionModel {
   return EqualUnmodifiableMapView(value);
 }
 
+@override final  String? paymentProofUrl;
 
 /// Create a copy of OrderTransactionModel
 /// with the given fields replaced by the non-null parameter values.
@@ -1600,16 +1602,16 @@ Map<String, dynamic> toJson() {
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is _OrderTransactionModel&&(identical(other.status, status) || other.status == status)&&(identical(other.paymentStatus, paymentStatus) || other.paymentStatus == paymentStatus)&&(identical(other.paymentUrl, paymentUrl) || other.paymentUrl == paymentUrl)&&(identical(other.paidAt, paidAt) || other.paidAt == paidAt)&&const DeepCollectionEquality().equals(other._paymentChannel, _paymentChannel));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is _OrderTransactionModel&&(identical(other.status, status) || other.status == status)&&(identical(other.paymentStatus, paymentStatus) || other.paymentStatus == paymentStatus)&&(identical(other.paymentUrl, paymentUrl) || other.paymentUrl == paymentUrl)&&(identical(other.paidAt, paidAt) || other.paidAt == paidAt)&&const DeepCollectionEquality().equals(other._paymentChannel, _paymentChannel)&&(identical(other.paymentProofUrl, paymentProofUrl) || other.paymentProofUrl == paymentProofUrl));
 }
 
 @JsonKey(includeFromJson: false, includeToJson: false)
 @override
-int get hashCode => Object.hash(runtimeType,status,paymentStatus,paymentUrl,paidAt,const DeepCollectionEquality().hash(_paymentChannel));
+int get hashCode => Object.hash(runtimeType,status,paymentStatus,paymentUrl,paidAt,const DeepCollectionEquality().hash(_paymentChannel),paymentProofUrl);
 
 @override
 String toString() {
-  return 'OrderTransactionModel(status: $status, paymentStatus: $paymentStatus, paymentUrl: $paymentUrl, paidAt: $paidAt, paymentChannel: $paymentChannel)';
+  return 'OrderTransactionModel(status: $status, paymentStatus: $paymentStatus, paymentUrl: $paymentUrl, paidAt: $paidAt, paymentChannel: $paymentChannel, paymentProofUrl: $paymentProofUrl)';
 }
 
 
@@ -1620,7 +1622,7 @@ abstract mixin class _$OrderTransactionModelCopyWith<$Res> implements $OrderTran
   factory _$OrderTransactionModelCopyWith(_OrderTransactionModel value, $Res Function(_OrderTransactionModel) _then) = __$OrderTransactionModelCopyWithImpl;
 @override @useResult
 $Res call({
- String status, String? paymentStatus, String? paymentUrl, String? paidAt, Map<String, dynamic>? paymentChannel
+ String status, String? paymentStatus, String? paymentUrl, String? paidAt, Map<String, dynamic>? paymentChannel, String? paymentProofUrl
 });
 
 
@@ -1637,14 +1639,15 @@ class __$OrderTransactionModelCopyWithImpl<$Res>
 
 /// Create a copy of OrderTransactionModel
 /// with the given fields replaced by the non-null parameter values.
-@override @pragma('vm:prefer-inline') $Res call({Object? status = null,Object? paymentStatus = freezed,Object? paymentUrl = freezed,Object? paidAt = freezed,Object? paymentChannel = freezed,}) {
+@override @pragma('vm:prefer-inline') $Res call({Object? status = null,Object? paymentStatus = freezed,Object? paymentUrl = freezed,Object? paidAt = freezed,Object? paymentChannel = freezed,Object? paymentProofUrl = freezed,}) {
   return _then(_OrderTransactionModel(
 status: null == status ? _self.status : status // ignore: cast_nullable_to_non_nullable
 as String,paymentStatus: freezed == paymentStatus ? _self.paymentStatus : paymentStatus // ignore: cast_nullable_to_non_nullable
 as String?,paymentUrl: freezed == paymentUrl ? _self.paymentUrl : paymentUrl // ignore: cast_nullable_to_non_nullable
 as String?,paidAt: freezed == paidAt ? _self.paidAt : paidAt // ignore: cast_nullable_to_non_nullable
 as String?,paymentChannel: freezed == paymentChannel ? _self._paymentChannel : paymentChannel // ignore: cast_nullable_to_non_nullable
-as Map<String, dynamic>?,
+as Map<String, dynamic>?,paymentProofUrl: freezed == paymentProofUrl ? _self.paymentProofUrl : paymentProofUrl // ignore: cast_nullable_to_non_nullable
+as String?,
   ));
 }
 

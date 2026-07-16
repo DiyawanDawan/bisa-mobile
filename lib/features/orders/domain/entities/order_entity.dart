@@ -52,6 +52,7 @@ abstract class OrderTransactionEntity with _$OrderTransactionEntity {
     DateTime? paidAt,
     String? paymentChannelCode,
     String? paymentChannelName,
+    String? paymentProofUrl,
   }) = _OrderTransactionEntity;
 }
 

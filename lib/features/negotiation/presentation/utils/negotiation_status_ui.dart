@@ -220,6 +220,7 @@ class NegotiationStatusDisplay {
     }
     final orderId = negotiation.order?.id ?? negotiation.orderId;
     if (orderId == null || orderId.isEmpty) return null;
+    // Harus `/order/:id` (GoRouter), bukan `/orders/:id` (API path).
     return '/order/$orderId';
   }
 

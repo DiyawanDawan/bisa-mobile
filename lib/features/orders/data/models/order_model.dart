@@ -163,6 +163,7 @@ abstract class OrderTransactionModel with _$OrderTransactionModel {
     String? paymentUrl,
     String? paidAt,
     Map<String, dynamic>? paymentChannel,
+    String? paymentProofUrl,
   }) = _OrderTransactionModel;
 
   factory OrderTransactionModel.fromJson(Map<String, dynamic> json) =>
@@ -177,6 +178,7 @@ abstract class OrderTransactionModel with _$OrderTransactionModel {
         paidAt: paidAt != null ? DateTime.tryParse(paidAt!) : null,
         paymentChannelCode: paymentChannel?['code']?.toString(),
         paymentChannelName: paymentChannel?['name']?.toString(),
+        paymentProofUrl: paymentProofUrl,
       );
 }
 

@@ -62,7 +62,7 @@ abstract class AppTextStyles {
     double? height,
   }) =>
       TextStyle(
-        fontSize: 12.sp,
+        fontSize: 13.sp,
         fontWeight: fontWeight,
         color: color ?? AppColors.textSecondary,
         height: height,
@@ -75,7 +75,7 @@ abstract class AppTextStyles {
     double? height,
   }) =>
       TextStyle(
-        fontSize: 11.sp,
+        fontSize: 12.sp,
         fontWeight: fontWeight,
         color: color ?? AppColors.textSecondary,
         height: height,
@@ -88,7 +88,7 @@ abstract class AppTextStyles {
     double? fontSize,
   }) =>
       TextStyle(
-        fontSize: fontSize ?? 10.sp,
+        fontSize: fontSize ?? 11.sp,
         fontWeight: fontWeight,
         color: color ?? AppColors.textSecondary,
       );
@@ -125,7 +125,7 @@ abstract class AppTextStyles {
     double letterSpacing = 0.2,
   }) =>
       TextStyle(
-        fontSize: 8.sp,
+        fontSize: 10.sp,
         fontWeight: fontWeight,
         color: color ?? AppColors.textSecondary,
         letterSpacing: letterSpacing,

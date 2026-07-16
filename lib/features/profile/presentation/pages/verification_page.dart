@@ -6,8 +6,12 @@ import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
 import 'package:mobile_bisa/core/core.dart';
+import '../../../../core/utils/text_recognition_util.dart';
+import '../../../../core/utils/face_detector_util.dart';
+import 'package:cunning_document_scanner/cunning_document_scanner.dart';
 import '../../../../shared/widgets/bisa_app_bar.dart';
 import '../../../../shared/widgets/custom_button.dart';
+import '../../../../shared/widgets/custom_text_field.dart';
 import '../../../auth/domain/entities/user_entity.dart';
 import '../../../auth/domain/repositories/auth_repository.dart';
 import '../../../auth/presentation/bloc/auth_cubit.dart';
@@ -35,35 +39,95 @@ class _VerificationPageState extends State<VerificationPage> {
   String? _selfiePath;
   String? _siupPath;
 
+  final _businessNameCtrl = TextEditingController();
+  final _taxIdCtrl = TextEditingController();
+  final _businessAddressCtrl = TextEditingController();
+
   bool _isSubmitting = false;
   String? _uploadStatus;
+  bool _scanningDocument = false;
 
   final _picker = ImagePicker();
+
+  @override
+  void dispose() {
+    _businessNameCtrl.dispose();
+    _taxIdCtrl.dispose();
+    _businessAddressCtrl.dispose();
+    super.dispose();
+  }
 
   Future<void> _pickImage(String type) async {
     final source = await _showImageSourceSheet();
     if (source == null) return;
 
-    final XFile? image = await _picker.pickImage(
-      source: source,
-      imageQuality: 85,
-      maxWidth: 2048,
-    );
-    if (image == null) return;
+    String? pickedPath;
+
+    if (source == ImageSource.camera && type != 'selfie') {
+      try {
+        final pictures = await CunningDocumentScanner.getPictures();
+        if (pictures != null && pictures.isNotEmpty) {
+          pickedPath = pictures.first;
+        } else {
+          // User cancelled the document scanner
+          return;
+        }
+      } catch (e) {
+        debugPrint('Document scanner failed: $e');
+        // Fallback to normal camera on error
+      }
+    }
+
+    if (pickedPath == null) {
+      final XFile? image = await _picker.pickImage(
+        source: source,
+        imageQuality: 85,
+        maxWidth: 2048,
+      );
+      if (image == null) return;
+      pickedPath = image.path;
+    }
+
+    if (type == 'selfie') {
+      setState(() {
+        _isSubmitting = true;
+        _uploadStatus = 'verification.detecting_face'.tr();
+      });
+      bool hasFace = false;
+      try {
+        hasFace = await FaceDetectorUtil.detectFace(pickedPath);
+      } catch (_) {
+        hasFace = false;
+      }
+      setState(() {
+        _isSubmitting = false;
+        _uploadStatus = null;
+      });
+
+      if (!hasFace) {
+        if (mounted) {
+          showErrorSnackBar(
+            context,
+            'verification.selfie_no_face_detected'.tr(),
+          );
+        }
+        return;
+      }
+    }
 
     setState(() {
       switch (type) {
         case 'ktp':
-          _ktpPath = image.path;
+          _ktpPath = pickedPath;
           break;
         case 'nib':
-          _nibPath = image.path;
+          _nibPath = pickedPath;
           break;
         case 'selfie':
-          _selfiePath = image.path;
+          _selfiePath = pickedPath;
           break;
         case 'siup':
-          _siupPath = image.path;
+          _siupPath = pickedPath;
           break;
       }
     });
@@ -112,6 +176,84 @@ class _VerificationPageState extends State<VerificationPage> {
     );
   }
 
+  /// OCR assist: foto dokumen (NIB/SIUP/dll) → tampilkan baris teks hasil
+  /// pembacaan → user PILIH baris yang benar untuk mengisi [controller].
+  ///
+  /// Sengaja tidak auto-fill heuristik (lihat TextRecognitionUtil untuk
+  /// alasan) supaya data KYC penting tidak salah isi karena tebakan OCR.
+  Future<void> _scanDocumentText(TextEditingController controller) async {
+    final source = await _showImageSourceSheet();
+    if (source == null || !mounted) return;
+
+    final picked = await _picker.pickImage(source: source, imageQuality: 85);
+    if (picked == null || !mounted) return;
+
+    setState(() => _scanningDocument = true);
+    List<String> lines = const [];
+    try {
+      lines = await TextRecognitionUtil.extractLines(picked.path);
+    } catch (_) {
+      lines = const [];
+    }
+    if (!mounted) return;
+    setState(() => _scanningDocument = false);
+
+    if (lines.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('verification.scan_no_text_found'.tr())),
+      );
+      return;
+    }
+
+    final selected = await showModalBottomSheet<String>(
+      context: context,
+      backgroundColor: AppColors.surface,
+      isScrollControlled: true,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(16.r)),
+      ),
+      builder: (ctx) => SafeArea(
+        child: ConstrainedBox(
+          constraints: BoxConstraints(maxHeight: MediaQuery.of(ctx).size.height * 0.6),
+          child: Padding(
+            padding: EdgeInsets.fromLTRB(16.w, 12.h, 16.w, 8.h),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  'verification.scan_pick_line_title'.tr(),
+                  style: TextStyle(fontSize: 15.sp, fontWeight: FontWeight.w700),
+                ),
+                SizedBox(height: 4.h),
+                Text(
+                  'verification.scan_pick_line_hint'.tr(),
+                  style: TextStyle(fontSize: 11.sp, color: AppColors.textSecondary),
+                ),
+                SizedBox(height: 8.h),
+                Flexible(
+                  child: ListView.builder(
+                    shrinkWrap: true,
+                    itemCount: lines.length,
+                    itemBuilder: (context, index) => ListTile(
+                      dense: true,
+                      title: Text(lines[index], style: TextStyle(fontSize: 13.sp)),
+                      onTap: () => Navigator.pop(ctx, lines[index]),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+
+    if (selected != null && mounted) {
+      setState(() => controller.text = selected);
+    }
+  }
+
   String _mapUploadStatus(String status) {
     return switch (status) {
       'ktp' => 'verification.uploading_doc'.tr(
@@ -134,6 +276,15 @@ class _VerificationPageState extends State<VerificationPage> {
   Future<void> _submit() async {
     if (_isSubmitting) return;
 
+    final businessName = _businessNameCtrl.text.trim();
+    if (businessName.isNotEmpty && businessName.length < 2) {
+      showErrorSnackBar(
+        context,
+        'verification.business_name_min_length'.tr(),
+      );
+      return;
+    }
+
     setState(() {
       _isSubmitting = true;
       _uploadStatus = 'verification.upload_preparing'.tr();
@@ -144,6 +295,9 @@ class _VerificationPageState extends State<VerificationPage> {
       nibPath: _nibPath,
       selfiePath: _selfiePath,
       siupPath: _siupPath,
+      businessName: businessName,
+      taxId: _taxIdCtrl.text.trim(),
+      businessAddress: _businessAddressCtrl.text.trim(),
       onUploadStatus: (status) {
         if (mounted) setState(() => _uploadStatus = _mapUploadStatus(status));
       },
@@ -249,6 +403,7 @@ class _VerificationPageState extends State<VerificationPage> {
                               guideType: VerificationGuideType.siup,
                               enabled: canUpload,
                             ),
+                            _buildBusinessDetailsSection(canUpload),
                           ],
                         ],
                       ),
@@ -274,6 +429,90 @@ class _VerificationPageState extends State<VerificationPage> {
           ),
         );
       },
+    );
+  }
+
+  Widget _buildBusinessDetailsSection(bool canUpload) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        SizedBox(height: 8.h),
+        const Divider(),
+        SizedBox(height: 8.h),
+        Text(
+          'verification.business_details_section'.tr(),
+          style: TextStyle(
+            fontSize: 13.sp,
+            fontWeight: FontWeight.w700,
+            color: AppColors.textPrimary,
+          ),
+        ),
+        SizedBox(height: 12.h),
+        CustomTextField(
+          label: 'verification.business_name_label'.tr(),
+          hint: 'verification.business_name_hint'.tr(),
+          controller: _businessNameCtrl,
+          enabled: canUpload && !_isSubmitting,
+          suffixIcon: _scanningDocument
+              ? Padding(
+                  padding: EdgeInsets.all(12.w),
+                  child: SizedBox(
+                    width: 16.w,
+                    height: 16.w,
+                    child: const CircularProgressIndicator(strokeWidth: 2, color: AppColors.primary),
+                  ),
+                )
+              : IconButton(
+                  icon: Icon(LucideIcons.camera, color: AppColors.primary, size: 20.sp),
+                  tooltip: 'verification.scan_document_tooltip'.tr(),
+                  onPressed: () => _scanDocumentText(_businessNameCtrl),
+                ),
+        ),
+        SizedBox(height: 12.h),
+        CustomTextField(
+          label: 'verification.tax_id_label'.tr(),
+          hint: 'verification.tax_id_hint'.tr(),
+          controller: _taxIdCtrl,
+          enabled: canUpload && !_isSubmitting,
+          suffixIcon: _scanningDocument
+              ? Padding(
+                  padding: EdgeInsets.all(12.w),
+                  child: SizedBox(
+                    width: 16.w,
+                    height: 16.w,
+                    child: const CircularProgressIndicator(strokeWidth: 2, color: AppColors.primary),
+                  ),
+                )
+              : IconButton(
+                  icon: Icon(LucideIcons.camera, color: AppColors.primary, size: 20.sp),
+                  tooltip: 'verification.scan_document_tooltip'.tr(),
+                  onPressed: () => _scanDocumentText(_taxIdCtrl),
+                ),
+        ),
+        SizedBox(height: 12.h),
+        CustomTextField(
+          label: 'verification.business_address_label'.tr(),
+          hint: 'verification.business_address_hint'.tr(),
+          controller: _businessAddressCtrl,
+          enabled: canUpload && !_isSubmitting,
+          maxLines: 3,
+          suffixIcon: _scanningDocument
+              ? Padding(
+                  padding: EdgeInsets.all(12.w),
+                  child: SizedBox(
+                    width: 16.w,
+                    height: 16.w,
+                    child: const CircularProgressIndicator(strokeWidth: 2, color: AppColors.primary),
+                  ),
+                )
+              : IconButton(
+                  icon: Icon(LucideIcons.camera, color: AppColors.primary, size: 20.sp),
+                  tooltip: 'verification.scan_document_tooltip'.tr(),
+                  onPressed: () => _scanDocumentText(_businessAddressCtrl),
+                ),
+        ),
+        SizedBox(height: 16.h),
+      ],
     );
   }
 

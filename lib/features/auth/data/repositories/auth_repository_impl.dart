@@ -264,6 +264,9 @@ class AuthRepositoryImpl implements AuthRepository {
     String? nibPath,
     String? selfiePath,
     String? siupPath,
+    String? businessName,
+    String? taxId,
+    String? businessAddress,
     void Function(String status)? onUploadStatus,
   }) async {
     try {
@@ -272,6 +275,9 @@ class AuthRepositoryImpl implements AuthRepository {
         nibPath: nibPath,
         selfiePath: selfiePath,
         siupPath: siupPath,
+        businessName: businessName,
+        taxId: taxId,
+        businessAddress: businessAddress,
         onUploadStatus: onUploadStatus,
       );
       return const Right(null);

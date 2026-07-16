@@ -509,7 +509,7 @@ $OrderReviewEntityCopyWith<$Res>? get review {
 /// @nodoc
 mixin _$OrderTransactionEntity {
 
- String get status; String? get paymentStatus; String? get paymentUrl; DateTime? get paidAt; String? get paymentChannelCode; String? get paymentChannelName;
+ String get status; String? get paymentStatus; String? get paymentUrl; DateTime? get paidAt; String? get paymentChannelCode; String? get paymentChannelName; String? get paymentProofUrl;
 /// Create a copy of OrderTransactionEntity
 /// with the given fields replaced by the non-null parameter values.
 @JsonKey(includeFromJson: false, includeToJson: false)
@@ -520,16 +520,16 @@ $OrderTransactionEntityCopyWith<OrderTransactionEntity> get copyWith => _$OrderT
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is OrderTransactionEntity&&(identical(other.status, status) || other.status == status)&&(identical(other.paymentStatus, paymentStatus) || other.paymentStatus == paymentStatus)&&(identical(other.paymentUrl, paymentUrl) || other.paymentUrl == paymentUrl)&&(identical(other.paidAt, paidAt) || other.paidAt == paidAt)&&(identical(other.paymentChannelCode, paymentChannelCode) || other.paymentChannelCode == paymentChannelCode)&&(identical(other.paymentChannelName, paymentChannelName) || other.paymentChannelName == paymentChannelName));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is OrderTransactionEntity&&(identical(other.status, status) || other.status == status)&&(identical(other.paymentStatus, paymentStatus) || other.paymentStatus == paymentStatus)&&(identical(other.paymentUrl, paymentUrl) || other.paymentUrl == paymentUrl)&&(identical(other.paidAt, paidAt) || other.paidAt == paidAt)&&(identical(other.paymentChannelCode, paymentChannelCode) || other.paymentChannelCode == paymentChannelCode)&&(identical(other.paymentChannelName, paymentChannelName) || other.paymentChannelName == paymentChannelName)&&(identical(other.paymentProofUrl, paymentProofUrl) || other.paymentProofUrl == paymentProofUrl));
 }
 
 
 @override
-int get hashCode => Object.hash(runtimeType,status,paymentStatus,paymentUrl,paidAt,paymentChannelCode,paymentChannelName);
+int get hashCode => Object.hash(runtimeType,status,paymentStatus,paymentUrl,paidAt,paymentChannelCode,paymentChannelName,paymentProofUrl);
 
 @override
 String toString() {
-  return 'OrderTransactionEntity(status: $status, paymentStatus: $paymentStatus, paymentUrl: $paymentUrl, paidAt: $paidAt, paymentChannelCode: $paymentChannelCode, paymentChannelName: $paymentChannelName)';
+  return 'OrderTransactionEntity(status: $status, paymentStatus: $paymentStatus, paymentUrl: $paymentUrl, paidAt: $paidAt, paymentChannelCode: $paymentChannelCode, paymentChannelName: $paymentChannelName, paymentProofUrl: $paymentProofUrl)';
 }
 
 
@@ -540,7 +540,7 @@ abstract mixin class $OrderTransactionEntityCopyWith<$Res>  {
   factory $OrderTransactionEntityCopyWith(OrderTransactionEntity value, $Res Function(OrderTransactionEntity) _then) = _$OrderTransactionEntityCopyWithImpl;
 @useResult
 $Res call({
- String status, String? paymentStatus, String? paymentUrl, DateTime? paidAt, String? paymentChannelCode, String? paymentChannelName
+ String status, String? paymentStatus, String? paymentUrl, DateTime? paidAt, String? paymentChannelCode, String? paymentChannelName, String? paymentProofUrl
 });
 
 
@@ -557,7 +557,7 @@ class _$OrderTransactionEntityCopyWithImpl<$Res>
 
 /// Create a copy of OrderTransactionEntity
 /// with the given fields replaced by the non-null parameter values.
-@pragma('vm:prefer-inline') @override $Res call({Object? status = null,Object? paymentStatus = freezed,Object? paymentUrl = freezed,Object? paidAt = freezed,Object? paymentChannelCode = freezed,Object? paymentChannelName = freezed,}) {
+@pragma('vm:prefer-inline') @override $Res call({Object? status = null,Object? paymentStatus = freezed,Object? paymentUrl = freezed,Object? paidAt = freezed,Object? paymentChannelCode = freezed,Object? paymentChannelName = freezed,Object? paymentProofUrl = freezed,}) {
   return _then(_self.copyWith(
 status: null == status ? _self.status : status // ignore: cast_nullable_to_non_nullable
 as String,paymentStatus: freezed == paymentStatus ? _self.paymentStatus : paymentStatus // ignore: cast_nullable_to_non_nullable
@@ -565,6 +565,7 @@ as String?,paymentUrl: freezed == paymentUrl ? _self.paymentUrl : paymentUrl // 
 as String?,paidAt: freezed == paidAt ? _self.paidAt : paidAt // ignore: cast_nullable_to_non_nullable
 as DateTime?,paymentChannelCode: freezed == paymentChannelCode ? _self.paymentChannelCode : paymentChannelCode // ignore: cast_nullable_to_non_nullable
 as String?,paymentChannelName: freezed == paymentChannelName ? _self.paymentChannelName : paymentChannelName // ignore: cast_nullable_to_non_nullable
+as String?,paymentProofUrl: freezed == paymentProofUrl ? _self.paymentProofUrl : paymentProofUrl // ignore: cast_nullable_to_non_nullable
 as String?,
   ));
 }
@@ -650,10 +651,10 @@ return $default(_that);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( String status,  String? paymentStatus,  String? paymentUrl,  DateTime? paidAt,  String? paymentChannelCode,  String? paymentChannelName)?  $default,{required TResult orElse(),}) {final _that = this;
+@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( String status,  String? paymentStatus,  String? paymentUrl,  DateTime? paidAt,  String? paymentChannelCode,  String? paymentChannelName,  String? paymentProofUrl)?  $default,{required TResult orElse(),}) {final _that = this;
 switch (_that) {
 case _OrderTransactionEntity() when $default != null:
-return $default(_that.status,_that.paymentStatus,_that.paymentUrl,_that.paidAt,_that.paymentChannelCode,_that.paymentChannelName);case _:
+return $default(_that.status,_that.paymentStatus,_that.paymentUrl,_that.paidAt,_that.paymentChannelCode,_that.paymentChannelName,_that.paymentProofUrl);case _:
   return orElse();
 
 }
@@ -671,10 +672,10 @@ return $default(_that.status,_that.paymentStatus,_that.paymentUrl,_that.paidAt,_
 /// }
 /// ```
 
-@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( String status,  String? paymentStatus,  String? paymentUrl,  DateTime? paidAt,  String? paymentChannelCode,  String? paymentChannelName)  $default,) {final _that = this;
+@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( String status,  String? paymentStatus,  String? paymentUrl,  DateTime? paidAt,  String? paymentChannelCode,  String? paymentChannelName,  String? paymentProofUrl)  $default,) {final _that = this;
 switch (_that) {
 case _OrderTransactionEntity():
-return $default(_that.status,_that.paymentStatus,_that.paymentUrl,_that.paidAt,_that.paymentChannelCode,_that.paymentChannelName);case _:
+return $default(_that.status,_that.paymentStatus,_that.paymentUrl,_that.paidAt,_that.paymentChannelCode,_that.paymentChannelName,_that.paymentProofUrl);case _:
   throw StateError('Unexpected subclass');
 
 }
@@ -691,10 +692,10 @@ return $default(_that.status,_that.paymentStatus,_that.paymentUrl,_that.paidAt,_
 /// }
 /// ```
 
-@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( String status,  String? paymentStatus,  String? paymentUrl,  DateTime? paidAt,  String? paymentChannelCode,  String? paymentChannelName)?  $default,) {final _that = this;
+@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( String status,  String? paymentStatus,  String? paymentUrl,  DateTime? paidAt,  String? paymentChannelCode,  String? paymentChannelName,  String? paymentProofUrl)?  $default,) {final _that = this;
 switch (_that) {
 case _OrderTransactionEntity() when $default != null:
-return $default(_that.status,_that.paymentStatus,_that.paymentUrl,_that.paidAt,_that.paymentChannelCode,_that.paymentChannelName);case _:
+return $default(_that.status,_that.paymentStatus,_that.paymentUrl,_that.paidAt,_that.paymentChannelCode,_that.paymentChannelName,_that.paymentProofUrl);case _:
   return null;
 
 }
@@ -706,7 +707,7 @@ return $default(_that.status,_that.paymentStatus,_that.paymentUrl,_that.paidAt,_
 
 
 class _OrderTransactionEntity implements OrderTransactionEntity {
-  const _OrderTransactionEntity({required this.status, this.paymentStatus, this.paymentUrl, this.paidAt, this.paymentChannelCode, this.paymentChannelName});
+  const _OrderTransactionEntity({required this.status, this.paymentStatus, this.paymentUrl, this.paidAt, this.paymentChannelCode, this.paymentChannelName, this.paymentProofUrl});
   
 
 @override final  String status;
@@ -715,6 +716,7 @@ class _OrderTransactionEntity implements OrderTransactionEntity {
 @override final  DateTime? paidAt;
 @override final  String? paymentChannelCode;
 @override final  String? paymentChannelName;
+@override final  String? paymentProofUrl;
 
 /// Create a copy of OrderTransactionEntity
 /// with the given fields replaced by the non-null parameter values.
@@ -726,16 +728,16 @@ _$OrderTransactionEntityCopyWith<_OrderTransactionEntity> get copyWith => __$Ord
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is _OrderTransactionEntity&&(identical(other.status, status) || other.status == status)&&(identical(other.paymentStatus, paymentStatus) || other.paymentStatus == paymentStatus)&&(identical(other.paymentUrl, paymentUrl) || other.paymentUrl == paymentUrl)&&(identical(other.paidAt, paidAt) || other.paidAt == paidAt)&&(identical(other.paymentChannelCode, paymentChannelCode) || other.paymentChannelCode == paymentChannelCode)&&(identical(other.paymentChannelName, paymentChannelName) || other.paymentChannelName == paymentChannelName));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is _OrderTransactionEntity&&(identical(other.status, status) || other.status == status)&&(identical(other.paymentStatus, paymentStatus) || other.paymentStatus == paymentStatus)&&(identical(other.paymentUrl, paymentUrl) || other.paymentUrl == paymentUrl)&&(identical(other.paidAt, paidAt) || other.paidAt == paidAt)&&(identical(other.paymentChannelCode, paymentChannelCode) || other.paymentChannelCode == paymentChannelCode)&&(identical(other.paymentChannelName, paymentChannelName) || other.paymentChannelName == paymentChannelName)&&(identical(other.paymentProofUrl, paymentProofUrl) || other.paymentProofUrl == paymentProofUrl));
 }
 
 
 @override
-int get hashCode => Object.hash(runtimeType,status,paymentStatus,paymentUrl,paidAt,paymentChannelCode,paymentChannelName);
+int get hashCode => Object.hash(runtimeType,status,paymentStatus,paymentUrl,paidAt,paymentChannelCode,paymentChannelName,paymentProofUrl);
 
 @override
 String toString() {
-  return 'OrderTransactionEntity(status: $status, paymentStatus: $paymentStatus, paymentUrl: $paymentUrl, paidAt: $paidAt, paymentChannelCode: $paymentChannelCode, paymentChannelName: $paymentChannelName)';
+  return 'OrderTransactionEntity(status: $status, paymentStatus: $paymentStatus, paymentUrl: $paymentUrl, paidAt: $paidAt, paymentChannelCode: $paymentChannelCode, paymentChannelName: $paymentChannelName, paymentProofUrl: $paymentProofUrl)';
 }
 
 
@@ -746,7 +748,7 @@ abstract mixin class _$OrderTransactionEntityCopyWith<$Res> implements $OrderTra
   factory _$OrderTransactionEntityCopyWith(_OrderTransactionEntity value, $Res Function(_OrderTransactionEntity) _then) = __$OrderTransactionEntityCopyWithImpl;
 @override @useResult
 $Res call({
- String status, String? paymentStatus, String? paymentUrl, DateTime? paidAt, String? paymentChannelCode, String? paymentChannelName
+ String status, String? paymentStatus, String? paymentUrl, DateTime? paidAt, String? paymentChannelCode, String? paymentChannelName, String? paymentProofUrl
 });
 
 
@@ -763,7 +765,7 @@ class __$OrderTransactionEntityCopyWithImpl<$Res>
 
 /// Create a copy of OrderTransactionEntity
 /// with the given fields replaced by the non-null parameter values.
-@override @pragma('vm:prefer-inline') $Res call({Object? status = null,Object? paymentStatus = freezed,Object? paymentUrl = freezed,Object? paidAt = freezed,Object? paymentChannelCode = freezed,Object? paymentChannelName = freezed,}) {
+@override @pragma('vm:prefer-inline') $Res call({Object? status = null,Object? paymentStatus = freezed,Object? paymentUrl = freezed,Object? paidAt = freezed,Object? paymentChannelCode = freezed,Object? paymentChannelName = freezed,Object? paymentProofUrl = freezed,}) {
   return _then(_OrderTransactionEntity(
 status: null == status ? _self.status : status // ignore: cast_nullable_to_non_nullable
 as String,paymentStatus: freezed == paymentStatus ? _self.paymentStatus : paymentStatus // ignore: cast_nullable_to_non_nullable
@@ -771,6 +773,7 @@ as String?,paymentUrl: freezed == paymentUrl ? _self.paymentUrl : paymentUrl // 
 as String?,paidAt: freezed == paidAt ? _self.paidAt : paidAt // ignore: cast_nullable_to_non_nullable
 as DateTime?,paymentChannelCode: freezed == paymentChannelCode ? _self.paymentChannelCode : paymentChannelCode // ignore: cast_nullable_to_non_nullable
 as String?,paymentChannelName: freezed == paymentChannelName ? _self.paymentChannelName : paymentChannelName // ignore: cast_nullable_to_non_nullable
+as String?,paymentProofUrl: freezed == paymentProofUrl ? _self.paymentProofUrl : paymentProofUrl // ignore: cast_nullable_to_non_nullable
 as String?,
   ));
 }

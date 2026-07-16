@@ -10,6 +10,7 @@ import 'package:mobile_bisa/core/constants/app_text_styles.dart';
 import 'package:mobile_bisa/core/core.dart';
 import 'package:mobile_bisa/core/utils/media_url_utils.dart';
 import 'package:mobile_bisa/core/utils/product_pricing.dart';
+import 'package:mobile_bisa/core/utils/translation_util.dart';
 import 'package:mobile_bisa/features/auth/presentation/bloc/auth_cubit.dart';
 import 'package:mobile_bisa/features/negotiation/domain/entities/negotiation_entity.dart';
 import 'package:mobile_bisa/features/negotiation/domain/entities/negotiation_entity_extensions.dart';
@@ -27,6 +28,7 @@ import 'package:mobile_bisa/shared/widgets/bisa_network_image.dart';
 import 'package:mobile_bisa/shared/widgets/chat_room_skeleton.dart';
 import 'package:mobile_bisa/features/invoice/presentation/utils/invoice_export_helper.dart';
 import 'package:mobile_bisa/features/negotiation/presentation/widgets/negotiation_closure_dialog.dart';
+import 'package:mobile_bisa/shared/widgets/handwriting_input_sheet.dart';
 import 'package:mobile_bisa/features/invoice/domain/repositories/invoice_repository.dart';
 import 'package:mobile_bisa/features/orders/domain/repositories/order_repository.dart';
 import 'package:url_launcher/url_launcher.dart';
@@ -54,6 +56,12 @@ class _NegotiationRoomPageState extends State<NegotiationRoomPage> {
   bool _isCurrentlyTyping = false;
   String? _editingMessageId;
 
+  // Track F: on-device translation state
+  // key = message ID, value = translated text (null = not translated)
+  final Map<String, String?> _translatedTexts = {};
+  // IDs currently being translated
+  final Set<String> _translatingIds = {};
+
   void _scrollToBottom() {
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (_scrollController.hasClients) {
@@ -78,6 +86,55 @@ class _NegotiationRoomPageState extends State<NegotiationRoomPage> {
 
   bool _isInquiryMode(NegotiationEntity n) =>
       widget.chatMode == 'inquiry' || n.isInquiryChat;
+
+  // ─── Track F: translate a single message on-tap ──────────────────────────
+  Future<void> _translateMessage(String msgId, String content) async {
+    // Already translated → toggle back to original
+    if (_translatedTexts.containsKey(msgId)) {
+      setState(() => _translatedTexts.remove(msgId));
+      return;
+    }
+
+    setState(() => _translatingIds.add(msgId));
+
+    try {
+      final detectedLang = await TranslationUtil.identifyLanguage(content);
+      final targetLang = (detectedLang == 'id') ? 'en' : 'id';
+
+      // Only support ID ↔ EN
+      if (detectedLang == 'und' ||
+          !{'id', 'en'}.contains(detectedLang)) {
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text('negotiation.translate_unavailable'.tr()),
+              duration: const Duration(seconds: 3),
+            ),
+          );
+        }
+        return;
+      }
+
+      final result = await TranslationUtil.translate(
+        text: content,
+        sourceLanguageCode: detectedLang,
+        targetLanguageCode: targetLang,
+      );
+
+      if (mounted) setState(() => _translatedTexts[msgId] = result);
+    } catch (_) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('negotiation.translate_failed'.tr()),
+            duration: const Duration(seconds: 3),
+          ),
+        );
+      }
+    } finally {
+      if (mounted) setState(() => _translatingIds.remove(msgId));
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -987,7 +1044,7 @@ class _NegotiationRoomPageState extends State<NegotiationRoomPage> {
                     children: [
                       if (msg.content.trim().isNotEmpty)
                         Text(
-                          msg.content,
+                          _translatedTexts[msg.id] ?? msg.content,
                           style: TextStyle(
                             color: isMe ? AppColors.white : AppColors.textPrimary,
                             fontSize: 14.sp,
@@ -1029,6 +1086,34 @@ class _NegotiationRoomPageState extends State<NegotiationRoomPage> {
                           fontStyle: FontStyle.italic,
                         ),
                       ),
+                    ],
+                    // Translate button (only for non-empty text messages)
+                    if (msg.content.trim().isNotEmpty) ...[
+                      SizedBox(width: 6.w),
+                      _translatingIds.contains(msg.id)
+                          ? SizedBox(
+                              width: 10.w,
+                              height: 10.w,
+                              child: CircularProgressIndicator(
+                                strokeWidth: 1.5,
+                                color: AppColors.textHint,
+                              ),
+                            )
+                          : GestureDetector(
+                              onTap: () => _translateMessage(msg.id, msg.content),
+                              child: Text(
+                                _translatedTexts.containsKey(msg.id)
+                                    ? 'negotiation.translate_show_original'.tr()
+                                    : 'negotiation.translate_button'.tr(),
+                                style: TextStyle(
+                                  fontSize: 10.sp,
+                                  color: AppColors.primary,
+                                  fontWeight: FontWeight.w700,
+                                  decoration: TextDecoration.underline,
+                                  decorationColor: AppColors.primary,
+                                ),
+                              ),
+                            ),
                     ],
                   ],
                 ),
@@ -1126,10 +1211,12 @@ class _NegotiationRoomPageState extends State<NegotiationRoomPage> {
 
   String _orderDetailRoute(NegotiationEntity n) {
     final orderId = n.order?.id ?? n.orderId;
-    return '/orders/$orderId';
+    return '/order/$orderId';
   }
 
+  /// Chat tetap boleh selama mediasi sengketa (LOCKED + DISPUTED).
   bool _canSendChat(NegotiationEntity n) {
+    if (_isDisputeMediationActive(n)) return true;
     const blocked = {'OFFER_REJECTED', 'COMPLETED', 'EXPIRED', 'CANCELLED'};
     return !blocked.contains(n.status);
   }
@@ -1174,6 +1261,16 @@ class _NegotiationRoomPageState extends State<NegotiationRoomPage> {
                   style: TextStyle(
                     fontSize: 11.sp,
                     color: AppColors.textSecondary,
+                    height: 1.35,
+                  ),
+                ),
+                SizedBox(height: 6.h),
+                Text(
+                  'negotiation.dispute_mediation_parties'.tr(),
+                  style: TextStyle(
+                    fontSize: 11.sp,
+                    fontWeight: FontWeight.w700,
+                    color: AppColors.warning,
                     height: 1.35,
                   ),
                 ),
@@ -1634,6 +1731,34 @@ class _NegotiationRoomPageState extends State<NegotiationRoomPage> {
                     child: Row(
                       children: [
                         SizedBox(width: AppSpacing.md12),
+                        // Handwriting input button
+                        GestureDetector(
+                          onTap: () {
+                            showModalBottomSheet(
+                              context: context,
+                              isScrollControlled: true,
+                              backgroundColor: Colors.transparent,
+                              builder: (_) => HandwritingInputSheet(
+                                onResult: (text) {
+                                  _messageController.text =
+                                      '${_messageController.text}$text';
+                                  _messageController.selection =
+                                      TextSelection.fromPosition(
+                                    TextPosition(
+                                      offset: _messageController.text.length,
+                                    ),
+                                  );
+                                },
+                              ),
+                            );
+                          },
+                          child: Icon(
+                            Icons.draw_outlined,
+                            size: 20.sp,
+                            color: AppColors.textHint,
+                          ),
+                        ),
+                        SizedBox(width: AppSpacing.sm),
                         Icon(
                           Icons.emoji_emotions_outlined,
                           size: 20.sp,

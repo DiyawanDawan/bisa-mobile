@@ -37,7 +37,7 @@ class AuthCubit extends Cubit<AuthState> {
         serverClientId: AppConfig.googleServerClientId,
       );
       final GoogleSignInAccount? googleUser = await googleSignIn.signIn();
-      
+
       if (googleUser == null) {
         emit(const AuthState.initial());
         return; // User canceled the sign-in
@@ -159,6 +159,9 @@ class AuthCubit extends Cubit<AuthState> {
     String? nibPath,
     String? selfiePath,
     String? siupPath,
+    String? businessName,
+    String? taxId,
+    String? businessAddress,
   }) async {
     emit(const AuthState.loading());
     final result = await _repository.submitVerification(
@@ -166,6 +169,9 @@ class AuthCubit extends Cubit<AuthState> {
       nibPath: nibPath,
       selfiePath: selfiePath,
       siupPath: siupPath,
+      businessName: businessName,
+      taxId: taxId,
+      businessAddress: businessAddress,
     );
     result.fold(
       (failure) => emit(AuthState.error(failure.message)),
