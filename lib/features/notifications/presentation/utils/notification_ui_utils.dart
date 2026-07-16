@@ -38,6 +38,10 @@ IconData notificationIcon(String type) {
     case 'MARKET':
     case 'MARKET_INSIGHT':
       return LucideIcons.trendingUp;
+    case 'PARTNERSHIP':
+      return LucideIcons.handshake;
+    case 'BOOKING':
+      return LucideIcons.calendarClock;
     default:
       return LucideIcons.bell;
   }
@@ -66,6 +70,10 @@ Color notificationColor(String type) {
     case 'MARKET':
     case 'MARKET_INSIGHT':
       return AppColors.success;
+    case 'PARTNERSHIP':
+      return AppColors.success;
+    case 'BOOKING':
+      return AppColors.warning;
     default:
       return AppColors.grey500;
   }
@@ -95,6 +103,10 @@ String notificationTypeLabel(String type) {
     case 'MARKET':
     case 'MARKET_INSIGHT':
       return 'notifications.type_market'.tr();
+    case 'PARTNERSHIP':
+      return 'partnership.menu_title'.tr();
+    case 'BOOKING':
+      return 'booking.menu_title'.tr();
     default:
       return 'notifications.type_general'.tr();
   }
@@ -185,6 +197,16 @@ NotificationAction? notificationAction(NotificationEntity notification) {
         return NotificationAction(
           label: 'notifications.action_view_insight'.tr(),
           route: '/market-detail/$refId',
+        );
+      case 'PARTNERSHIP':
+        return NotificationAction(
+          label: 'partnership.view_existing'.tr(),
+          route: '/partnerships/$refId',
+        );
+      case 'BOOKING':
+        return NotificationAction(
+          label: 'booking.view_detail'.tr(),
+          route: '/bookings/$refId',
         );
     }
   }

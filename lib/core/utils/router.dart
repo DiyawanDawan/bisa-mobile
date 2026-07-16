@@ -39,6 +39,11 @@ import '../../features/ai/presentation/pages/ai_chat_page.dart';
 import '../../features/marketplace/presentation/pages/supplier_product_list_page.dart';
 import '../../features/marketplace/presentation/pages/supplier_store_page.dart';
 import '../../features/follow/presentation/pages/follow_list_page.dart';
+import '../../features/partnership/presentation/pages/partnership_list_page.dart';
+import '../../features/partnership/presentation/pages/partnership_create_page.dart';
+import '../../features/partnership/presentation/pages/partnership_detail_page.dart';
+import '../../features/booking/presentation/pages/booking_list_page.dart';
+import '../../features/booking/presentation/pages/booking_detail_page.dart';
 import '../../features/orders/presentation/pages/supplier_shipping_origin_page.dart';
 import '../../features/marketplace/presentation/pages/collection_products_page.dart';
 import '../../features/marketplace/presentation/pages/marketplace_page.dart';
@@ -404,6 +409,40 @@ final goRouter = GoRouter(
             final tab = state.uri.queryParameters['tab'] == 'followers' ? 1 : 0;
             return FollowListPage(initialTab: tab);
           },
+        ),
+        GoRoute(
+          path: 'bookings',
+          builder: (context, state) => const BookingListPage(),
+          routes: [
+            GoRoute(
+              path: ':id',
+              builder: (context, state) => BookingDetailPage(
+                bookingId: state.pathParameters['id']!,
+              ),
+            ),
+          ],
+        ),
+        GoRoute(
+          path: 'partnerships',
+          builder: (context, state) => const PartnershipListPage(),
+          routes: [
+            GoRoute(
+              path: 'create/:supplierId',
+              builder: (context, state) {
+                final extra = state.extra as Map<String, dynamic>?;
+                return PartnershipCreatePage(
+                  supplierId: state.pathParameters['supplierId']!,
+                  supplierName: extra?['name'] as String? ?? 'Supplier',
+                );
+              },
+            ),
+            GoRoute(
+              path: ':id',
+              builder: (context, state) => PartnershipDetailPage(
+                partnershipId: state.pathParameters['id']!,
+              ),
+            ),
+          ],
         ),
         GoRoute(
           path: 'store-management',

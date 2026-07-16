@@ -37,6 +37,9 @@ abstract class MarketplaceRepository {
     String? status,
     String? productMode,
     String? cropType,
+    bool? availableNow,
+    bool? preHarvestBookable,
+    bool? canBook,
     int page = 1,
     int limit = 10,
   });

@@ -455,6 +455,45 @@ class ProductCard extends StatelessWidget {
                       ],
                     ),
                   ],
+                  SizedBox(height: 6.h),
+                  Wrap(
+                    spacing: AppSpacing.xs,
+                    runSpacing: AppSpacing.xs,
+                    children: [
+                      _buildSmallBadge(
+                        LucideIcons.package,
+                        'marketplace.stock_line'.tr(
+                          namedArgs: {
+                            'stock': product.availableStock
+                                .toStringAsFixed(product.availableStock % 1 == 0 ? 0 : 1),
+                            'unit': product.unit,
+                          },
+                        ),
+                        product.availableStock > 0 ? AppColors.success : AppColors.error,
+                      ),
+                      if (product.reservedStock > 0)
+                        _buildSmallBadge(
+                          LucideIcons.lock,
+                          'marketplace.booked_line'.tr(namedArgs: {
+                            'qty': product.reservedStock.toStringAsFixed(
+                              product.reservedStock % 1 == 0 ? 0 : 1,
+                            ),
+                            'unit': product.unit,
+                          }),
+                          AppColors.warning,
+                        ),
+                      if (product.productMode == 'ORGANIC_PRODUCE' &&
+                          (product.availabilityType == 'PRE_HARVEST' ||
+                              product.availabilityType == 'MIXED'))
+                        _buildSmallBadge(
+                          LucideIcons.calendarClock,
+                          product.nextHarvestDate != null
+                              ? 'Panen ${DateFormat('dd MMM').format(product.nextHarvestDate!)}'
+                              : 'marketplace.availability_preharvest'.tr(),
+                          AppColors.warning,
+                        ),
+                    ],
+                  ),
                 ],
               ),
             ),

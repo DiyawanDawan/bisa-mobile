@@ -85,6 +85,12 @@ class ProfileAllMenuPage extends StatelessWidget {
                   onTap: () => context.push('/follows'),
                 ),
                 _MenuGridItem(
+                  icon: LucideIcons.handshake,
+                  label: 'partnership.menu_title'.tr(),
+                  color: AppColors.success,
+                  onTap: () => context.push('/partnerships'),
+                ),
+                _MenuGridItem(
                   icon: LucideIcons.bell,
                   label: 'profile.menu_notifications'.tr(),
                   color: AppColors.error,
@@ -134,6 +140,12 @@ class ProfileAllMenuPage extends StatelessWidget {
                     context.pop();
                   },
                 ),
+                _MenuGridItem(
+                  icon: LucideIcons.calendarClock,
+                  label: 'booking.menu_title'.tr(),
+                  color: AppColors.warning,
+                  onTap: () => context.push('/bookings'),
+                ),
               ],
             ),
           ],
@@ -174,6 +186,12 @@ class ProfileAllMenuPage extends StatelessWidget {
                   label: 'profile.menu_product_engagement'.tr(),
                   color: AppColors.error,
                   onTap: () => context.push('/product-engagement'),
+                ),
+                _MenuGridItem(
+                  icon: LucideIcons.calendarClock,
+                  label: 'booking.incoming_title'.tr(),
+                  color: AppColors.info,
+                  onTap: () => context.push('/bookings'),
                 ),
                 _MenuGridItem(
                   icon: LucideIcons.wallet,

@@ -61,6 +61,9 @@ class MarketplaceRepositoryImpl implements MarketplaceRepository {
     String? status,
     String? productMode,
     String? cropType,
+    bool? availableNow,
+    bool? preHarvestBookable,
+    bool? canBook,
     int page = 1,
     int limit = 10,
   }) async {
@@ -80,6 +83,9 @@ class MarketplaceRepositoryImpl implements MarketplaceRepository {
         status: status,
         productMode: productMode,
         cropType: cropType,
+        availableNow: availableNow,
+        preHarvestBookable: preHarvestBookable,
+        canBook: canBook,
         page: page,
         limit: limit,
       );
@@ -373,7 +379,7 @@ class MarketplaceRepositoryImpl implements MarketplaceRepository {
     if (details is List && details.isNotEmpty) {
       final first = details.first;
       if (first is Map && first['message'] != null) {
-        return '${base}: ${first['message']}';
+        return '$base: ${first['message']}';
       }
     }
     return base.toString();

@@ -556,6 +556,8 @@ class _SupplierProfilePageState extends State<SupplierProfilePage> {
             ],
           ),
           SizedBox(height: AppSpacing.section),
+          _buildPartnershipAction(context),
+          SizedBox(height: AppSpacing.sm10),
           Row(
             children: [
               Expanded(
@@ -595,6 +597,40 @@ class _SupplierProfilePageState extends State<SupplierProfilePage> {
             ],
           ),
         ],
+      ),
+    );
+  }
+
+  Widget _buildPartnershipAction(BuildContext context) {
+    if (widget.previewAsOwner) return const SizedBox.shrink();
+
+    final currentUser = context.watch<AuthCubit>().state.maybeWhen(
+          authenticated: (u) => u,
+          orElse: () => null,
+        );
+    if (currentUser == null || currentUser.role == 'SUPPLIER') {
+      return const SizedBox.shrink();
+    }
+
+    return SizedBox(
+      width: double.infinity,
+      child: OutlinedButton.icon(
+        onPressed: () {
+          context.push(
+            '/partnerships/create/${widget.supplierId}',
+            extra: {'name': widget.supplierName},
+          );
+        },
+        icon: Icon(LucideIcons.handshake, size: 18.sp),
+        label: Text('buat_kontrak_kerjasama'.tr()),
+        style: OutlinedButton.styleFrom(
+          foregroundColor: AppColors.success,
+          padding: EdgeInsets.symmetric(vertical: AppSpacing.md12),
+          side: BorderSide(color: AppColors.success.withValues(alpha: 0.45)),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(AppRadius.tile),
+          ),
+        ),
       ),
     );
   }

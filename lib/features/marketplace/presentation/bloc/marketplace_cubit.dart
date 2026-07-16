@@ -42,6 +42,9 @@ class MarketplaceCubit extends Cubit<MarketplaceState> {
     String? status,
     String? productMode,
     String? cropType,
+    bool? availableNow,
+    bool? preHarvestBookable,
+    bool? canBook,
     int? limit,
     bool refresh = true,
   }) async {
@@ -80,6 +83,9 @@ class MarketplaceCubit extends Cubit<MarketplaceState> {
       status: queryStatus,
       productMode: productMode,
       cropType: cropType,
+      availableNow: availableNow,
+      preHarvestBookable: preHarvestBookable,
+      canBook: canBook,
       page: _currentPage,
       limit: limit ?? _limit,
     );

@@ -50,6 +50,7 @@ import '../../../commerce/presentation/widgets/product_like_button.dart';
 import '../../../follow/presentation/widgets/follow_button.dart';
 import '../../../../shared/widgets/custom_button.dart';
 import '../../../../shared/widgets/custom_text_field.dart';
+import '../../../booking/presentation/widgets/booking_create_sheet.dart';
 
 class ProductDetailPage extends StatefulWidget {
   final String productId;
@@ -1880,6 +1881,34 @@ class _ProductDetailPageState extends State<ProductDetailPage> {
                         style: OutlinedButton.styleFrom(
                           foregroundColor: AppColors.primary,
                           side: BorderSide(color: AppColors.primary),
+                        ),
+                      ),
+                    ),
+                  ),
+                if (p.status == 'ACTIVE' && p.stock >= p.minOrder)
+                  Padding(
+                    padding: EdgeInsets.fromLTRB(
+                      AppSpacing.xl,
+                      AppSpacing.md12,
+                      AppSpacing.xl,
+                      0,
+                    ),
+                    child: SizedBox(
+                      width: double.infinity,
+                      height: 44.h,
+                      child: OutlinedButton.icon(
+                        onPressed: () {
+                          if (!isAuthenticated) {
+                            AuthSheet.show(context);
+                            return;
+                          }
+                          showBookingCreateSheet(context: context, product: p);
+                        },
+                        icon: Icon(LucideIcons.calendarClock, size: 18.sp),
+                        label: Text('booking.cta'.tr()),
+                        style: OutlinedButton.styleFrom(
+                          foregroundColor: AppColors.secondary,
+                          side: BorderSide(color: AppColors.secondary),
                         ),
                       ),
                     ),

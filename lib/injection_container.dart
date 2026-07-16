@@ -91,6 +91,14 @@ import 'features/follow/data/datasources/follow_remote_data_source.dart';
 import 'features/follow/domain/repositories/follow_repository.dart';
 import 'features/follow/data/repositories/follow_repository_impl.dart';
 import 'features/follow/presentation/bloc/follow_cubit.dart';
+import 'features/partnership/data/datasources/partnership_remote_data_source.dart';
+import 'features/partnership/domain/repositories/partnership_repository.dart';
+import 'features/partnership/data/repositories/partnership_repository_impl.dart';
+import 'features/partnership/presentation/bloc/partnership_cubit.dart';
+import 'features/booking/data/datasources/booking_remote_data_source.dart';
+import 'features/booking/domain/repositories/booking_repository.dart';
+import 'features/booking/data/repositories/booking_repository_impl.dart';
+import 'features/booking/presentation/bloc/booking_cubit.dart';
 
 
 final sl = GetIt.instance;
@@ -168,6 +176,24 @@ Future<void> init() async {
   );
   sl.registerLazySingleton<FollowRepository>(
     () => FollowRepositoryImpl(remoteDataSource: sl()),
+  );
+
+  //! Features - Partnership (Mitra Utama)
+  sl.registerFactory(() => PartnershipCubit(sl()));
+  sl.registerLazySingleton<PartnershipRemoteDataSource>(
+    () => PartnershipRemoteDataSourceImpl(dio: sl<ApiClient>().dio),
+  );
+  sl.registerLazySingleton<PartnershipRepository>(
+    () => PartnershipRepositoryImpl(remoteDataSource: sl()),
+  );
+
+  //! Features - Booking
+  sl.registerFactory(() => BookingCubit(sl()));
+  sl.registerLazySingleton<BookingRemoteDataSource>(
+    () => BookingRemoteDataSourceImpl(dio: sl<ApiClient>().dio),
+  );
+  sl.registerLazySingleton<BookingRepository>(
+    () => BookingRepositoryImpl(remoteDataSource: sl()),
   );
 
   //! Features - Auth

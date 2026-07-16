@@ -14,6 +14,9 @@ abstract class ProductModel with _$ProductModel {
     required dynamic pricePerUnit,
     dynamic originalPrice,
     @Default(0) dynamic stock,
+    @Default(0) dynamic reservedStock,
+    @Default(0) dynamic availableStock,
+    @Default(true) bool canBook,
     @Default(1) dynamic minOrder,
     @Default(true) bool allowsSample,
     @Default(1) dynamic sampleMaxQty,
@@ -39,6 +42,9 @@ abstract class ProductModel with _$ProductModel {
     String? fertilizerType,
     @Default(false) bool isChemicalFree,
     String? cropType,
+    @Default('READY') String availabilityType,
+    String? nextHarvestDate,
+    dynamic nextHarvestQtyTon,
     String? categoryId,
     @Default([]) List<ProductSpecModel> specs,
     String? videoUrl,
@@ -56,6 +62,9 @@ abstract class ProductModel with _$ProductModel {
       pricePerUnit: json['pricePerUnit'],
       originalPrice: json['originalPrice'],
       stock: json['stock'] ?? 0,
+      reservedStock: json['reservedStock'] ?? 0,
+      availableStock: json['availableStock'] ?? json['stock'] ?? 0,
+      canBook: json['canBook'] as bool? ?? true,
       minOrder: json['minOrder'] ?? 1,
       allowsSample: json['allowsSample'] as bool? ?? true,
       sampleMaxQty: json['sampleMaxQty'] ?? 1,
@@ -87,6 +96,9 @@ abstract class ProductModel with _$ProductModel {
       fertilizerType: json['fertilizerType'] as String?,
       isChemicalFree: json['isChemicalFree'] as bool? ?? false,
       cropType: json['cropType'] as String?,
+      availabilityType: json['availabilityType'] as String? ?? 'READY',
+      nextHarvestDate: json['nextHarvestDate'] as String?,
+      nextHarvestQtyTon: json['nextHarvestQtyTon'],
       categoryId: json['categoryId'] as String?,
       specs: parseSpecs(json['specs']),
       videoUrl: json['videoUrl'] as String?,
@@ -108,6 +120,10 @@ abstract class ProductModel with _$ProductModel {
         ? double.tryParse(originalPrice.toString())
         : null,
     stock: double.tryParse(stock.toString()) ?? 0.0,
+    reservedStock: double.tryParse(reservedStock.toString()) ?? 0.0,
+    availableStock: double.tryParse(availableStock.toString()) ??
+        (double.tryParse(stock.toString()) ?? 0.0),
+    canBook: canBook,
     minOrder: double.tryParse(minOrder.toString()) ?? 0.0,
     allowsSample: allowsSample,
     sampleMaxQty: double.tryParse(sampleMaxQty.toString()) ?? 1,
@@ -135,6 +151,11 @@ abstract class ProductModel with _$ProductModel {
     fertilizerType: fertilizerType,
     isChemicalFree: isChemicalFree,
     cropType: cropType,
+    availabilityType: availabilityType,
+    nextHarvestDate: nextHarvestDate != null ? DateTime.tryParse(nextHarvestDate!) : null,
+    nextHarvestQtyTon: nextHarvestQtyTon != null
+        ? double.tryParse(nextHarvestQtyTon.toString())
+        : null,
     categoryId: categoryId,
     specs: specs
         .map(

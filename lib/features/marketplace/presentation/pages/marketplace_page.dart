@@ -9,7 +9,6 @@ import 'dart:async';
 import 'package:mobile_bisa/core/constants/app_layout.dart';
 import 'package:mobile_bisa/core/constants/app_colors.dart';
 import 'package:mobile_bisa/core/utils/safe_area_utils.dart';
-import 'package:mobile_bisa/injection_container.dart';
 import 'package:mobile_bisa/features/marketplace/presentation/bloc/marketplace_cubit.dart';
 import 'package:mobile_bisa/features/marketplace/presentation/bloc/category_cubit.dart';
 import 'package:mobile_bisa/features/marketplace/presentation/bloc/category_state.dart';
@@ -50,6 +49,8 @@ class _MarketplacePageState extends State<MarketplacePage> {
   double? _maxPrice;
   double? _minRating;
   String _sortBy = 'createdAt';
+  bool? _availableNow;
+  bool? _preHarvestBookable;
 
   @override
   void initState() {
@@ -131,6 +132,10 @@ class _MarketplacePageState extends State<MarketplacePage> {
       maxPrice: _maxPrice,
       minRating: _minRating,
       productMode: _activeProductMode,
+      availableNow: _activeProductMode == 'ORGANIC_PRODUCE' ? _availableNow : null,
+      preHarvestBookable:
+          _activeProductMode == 'ORGANIC_PRODUCE' ? _preHarvestBookable : null,
+      canBook: true,
       sortBy: sortBy,
       sortOrder: sortOrder,
       refresh: refresh,
@@ -240,6 +245,8 @@ class _MarketplacePageState extends State<MarketplacePage> {
                       SliverToBoxAdapter(child: SizedBox(height: AppSpacing.sm)),
                       if (_activeProductMode == 'BIOMASS_MATERIAL')
                         SliverToBoxAdapter(child: _buildBiomassaTypeBar()),
+                      if (_activeProductMode == 'ORGANIC_PRODUCE')
+                        SliverToBoxAdapter(child: _buildOrganicAvailabilityBar()),
                       SliverToBoxAdapter(
                         child: HorizontalProductSection(
                           title: _activeProductMode == 'ORGANIC_PRODUCE'
@@ -619,7 +626,7 @@ class _MarketplacePageState extends State<MarketplacePage> {
         return GestureDetector(
           onTap: () => setState(() => _isSearching = false),
           child: Container(
-            color: AppColors.black.withOpacity(0.3),
+            color: AppColors.black.withValues(alpha: 0.3),
             child: Column(
               children: [
                 Container(
@@ -632,7 +639,7 @@ class _MarketplacePageState extends State<MarketplacePage> {
                     borderRadius: BorderRadius.circular(AppRadius.xl),
                     boxShadow: [
                       BoxShadow(
-                        color: AppColors.black.withOpacity(0.1),
+                        color: AppColors.black.withValues(alpha: 0.1),
                         blurRadius: 10,
                         offset: const Offset(0, 4),
                       ),
@@ -718,6 +725,8 @@ class _MarketplacePageState extends State<MarketplacePage> {
             _selectedCategory = null;
             if (mode == 'BIOMASS_MATERIAL') {
               _selectedBiomassaType = 'BIOCHAR';
+              _availableNow = null;
+              _preHarvestBookable = null;
             }
           });
           context.read<CategoryCubit>().getCategories(
@@ -819,6 +828,89 @@ class _MarketplacePageState extends State<MarketplacePage> {
     );
   }
 
+  Widget _buildOrganicAvailabilityBar() {
+    final bool showAll = _availableNow != true && _preHarvestBookable != true;
+    final bool readyOnly = _availableNow == true && _preHarvestBookable != true;
+    final bool preHarvestOnly = _preHarvestBookable == true && _availableNow != true;
+
+    return Container(
+      height: 44.h,
+      margin: EdgeInsets.only(bottom: 4.h),
+      child: ListView(
+        padding: EdgeInsets.symmetric(horizontal: AppSpacing.lg),
+        scrollDirection: Axis.horizontal,
+        physics: const BouncingScrollPhysics(),
+        children: [
+          _buildAvailabilityChip(
+            label: 'marketplace.availability_all'.tr(),
+            selected: showAll,
+            onTap: () {
+              setState(() {
+                _availableNow = null;
+                _preHarvestBookable = null;
+              });
+              _fetchProducts();
+            },
+          ),
+          SizedBox(width: AppSpacing.sm),
+          _buildAvailabilityChip(
+            label: 'marketplace.availability_ready'.tr(),
+            selected: readyOnly,
+            onTap: () {
+              setState(() {
+                _availableNow = true;
+                _preHarvestBookable = null;
+              });
+              _fetchProducts();
+            },
+          ),
+          SizedBox(width: AppSpacing.sm),
+          _buildAvailabilityChip(
+            label: 'marketplace.availability_preharvest'.tr(),
+            selected: preHarvestOnly,
+            onTap: () {
+              setState(() {
+                _preHarvestBookable = true;
+                _availableNow = null;
+              });
+              _fetchProducts();
+            },
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildAvailabilityChip({
+    required String label,
+    required bool selected,
+    required VoidCallback onTap,
+  }) {
+    return GestureDetector(
+      onTap: onTap,
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 180),
+        padding: EdgeInsets.symmetric(horizontal: AppSpacing.section),
+        alignment: Alignment.center,
+        decoration: BoxDecoration(
+          color: selected ? AppColors.primary.withValues(alpha: 0.12) : AppColors.surface,
+          borderRadius: BorderRadius.circular(AppRadius.pill),
+          border: Border.all(
+            color: selected ? AppColors.primary : AppColors.grey200,
+          ),
+        ),
+        child: Text(
+          label,
+          style: TextStyle(
+            color: selected ? AppColors.primary : AppColors.textSecondary,
+            fontWeight: selected ? FontWeight.w800 : FontWeight.w600,
+            fontSize: 12.sp,
+          ),
+        ),
+      ),
+    );
+  }
+
   Widget _buildBuyerProductsBanner(BuildContext context) {
     return Padding(
       padding: EdgeInsets.fromLTRB(
@@ -861,7 +953,7 @@ class _MarketplacePageState extends State<MarketplacePage> {
                       Text(
                         'marketplace.buyer_products_subtitle'.tr(),
                         style: TextStyle(
-                          color: AppColors.textOnPrimary.withOpacity(0.85),
+                          color: AppColors.textOnPrimary.withValues(alpha: 0.85),
                           fontSize: 11.sp,
                         ),
                       ),
