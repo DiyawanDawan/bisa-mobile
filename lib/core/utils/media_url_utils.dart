@@ -134,17 +134,16 @@ String _resolveRelativePath(String path) {
   final base = MediaConfig.mediaBaseUrl;
   if (base.isEmpty) return path;
 
-  final normalized = path.startsWith('/') ? path.substring(1) : path;
+  var normalized = path.startsWith('/') ? path.substring(1) : path;
 
-  // R2 CDN: https://cdn.example.com/products/...
-  if (MediaConfig.useDirectCdn) {
-    return '$base/$normalized';
+  // Legacy: strip API proxy prefix if masih ada di response lama
+  const legacyPrefix = 'api/v1/storage/assets/';
+  if (normalized.startsWith(legacyPrefix)) {
+    normalized = normalized.substring(legacyPrefix.length);
   }
 
-  if (normalized.contains('storage/assets/')) {
-    return '$base/${normalized.startsWith('/') ? normalized.substring(1) : normalized}';
-  }
-  return '$base${MediaConfig.storageAssetsPrefix}$normalized';
+  // R2 CDN: https://cdn.bisaagri.com/products/seed-stock/...
+  return '$base/$normalized';
 }
 
 String _rewriteHost(String original, Uri mediaUri) {
@@ -172,7 +171,7 @@ String _rewritePrivateR2Url(Uri mediaUri) {
 }
 
 String _alignStorageAssetHost(String original, Uri mediaUri) {
-  if (!original.contains(MediaConfig.storageAssetsPrefix)) return original;
+  if (!original.contains('/storage/assets/')) return original;
 
   final base = MediaConfig.mediaBaseUrl;
   if (base.isEmpty) return original;
