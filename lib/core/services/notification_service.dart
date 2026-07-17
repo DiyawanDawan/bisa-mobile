@@ -1,11 +1,20 @@
 import 'package:awesome_notifications/awesome_notifications.dart';
 import 'package:easy_localization/easy_localization.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:mobile_bisa/core/constants/app_colors.dart';
 import 'package:mobile_bisa/core/navigation/notification_navigation.dart';
 
 class NotificationService {
+  static Stream<String>? _tokenRefreshStream;
+
+  /// Fires when FCM token rotates — wire to backend re-register after login.
+  static Stream<String> get onTokenRefresh {
+    _tokenRefreshStream ??= FirebaseMessaging.instance.onTokenRefresh;
+    return _tokenRefreshStream!;
+  }
+
   static Future<void> initialize() async {
     await AwesomeNotifications().initialize(
       null, // default icon
@@ -93,6 +102,37 @@ class NotificationService {
   }
 
   static Future<String?> getFCMToken() async {
-    return await FirebaseMessaging.instance.getToken();
+    return ensureFcmToken();
+  }
+
+  /// Request permission (iOS) and return current FCM device token.
+  static Future<String?> ensureFcmToken() async {
+    try {
+      final settings = await FirebaseMessaging.instance.requestPermission(
+        alert: true,
+        badge: true,
+        sound: true,
+      );
+      if (settings.authorizationStatus == AuthorizationStatus.denied) {
+        debugPrint('[FCM] Notification permission denied');
+        return null;
+      }
+      return FirebaseMessaging.instance.getToken();
+    } catch (e, st) {
+      debugPrint('[FCM] ensureFcmToken failed: $e\n$st');
+      return null;
+    }
+  }
+
+  static String devicePlatformLabel() {
+    if (kIsWeb) return 'WEB';
+    switch (defaultTargetPlatform) {
+      case TargetPlatform.iOS:
+        return 'IOS';
+      case TargetPlatform.android:
+        return 'ANDROID';
+      default:
+        return 'WEB';
+    }
   }
 }

@@ -1,15 +1,55 @@
+import 'dart:async';
+
+import 'package:flutter/foundation.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:mobile_bisa/core/services/notification_service.dart';
 import '../../domain/repositories/notification_repository.dart';
 import '../../domain/entities/notification_entity.dart';
 import 'notification_state.dart';
 
 class NotificationCubit extends Cubit<NotificationState> {
   final NotificationRepository _repository;
+  StreamSubscription<String>? _tokenRefreshSub;
+  bool _fcmListenerAttached = false;
 
   NotificationCubit(this._repository) : super(const NotificationInitial());
 
   Future<void> bootstrap() async {
+    await registerFcmDevice();
     await refreshUnreadCount();
+  }
+
+  /// Register (or refresh) FCM token with backend after login.
+  Future<void> registerFcmDevice() async {
+    _attachTokenRefreshListener();
+
+    final token = await NotificationService.ensureFcmToken();
+    if (token == null || token.isEmpty) return;
+
+    await _sendFcmToken(token);
+  }
+
+  void _attachTokenRefreshListener() {
+    if (_fcmListenerAttached) return;
+    _fcmListenerAttached = true;
+    _tokenRefreshSub = NotificationService.onTokenRefresh.listen((token) {
+      unawaited(_sendFcmToken(token));
+    });
+  }
+
+  Future<void> _sendFcmToken(String token) async {
+    final platform = NotificationService.devicePlatformLabel();
+    final result = await _repository.registerFcmToken(token, platform);
+    result.fold(
+      (failure) => debugPrint('[FCM] register failed: ${failure.message}'),
+      (_) => debugPrint('[FCM] token registered ($platform)'),
+    );
+  }
+
+  @override
+  Future<void> close() {
+    unawaited(_tokenRefreshSub?.cancel());
+    return super.close();
   }
 
   Future<void> refreshUnreadCount() async {
