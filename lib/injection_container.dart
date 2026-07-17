@@ -99,7 +99,8 @@ import 'features/booking/data/datasources/booking_remote_data_source.dart';
 import 'features/booking/domain/repositories/booking_repository.dart';
 import 'features/booking/data/repositories/booking_repository_impl.dart';
 import 'features/booking/presentation/bloc/booking_cubit.dart';
-
+import 'features/support/data/datasources/support_remote_data_source.dart';
+import 'features/support/presentation/bloc/support_cubit.dart';
 
 final sl = GetIt.instance;
 
@@ -156,9 +157,7 @@ Future<void> init() async {
   sl.registerFactory(() => MarketCubit(sl()));
 
   //! Features - Q1 stretch (referral, ERP, live, e-sign helpers)
-  sl.registerLazySingleton(
-    () => StretchRemoteDataSource(sl<ApiClient>().dio),
-  );
+  sl.registerLazySingleton(() => StretchRemoteDataSource(sl<ApiClient>().dio));
 
   //! Features - Commerce (Cart & Wishlist)
   sl.registerFactory(() => CommerceCubit(sl()));
@@ -204,10 +203,7 @@ Future<void> init() async {
     ),
   );
   sl.registerLazySingleton<AuthRepository>(
-    () => AuthRepositoryImpl(
-      remoteDataSource: sl(),
-      tokenRepository: sl(),
-    ),
+    () => AuthRepositoryImpl(remoteDataSource: sl(), tokenRepository: sl()),
   );
 
   //! Features - Marketplace
@@ -263,6 +259,10 @@ Future<void> init() async {
   sl.registerLazySingleton<AiRepository>(
     () => AiRepositoryImpl(remoteDataSource: sl()),
   );
+
+  //! Features - Customer Support
+  sl.registerLazySingleton(() => SupportRemoteDataSource(sl<ApiClient>().dio));
+  sl.registerFactory(() => SupportCubit(sl()));
 
   //! Features - Notifications
   sl.registerLazySingleton<NotificationRemoteDataSource>(
@@ -329,9 +329,7 @@ Future<void> init() async {
   );
 
   //! Features - Compare products (FB-6)
-  sl.registerLazySingleton(
-    () => CompareListStore(sl<SharedPreferences>()),
-  );
+  sl.registerLazySingleton(() => CompareListStore(sl<SharedPreferences>()));
   sl.registerLazySingleton(() => CompareCubit(sl<CompareListStore>()));
 
   //! Features - GIS
@@ -359,9 +357,7 @@ Future<void> init() async {
       migrateOnAlgorithmChange: true,
       resetOnError: true,
     ),
-    iOptions: IOSOptions(
-      accessibility: KeychainAccessibility.first_unlock,
-    ),
+    iOptions: IOSOptions(accessibility: KeychainAccessibility.first_unlock),
   );
   sl.registerLazySingleton(() => secureStorage);
 

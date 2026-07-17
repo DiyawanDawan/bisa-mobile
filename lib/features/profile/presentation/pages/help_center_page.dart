@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
 import 'package:url_launcher/url_launcher.dart';
+import 'package:go_router/go_router.dart';
 import '../../../../shared/widgets/bisa_app_bar.dart';
 import '../../../../core/constants/app_colors.dart';
 import '../../../public_orders/data/public_order_api.dart';
@@ -52,15 +53,15 @@ class _HelpCenterPageState extends State<HelpCenterPage> {
   }
 
   List<Map<String, String>> get _fallbackFaqs => [
-        {
-          'question': 'profile.help_faq_fallback_q1'.tr(),
-          'answer': 'profile.help_faq_fallback_a1'.tr(),
-        },
-        {
-          'question': 'profile.help_faq_fallback_q2'.tr(),
-          'answer': 'profile.help_faq_fallback_a2'.tr(),
-        },
-      ];
+    {
+      'question': 'profile.help_faq_fallback_q1'.tr(),
+      'answer': 'profile.help_faq_fallback_a1'.tr(),
+    },
+    {
+      'question': 'profile.help_faq_fallback_q2'.tr(),
+      'answer': 'profile.help_faq_fallback_a2'.tr(),
+    },
+  ];
 
   Future<void> _openWhatsApp() async {
     final raw = (_whatsapp ?? '6281234567890').replaceAll(RegExp(r'\D'), '');
@@ -80,7 +81,9 @@ class _HelpCenterPageState extends State<HelpCenterPage> {
         backgroundColor: AppColors.surface,
       ),
       body: _loading
-          ? const Center(child: CircularProgressIndicator(color: AppColors.primary))
+          ? const Center(
+              child: CircularProgressIndicator(color: AppColors.primary),
+            )
           : RefreshIndicator(
               onRefresh: _load,
               child: SingleChildScrollView(
@@ -93,17 +96,29 @@ class _HelpCenterPageState extends State<HelpCenterPage> {
                     SizedBox(height: 24.h),
                     Text(
                       'profile.help_faq_section_title'.tr(),
-                      style: TextStyle(fontSize: 16.sp, fontWeight: FontWeight.bold),
+                      style: TextStyle(
+                        fontSize: 16.sp,
+                        fontWeight: FontWeight.bold,
+                      ),
                     ),
                     if (_error != null) ...[
                       SizedBox(height: 8.h),
-                      Text(_error!, style: TextStyle(fontSize: 12.sp, color: AppColors.textSecondary)),
+                      Text(
+                        _error!,
+                        style: TextStyle(
+                          fontSize: 12.sp,
+                          color: AppColors.textSecondary,
+                        ),
+                      ),
                     ],
                     SizedBox(height: 16.h),
                     if (_faqs.isEmpty)
                       Text(
                         'profile.help_faq_empty'.tr(),
-                        style: TextStyle(fontSize: 13.sp, color: AppColors.textSecondary),
+                        style: TextStyle(
+                          fontSize: 13.sp,
+                          color: AppColors.textSecondary,
+                        ),
                       )
                     else
                       ..._faqs.map(
@@ -138,7 +153,11 @@ class _HelpCenterPageState extends State<HelpCenterPage> {
                   color: AppColors.white.withValues(alpha: 0.2),
                   shape: BoxShape.circle,
                 ),
-                child: Icon(LucideIcons.headset, color: AppColors.textOnPrimary, size: 32.sp),
+                child: Icon(
+                  LucideIcons.headset,
+                  color: AppColors.textOnPrimary,
+                  size: 32.sp,
+                ),
               ),
               SizedBox(width: 16.w),
               Expanded(
@@ -156,7 +175,7 @@ class _HelpCenterPageState extends State<HelpCenterPage> {
                     Text(
                       'profile.help_support_24'.tr(),
                       style: TextStyle(
-                        color: AppColors.textOnPrimary.withOpacity(0.9),
+                        color: AppColors.textOnPrimary.withValues(alpha: 0.9),
                         fontSize: 12.sp,
                       ),
                     ),
@@ -167,12 +186,30 @@ class _HelpCenterPageState extends State<HelpCenterPage> {
           ),
           SizedBox(height: 20.h),
           ElevatedButton(
-            onPressed: _openWhatsApp,
+            onPressed: () => context.push('/support'),
             style: ElevatedButton.styleFrom(
               backgroundColor: AppColors.surface,
               foregroundColor: AppColors.primary,
               minimumSize: Size(double.infinity, 44.h),
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8.r)),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(8.r),
+              ),
+            ),
+            child: Text(
+              'support.help_chat_cta'.tr(),
+              style: const TextStyle(fontWeight: FontWeight.bold),
+            ),
+          ),
+          SizedBox(height: 10.h),
+          OutlinedButton(
+            onPressed: _openWhatsApp,
+            style: OutlinedButton.styleFrom(
+              foregroundColor: AppColors.textOnPrimary,
+              side: const BorderSide(color: AppColors.textOnPrimary),
+              minimumSize: Size(double.infinity, 44.h),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(8.r),
+              ),
             ),
             child: Text(
               'profile.help_whatsapp_cta'.tr(),

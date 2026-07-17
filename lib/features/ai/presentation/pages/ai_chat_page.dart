@@ -14,6 +14,8 @@ import '../bloc/ai_cubit.dart';
 import 'package:mobile_bisa/shared/widgets/pro_required_placeholder.dart';
 import 'package:mobile_bisa/shared/widgets/shimmer_loading.dart';
 import 'package:skeletonizer/skeletonizer.dart';
+import '../../../support/data/datasources/support_remote_data_source.dart';
+import '../../../support/data/models/support_ticket.dart';
 
 class AiChatPage extends StatefulWidget {
   const AiChatPage({super.key});
@@ -24,14 +26,24 @@ class AiChatPage extends StatefulWidget {
 
 class _AiChatPageState extends State<AiChatPage> {
   List<String> get _suggestedPrompts => [
-        'ai.prompt_biochar'.tr(),
-        'ai.prompt_biomass'.tr(),
-        'ai.prompt_negotiation'.tr(),
-        'ai.prompt_marketplace'.tr(),
-      ];
+    'ai.prompt_biochar'.tr(),
+    'ai.prompt_biomass'.tr(),
+    'ai.prompt_negotiation'.tr(),
+    'ai.prompt_marketplace'.tr(),
+  ];
 
   final _messageController = TextEditingController();
   final _scrollController = ScrollController();
+  final _supportApi = sl<SupportRemoteDataSource>();
+  SupportTicket? _activeSupportTicket;
+  bool _checkingSupport = true;
+  bool _startingHandoff = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _checkActiveSupport();
+  }
 
   @override
   void dispose() {
@@ -50,12 +62,123 @@ class _AiChatPageState extends State<AiChatPage> {
     }
   }
 
+  Future<void> _checkActiveSupport() async {
+    try {
+      final ticket = await _supportApi.getActiveTicket();
+      if (!mounted) return;
+      setState(() {
+        _activeSupportTicket = ticket;
+        _checkingSupport = false;
+      });
+    } catch (_) {
+      if (mounted) setState(() => _checkingSupport = false);
+    }
+  }
+
+  void _syncCsHandoffFlag(BuildContext blocContext) {
+    final cubit = blocContext.read<AiCubit>();
+    final shouldPause = _activeSupportTicket != null;
+    if (cubit.csHandoffActive != shouldPause) {
+      cubit.setCsHandoffActive(shouldPause);
+    }
+  }
+
+  Future<void> _openCustomerService(BuildContext blocContext) async {
+    if (_startingHandoff) return;
+    if (_activeSupportTicket != null) {
+      await context.push('/support/${_activeSupportTicket!.id}');
+      await _checkActiveSupport();
+      if (mounted) _syncCsHandoffFlag(blocContext);
+      return;
+    }
+
+    final messages = blocContext.read<AiCubit>().messages;
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (dialogContext) => AlertDialog(
+        title: Text('support.handoff_title'.tr()),
+        content: Text('support.handoff_body'.tr()),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(dialogContext, false),
+            child: Text('batal'.tr()),
+          ),
+          FilledButton(
+            onPressed: () => Navigator.pop(dialogContext, true),
+            child: Text('support.chat_cs'.tr()),
+          ),
+        ],
+      ),
+    );
+    if (confirmed != true || !mounted) return;
+
+    final transcript = messages
+        .take(30)
+        .map(
+          (message) => {
+            'role': message.isUser ? 'user' : 'assistant',
+            'content': message.text.length > 2000
+                ? message.text.substring(0, 2000)
+                : message.text,
+          },
+        )
+        .toList();
+    String? lastUserMessage;
+    for (final message in messages.reversed) {
+      if (message.isUser) {
+        lastUserMessage = message.text;
+        break;
+      }
+    }
+
+    setState(() => _startingHandoff = true);
+    try {
+      final ticket = await _supportApi.createTicket(
+        subject: 'support.handoff_subject'.tr(),
+        category: 'OTHER',
+        source: 'AI_HANDOFF',
+        initialMessage:
+            lastUserMessage ?? 'support.handoff_default_message'.tr(),
+        aiTranscript: transcript,
+      );
+      if (!mounted) return;
+      setState(() => _activeSupportTicket = ticket);
+      _syncCsHandoffFlag(blocContext);
+      await context.push('/support/${ticket.id}');
+      await _checkActiveSupport();
+      if (mounted) _syncCsHandoffFlag(blocContext);
+    } catch (_) {
+      if (!mounted) return;
+      final existing = await _supportApi.getActiveTicket().catchError(
+        (_) => null,
+      );
+      if (!mounted) return;
+      if (existing != null) {
+        setState(() => _activeSupportTicket = existing);
+        _syncCsHandoffFlag(blocContext);
+        await context.push('/support/${existing.id}');
+      } else {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('support.handoff_failed'.tr()),
+          ),
+        );
+      }
+    } finally {
+      if (mounted) setState(() => _startingHandoff = false);
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return BlocProvider(
       create: (context) => sl<AiCubit>(),
       child: Builder(
         builder: (context) {
+          WidgetsBinding.instance.addPostFrameCallback((_) {
+            if (!mounted) return;
+            _syncCsHandoffFlag(context);
+          });
           return Scaffold(
             backgroundColor: AppColors.background,
             appBar: BisaAppBar(
@@ -83,95 +206,127 @@ class _AiChatPageState extends State<AiChatPage> {
               ),
               actions: [
                 IconButton(
-                  icon: const Icon(LucideIcons.trash2, color: AppColors.textSecondary),
+                  tooltip: _activeSupportTicket == null
+                      ? 'support.chat_cs'.tr()
+                      : 'support.continue_chat_cs'.tr(),
+                  icon: _startingHandoff || _checkingSupport
+                      ? SizedBox(
+                          width: 18.r,
+                          height: 18.r,
+                          child: const CircularProgressIndicator(
+                            strokeWidth: 2,
+                            color: AppColors.primary,
+                          ),
+                        )
+                      : Icon(
+                          LucideIcons.headset,
+                          color: _activeSupportTicket == null
+                              ? AppColors.primary
+                              : AppColors.warning,
+                        ),
+                  onPressed: _checkingSupport || _startingHandoff
+                      ? null
+                      : () => _openCustomerService(context),
+                ),
+                IconButton(
+                  icon: const Icon(
+                    LucideIcons.trash2,
+                    color: AppColors.textSecondary,
+                  ),
                   onPressed: () => _showClearChatConfirmation(context),
                 ),
               ],
             ),
-        body: Column(
-          children: [
-            Expanded(
-              child: BlocBuilder<AiCubit, AiState>(
-                builder: (context, state) {
-                  return state.maybeWhen(
-                    initial: () => _buildEmptyState(),
-                    chatLoaded: (messages, isTyping) {
-                      WidgetsBinding.instance.addPostFrameCallback((_) => _scrollToBottom());
-                      return ListView.builder(
-                        controller: _scrollController,
-                        padding: EdgeInsets.all(16.w),
-                        itemCount: messages.length + (isTyping ? 1 : 0),
-                        itemBuilder: (context, index) {
-                          if (index == messages.length && isTyping) {
-                            return const _TypingIndicator();
-                          }
-                          return _buildChatBubble(context, messages[index]);
+            body: Column(
+              children: [
+                Expanded(
+                  child: BlocBuilder<AiCubit, AiState>(
+                    builder: (context, state) {
+                      return state.maybeWhen(
+                        initial: () => _buildEmptyState(),
+                        chatLoaded: (messages, isTyping) {
+                          WidgetsBinding.instance.addPostFrameCallback(
+                            (_) => _scrollToBottom(),
+                          );
+                          return ListView.builder(
+                            controller: _scrollController,
+                            padding: EdgeInsets.all(16.w),
+                            itemCount: messages.length + (isTyping ? 1 : 0),
+                            itemBuilder: (context, index) {
+                              if (index == messages.length && isTyping) {
+                                return const _TypingIndicator();
+                              }
+                              return _buildChatBubble(context, messages[index]);
+                            },
+                          );
                         },
+                        loading: () => ShimmerLoading(
+                          child: ListView(
+                            padding: EdgeInsets.all(16.w),
+                            children: [
+                              Align(
+                                alignment: Alignment.centerLeft,
+                                child: Bone(
+                                  width: 200.w,
+                                  height: 48.h,
+                                  borderRadius: BorderRadius.circular(16.r),
+                                ),
+                              ),
+                              SizedBox(height: 12.h),
+                              Align(
+                                alignment: Alignment.centerRight,
+                                child: Bone(
+                                  width: 160.w,
+                                  height: 40.h,
+                                  borderRadius: BorderRadius.circular(16.r),
+                                ),
+                              ),
+                              SizedBox(height: 12.h),
+                              Align(
+                                alignment: Alignment.centerLeft,
+                                child: Bone(
+                                  width: 240.w,
+                                  height: 64.h,
+                                  borderRadius: BorderRadius.circular(16.r),
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                        error: (message) {
+                          final display = localizeFailureMessage(message);
+                          final lowered = message.toLowerCase();
+                          final isProError =
+                              message.contains('PRO') ||
+                              message.contains('Langganan') ||
+                              lowered.contains('subscription') ||
+                              lowered.contains('langganan');
+                          if (isProError) {
+                            return ProRequiredPlaceholder(
+                              message: display,
+                              icon: LucideIcons.bot,
+                              onRetryPressed: () => context
+                                  .read<AiCubit>()
+                                  .sendMessage(''), // Or some refresh logic
+                              onActionPressed: () =>
+                                  context.push('/iot-subscription'),
+                            );
+                          }
+                          return Center(child: Text(display));
+                        },
+                        orElse: () => const SizedBox.shrink(),
                       );
                     },
-                    loading: () => ShimmerLoading(
-                      child: ListView(
-                        padding: EdgeInsets.all(16.w),
-                        children: [
-                          Align(
-                            alignment: Alignment.centerLeft,
-                            child: Bone(
-                              width: 200.w,
-                              height: 48.h,
-                              borderRadius: BorderRadius.circular(16.r),
-                            ),
-                          ),
-                          SizedBox(height: 12.h),
-                          Align(
-                            alignment: Alignment.centerRight,
-                            child: Bone(
-                              width: 160.w,
-                              height: 40.h,
-                              borderRadius: BorderRadius.circular(16.r),
-                            ),
-                          ),
-                          SizedBox(height: 12.h),
-                          Align(
-                            alignment: Alignment.centerLeft,
-                            child: Bone(
-                              width: 240.w,
-                              height: 64.h,
-                              borderRadius: BorderRadius.circular(16.r),
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                    error: (message) {
-                      final display = localizeFailureMessage(message);
-                      final lowered = message.toLowerCase();
-                      final isProError = message.contains('PRO') ||
-                          message.contains('Langganan') ||
-                          lowered.contains('subscription') ||
-                          lowered.contains('langganan');
-                      if (isProError) {
-                        return ProRequiredPlaceholder(
-                          message: display,
-                          icon: LucideIcons.bot,
-                          onRetryPressed: () => context.read<AiCubit>().sendMessage(''), // Or some refresh logic
-                          onActionPressed: () => context.push('/iot-subscription'),
-                        );
-                      }
-                      return Center(child: Text(display));
-                    },
-                    orElse: () => const SizedBox.shrink(),
-                  );
-                },
-              ),
+                  ),
+                ),
+                _buildInputArea(),
+              ],
             ),
-            _buildInputArea(),
-          ],
-        ),
-      );
-    },
-  ),
-);
-}
+          );
+        },
+      ),
+    );
+  }
 
   void _sendSuggestedPrompt(BuildContext context, String text) {
     context.read<AiCubit>().sendMessage(text);
@@ -184,7 +339,9 @@ class _AiChatPageState extends State<AiChatPage> {
         return SingleChildScrollView(
           padding: EdgeInsets.symmetric(horizontal: 20.w, vertical: 24.h),
           child: ConstrainedBox(
-            constraints: BoxConstraints(minHeight: constraints.maxHeight - 48.h),
+            constraints: BoxConstraints(
+              minHeight: constraints.maxHeight - 48.h,
+            ),
             child: Column(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
@@ -323,14 +480,11 @@ class _AiChatPageState extends State<AiChatPage> {
       margin: EdgeInsets.only(bottom: 12.h, left: 16.w, right: 16.w),
       padding: EdgeInsets.symmetric(horizontal: 20.w),
       decoration: BoxDecoration(
-        color: AppColors.error.withOpacity(0.9),
+        color: AppColors.error.withValues(alpha: 0.9),
         borderRadius: BorderRadius.circular(12.r),
       ),
       alignment: isUser ? Alignment.centerRight : Alignment.centerLeft,
-      child: const Icon(
-        LucideIcons.trash2,
-        color: AppColors.white,
-      ),
+      child: const Icon(LucideIcons.trash2, color: AppColors.white),
     );
   }
 
@@ -363,12 +517,16 @@ class _AiChatPageState extends State<AiChatPage> {
               borderRadius: BorderRadius.only(
                 topLeft: Radius.circular(12.r),
                 topRight: Radius.circular(12.r),
-                bottomLeft: message.isUser ? Radius.circular(12.r) : Radius.zero,
-                bottomRight: message.isUser ? Radius.zero : Radius.circular(12.r),
+                bottomLeft: message.isUser
+                    ? Radius.circular(12.r)
+                    : Radius.zero,
+                bottomRight: message.isUser
+                    ? Radius.zero
+                    : Radius.circular(12.r),
               ),
               boxShadow: [
                 BoxShadow(
-                  color: AppColors.black.withOpacity(0.02),
+                  color: AppColors.black.withValues(alpha: 0.02),
                   blurRadius: 5,
                   offset: const Offset(0, 2),
                 ),
@@ -448,7 +606,10 @@ class _AiChatPageState extends State<AiChatPage> {
               ),
               const Divider(color: AppColors.grey200, height: 1),
               ListTile(
-                leading: const Icon(LucideIcons.pencil, color: AppColors.secondary),
+                leading: const Icon(
+                  LucideIcons.pencil,
+                  color: AppColors.secondary,
+                ),
                 title: Text(
                   'Edit Pesan',
                   style: TextStyle(
@@ -513,10 +674,7 @@ class _AiChatPageState extends State<AiChatPage> {
               hintText: 'Edit pesan Anda...',
               border: OutlineInputBorder(),
             ),
-            style: TextStyle(
-              fontSize: 14.sp,
-              color: AppColors.textPrimary,
-            ),
+            style: TextStyle(fontSize: 14.sp, color: AppColors.textPrimary),
           ),
           actions: [
             TextButton(
@@ -564,10 +722,7 @@ class _AiChatPageState extends State<AiChatPage> {
           ),
           content: Text(
             'Tindakan ini akan menghapus seluruh riwayat percakapan Anda dengan asisten.',
-            style: TextStyle(
-              fontSize: 14.sp,
-              color: AppColors.textSecondary,
-            ),
+            style: TextStyle(fontSize: 14.sp, color: AppColors.textSecondary),
           ),
           actions: [
             TextButton(
@@ -596,7 +751,28 @@ class _AiChatPageState extends State<AiChatPage> {
   Widget _buildInputArea() {
     return BlocBuilder<AiCubit, AiState>(
       builder: (context, state) {
-        final isLoading = state.maybeWhen(loading: () => true, orElse: () => false);
+        if (_activeSupportTicket != null) {
+          return SafeArea(
+            top: false,
+            child: Container(
+              width: double.infinity,
+              padding: EdgeInsets.all(14.w),
+              color: AppColors.surface,
+              child: FilledButton.icon(
+                onPressed: () => _openCustomerService(context),
+                style: FilledButton.styleFrom(
+                  backgroundColor: AppColors.primary,
+                ),
+                icon: const Icon(LucideIcons.headset),
+                label: Text('support.continue_conversation'.tr()),
+              ),
+            ),
+          );
+        }
+        final isLoading = state.maybeWhen(
+          loading: () => true,
+          orElse: () => false,
+        );
         return SafeArea(
           top: false,
           child: Container(
@@ -627,13 +803,17 @@ class _AiChatPageState extends State<AiChatPage> {
                         hintText: 'ai.input_hint'.tr(),
                         border: InputBorder.none,
                       ),
-                      onSubmitted: isLoading ? null : (_) => _submitMessage(context),
+                      onSubmitted: isLoading
+                          ? null
+                          : (_) => _submitMessage(context),
                     ),
                   ),
                 ),
                 SizedBox(width: 8.w),
                 CircleAvatar(
-                  backgroundColor: isLoading ? AppColors.grey300 : AppColors.primary,
+                  backgroundColor: isLoading
+                      ? AppColors.grey300
+                      : AppColors.primary,
                   child: IconButton(
                     icon: isLoading
                         ? SizedBox(
@@ -644,7 +824,11 @@ class _AiChatPageState extends State<AiChatPage> {
                               color: AppColors.surface,
                             ),
                           )
-                        : const Icon(LucideIcons.send, color: AppColors.textOnPrimary, size: 18),
+                        : const Icon(
+                            LucideIcons.send,
+                            color: AppColors.textOnPrimary,
+                            size: 18,
+                          ),
                     onPressed: isLoading ? null : () => _submitMessage(context),
                   ),
                 ),
@@ -755,9 +939,10 @@ class _TypingIndicatorState extends State<_TypingIndicator>
     });
 
     _animations = _controllers.map((c) {
-      return Tween<double>(begin: 0, end: -8).animate(
-        CurvedAnimation(parent: c, curve: Curves.easeInOut),
-      );
+      return Tween<double>(
+        begin: 0,
+        end: -8,
+      ).animate(CurvedAnimation(parent: c, curve: Curves.easeInOut));
     }).toList();
 
     // Stagger the animations
@@ -792,7 +977,7 @@ class _TypingIndicatorState extends State<_TypingIndicator>
           ),
           boxShadow: [
             BoxShadow(
-              color: AppColors.black.withOpacity(0.02),
+              color: AppColors.black.withValues(alpha: 0.02),
               blurRadius: 5,
               offset: const Offset(0, 2),
             ),
@@ -812,7 +997,7 @@ class _TypingIndicatorState extends State<_TypingIndicator>
                       width: 8.w,
                       height: 8.w,
                       decoration: BoxDecoration(
-                        color: AppColors.primary.withOpacity(0.5),
+                        color: AppColors.primary.withValues(alpha: 0.5),
                         shape: BoxShape.circle,
                       ),
                     ),

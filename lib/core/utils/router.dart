@@ -59,6 +59,8 @@ import '../../features/profile/presentation/pages/verification_page.dart';
 import '../../features/profile/presentation/pages/address_list_page.dart';
 import '../../features/profile/presentation/pages/payment_methods_page.dart';
 import '../../features/profile/presentation/pages/help_center_page.dart';
+import '../../features/support/presentation/pages/support_ticket_list_page.dart';
+import '../../features/support/presentation/pages/support_ticket_detail_page.dart';
 import '../../features/profile/presentation/pages/settings_page.dart';
 import '../../features/profile/presentation/pages/important_features_page.dart';
 import '../../features/stretch/presentation/pages/referral_program_page.dart';
@@ -195,7 +197,8 @@ final goRouter = GoRouter(
             final extra = state.extra as Map<String, dynamic>?;
             return SupplierProfilePage(
               supplierId: state.pathParameters['id']!,
-              supplierName: extra?['name'] ?? 'marketplace.supplier_fallback'.tr(),
+              supplierName:
+                  extra?['name'] ?? 'marketplace.supplier_fallback'.tr(),
               previewAsOwner: extra?['preview'] == true,
             );
           },
@@ -223,7 +226,8 @@ final goRouter = GoRouter(
             final extra = state.extra as Map<String, dynamic>?;
             return ProductReviewsPage(
               productId: state.pathParameters['id']!,
-              productName: extra?['name'] ?? 'marketplace.product_reviews_title'.tr(),
+              productName:
+                  extra?['name'] ?? 'marketplace.product_reviews_title'.tr(),
             );
           },
         ),
@@ -247,21 +251,18 @@ final goRouter = GoRouter(
           routes: [
             GoRoute(
               path: 'create-invoice',
-              builder: (context, state) => CreateInvoicePage(
-                negotiationId: state.pathParameters['id']!,
-              ),
+              builder: (context, state) =>
+                  CreateInvoicePage(negotiationId: state.pathParameters['id']!),
             ),
             GoRoute(
               path: 'review-invoice',
-              builder: (context, state) => ReviewInvoicePage(
-                negotiationId: state.pathParameters['id']!,
-              ),
+              builder: (context, state) =>
+                  ReviewInvoicePage(negotiationId: state.pathParameters['id']!),
             ),
             GoRoute(
               path: 'edit-invoice',
-              builder: (context, state) => EditInvoicePage(
-                negotiationId: state.pathParameters['id']!,
-              ),
+              builder: (context, state) =>
+                  EditInvoicePage(negotiationId: state.pathParameters['id']!),
             ),
             GoRoute(
               path: 'product',
@@ -311,9 +312,8 @@ final goRouter = GoRouter(
         // Orders — checkout-result hanya di root (lihat /checkout-result di bawah)
         GoRoute(
           path: 'order-batch/:id',
-          builder: (context, state) => OrderBatchDetailPage(
-            anchorOrderId: state.pathParameters['id']!,
-          ),
+          builder: (context, state) =>
+              OrderBatchDetailPage(anchorOrderId: state.pathParameters['id']!),
         ),
         GoRoute(
           path: 'order/:id',
@@ -342,8 +342,7 @@ final goRouter = GoRouter(
           routes: [
             GoRoute(
               path: 'transactions',
-              builder: (context, state) =>
-                  const WalletTransactionHistoryPage(),
+              builder: (context, state) => const WalletTransactionHistoryPage(),
             ),
           ],
         ),
@@ -372,6 +371,18 @@ final goRouter = GoRouter(
         GoRoute(
           path: 'help-center',
           builder: (context, state) => const HelpCenterPage(),
+        ),
+        GoRoute(
+          path: 'support',
+          builder: (context, state) => const SupportTicketListPage(),
+          routes: [
+            GoRoute(
+              path: ':id',
+              builder: (context, state) => SupportTicketDetailPage(
+                ticketId: state.pathParameters['id']!,
+              ),
+            ),
+          ],
         ),
         GoRoute(
           path: 'change-password',
@@ -416,9 +427,8 @@ final goRouter = GoRouter(
           routes: [
             GoRoute(
               path: ':id',
-              builder: (context, state) => BookingDetailPage(
-                bookingId: state.pathParameters['id']!,
-              ),
+              builder: (context, state) =>
+                  BookingDetailPage(bookingId: state.pathParameters['id']!),
             ),
           ],
         ),
@@ -454,8 +464,9 @@ final goRouter = GoRouter(
         ),
         GoRoute(
           path: 'product-manage/:id',
-          builder: (context, state) =>
-              ProductManagementDetailPage(productId: state.pathParameters['id']!),
+          builder: (context, state) => ProductManagementDetailPage(
+            productId: state.pathParameters['id']!,
+          ),
         ),
         GoRoute(
           path: 'buyer-products',
@@ -508,9 +519,8 @@ final goRouter = GoRouter(
       routes: [
         GoRoute(
           path: ':orderNumber',
-          builder: (context, state) => PublicTrackPage(
-            orderNumber: state.pathParameters['orderNumber'],
-          ),
+          builder: (context, state) =>
+              PublicTrackPage(orderNumber: state.pathParameters['orderNumber']),
         ),
       ],
     ),
@@ -579,9 +589,8 @@ final goRouter = GoRouter(
       routes: [
         GoRoute(
           path: ':sessionId',
-          builder: (context, state) => LiveRoomPage(
-            sessionId: state.pathParameters['sessionId']!,
-          ),
+          builder: (context, state) =>
+              LiveRoomPage(sessionId: state.pathParameters['sessionId']!),
         ),
       ],
     ),
@@ -628,7 +637,8 @@ final goRouter = GoRouter(
           orderNumber: extra['orderNumber'] as String,
           amount: extra['amount'] as num,
           paymentResult: extra['paymentResult'] as Map<String, dynamic>,
-          batchOrderIds: (extra['batchOrderIds'] as List?)
+          batchOrderIds:
+              (extra['batchOrderIds'] as List?)
                   ?.map((e) => e.toString())
                   .toList() ??
               const [],
@@ -637,10 +647,7 @@ final goRouter = GoRouter(
         );
       },
     ),
-    GoRoute(
-      path: '/cart',
-      builder: (context, state) => const CartPage(),
-    ),
+    GoRoute(path: '/cart', builder: (context, state) => const CartPage()),
     GoRoute(
       path: '/checkout-result',
       builder: (context, state) => _buildCheckoutRoute(state.extra),
@@ -661,10 +668,7 @@ final goRouter = GoRouter(
       path: '/bulk-product-upload',
       builder: (context, state) => const BulkProductUploadPage(),
     ),
-    GoRoute(
-      path: '/rfq',
-      builder: (context, state) => const RfqListPage(),
-    ),
+    GoRoute(path: '/rfq', builder: (context, state) => const RfqListPage()),
     GoRoute(
       path: '/rfq/create',
       builder: (context, state) => const RfqCreatePage(),

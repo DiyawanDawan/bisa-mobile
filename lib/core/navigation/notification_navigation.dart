@@ -11,7 +11,8 @@ abstract class NotificationNavigation {
     final body = data['body']?.toString() ?? '';
     final negotiationId = data['negotiationId']?.toString();
 
-    final isDispute = type == 'DISPUTE' ||
+    final isDispute =
+        type == 'DISPUTE' ||
         type == 'ORDER_DISPUTE' ||
         ((type == 'ORDER' || type == 'ORDER_STATUS') &&
             notificationIsDisputeRelatedFromText(title, body));
@@ -45,6 +46,11 @@ abstract class NotificationNavigation {
 
     if (type == 'NEGOTIATION' && refId != null && refId.isNotEmpty) {
       goRouter.push('/negotiation/$refId');
+      return;
+    }
+
+    if (type == 'SUPPORT' && refId != null && refId.isNotEmpty) {
+      goRouter.push('/support/$refId');
       return;
     }
 

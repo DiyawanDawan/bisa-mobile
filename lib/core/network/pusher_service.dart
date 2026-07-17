@@ -14,7 +14,8 @@ import 'package:mobile_bisa/core/config/app_config.dart';
 ///   1. Cek JWT (requireAuth).
 ///   2. Parse `channel_name` dari form body.
 ///   3. Untuk `private-negotiation-{id}` → verifikasi user.id == buyerId || sellerId.
-///   4. Return `pusher.authorizeChannel(socketId, channel)` response.
+///   4. Untuk `private-support-{id}` → verifikasi user.id == ticket.userId || ADMIN.
+///   5. Return `pusher.authorizeChannel(socketId, channel)` response.
 ///
 /// Catatan: `ApiClient` Dio singleton di-pass via `setAuthDio` agar interceptor
 /// JWT terbawa.

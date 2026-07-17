@@ -1,5 +1,6 @@
 import 'package:hydrated_bloc/hydrated_bloc.dart';
 import 'package:freezed_annotation/freezed_annotation.dart';
+import 'package:easy_localization/easy_localization.dart';
 import '../../domain/repositories/ai_repository.dart';
 
 part 'ai_state.dart';
@@ -8,13 +9,32 @@ part 'ai_cubit.freezed.dart';
 class AiCubit extends HydratedCubit<AiState> {
   final AiRepository _repository;
   List<ChatMessage> _messages = [];
+  bool _csHandoffActive = false;
 
   AiCubit(this._repository) : super(const AiState.initial());
+
+  List<ChatMessage> get messages => List.unmodifiable(_messages);
+
+  bool get csHandoffActive => _csHandoffActive;
+
+  /// Pause AI replies while a support ticket is open (Chat CS handoff).
+  void setCsHandoffActive(bool active) {
+    _csHandoffActive = active;
+  }
 
   Future<void> sendMessage(String text) async {
     if (text.trim().isEmpty) return;
 
-    _messages.add(ChatMessage(text: text, isUser: true, timestamp: DateTime.now()));
+    if (_csHandoffActive) {
+      emit(
+        AiState.error('support.ai_paused'.tr()),
+      );
+      return;
+    }
+
+    _messages.add(
+      ChatMessage(text: text, isUser: true, timestamp: DateTime.now()),
+    );
     emit(AiState.chatLoaded(List.from(_messages), isTyping: true));
 
     final result = await _repository.askChatbot(text);
@@ -24,7 +44,13 @@ class AiCubit extends HydratedCubit<AiState> {
         emit(AiState.error(failure.message));
       },
       (answer) {
-        _messages.add(ChatMessage(text: _stripMarkdown(answer), isUser: false, timestamp: DateTime.now()));
+        _messages.add(
+          ChatMessage(
+            text: _stripMarkdown(answer),
+            isUser: false,
+            timestamp: DateTime.now(),
+          ),
+        );
         emit(AiState.chatLoaded(List.from(_messages)));
       },
     );
@@ -92,13 +118,16 @@ class AiCubit extends HydratedCubit<AiState> {
   @override
   Map<String, dynamic>? toJson(AiState state) {
     return {
-      'messages': _messages.map((m) => {
-        'id': m.id,
-        'text': m.text,
-        'isUser': m.isUser,
-        'timestamp': m.timestamp.toIso8601String(),
-      }).toList(),
+      'messages': _messages
+          .map(
+            (m) => {
+              'id': m.id,
+              'text': m.text,
+              'isUser': m.isUser,
+              'timestamp': m.timestamp.toIso8601String(),
+            },
+          )
+          .toList(),
     };
   }
 }
-

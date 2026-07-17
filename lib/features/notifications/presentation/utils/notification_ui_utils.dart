@@ -6,10 +6,7 @@ import '../../../../core/constants/app_colors.dart';
 import '../../domain/entities/notification_entity.dart';
 
 class NotificationAction {
-  const NotificationAction({
-    required this.label,
-    required this.route,
-  });
+  const NotificationAction({required this.label, required this.route});
 
   final String label;
   final String route;
@@ -42,6 +39,8 @@ IconData notificationIcon(String type) {
       return LucideIcons.handshake;
     case 'BOOKING':
       return LucideIcons.calendarClock;
+    case 'SUPPORT':
+      return LucideIcons.headset;
     default:
       return LucideIcons.bell;
   }
@@ -74,6 +73,8 @@ Color notificationColor(String type) {
       return AppColors.success;
     case 'BOOKING':
       return AppColors.warning;
+    case 'SUPPORT':
+      return AppColors.primary;
     default:
       return AppColors.grey500;
   }
@@ -107,6 +108,8 @@ String notificationTypeLabel(String type) {
       return 'partnership.menu_title'.tr();
     case 'BOOKING':
       return 'booking.menu_title'.tr();
+    case 'SUPPORT':
+      return 'support.title'.tr();
     default:
       return 'notifications.type_general'.tr();
   }
@@ -207,6 +210,11 @@ NotificationAction? notificationAction(NotificationEntity notification) {
         return NotificationAction(
           label: 'booking.view_detail'.tr(),
           route: '/bookings/$refId',
+        );
+      case 'SUPPORT':
+        return NotificationAction(
+          label: 'support.open_ticket'.tr(),
+          route: '/support/$refId',
         );
     }
   }
