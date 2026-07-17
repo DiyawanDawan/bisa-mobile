@@ -9,6 +9,7 @@ abstract class NotificationRemoteDataSource {
   Future<void> markAsRead(String id);
   Future<void> markAllAsRead();
   Future<void> registerFcmToken(String token, String platform);
+  Future<void> deregisterFcmToken(String token);
   Future<void> deleteNotification(String id);
   Future<NotificationModel> getNotificationById(String id);
 }
@@ -47,6 +48,11 @@ class NotificationRemoteDataSourceImpl implements NotificationRemoteDataSource {
       '/notifications/tokens',
       data: {'fcmToken': token, 'platform': platform.toUpperCase()},
     );
+  }
+
+  @override
+  Future<void> deregisterFcmToken(String token) async {
+    await dio.delete('/notifications/tokens', data: {'fcmToken': token});
   }
 
   @override

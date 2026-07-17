@@ -151,6 +151,7 @@ class MyApp extends StatelessWidget {
             context.read<NotificationCubit>().bootstrap();
           },
           unauthenticated: () {
+            context.read<NotificationCubit>().deregisterFcmDevice();
             SessionManager.resetUserScopedState(context);
           },
           orElse: () {},

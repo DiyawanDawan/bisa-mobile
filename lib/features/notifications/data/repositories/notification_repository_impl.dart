@@ -59,6 +59,18 @@ class NotificationRepositoryImpl implements NotificationRepository {
   }
 
   @override
+  Future<Either<Failure, void>> deregisterFcmToken(String token) async {
+    try {
+      await remoteDataSource.deregisterFcmToken(token);
+      return const Right(null);
+    } on DioException catch (e) {
+      return Left(_mapDioExceptionToFailure(e));
+    } catch (e) {
+      return const Left(UnexpectedFailure());
+    }
+  }
+
+  @override
   Future<Either<Failure, void>> deleteNotification(String id) async {
     try {
       await remoteDataSource.deleteNotification(id);

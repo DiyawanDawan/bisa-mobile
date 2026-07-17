@@ -111,6 +111,13 @@ class NotificationCubit extends Cubit<NotificationState> {
     return result.isRight();
   }
 
+  Future<void> deregisterFcmDevice() async {
+    final token = await NotificationService.ensureFcmToken();
+    if (token == null || token.isEmpty) return;
+    await _repository.deregisterFcmToken(token);
+    debugPrint('[FCM] token deregistered on logout');
+  }
+
   void reset() {
     emit(const NotificationInitial(unreadCount: 0));
   }

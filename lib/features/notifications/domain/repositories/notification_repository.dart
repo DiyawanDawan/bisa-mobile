@@ -7,6 +7,7 @@ abstract class NotificationRepository {
   Future<Either<Failure, void>> markAsRead(String id);
   Future<Either<Failure, void>> markAllAsRead();
   Future<Either<Failure, void>> registerFcmToken(String token, String platform);
+  Future<Either<Failure, void>> deregisterFcmToken(String token);
   Future<Either<Failure, void>> deleteNotification(String id);
   Future<Either<Failure, NotificationEntity>> getNotificationById(String id);
 }
