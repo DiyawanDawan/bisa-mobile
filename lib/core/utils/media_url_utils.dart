@@ -35,6 +35,10 @@ String resolveMediaUrl(String? url) {
     return trimmed;
   }
 
+  if (mediaUri.host.toLowerCase() == 'loremflickr.com') {
+    return _rewriteLoremFlickrHttpUrl(mediaUri);
+  }
+
   var resolved = trimmed;
 
   final pathKey = mediaUri.path.replaceFirst(RegExp(r'^/'), '');
@@ -94,7 +98,15 @@ bool _isStorageObjectPath(String path) {
   return prefixes.any((p) => path.startsWith(p));
 }
 
-/// Fallback jika API mengembalikan path DB placeholder (bukan URL penuh).
+String _picsumUrl(String width, String height, String seed) {
+  final safeSeed = seed.replaceAll(RegExp(r'[^a-zA-Z0-9_-]'), '');
+  final clipped = safeSeed.isEmpty
+      ? 'bisa'
+      : (safeSeed.length > 64 ? safeSeed.substring(0, 64) : safeSeed);
+  return 'https://picsum.photos/seed/$clipped/$width/$height';
+}
+
+/// Path DB placeholder → Picsum (LoremFlickr sering down / hotlink-blocked).
 String _loremFlickrPathToUrl(String dbPath) {
   const prefix = 'external/loremflickr/';
   if (!dbPath.startsWith(prefix)) return dbPath;
@@ -114,20 +126,43 @@ String _loremFlickrPathToUrl(String dbPath) {
     i++;
   }
 
-  final keywordPath = keywordParts.join('/');
-  final buffer = StringBuffer('https://loremflickr.com/$width/$height/$keywordPath');
-
+  var lock = '0';
+  var random = '';
   if (i < segments.length && segments[i] == 'lock' && i + 1 < segments.length) {
-    buffer.write('?lock=${segments[i + 1]}');
+    lock = segments[i + 1];
     i += 2;
-    if (i < segments.length && segments[i] == 'random' && i + 1 < segments.length) {
-      buffer.write('&random=${segments[i + 1]}');
-    }
-  } else if (i < segments.length && segments[i] == 'random' && i + 1 < segments.length) {
-    buffer.write('?random=${segments[i + 1]}');
+  }
+  if (i < segments.length && segments[i] == 'random' && i + 1 < segments.length) {
+    random = segments[i + 1];
   }
 
-  return buffer.toString();
+  final kw = keywordParts
+      .join('-')
+      .replaceAll(RegExp(r'[^a-zA-Z0-9_-]'), '');
+  final kwClipped = kw.length > 24 ? kw.substring(0, 24) : kw;
+  final seed =
+      'bisa-lf-$lock${random.isNotEmpty ? '-r$random' : ''}${kwClipped.isNotEmpty ? '-$kwClipped' : ''}';
+  return _picsumUrl(width, height, seed);
+}
+
+/// Rewrite respons API lama yang masih mengembalikan loremflickr.com.
+String _rewriteLoremFlickrHttpUrl(Uri mediaUri) {
+  final parts = mediaUri.pathSegments.where((s) => s.isNotEmpty).toList();
+  if (parts.length < 2) return mediaUri.toString();
+
+  final width = parts[0];
+  final height = parts[1];
+  final keywords = parts
+      .skip(2)
+      .join('-')
+      .replaceAll(RegExp(r'[^a-zA-Z0-9_-]'), '');
+  final kwClipped =
+      keywords.length > 24 ? keywords.substring(0, 24) : keywords;
+  final lock = mediaUri.queryParameters['lock'] ?? '0';
+  final random = mediaUri.queryParameters['random'];
+  final seed =
+      'bisa-lf-$lock${random != null && random.isNotEmpty ? '-r$random' : ''}${kwClipped.isNotEmpty ? '-$kwClipped' : ''}';
+  return _picsumUrl(width, height, seed);
 }
 
 String _resolveRelativePath(String path) {
