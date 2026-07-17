@@ -37,10 +37,19 @@ String resolveMediaUrl(String? url) {
 
   var resolved = trimmed;
 
+  final pathKey = mediaUri.path.replaceFirst(RegExp(r'^/'), '');
+  if (_isStorageObjectPath(pathKey)) {
+    return _resolveRelativePath(pathKey);
+  }
+
   if (_localHosts.contains(mediaUri.host.toLowerCase())) {
     resolved = _rewriteHost(resolved, mediaUri);
   } else if (mediaUri.host.contains('r2.cloudflarestorage.com')) {
     resolved = _rewritePrivateR2Url(mediaUri);
+  } else if (mediaUri.path.contains('/storage/assets/')) {
+    final idx = mediaUri.path.indexOf('/storage/assets/');
+    final key = mediaUri.path.substring(idx + '/storage/assets/'.length);
+    resolved = _resolveRelativePath(key);
   } else {
     resolved = _alignStorageAssetHost(resolved, mediaUri);
   }
@@ -69,6 +78,20 @@ ImageProvider? resolveMediaImageProvider(String? url) {
 
 bool _looksLikeAbsoluteUrl(String value) {
   return value.startsWith('http://') || value.startsWith('https://');
+}
+
+bool _isStorageObjectPath(String path) {
+  const prefixes = [
+    'products/',
+    'avatars/',
+    'store-banners/',
+    'general/',
+    'forum/',
+    'negotiations/',
+    'articles/',
+    'categories/',
+  ];
+  return prefixes.any((p) => path.startsWith(p));
 }
 
 /// Fallback jika API mengembalikan path DB placeholder (bukan URL penuh).
@@ -112,6 +135,12 @@ String _resolveRelativePath(String path) {
   if (base.isEmpty) return path;
 
   final normalized = path.startsWith('/') ? path.substring(1) : path;
+
+  // R2 CDN: https://cdn.example.com/products/...
+  if (MediaConfig.useDirectCdn) {
+    return '$base/$normalized';
+  }
+
   if (normalized.contains('storage/assets/')) {
     return '$base/${normalized.startsWith('/') ? normalized.substring(1) : normalized}';
   }
