@@ -47,7 +47,13 @@ class ForumGroupRemoteDataSourceImpl implements ForumGroupRemoteDataSource {
         if (mine) 'mine': 'true',
       },
     );
-    final List data = response.data['data'] as List? ?? const [];
+    final raw = response.data;
+    final dynamic payload = raw is Map ? raw['data'] : null;
+    final List data = payload is List
+        ? payload
+        : (payload is Map && payload['groups'] is List)
+            ? payload['groups'] as List
+            : const [];
     return data
         .whereType<Map>()
         .map((e) => ForumGroupEntity.fromJson(Map<String, dynamic>.from(e)))

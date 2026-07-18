@@ -1,5 +1,4 @@
 import 'package:easy_localization/easy_localization.dart';
-import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_svg/flutter_svg.dart';
@@ -211,10 +210,8 @@ class _LoginPageState extends State<LoginPage> {
                             ),
                             SizedBox(height: AppSpacing.xxl),
                             _buildLoginButton(),
-                            if (kDebugMode) ...[
-                              SizedBox(height: AppSpacing.section),
-                              _buildDemoQuickFillRow(),
-                            ],
+                            SizedBox(height: AppSpacing.section),
+                            _buildDemoQuickFillRow(),
                           ],
                         ),
                       ),
@@ -352,7 +349,7 @@ class _LoginPageState extends State<LoginPage> {
     );
   }
 
-  /// Isi cepat akun demo (hanya debug / hackathon).
+  /// Isi cepat akun demo buyer / supplier.
   Widget _buildDemoQuickFillRow() {
     return Row(
       children: [

@@ -48,6 +48,14 @@ class _ForumGroupsPageState extends State<ForumGroupsPage> {
             BisaAppBarAction(
               icon: LucideIcons.plus,
               onTap: () async {
+                final isAuth = context.read<AuthCubit>().state.maybeWhen(
+                  authenticated: (_) => true,
+                  orElse: () => false,
+                );
+                if (!isAuth) {
+                  AuthSheet.show(context);
+                  return;
+                }
                 final created = await context.push('/forum-groups/create');
                 if (created == true && context.mounted) {
                   context.read<ForumGroupCubit>().loadGroups(mine: _mineOnly);
@@ -105,7 +113,29 @@ class _ForumGroupsPageState extends State<ForumGroupsPage> {
                     return const Center(child: CircularProgressIndicator());
                   }
                   if (state is ForumGroupError) {
-                    return Center(child: Text(state.message));
+                    return Center(
+                      child: Padding(
+                        padding: EdgeInsets.all(24.w),
+                        child: Column(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Text(
+                              state.message,
+                              textAlign: TextAlign.center,
+                              style: const TextStyle(color: AppColors.textSecondary),
+                            ),
+                            SizedBox(height: 12.h),
+                            CustomButton(
+                              text: 'Coba lagi',
+                              height: 40.h,
+                              onPressed: () => context
+                                  .read<ForumGroupCubit>()
+                                  .loadGroups(mine: _mineOnly),
+                            ),
+                          ],
+                        ),
+                      ),
+                    );
                   }
                   if (state is ForumGroupListLoaded) {
                     if (state.groups.isEmpty) {
@@ -116,7 +146,12 @@ class _ForumGroupsPageState extends State<ForumGroupsPage> {
                         ),
                       );
                     }
-                    return ListView.builder(
+                    return RefreshIndicator(
+                      color: AppColors.primary,
+                      onRefresh: () => context
+                          .read<ForumGroupCubit>()
+                          .loadGroups(mine: _mineOnly),
+                      child: ListView.builder(
                       padding: EdgeInsets.fromLTRB(16.w, 8.h, 16.w, 16.h),
                       itemCount: state.groups.length,
                       itemBuilder: (context, index) {
@@ -211,6 +246,7 @@ class _ForumGroupsPageState extends State<ForumGroupsPage> {
                           ),
                         );
                       },
+                    ),
                     );
                   }
                   return const SizedBox.shrink();

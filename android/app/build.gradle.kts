@@ -40,6 +40,17 @@ android {
         versionCode = flutter.versionCode
         versionName = flutter.versionName
         multiDexEnabled = true
+        // Real devices only — skip x86/x86_64 to avoid Windows strip file-lock races.
+        ndk {
+            abiFilters += listOf("armeabi-v7a", "arm64-v8a")
+        }
+    }
+
+    packaging {
+        jniLibs {
+            // Avoid :app:stripReleaseDebugSymbols file locks on Windows.
+            keepDebugSymbols += listOf("**/*.so")
+        }
     }
 
     // SEC-MOB-007: dedicated release signing config (loaded dari key.properties).
@@ -64,13 +75,22 @@ android {
                 signingConfigs.getByName("debug")
             }
 
-            // R8 / minification + resource shrinking + ProGuard rules.
-            isMinifyEnabled = true
-            isShrinkResources = true
-            proguardFiles(
-                getDefaultProguardFile("proguard-android-optimize.txt"),
-                "proguard-rules.pro",
-            )
+            // Path project mengandung spasi ("Mobile Apps") — skip native debug
+            // symbol extract yang sering gagal di Windows (NoSuchFileException).
+            ndk {
+                debugSymbolLevel = "NONE"
+            }
+
+            // Sementara nonaktifkan R8: path "Mobile Apps" (spasi) sering
+            // memicu NoSuchFileException di minifyReleaseWithR8 di Windows.
+            isMinifyEnabled = false
+            isShrinkResources = false
+            // isMinifyEnabled = true
+            // isShrinkResources = true
+            // proguardFiles(
+            //     getDefaultProguardFile("proguard-android-optimize.txt"),
+            //     "proguard-rules.pro",
+            // )
         }
     }
 }

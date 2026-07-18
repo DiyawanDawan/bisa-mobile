@@ -10,6 +10,7 @@ import 'package:mobile_bisa/features/auth/presentation/bloc/auth_cubit.dart';
 import 'package:mobile_bisa/features/marketplace/presentation/bloc/review_cubit.dart';
 import 'package:mobile_bisa/features/marketplace/presentation/bloc/review_state.dart';
 import 'package:mobile_bisa/shared/widgets/bisa_app_bar.dart';
+import 'package:mobile_bisa/shared/widgets/bisa_network_image.dart';
 import 'package:mobile_bisa/shared/widgets/shimmer_loading.dart';
 import 'package:mobile_bisa/injection_container.dart';
 import 'package:mobile_bisa/features/marketplace/data/models/review_model.dart';
@@ -164,7 +165,31 @@ class _ReviewCard extends StatelessWidget {
             review.comment,
             style: TextStyle(fontSize: 13.sp, color: AppColors.textPrimary),
           ),
-          if ((review as dynamic).reply != null) ...[
+          if (review.images != null && review.images!.isNotEmpty) ...[
+            SizedBox(height: AppSpacing.md12),
+            SizedBox(
+              height: 72.h,
+              child: ListView.separated(
+                scrollDirection: Axis.horizontal,
+                itemCount: review.images!.length,
+                separatorBuilder: (_, __) => SizedBox(width: 8.w),
+                itemBuilder: (context, index) {
+                  return ClipRRect(
+                    borderRadius: BorderRadius.circular(AppRadius.lg),
+                    child: SizedBox(
+                      width: 72.w,
+                      height: 72.h,
+                      child: BisaNetworkImage(
+                        imageUrl: review.images![index],
+                        fit: BoxFit.cover,
+                      ),
+                    ),
+                  );
+                },
+              ),
+            ),
+          ],
+          if (review.reply != null) ...[
             SizedBox(height: AppSpacing.md12),
             Container(
               padding: EdgeInsets.all(AppSpacing.md12),
@@ -181,14 +206,14 @@ class _ReviewCard extends StatelessWidget {
                   ),
                   SizedBox(height: 4.h),
                   Text(
-                    (review as dynamic).reply!,
+                    review.reply!,
                     style: TextStyle(fontSize: 12.sp, color: AppColors.textSecondary),
                   ),
                 ],
               ),
             ),
           ],
-          if (isSupplier && (review as dynamic).reply == null) ...[
+          if (isSupplier && review.reply == null) ...[
             SizedBox(height: AppSpacing.md12),
             TextButton.icon(
               onPressed: () => _showReplyDialog(context),

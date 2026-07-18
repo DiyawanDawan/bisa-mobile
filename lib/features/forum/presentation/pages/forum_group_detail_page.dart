@@ -4,9 +4,11 @@ import 'package:flutter_screenutil/flutter_screenutil.dart';
 import '../../../../core/constants/app_colors.dart';
 import '../../../../core/constants/app_layout.dart';
 import '../../../../injection_container.dart';
+import '../../../../shared/widgets/auth_sheet.dart';
 import '../../../../shared/widgets/bisa_app_bar.dart';
 import '../../../../shared/widgets/bisa_network_image.dart';
 import '../../../../shared/widgets/custom_button.dart';
+import '../../../auth/presentation/bloc/auth_cubit.dart';
 import '../bloc/forum_cubit.dart';
 import '../bloc/forum_group_cubit.dart';
 import '../widgets/post_card.dart';
@@ -114,6 +116,14 @@ class ForumGroupDetailPage extends StatelessWidget {
                             isOutlined: group.isMember,
                             height: 42.h,
                             onPressed: () async {
+                              final isAuth = context.read<AuthCubit>().state.maybeWhen(
+                                authenticated: (_) => true,
+                                orElse: () => false,
+                              );
+                              if (!isAuth) {
+                                AuthSheet.show(context);
+                                return;
+                              }
                               if (group.isMember) {
                                 await context.read<ForumGroupCubit>().leaveGroup(group.id);
                               } else {

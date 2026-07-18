@@ -9,20 +9,8 @@ allprojects {
     }
 }
 
-val newBuildDir: Directory =
-    rootProject.layout.buildDirectory
-        .dir("../../build")
-        .get()
-rootProject.layout.buildDirectory.value(newBuildDir)
-
-subprojects {
-    val newSubprojectBuildDir: Directory = newBuildDir.dir(project.name)
-    project.layout.buildDirectory.value(newSubprojectBuildDir)
-}
-subprojects {
-    project.evaluationDependsOn(":app")
-}
-
+// Prefer building from a path without spaces (e.g. D:\HACKATON\mobile_bisa-build).
+// Custom buildDirectory redirects break AGP symbol tables on Flutter 3.44+.
 tasks.register<Delete>("clean") {
     delete(rootProject.layout.buildDirectory)
 }

@@ -19,6 +19,7 @@ import 'package:share_plus/share_plus.dart';
 import 'package:mobile_bisa/shared/widgets/bisa_filter_chip.dart';
 import 'package:mobile_bisa/shared/widgets/bisa_avatar.dart';
 import 'package:mobile_bisa/shared/widgets/shimmer_loading.dart';
+import 'package:mobile_bisa/features/forum/presentation/widgets/forum_public_groups_section.dart';
 
 class ForumPage extends StatefulWidget {
   /// Tag awal yang otomatis di-apply ke filter saat halaman dibuka — dipakai
@@ -33,6 +34,7 @@ class ForumPage extends StatefulWidget {
 
 class _ForumPageState extends State<ForumPage> {
   String _selectedCategory = 'Semua';
+  int _groupsRefreshToken = 0;
 
   static const _categoryValues = [
     'Semua',
@@ -205,7 +207,10 @@ class _ForumPageState extends State<ForumPage> {
 
                 return RefreshIndicator(
                   color: AppColors.primary,
-                  onRefresh: () async => context.read<ForumCubit>().getPosts(),
+                  onRefresh: () async {
+                    setState(() => _groupsRefreshToken++);
+                    await context.read<ForumCubit>().getPosts();
+                  },
                   child: ListView(
                     padding: EdgeInsets.only(
                       bottom: mainShellBottomPadding(
@@ -216,6 +221,7 @@ class _ForumPageState extends State<ForumPage> {
                     physics: const BouncingScrollPhysics(),
                     children: [
                       if (_activeTag != null) _buildActiveTagBanner(),
+                      ForumPublicGroupsSection(key: ValueKey(_groupsRefreshToken)),
                       // Create Post Header
                       Container(
                         margin: EdgeInsets.all(AppSpacing.lg),

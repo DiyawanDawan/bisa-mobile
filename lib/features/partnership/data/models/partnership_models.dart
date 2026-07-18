@@ -36,6 +36,37 @@ class PartnershipUserModel {
   }
 }
 
+class PartnershipSignatureModel {
+  final String party;
+  final String label;
+  final DateTime? signedAt;
+  final String? signerName;
+  final String? signerTitle;
+  final String? companyName;
+
+  PartnershipSignatureModel({
+    required this.party,
+    required this.label,
+    this.signedAt,
+    this.signerName,
+    this.signerTitle,
+    this.companyName,
+  });
+
+  factory PartnershipSignatureModel.fromJson(Map<String, dynamic> json) {
+    return PartnershipSignatureModel(
+      party: json['party'] as String? ?? '',
+      label: json['label'] as String? ?? '',
+      signedAt: json['signedAt'] != null
+          ? DateTime.parse(json['signedAt'] as String)
+          : null,
+      signerName: json['signerName'] as String?,
+      signerTitle: json['signerTitle'] as String?,
+      companyName: json['companyName'] as String?,
+    );
+  }
+}
+
 class PartnershipModel {
   final String id;
   final String contractNumber;
@@ -55,7 +86,19 @@ class PartnershipModel {
   final DateTime endDate;
   final DateTime? buyerSignedAt;
   final DateTime? sellerSignedAt;
+  final DateTime? platformSignedAt;
+  final String? buyerSignerName;
+  final String? buyerSignerTitle;
+  final String? buyerCompanyName;
+  final String? sellerSignerName;
+  final String? sellerSignerTitle;
+  final String? sellerCompanyName;
+  final String? platformSignerName;
+  final String? platformSignerTitle;
   final bool isFullySigned;
+  final int requiredSigners;
+  final int signedCount;
+  final List<PartnershipSignatureModel> signatures;
   final String? rejectionReason;
   final DateTime? terminatedAt;
   final String? terminatedBy;
@@ -92,7 +135,19 @@ class PartnershipModel {
     required this.endDate,
     this.buyerSignedAt,
     this.sellerSignedAt,
+    this.platformSignedAt,
+    this.buyerSignerName,
+    this.buyerSignerTitle,
+    this.buyerCompanyName,
+    this.sellerSignerName,
+    this.sellerSignerTitle,
+    this.sellerCompanyName,
+    this.platformSignerName,
+    this.platformSignerTitle,
     this.isFullySigned = false,
+    this.requiredSigners = 3,
+    this.signedCount = 0,
+    this.signatures = const [],
     this.rejectionReason,
     this.terminatedAt,
     this.terminatedBy,
@@ -112,6 +167,7 @@ class PartnershipModel {
   });
 
   factory PartnershipModel.fromJson(Map<String, dynamic> json) {
+    final sigList = json['signatures'] as List? ?? [];
     return PartnershipModel(
       id: json['id'] as String,
       contractNumber: json['contractNumber'] as String,
@@ -135,7 +191,23 @@ class PartnershipModel {
       sellerSignedAt: json['sellerSignedAt'] != null
           ? DateTime.parse(json['sellerSignedAt'] as String)
           : null,
+      platformSignedAt: json['platformSignedAt'] != null
+          ? DateTime.parse(json['platformSignedAt'] as String)
+          : null,
+      buyerSignerName: json['buyerSignerName'] as String?,
+      buyerSignerTitle: json['buyerSignerTitle'] as String?,
+      buyerCompanyName: json['buyerCompanyName'] as String?,
+      sellerSignerName: json['sellerSignerName'] as String?,
+      sellerSignerTitle: json['sellerSignerTitle'] as String?,
+      sellerCompanyName: json['sellerCompanyName'] as String?,
+      platformSignerName: json['platformSignerName'] as String?,
+      platformSignerTitle: json['platformSignerTitle'] as String?,
       isFullySigned: json['isFullySigned'] as bool? ?? false,
+      requiredSigners: json['requiredSigners'] as int? ?? 3,
+      signedCount: json['signedCount'] as int? ?? 0,
+      signatures: sigList
+          .map((e) => PartnershipSignatureModel.fromJson(e as Map<String, dynamic>))
+          .toList(),
       rejectionReason: json['rejectionReason'] as String?,
       terminatedAt: json['terminatedAt'] != null
           ? DateTime.parse(json['terminatedAt'] as String)

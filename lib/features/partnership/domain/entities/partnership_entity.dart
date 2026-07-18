@@ -27,6 +27,27 @@ class PartnershipUserEntity extends Equatable {
   List<Object?> get props => [id, fullName, role];
 }
 
+class PartnershipSignatureEntity extends Equatable {
+  final String party;
+  final String label;
+  final DateTime? signedAt;
+  final String? signerName;
+  final String? signerTitle;
+  final String? companyName;
+
+  const PartnershipSignatureEntity({
+    required this.party,
+    required this.label,
+    this.signedAt,
+    this.signerName,
+    this.signerTitle,
+    this.companyName,
+  });
+
+  @override
+  List<Object?> get props => [party, signedAt, signerName];
+}
+
 class PartnershipEntity extends Equatable {
   final String id;
   final String contractNumber;
@@ -46,7 +67,19 @@ class PartnershipEntity extends Equatable {
   final DateTime endDate;
   final DateTime? buyerSignedAt;
   final DateTime? sellerSignedAt;
+  final DateTime? platformSignedAt;
+  final String? buyerSignerName;
+  final String? buyerSignerTitle;
+  final String? buyerCompanyName;
+  final String? sellerSignerName;
+  final String? sellerSignerTitle;
+  final String? sellerCompanyName;
+  final String? platformSignerName;
+  final String? platformSignerTitle;
   final bool isFullySigned;
+  final int requiredSigners;
+  final int signedCount;
+  final List<PartnershipSignatureEntity> signatures;
   final String? rejectionReason;
   final DateTime? terminatedAt;
   final int renewalCount;
@@ -80,7 +113,19 @@ class PartnershipEntity extends Equatable {
     required this.endDate,
     this.buyerSignedAt,
     this.sellerSignedAt,
+    this.platformSignedAt,
+    this.buyerSignerName,
+    this.buyerSignerTitle,
+    this.buyerCompanyName,
+    this.sellerSignerName,
+    this.sellerSignerTitle,
+    this.sellerCompanyName,
+    this.platformSignerName,
+    this.platformSignerTitle,
     this.isFullySigned = false,
+    this.requiredSigners = 3,
+    this.signedCount = 0,
+    this.signatures = const [],
     this.rejectionReason,
     this.terminatedAt,
     this.renewalCount = 0,
@@ -100,6 +145,13 @@ class PartnershipEntity extends Equatable {
   bool get isExpired => status == 'EXPIRED';
   bool get isPending => status == 'PENDING';
   bool get canSign => status == 'PENDING' || status == 'AWAITING_SIGNATURE';
+
+  PartnershipSignatureEntity? signatureFor(String party) {
+    for (final s in signatures) {
+      if (s.party == party) return s;
+    }
+    return null;
+  }
 
   @override
   List<Object?> get props => [id, status, contractNumber, endDate];

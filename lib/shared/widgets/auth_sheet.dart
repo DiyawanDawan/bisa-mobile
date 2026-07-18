@@ -1,5 +1,4 @@
 import 'package:easy_localization/easy_localization.dart';
-import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
@@ -265,26 +264,24 @@ class _AuthSheetState extends State<AuthSheet> {
                     );
                   },
                 ),
-                if (kDebugMode) ...[
-                  SizedBox(height: AppSpacing.md12),
-                  Row(
-                    children: [
-                      Expanded(
-                        child: _demoFillChip(
-                          label: 'auth.demo_buyer'.tr(),
-                          onTap: () => _fillDemoCredentials(buyer: true),
-                        ),
+                SizedBox(height: AppSpacing.md12),
+                Row(
+                  children: [
+                    Expanded(
+                      child: _demoFillChip(
+                        label: 'auth.demo_buyer'.tr(),
+                        onTap: () => _fillDemoCredentials(buyer: true),
                       ),
-                      SizedBox(width: AppSpacing.sm),
-                      Expanded(
-                        child: _demoFillChip(
-                          label: 'auth.demo_supplier'.tr(),
-                          onTap: () => _fillDemoCredentials(buyer: false),
-                        ),
+                    ),
+                    SizedBox(width: AppSpacing.sm),
+                    Expanded(
+                      child: _demoFillChip(
+                        label: 'auth.demo_supplier'.tr(),
+                        onTap: () => _fillDemoCredentials(buyer: false),
                       ),
-                    ],
-                  ),
-                ],
+                    ),
+                  ],
+                ),
                 SizedBox(height: AppSpacing.xl),
                 Row(
                   children: [

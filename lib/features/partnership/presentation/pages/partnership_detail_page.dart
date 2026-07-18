@@ -117,14 +117,42 @@ class _PartnershipDetailBody extends StatelessWidget {
                       ]),
                       SizedBox(height: AppSpacing.md),
                       _Section(title: 'partnership.section_signature'.tr(), children: [
+                        Text(
+                          'partnership.signers_progress'.tr(
+                            namedArgs: {
+                              'signed': '${p.signedCount}',
+                              'total': '${p.requiredSigners}',
+                            },
+                          ),
+                          style: TextStyle(
+                            fontSize: 12.sp,
+                            color: AppColors.textSecondary,
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                        SizedBox(height: AppSpacing.sm),
                         _SignRow(
                           label: 'partnership.buyer_sign'.tr(),
                           signedAt: p.buyerSignedAt,
+                          signerName: p.buyerSignerName ?? p.buyer.fullName,
+                          signerTitle: p.buyerSignerTitle,
+                          companyName: p.buyerCompanyName ?? p.buyer.companyName,
                         ),
                         SizedBox(height: AppSpacing.sm),
                         _SignRow(
                           label: 'partnership.supplier_sign'.tr(),
                           signedAt: p.sellerSignedAt,
+                          signerName: p.sellerSignerName ?? p.supplier.fullName,
+                          signerTitle: p.sellerSignerTitle,
+                          companyName: p.sellerCompanyName ?? p.supplier.companyName,
+                        ),
+                        SizedBox(height: AppSpacing.sm),
+                        _SignRow(
+                          label: 'partnership.platform_sign'.tr(),
+                          signedAt: p.platformSignedAt,
+                          signerName: p.platformSignerName ?? 'BISA Agri',
+                          signerTitle: p.platformSignerTitle,
+                          companyName: 'BISA Agri',
                         ),
                       ]),
                       if (p.isRenewalPending && p.renewalProposedEndDate != null) ...[
@@ -405,26 +433,61 @@ class _TermRow extends StatelessWidget {
 class _SignRow extends StatelessWidget {
   final String label;
   final DateTime? signedAt;
+  final String? signerName;
+  final String? signerTitle;
+  final String? companyName;
 
-  const _SignRow({required this.label, this.signedAt});
+  const _SignRow({
+    required this.label,
+    this.signedAt,
+    this.signerName,
+    this.signerTitle,
+    this.companyName,
+  });
 
   @override
   Widget build(BuildContext context) {
     final signed = signedAt != null;
+    final identityParts = <String>[
+      if (signerName != null && signerName!.trim().isNotEmpty) signerName!.trim(),
+      if (signerTitle != null && signerTitle!.trim().isNotEmpty) signerTitle!.trim(),
+      if (companyName != null && companyName!.trim().isNotEmpty) companyName!.trim(),
+    ];
+    final identityLine = identityParts.join(' · ');
+
     return Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Icon(
-          signed ? LucideIcons.circleCheck : LucideIcons.circle,
-          size: 18.sp,
-          color: signed ? AppColors.success : AppColors.textHint,
+        Padding(
+          padding: EdgeInsets.only(top: 2.h),
+          child: Icon(
+            signed ? LucideIcons.circleCheck : LucideIcons.circle,
+            size: 18.sp,
+            color: signed ? AppColors.success : AppColors.textHint,
+          ),
         ),
         SizedBox(width: AppSpacing.sm),
         Expanded(
-          child: Text(
-            signed
-                ? '$label · ${DateFormat('dd MMM yyyy HH:mm').format(signedAt!)}'
-                : label,
-            style: TextStyle(fontSize: 13.sp),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                signed
+                    ? '$label · ${DateFormat('dd MMM yyyy HH:mm').format(signedAt!)}'
+                    : label,
+                style: TextStyle(fontSize: 13.sp, fontWeight: FontWeight.w600),
+              ),
+              if (identityLine.isNotEmpty) ...[
+                SizedBox(height: 2.h),
+                Text(
+                  identityLine,
+                  style: TextStyle(
+                    fontSize: 12.sp,
+                    color: AppColors.textSecondary,
+                  ),
+                ),
+              ],
+            ],
           ),
         ),
       ],
@@ -563,6 +626,12 @@ class _ActionBar extends StatelessWidget {
   bool _needsSign() {
     if (isBuyer && partnership.buyerSignedAt == null) return true;
     if (isSupplier && partnership.sellerSignedAt == null) return true;
+    if (userRole == 'ADMIN' &&
+        partnership.platformSignedAt == null &&
+        partnership.buyerSignedAt != null &&
+        partnership.sellerSignedAt != null) {
+      return true;
+    }
     return false;
   }
 

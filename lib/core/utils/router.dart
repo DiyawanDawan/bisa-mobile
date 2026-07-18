@@ -145,6 +145,10 @@ final goRouter = GoRouter(
         location.startsWith('/supplier/') ||
         location.startsWith('/collection-products') ||
         location.startsWith('/forum-detail/') ||
+        location == '/forum-groups' ||
+        (location.startsWith('/forum-groups/') &&
+            !location.startsWith('/forum-groups/create')) ||
+        location.startsWith('/forum-tag/') ||
         location.startsWith('/ai-chat') ||
         location.startsWith('/help-center') ||
         location.startsWith('/terms') ||
