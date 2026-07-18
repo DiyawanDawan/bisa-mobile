@@ -1,0 +1,9 @@
+{
+  "API_URL": "https://backend-dev-v1.bisaagri.com/api/v1",
+  "MEDIA_BASE_URL": "https://cdn.bisaagri.com",
+  "PUSHER_KEY": "your-pusher-key",
+  "PUSHER_CLUSTER": "ap1",
+  "PUBLIC_WEB_URL": "https://www.bisaagri.com",
+  "APP_ENV": "production",
+  "_comment": "Hanya untuk go-live sungguhan. Pre-live / QA pakai dart_define.development.json."
+}
