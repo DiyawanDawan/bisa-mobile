@@ -14,6 +14,15 @@ abstract class AppConfig {
     defaultValue: '',
   );
 
+  /// `development` (pre-live / QA) atau `production` (go-live).
+  static const String appEnv = String.fromEnvironment(
+    'APP_ENV',
+    defaultValue: 'development',
+  );
+
+  static bool get isDevelopment => appEnv.toLowerCase() != 'production';
+  static bool get isProduction => appEnv.toLowerCase() == 'production';
+
   /// IP komputer dev untuk HP fisik (satu WiFi). Update jika IP berubah.
   static const String devLanHost = String.fromEnvironment(
     'DEV_LAN_HOST',
@@ -22,7 +31,7 @@ abstract class AppConfig {
 
   static const String publicWebUrl = String.fromEnvironment(
     'PUBLIC_WEB_URL',
-    defaultValue: 'http://localhost:3001',
+    defaultValue: 'https://www.bisaagri.com',
   );
 
   static const String googleServerClientId = String.fromEnvironment(
@@ -67,6 +76,7 @@ abstract class AppConfig {
 
   /// Panggil di `main()` sebelum `di.init()`.
   static Future<void> bootstrap() async {
+    debugPrint('[BISA] APP_ENV=$appEnv');
     if (!kDebugMode) return;
 
     final fromDartDefine = apiUrl.trim();

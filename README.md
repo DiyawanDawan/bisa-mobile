@@ -27,11 +27,20 @@ Aplikasi **wajib** di-run dengan `API_URL`. Tanpa ini, layar terbuka tapi **data
 1. Buka folder `mobile_bisa`
 2. Tab **Run and Debug** (Ctrl+Shift+D)
 3. Pilih salah satu:
-   - **BISA — Android Emulator** → pakai `10.0.2.2` (default untuk emulator)
+   - **BISA — Development server ★** → `backend-dev-v1.bisaagri.com` (default pre-live / QA)
+   - **BISA — Android Emulator** → pakai `10.0.2.2` (backend lokal)
    - **BISA — Windows / Chrome (localhost)** → untuk `flutter run -d windows` atau Chrome
    - **BISA — HP Fisik (WiFi)** → HP dan PC harus satu jaringan WiFi
+   - **BISA — Production** → hanya saat go-live
 
 Jangan klik Run langsung tanpa memilih config di atas.
+
+### Build APK release (development)
+
+```powershell
+flutter build apk --release --target-platform=android-arm64 `
+  --dart-define-from-file=dart_define.development.json
+```
 
 ### Opsi 2 — HP fisik via USB (disarankan, tanpa firewall)
 

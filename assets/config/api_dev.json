@@ -1,5 +1,5 @@
 {
-  "API_URL": "https://art-calamitean-milton.ngrok-free.dev/api/v1",
-  "MEDIA_BASE_URL": "https://art-calamitean-milton.ngrok-free.dev",
-  "_note": "Flutter WEB otomatis pakai http://localhost:3000 (CORS). File ini untuk HP fisik/emulator."
+  "API_URL": "https://backend-dev-v1.bisaagri.com/api/v1",
+  "MEDIA_BASE_URL": "https://cdn.bisaagri.com",
+  "_note": "Default remote development. Flutter WEB tetap pakai localhost (CORS). Override via --dart-define bila perlu."
 }

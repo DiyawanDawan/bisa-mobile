@@ -2,7 +2,16 @@
   "version": "0.2.0",
   "configurations": [
     {
-      "name": "BISA — ngrok (HP / emulator) ★",
+      "name": "BISA — Development server ★",
+      "request": "launch",
+      "type": "dart",
+      "program": "lib/main.dart",
+      "toolArgs": [
+        "--dart-define-from-file=dart_define.development.json"
+      ]
+    },
+    {
+      "name": "BISA — ngrok (tunnel lokal)",
       "request": "launch",
       "type": "dart",
       "program": "lib/main.dart",
@@ -46,5 +55,14 @@
         "--dart-define-from-file=dart_define.dev.json"
       ]
     },
+    {
+      "name": "BISA — Production (go-live only)",
+      "request": "launch",
+      "type": "dart",
+      "program": "lib/main.dart",
+      "toolArgs": [
+        "--dart-define-from-file=dart_define.production.json"
+      ]
+    }
   ]
 }
