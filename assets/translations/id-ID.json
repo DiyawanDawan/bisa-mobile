@@ -2614,6 +2614,8 @@
   "negotiation.hint_edit_message": "Ubah pesan...",
   "negotiation.hint_write_message": "Tulis pesan... (/bantuan)",
   "negotiation.invoice_from_supplier": "Tagihan dari Supplier",
+  "negotiation.invoice_panel_show": "Tampilkan",
+  "negotiation.invoice_panel_hide": "Sembunyikan",
   "negotiation.invoice_paid_buyer": "Tagihan sudah dibayar. Anda bisa melihat detail pesanan atau unduh PDF tagihan.",
   "negotiation.invoice_paid_subtitle": "Pembeli sudah membayar. Koordinasi pengiriman tetap bisa via chat.",
   "negotiation.invoice_paid_title": "Pembayaran Diterima",

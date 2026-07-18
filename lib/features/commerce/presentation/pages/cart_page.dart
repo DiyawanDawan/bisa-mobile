@@ -563,7 +563,11 @@ class _CartPageState extends State<CartPage> {
               ),
           duration: const Duration(seconds: 5),
         );
-        final failureRoute = paymentInitFailureRoute(orderIds.firstOrNull);
+        final failureRoute = paymentInitFailureRoute(
+          orderIds.firstOrNull,
+          paymentCode: payment.code,
+          paymentName: payment.name,
+        );
         if (failureRoute != null) {
           context.push(failureRoute);
         }
@@ -627,7 +631,10 @@ class _CartPageState extends State<CartPage> {
 
     context.push(
       '/checkout-result',
-      extra: {'orders': orders},
+      extra: {
+        'orders': orders,
+        if (payment != null) 'selectedPaymentCode': payment.code,
+      },
     );
   }
 

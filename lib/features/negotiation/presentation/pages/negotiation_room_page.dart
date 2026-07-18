@@ -29,6 +29,7 @@ import 'package:mobile_bisa/shared/widgets/chat_room_skeleton.dart';
 import 'package:mobile_bisa/features/invoice/presentation/utils/invoice_export_helper.dart';
 import 'package:mobile_bisa/features/negotiation/presentation/widgets/negotiation_closure_dialog.dart';
 import 'package:mobile_bisa/shared/widgets/handwriting_input_sheet.dart';
+import 'package:mobile_bisa/shared/widgets/linkified_text.dart';
 import 'package:mobile_bisa/features/invoice/domain/repositories/invoice_repository.dart';
 import 'package:mobile_bisa/features/orders/domain/repositories/order_repository.dart';
 import 'package:url_launcher/url_launcher.dart';
@@ -59,8 +60,33 @@ class _NegotiationRoomPageState extends State<NegotiationRoomPage> {
   // Track F: on-device translation state
   // key = message ID, value = translated text (null = not translated)
   final Map<String, String?> _translatedTexts = {};
-  // IDs currently being translated
+  // IDs currently being translated (hanya jika butuh >150ms)
   final Set<String> _translatingIds = {};
+  bool _modelsPreparing = false;
+
+  /// Panel "Tagihan dari Supplier" — bisa collapse biar input chat tidak ketutup.
+  bool _invoicePanelExpanded = true;
+  bool _wasKeyboardOpen = false;
+
+  @override
+  void initState() {
+    super.initState();
+    // Prefetch model supaya tap Terjemahkan hampir instan.
+    TranslationUtil.warmUp();
+  }
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    // Keyboard muncul → auto-collapse tagihan supaya input chat terlihat.
+    final keyboardOpen = MediaQuery.viewInsetsOf(context).bottom > 80;
+    if (keyboardOpen && !_wasKeyboardOpen && _invoicePanelExpanded) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (mounted) setState(() => _invoicePanelExpanded = false);
+      });
+    }
+    _wasKeyboardOpen = keyboardOpen;
+  }
 
   void _scrollToBottom() {
     WidgetsBinding.instance.addPostFrameCallback((_) {
@@ -95,15 +121,47 @@ class _NegotiationRoomPageState extends State<NegotiationRoomPage> {
       return;
     }
 
-    setState(() => _translatingIds.add(msgId));
+    if (_translatingIds.contains(msgId)) return;
+
+    // Model belum siap: unduh dulu sekali (bukan spinner per-pesan).
+    if (!TranslationUtil.isReady) {
+      if (_modelsPreparing) return;
+      setState(() => _modelsPreparing = true);
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('negotiation.translate_downloading_model'.tr()),
+            duration: const Duration(seconds: 2),
+          ),
+        );
+      }
+      final ready = await TranslationUtil.ensureModelsReady();
+      if (mounted) setState(() => _modelsPreparing = false);
+      if (!ready) {
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text('negotiation.translate_failed'.tr()),
+              duration: const Duration(seconds: 3),
+            ),
+          );
+        }
+        return;
+      }
+    }
+
+    // Spinner hanya jika terjemahan >150ms (biasanya instan setelah model siap).
+    var showSpinner = false;
+    final spinnerTimer = Timer(const Duration(milliseconds: 150), () {
+      if (!mounted) return;
+      showSpinner = true;
+      setState(() => _translatingIds.add(msgId));
+    });
 
     try {
-      final detectedLang = await TranslationUtil.identifyLanguage(content);
-      final targetLang = (detectedLang == 'id') ? 'en' : 'id';
-
-      // Only support ID ↔ EN
-      if (detectedLang == 'und' ||
-          !{'id', 'en'}.contains(detectedLang)) {
+      final pair = await TranslationUtil.resolveIdEnDirection(content);
+      if (pair == null) {
+        // Hanya URL / tanpa teks bermakna — tidak ada yang diterjemahkan.
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
@@ -117,8 +175,8 @@ class _NegotiationRoomPageState extends State<NegotiationRoomPage> {
 
       final result = await TranslationUtil.translate(
         text: content,
-        sourceLanguageCode: detectedLang,
-        targetLanguageCode: targetLang,
+        sourceLanguageCode: pair.source,
+        targetLanguageCode: pair.target,
       );
 
       if (mounted) setState(() => _translatedTexts[msgId] = result);
@@ -132,7 +190,10 @@ class _NegotiationRoomPageState extends State<NegotiationRoomPage> {
         );
       }
     } finally {
-      if (mounted) setState(() => _translatingIds.remove(msgId));
+      spinnerTimer.cancel();
+      if (mounted && (showSpinner || _translatingIds.contains(msgId))) {
+        setState(() => _translatingIds.remove(msgId));
+      }
     }
   }
 
@@ -144,6 +205,7 @@ class _NegotiationRoomPageState extends State<NegotiationRoomPage> {
         ..subscribeToNegotiation(widget.negotiationId),
       child: Scaffold(
         backgroundColor: AppColors.background,
+        resizeToAvoidBottomInset: true,
         appBar: BisaAppBar(
           backgroundColor: AppColors.surface,
           centerTitle: false,
@@ -1043,14 +1105,18 @@ class _NegotiationRoomPageState extends State<NegotiationRoomPage> {
                     crossAxisAlignment: CrossAxisAlignment.end,
                     children: [
                       if (msg.content.trim().isNotEmpty)
-                        Text(
-                          _translatedTexts[msg.id] ?? msg.content,
+                        LinkifiedText(
+                          text: _translatedTexts[msg.id] ?? msg.content,
                           style: TextStyle(
                             color: isMe ? AppColors.white : AppColors.textPrimary,
                             fontSize: 14.sp,
                             fontWeight: FontWeight.w500,
                             height: 1.4,
                           ),
+                          // Own bubble (hijau): biru muda supaya kontras; peer: biru info.
+                          linkColor: isMe
+                              ? const Color(0xFFBFDBFE)
+                              : AppColors.info,
                         ),
                       if (msg.attachmentUrl != null &&
                           msg.attachmentUrl!.isNotEmpty) ...[
@@ -1100,17 +1166,23 @@ class _NegotiationRoomPageState extends State<NegotiationRoomPage> {
                               ),
                             )
                           : GestureDetector(
-                              onTap: () => _translateMessage(msg.id, msg.content),
+                              onTap: _modelsPreparing
+                                  ? null
+                                  : () => _translateMessage(msg.id, msg.content),
                               child: Text(
                                 _translatedTexts.containsKey(msg.id)
                                     ? 'negotiation.translate_show_original'.tr()
                                     : 'negotiation.translate_button'.tr(),
                                 style: TextStyle(
                                   fontSize: 10.sp,
-                                  color: AppColors.primary,
+                                  color: _modelsPreparing
+                                      ? AppColors.textHint
+                                      : AppColors.primary,
                                   fontWeight: FontWeight.w700,
                                   decoration: TextDecoration.underline,
-                                  decorationColor: AppColors.primary,
+                                  decorationColor: _modelsPreparing
+                                      ? AppColors.textHint
+                                      : AppColors.primary,
                                 ),
                               ),
                             ),
@@ -1618,64 +1690,12 @@ class _NegotiationRoomPageState extends State<NegotiationRoomPage> {
             SizedBox(height: AppSpacing.md),
           ],
 
-          // Buyer: review tagihan dari supplier
+          // Buyer: review tagihan dari supplier (collapse/expand)
           if (!_isInquiryMode(n) && !isSupplier && _hasIssuedInvoice(n)) ...[
-            _buildInvoiceReviewCard(
+            _buildCollapsibleInvoiceSection(
+              context,
               n,
               showPaymentPrompt: _orderNeedsPayment(n),
-            ),
-            if (_orderNeedsPayment(n)) ...[
-              SizedBox(height: AppSpacing.md12),
-              Row(
-                children: [
-                  Expanded(
-                    child: CustomButton(
-                      text: 'negotiation.action_review_pay'.tr(),
-                      useGradient: true,
-                      height: 48.h,
-                      onPressed: () => _navigateToReviewInvoice(context, n),
-                    ),
-                  ),
-                ],
-              ),
-              SizedBox(height: AppSpacing.sm),
-            ] else ...[
-              SizedBox(height: AppSpacing.md12),
-              _buildInvoiceWaitingBanner(
-                title: 'negotiation.banner_payment_received'.tr(),
-                subtitle: 'negotiation.banner_order_processing'.tr(namedArgs: {
-                  'orderNumber': n.order?.orderNumber ?? '',
-                }),
-              ),
-              SizedBox(height: AppSpacing.sm10),
-              CustomButton(
-                text: 'negotiation.action_view_order'.tr(),
-                useGradient: true,
-                height: 48.h,
-                onPressed: () => context.push(_orderDetailRoute(n)),
-              ),
-              SizedBox(height: AppSpacing.sm),
-            ],
-            Row(
-              children: [
-                Expanded(
-                  child: CustomButton(
-                    text: 'negotiation.action_view_invoice'.tr(),
-                    height: 44.h,
-                    isOutlined: true,
-                    onPressed: () => _navigateToReviewInvoice(context, n),
-                  ),
-                ),
-                SizedBox(width: AppSpacing.sm10),
-                Expanded(
-                  child: CustomButton(
-                    text: 'invoice.action_download_pdf'.tr(),
-                    height: 44.h,
-                    isOutlined: true,
-                    onPressed: () => _downloadInvoice(context, n.orderId!),
-                  ),
-                ),
-              ],
             ),
             SizedBox(height: AppSpacing.md12),
           ],
@@ -2165,9 +2185,176 @@ class _NegotiationRoomPageState extends State<NegotiationRoomPage> {
     );
   }
 
+  Widget _buildCollapsibleInvoiceSection(
+    BuildContext context,
+    NegotiationEntity n, {
+    required bool showPaymentPrompt,
+  }) {
+    final expanded = _invoicePanelExpanded;
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        // Header: selalu terlihat — tap untuk show/hide detail
+        Material(
+          color: AppColors.surface,
+          borderRadius: BorderRadius.circular(AppRadius.lg),
+          child: InkWell(
+            onTap: () => setState(() => _invoicePanelExpanded = !expanded),
+            borderRadius: BorderRadius.circular(AppRadius.lg),
+            child: Container(
+              width: double.infinity,
+              padding: EdgeInsets.symmetric(
+                horizontal: AppSpacing.md12,
+                vertical: AppSpacing.md12,
+              ),
+              decoration: BoxDecoration(
+                borderRadius: BorderRadius.circular(AppRadius.lg),
+                border: Border.all(color: AppColors.grey200),
+              ),
+              child: Row(
+                children: [
+                  Icon(
+                    Icons.receipt_long_outlined,
+                    color: AppColors.primary,
+                    size: 20.sp,
+                  ),
+                  SizedBox(width: AppSpacing.sm),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          'negotiation.invoice_from_supplier'.tr(),
+                          style: TextStyle(
+                            fontWeight: FontWeight.w800,
+                            fontSize: 13.sp,
+                            color: AppColors.textPrimary,
+                          ),
+                        ),
+                        if (!expanded) ...[
+                          SizedBox(height: 2.h),
+                          Text(
+                            formatMoneyIdr(n.totalEstimate),
+                            style: TextStyle(
+                              fontSize: 12.sp,
+                              fontWeight: FontWeight.w700,
+                              color: AppColors.primary,
+                            ),
+                          ),
+                        ],
+                      ],
+                    ),
+                  ),
+                  Text(
+                    expanded
+                        ? 'negotiation.invoice_panel_hide'.tr()
+                        : 'negotiation.invoice_panel_show'.tr(),
+                    style: TextStyle(
+                      fontSize: 11.sp,
+                      fontWeight: FontWeight.w700,
+                      color: AppColors.primary,
+                    ),
+                  ),
+                  SizedBox(width: 4.w),
+                  Icon(
+                    expanded
+                        ? Icons.keyboard_arrow_up_rounded
+                        : Icons.keyboard_arrow_down_rounded,
+                    color: AppColors.primary,
+                    size: 22.sp,
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ),
+        AnimatedSize(
+          duration: const Duration(milliseconds: 220),
+          curve: Curves.easeInOut,
+          alignment: Alignment.topCenter,
+          child: expanded
+              ? Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    SizedBox(height: AppSpacing.sm10),
+                    _buildInvoiceReviewCard(
+                      n,
+                      showPaymentPrompt: showPaymentPrompt,
+                      showHeader: false,
+                    ),
+                    if (showPaymentPrompt) ...[
+                      SizedBox(height: AppSpacing.md12),
+                      CustomButton(
+                        text: 'negotiation.action_review_pay'.tr(),
+                        useGradient: true,
+                        height: 48.h,
+                        onPressed: () => _navigateToReviewInvoice(context, n),
+                      ),
+                      SizedBox(height: AppSpacing.sm),
+                    ] else ...[
+                      SizedBox(height: AppSpacing.md12),
+                      _buildInvoiceWaitingBanner(
+                        title: 'negotiation.banner_payment_received'.tr(),
+                        subtitle: 'negotiation.banner_order_processing'
+                            .tr(namedArgs: {
+                          'orderNumber': n.order?.orderNumber ?? '',
+                        }),
+                      ),
+                      SizedBox(height: AppSpacing.sm10),
+                      CustomButton(
+                        text: 'negotiation.action_view_order'.tr(),
+                        useGradient: true,
+                        height: 48.h,
+                        onPressed: () => context.push(_orderDetailRoute(n)),
+                      ),
+                      SizedBox(height: AppSpacing.sm),
+                    ],
+                    Row(
+                      children: [
+                        Expanded(
+                          child: CustomButton(
+                            text: 'negotiation.action_view_invoice'.tr(),
+                            height: 44.h,
+                            isOutlined: true,
+                            onPressed: () =>
+                                _navigateToReviewInvoice(context, n),
+                          ),
+                        ),
+                        SizedBox(width: AppSpacing.sm10),
+                        Expanded(
+                          child: CustomButton(
+                            text: 'invoice.action_download_pdf'.tr(),
+                            height: 44.h,
+                            isOutlined: true,
+                            onPressed: () =>
+                                _downloadInvoice(context, n.orderId!),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ],
+                )
+              : (showPaymentPrompt
+                  ? Padding(
+                      padding: EdgeInsets.only(top: AppSpacing.sm10),
+                      child: CustomButton(
+                        text: 'negotiation.action_review_pay'.tr(),
+                        useGradient: true,
+                        height: 44.h,
+                        onPressed: () => _navigateToReviewInvoice(context, n),
+                      ),
+                    )
+                  : const SizedBox.shrink()),
+        ),
+      ],
+    );
+  }
+
   Widget _buildInvoiceReviewCard(
     NegotiationEntity n, {
     required bool showPaymentPrompt,
+    bool showHeader = true,
   }) {
     return Container(
       width: double.infinity,
@@ -2180,21 +2367,23 @@ class _NegotiationRoomPageState extends State<NegotiationRoomPage> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Row(
-            children: [
-              Icon(Icons.receipt_long_outlined, color: AppColors.primary, size: 20.sp),
-              SizedBox(width: AppSpacing.sm),
-              Text(
-                'negotiation.invoice_from_supplier'.tr(),
-                style: TextStyle(
-                  fontWeight: FontWeight.w800,
-                  fontSize: 14.sp,
-                  color: AppColors.textPrimary,
+          if (showHeader) ...[
+            Row(
+              children: [
+                Icon(Icons.receipt_long_outlined, color: AppColors.primary, size: 20.sp),
+                SizedBox(width: AppSpacing.sm),
+                Text(
+                  'negotiation.invoice_from_supplier'.tr(),
+                  style: TextStyle(
+                    fontWeight: FontWeight.w800,
+                    fontSize: 14.sp,
+                    color: AppColors.textPrimary,
+                  ),
                 ),
-              ),
-            ],
-          ),
-          SizedBox(height: AppSpacing.md12),
+              ],
+            ),
+            SizedBox(height: AppSpacing.md12),
+          ],
           _invoiceRow('invoice.label_product'.tr(), n.product.name),
           _invoiceRow(
             'invoice.label_qty'.tr(),

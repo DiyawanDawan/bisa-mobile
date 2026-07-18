@@ -138,24 +138,99 @@ class _AddPostPageState extends State<AddPostPage> {
 
     if (publishing) {
       final combinedText = '$title $content'.toLowerCase();
-      final bannedKeywords = [
-        'judi',
-        'slot',
-        'gacor',
-        'narkoba',
-        'senjata',
-        'bom',
-        'teroris',
-        'porn',
-        'bokep'
+      // Minimal 2 kata — hindari false positive (mis. "slot" = slot pickup logistik).
+      const bannedPhrases = [
+        // Judi / togel
+        'judi online',
+        'judi slot',
+        'main judi',
+        'situs judi',
+        'agen judi',
+        'slot gacor',
+        'slot online',
+        'slot maxwin',
+        'maxwin slot',
+        'togel online',
+        'pasang togel',
+        'bandar togel',
+        'casino online',
+        // Narkoba
+        'jual narkoba',
+        'beli narkoba',
+        'edaran narkoba',
+        'jual sabu',
+        'jual ganja',
+        'narkoba murah',
+        // Senjata / kekerasan
+        'jual senjata',
+        'beli senjata',
+        'senjata api',
+        'jual bom',
+        'rakit bom',
+        // Teror
+        'aksi teroris',
+        'jaringan teroris',
+        'bom bunuh',
+        'bokep',
+        'bokep online',
+        'bokep indonesia',
+        'bokep terbaru',
+        'bokep terbaru',
+        'bokep terbaru indonesia',
+        'bokep terbaru indonesia online',
+        'bokep terbaru indonesia online gratis',
+        'bokep terbaru indonesia online gratis terbaru',
+        'bokep terbaru indonesia online gratis terbaru',
+        'bokep terbaru indonesia online gratis terbaru indonesia',
+        'bokep terbaru indonesia online gratis terbaru indonesia online',
+        'bokep terbaru indonesia online gratis terbaru indonesia online gratis',
+        'bokep terbaru indonesia online gratis terbaru indonesia online gratis terbaru',
+        'bokep terbaru indonesia online gratis terbaru indonesia online gratis terbaru',
+        'bokep terbaru indonesia online gratis terbaru indonesia online gratis terbaru indonesia',
+        'bokep terbaru indonesia online gratis terbaru indonesia online gratis terbaru indonesia online',
+        'bokep terbaru indonesia online gratis terbaru indonesia online gratis terbaru indonesia online gratis',
+        'bokep terbaru indonesia online gratis terbaru indonesia online gratis terbaru indonesia online gratis terbaru',
+        'bokep terbaru indonesia online gratis terbaru indonesia online gratis terbaru indonesia online gratis terbaru indonesia',
+        'bokep terbaru indonesia online gratis terbaru indonesia online gratis terbaru indonesia online gratis terbaru indonesia online',
+        'bokep terbaru indonesia online gratis terbaru indonesia online gratis terbaru indonesia online gratis terbaru indonesia online gratis',
+        'bokep terbaru indonesia online gratis terbaru indonesia online gratis terbaru indonesia online gratis terbaru indonesia online gratis terbaru',
+        'bokep terbaru indonesia online gratis terbaru indonesia online gratis terbaru indonesia online gratis terbaru indonesia online gratis terbaru indonesia',
+        'bokep terbaru indonesia online gratis terbaru indonesia online gratis terbaru indonesia online gratis terbaru indonesia online gratis terbaru indonesia online',
+        'bokep terbaru indonesia online gratis terbaru indonesia online gratis terbaru indonesia online gratis terbaru indonesia online gratis terbaru indonesia online gratis',
+        'bokep terbaru indonesia online gratis terbaru indonesia online gratis terbaru indonesia online gratis terbaru indonesia online gratis terbaru indonesia online gratis terbaru',
+        'bokep terbaru indonesia online gratis terbaru indonesia online gratis terbaru indonesia online gratis terbaru indonesia online gratis terbaru indonesia online gratis terbaru indonesia',
+        'bokep terbaru indonesia online gratis terbaru indonesia online gratis terbaru indonesia online gratis terbaru indonesia online gratis terbaru indonesia online gratis terbaru indonesia online',
+        'bokep terbaru indonesia online gratis terbaru indonesia online gratis terbaru indonesia online gratis terbaru indonesia online gratis terbaru indonesia online gratis terbaru indonesia online gratis',
+        'bokep terbaru indonesia online gratis terbaru indonesia online gratis terbaru indonesia online gratis terbaru indonesia online gratis terbaru indonesia online gratis terbaru indonesia online gratis terbaru',
+        'bokep terbaru indonesia online gratis terbaru indonesia online gratis terbaru indonesia online gratis terbaru indonesia online gratis terbaru indonesia online gratis terbaru indonesia online gratis terbaru indonesia',
+        'porno',
+        'abg bokep',
+        'porno online',
+        'porno indonesia',
+        'porno terbaru',
+        'porno terbaru',
+        'porno terbaru indonesia',
+        'porno terbaru indonesia online',
+        'porno terbaru indonesia online gratis',
+        'porno terbaru indonesia online gratis terbaru',
+        // Konten dewasa
+        'video porno',
+        'slot gacor',
+        'maxwin slot',
+        'film porno',
+        'situs porno',
+        'jual bokep',
+        'link bokep',
+        'nonton bokep',
+        'konten dewasa',
       ];
 
       // 1. Check title & body text
-      for (final keyword in bannedKeywords) {
-        if (combinedText.contains(keyword)) {
+      for (final phrase in bannedPhrases) {
+        if (combinedText.contains(phrase)) {
           showErrorSnackBar(
             ctx,
-            'forum.banned_word_detected'.tr(namedArgs: {'word': keyword}),
+            'forum.banned_word_detected'.tr(namedArgs: {'word': phrase}),
           );
           return;
         }
@@ -176,12 +251,13 @@ class _AddPostPageState extends State<AddPostPage> {
           for (final path in imagesToScan) {
             final lines = await TextRecognitionUtil.extractLines(path);
             final lowerText = lines.join(' ').toLowerCase();
-            for (final keyword in bannedKeywords) {
-              if (lowerText.contains(keyword)) {
+            for (final phrase in bannedPhrases) {
+              if (lowerText.contains(phrase)) {
                 if (mounted) {
                   showErrorSnackBar(
                     context,
-                    'forum.banned_word_detected'.tr(namedArgs: {'word': keyword}),
+                    'forum.banned_word_detected'
+                        .tr(namedArgs: {'word': phrase}),
                   );
                 }
                 setState(() {

@@ -15,6 +15,9 @@ import '../../domain/entities/forum_media.dart';
 
 enum ForumMediaLayout { compact, standard, comment }
 
+/// Maksimal tile yang ditampilkan di feed; sisanya via overlay +N lalu swipe di viewer.
+const int _kFeedPreviewMax = 4;
+
 /// Grid preview for forum post/comment attachments.
 class ForumMediaGrid extends StatelessWidget {
   const ForumMediaGrid({
@@ -31,6 +34,59 @@ class ForumMediaGrid extends StatelessWidget {
   ForumMediaLayout get _resolvedLayout {
     if (compact) return ForumMediaLayout.compact;
     return layout;
+  }
+
+  void _openGallery(BuildContext context, int initialIndex) {
+    final item = media[initialIndex];
+    if (item.isVideo) {
+      _openVideoExternal(context, item);
+      return;
+    }
+    // Mulai dari gambar terdekat jika index video (viewer fokus image swipe).
+    final imageIndices = <int>[];
+    for (var i = 0; i < media.length; i++) {
+      if (media[i].isImage) imageIndices.add(i);
+    }
+    if (imageIndices.isEmpty) {
+      _openVideoExternal(context, item);
+      return;
+    }
+    var start = imageIndices.indexOf(initialIndex);
+    if (start < 0) {
+      start = 0;
+      for (var i = 0; i < imageIndices.length; i++) {
+        if (imageIndices[i] >= initialIndex) {
+          start = i;
+          break;
+        }
+      }
+    }
+    final images = imageIndices.map((i) => media[i]).toList();
+    Navigator.of(context).push(
+      PageRouteBuilder(
+        opaque: false,
+        barrierColor: AppColors.black.withValues(alpha: 0.92),
+        pageBuilder: (_, __, ___) => ForumMediaGalleryViewer(
+          media: images,
+          initialIndex: start,
+        ),
+        transitionsBuilder: (_, animation, __, child) =>
+            FadeTransition(opacity: animation, child: child),
+      ),
+    );
+  }
+
+  Future<void> _openVideoExternal(
+    BuildContext context,
+    ForumMediaItem item,
+  ) async {
+    final uri = Uri.tryParse(item.url);
+    if (uri == null) return;
+    if (!await launchUrl(uri, mode: LaunchMode.externalApplication)) {
+      if (context.mounted) {
+        showErrorSnackBar(context, 'forum.media_open_failed');
+      }
+    }
   }
 
   @override
@@ -50,10 +106,13 @@ class ForumMediaGrid extends StatelessWidget {
                 item: media.first,
                 width: maxWidth,
                 height: 200.h,
+                onTap: () => _openGallery(context, 0),
               ),
             );
           }
 
+          final preview = media.take(_kFeedPreviewMax).toList();
+          final extra = media.length - preview.length;
           final tileWidth = (maxWidth - 8.w) / 2;
           final tileHeight = tileWidth * 0.72;
 
@@ -63,11 +122,14 @@ class ForumMediaGrid extends StatelessWidget {
               spacing: AppSpacing.sm,
               runSpacing: AppSpacing.sm,
               children: [
-                for (final item in media)
+                for (int i = 0; i < preview.length; i++)
                   _MediaTile(
-                    item: item,
+                    item: preview[i],
                     width: tileWidth,
                     height: tileHeight,
+                    showMoreOverlay: extra > 0 && i == preview.length - 1,
+                    moreCount: extra,
+                    onTap: () => _openGallery(context, i),
                   ),
               ],
             ),
@@ -77,26 +139,215 @@ class ForumMediaGrid extends StatelessWidget {
     }
 
     final isCompact = _resolvedLayout == ForumMediaLayout.compact;
-    final items = media.take(isCompact ? 3 : media.length).toList();
-    final extra = media.length - items.length;
-    final tileSize = isCompact ? 72.w : 100.w;
 
-    return Padding(
-      padding: EdgeInsets.only(top: isCompact ? 8.h : 12.h),
-      child: Wrap(
-        spacing: AppSpacing.sm,
-        runSpacing: AppSpacing.sm,
-        children: [
-          for (int i = 0; i < items.length; i++)
-            _MediaTile(
-              item: items[i],
-              width: tileSize,
-              height: tileSize,
-              showMoreOverlay: isCompact && extra > 0 && i == items.length - 1,
-              moreCount: extra,
+    if (isCompact) {
+      final preview = media.take(3).toList();
+      final extra = media.length - preview.length;
+      final tileSize = 72.w;
+      return Padding(
+        padding: EdgeInsets.only(top: 8.h),
+        child: Wrap(
+          spacing: AppSpacing.sm,
+          runSpacing: AppSpacing.sm,
+          children: [
+            for (int i = 0; i < preview.length; i++)
+              _MediaTile(
+                item: preview[i],
+                width: tileSize,
+                height: tileSize,
+                showMoreOverlay: extra > 0 && i == preview.length - 1,
+                moreCount: extra,
+                onTap: () => _openGallery(context, i),
+              ),
+          ],
+        ),
+      );
+    }
+
+    // Feed / detail: collage rasio beragam, max 4 tile + overlay sisa.
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final maxWidth = constraints.maxWidth;
+        if (maxWidth <= 0) return const SizedBox.shrink();
+
+        return Padding(
+          padding: EdgeInsets.only(top: 12.h),
+          child: _ForumMediaCollage(
+            media: media,
+            maxWidth: maxWidth,
+            onOpen: (index) => _openGallery(context, index),
+          ),
+        );
+      },
+    );
+  }
+}
+
+/// Collage ala galeri: 1 penuh, 2 sejajar, 3 (besar + 2), 4+ (2×2, last +N).
+class _ForumMediaCollage extends StatelessWidget {
+  const _ForumMediaCollage({
+    required this.media,
+    required this.maxWidth,
+    required this.onOpen,
+  });
+
+  final List<ForumMediaItem> media;
+  final double maxWidth;
+  final ValueChanged<int> onOpen;
+
+  @override
+  Widget build(BuildContext context) {
+    final gap = 6.w;
+    final count = media.length;
+    final previewCount = count >= _kFeedPreviewMax ? _kFeedPreviewMax : count;
+    final extra = count - previewCount;
+
+    if (count == 1) {
+      return _MediaTile(
+        item: media.first,
+        width: maxWidth,
+        height: 220.h,
+        onTap: () => onOpen(0),
+      );
+    }
+
+    if (count == 2) {
+      final w = (maxWidth - gap) / 2;
+      return SizedBox(
+        height: 200.h,
+        child: Row(
+          children: [
+            Expanded(
+              flex: 5,
+              child: _MediaTile(
+                item: media[0],
+                width: w * 1.1,
+                height: 200.h,
+                borderRadius: BorderRadius.horizontal(
+                  left: Radius.circular(AppRadius.lg),
+                ),
+                onTap: () => onOpen(0),
+              ),
             ),
-        ],
-      ),
+            SizedBox(width: gap),
+            Expanded(
+              flex: 4,
+              child: _MediaTile(
+                item: media[1],
+                width: w * 0.9,
+                height: 200.h,
+                borderRadius: BorderRadius.horizontal(
+                  right: Radius.circular(AppRadius.lg),
+                ),
+                onTap: () => onOpen(1),
+              ),
+            ),
+          ],
+        ),
+      );
+    }
+
+    if (count == 3) {
+      final rightW = (maxWidth - gap) * 0.42;
+      final leftW = maxWidth - gap - rightW;
+      final halfH = (220.h - gap) / 2;
+      return SizedBox(
+        height: 220.h,
+        child: Row(
+          children: [
+            _MediaTile(
+              item: media[0],
+              width: leftW,
+              height: 220.h,
+              borderRadius: BorderRadius.horizontal(
+                left: Radius.circular(AppRadius.lg),
+              ),
+              onTap: () => onOpen(0),
+            ),
+            SizedBox(width: gap),
+            Column(
+              children: [
+                _MediaTile(
+                  item: media[1],
+                  width: rightW,
+                  height: halfH,
+                  borderRadius: BorderRadius.only(
+                    topRight: Radius.circular(AppRadius.lg),
+                  ),
+                  onTap: () => onOpen(1),
+                ),
+                SizedBox(height: gap),
+                _MediaTile(
+                  item: media[2],
+                  width: rightW,
+                  height: halfH,
+                  borderRadius: BorderRadius.only(
+                    bottomRight: Radius.circular(AppRadius.lg),
+                  ),
+                  onTap: () => onOpen(2),
+                ),
+              ],
+            ),
+          ],
+        ),
+      );
+    }
+
+    // 4+: tampilkan 4, last tile overlay +sisa
+    final cellW = (maxWidth - gap) / 2;
+    final cellH = 110.h;
+    return Column(
+      children: [
+        Row(
+          children: [
+            _MediaTile(
+              item: media[0],
+              width: cellW,
+              height: cellH * 1.15,
+              borderRadius: BorderRadius.only(
+                topLeft: Radius.circular(AppRadius.lg),
+              ),
+              onTap: () => onOpen(0),
+            ),
+            SizedBox(width: gap),
+            _MediaTile(
+              item: media[1],
+              width: cellW,
+              height: cellH * 1.15,
+              borderRadius: BorderRadius.only(
+                topRight: Radius.circular(AppRadius.lg),
+              ),
+              onTap: () => onOpen(1),
+            ),
+          ],
+        ),
+        SizedBox(height: gap),
+        Row(
+          children: [
+            _MediaTile(
+              item: media[2],
+              width: cellW,
+              height: cellH,
+              borderRadius: BorderRadius.only(
+                bottomLeft: Radius.circular(AppRadius.lg),
+              ),
+              onTap: () => onOpen(2),
+            ),
+            SizedBox(width: gap),
+            _MediaTile(
+              item: media[3],
+              width: cellW,
+              height: cellH,
+              borderRadius: BorderRadius.only(
+                bottomRight: Radius.circular(AppRadius.lg),
+              ),
+              showMoreOverlay: extra > 0,
+              moreCount: extra,
+              onTap: () => onOpen(3),
+            ),
+          ],
+        ),
+      ],
     );
   }
 }
@@ -106,141 +357,198 @@ class _MediaTile extends StatelessWidget {
     required this.item,
     required this.width,
     required this.height,
+    required this.onTap,
     this.showMoreOverlay = false,
     this.moreCount = 0,
+    this.borderRadius,
   });
 
   final ForumMediaItem item;
   final double width;
   final double height;
+  final VoidCallback onTap;
   final bool showMoreOverlay;
   final int moreCount;
+  final BorderRadius? borderRadius;
 
   @override
   Widget build(BuildContext context) {
+    final radius = borderRadius ?? BorderRadius.circular(AppRadius.lg);
     return GestureDetector(
-      onTap: () => _openMedia(context, item),
+      onTap: onTap,
       child: ClipRRect(
-        borderRadius: BorderRadius.circular(AppRadius.lg),
-        child: Stack(
-          children: [
-            if (item.isImage)
-              BisaNetworkImage(
-                imageUrl: item.url,
-                width: width,
-                height: height,
-                fit: BoxFit.cover,
-                placeholder: (_, __) => BisaMediaSkeleton(
+        borderRadius: radius,
+        child: SizedBox(
+          width: width,
+          height: height,
+          child: Stack(
+            fit: StackFit.expand,
+            children: [
+              if (item.isImage)
+                BisaNetworkImage(
+                  imageUrl: item.url,
                   width: width,
                   height: height,
-                  borderRadius: BorderRadius.circular(AppRadius.lg),
+                  fit: BoxFit.cover,
+                  placeholder: (_, __) => BisaMediaSkeleton(
+                    width: width,
+                    height: height,
+                    borderRadius: radius,
+                  ),
+                  errorWidget: (_, __, ___) => _fallback(),
+                )
+              else
+                ColoredBox(
+                  color: AppColors.grey900,
+                  child: Icon(
+                    LucideIcons.play,
+                    color: AppColors.surface,
+                    size: 28.sp,
+                  ),
                 ),
-                errorWidget: (_, __, ___) => _fallback(),
-              )
-            else
-              Container(
-                width: width,
-                height: height,
-                color: AppColors.grey900,
-                child: Icon(
-                  LucideIcons.play,
-                  color: AppColors.surface,
-                  size: 28.sp,
-                ),
-              ),
-            if (item.isVideo && !showMoreOverlay)
-              Positioned.fill(
-                child: Container(
-                  color: AppColors.textHint,
+              if (item.isVideo && !showMoreOverlay)
+                ColoredBox(
+                  color: AppColors.black.withValues(alpha: 0.35),
                   child: Icon(
                     LucideIcons.play,
                     color: AppColors.surface,
                     size: 24.sp,
                   ),
                 ),
-              ),
-            if (showMoreOverlay)
-              Positioned.fill(
-                child: Container(
-                  color: AppColors.textSecondary,
-                  alignment: Alignment.center,
-                  child: Text(
-                    '+$moreCount',
-                    style: TextStyle(
-                      color: AppColors.surface,
-                      fontWeight: FontWeight.w800,
-                      fontSize: 16.sp,
+              if (showMoreOverlay)
+                ColoredBox(
+                  color: AppColors.black.withValues(alpha: 0.55),
+                  child: Center(
+                    child: Text(
+                      '+$moreCount',
+                      style: TextStyle(
+                        color: AppColors.surface,
+                        fontWeight: FontWeight.w800,
+                        fontSize: 22.sp,
+                      ),
                     ),
                   ),
                 ),
-              ),
-          ],
+            ],
+          ),
         ),
       ),
     );
   }
 
   Widget _fallback() {
-    return Container(
-      width: width,
-      height: height,
+    return ColoredBox(
       color: AppColors.grey100,
       child: Icon(LucideIcons.imageOff, color: AppColors.grey400),
     );
   }
+}
 
-  Future<void> _openMedia(BuildContext context, ForumMediaItem item) async {
-    if (item.isImage) {
-      await showDialog<void>(
-        context: context,
-        barrierColor: AppColors.textPrimary,
-        builder: (ctx) => Dialog(
-          insetPadding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 24.h),
-          backgroundColor: AppColors.transparent,
-          child: Stack(
-            alignment: Alignment.topRight,
-            children: [
-              InteractiveViewer(
-                minScale: 0.8,
-                maxScale: 4,
-                child: ClipRRect(
-                  borderRadius: BorderRadius.circular(AppRadius.lg),
-                  child: BisaNetworkImage(
-                    imageUrl: item.url,
-                    fit: BoxFit.contain,
-                    placeholder: (_, __) => BisaMediaSkeleton(
-                      width: double.infinity,
-                      height: 240.h,
-                    ),
-                    errorWidget: (_, __, ___) => SizedBox(
-                      height: 240.h,
-                      child: Icon(
+/// Fullscreen gallery — swipe antar gambar.
+class ForumMediaGalleryViewer extends StatefulWidget {
+  const ForumMediaGalleryViewer({
+    super.key,
+    required this.media,
+    this.initialIndex = 0,
+  });
+
+  final List<ForumMediaItem> media;
+  final int initialIndex;
+
+  @override
+  State<ForumMediaGalleryViewer> createState() =>
+      _ForumMediaGalleryViewerState();
+}
+
+class _ForumMediaGalleryViewerState extends State<ForumMediaGalleryViewer> {
+  late final PageController _controller;
+  late int _index;
+
+  @override
+  void initState() {
+    super.initState();
+    _index = widget.initialIndex.clamp(0, widget.media.length - 1);
+    _controller = PageController(initialPage: _index);
+  }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final total = widget.media.length;
+    return Scaffold(
+      backgroundColor: AppColors.transparent,
+      body: SafeArea(
+        child: Stack(
+          children: [
+            PageView.builder(
+              controller: _controller,
+              itemCount: total,
+              onPageChanged: (i) => setState(() => _index = i),
+              itemBuilder: (context, i) {
+                final item = widget.media[i];
+                return InteractiveViewer(
+                  minScale: 0.8,
+                  maxScale: 4,
+                  child: Center(
+                    child: BisaNetworkImage(
+                      imageUrl: item.url,
+                      fit: BoxFit.contain,
+                      placeholder: (_, __) => BisaMediaSkeleton(
+                        width: double.infinity,
+                        height: 280.h,
+                      ),
+                      errorWidget: (_, __, ___) => Icon(
                         LucideIcons.imageOff,
                         color: AppColors.white.withValues(alpha: 0.54),
                         size: 48.sp,
                       ),
                     ),
                   ),
-                ),
+                );
+              },
+            ),
+            Positioned(
+              top: 8.h,
+              left: 8.w,
+              right: 8.w,
+              child: Row(
+                children: [
+                  IconButton(
+                    onPressed: () => Navigator.pop(context),
+                    icon: const Icon(Icons.close, color: AppColors.white),
+                  ),
+                  const Spacer(),
+                  if (total > 1)
+                    Container(
+                      padding: EdgeInsets.symmetric(
+                        horizontal: 12.w,
+                        vertical: 6.h,
+                      ),
+                      decoration: BoxDecoration(
+                        color: AppColors.black.withValues(alpha: 0.45),
+                        borderRadius: BorderRadius.circular(AppRadius.pill),
+                      ),
+                      child: Text(
+                        '${_index + 1} / $total',
+                        style: TextStyle(
+                          color: AppColors.white,
+                          fontWeight: FontWeight.w700,
+                          fontSize: 13.sp,
+                        ),
+                      ),
+                    ),
+                ],
               ),
-              IconButton(
-                onPressed: () => Navigator.pop(ctx),
-                icon: const Icon(Icons.close, color: AppColors.textOnPrimary),
-              ),
-            ],
-          ),
+            ),
+          ],
         ),
-      );
-      return;
-    }
-
-    final uri = Uri.tryParse(item.url);
-    if (uri == null) return;
-    if (!await launchUrl(uri, mode: LaunchMode.externalApplication)) {
-      if (context.mounted) {
-        showErrorSnackBar(context, 'forum.media_open_failed');
-      }
-    }
+      ),
+    );
   }
 }
 
@@ -369,7 +677,8 @@ class _ActionChip extends StatelessWidget {
         onTap: onTap,
         borderRadius: BorderRadius.circular(AppRadius.md),
         child: Padding(
-          padding: EdgeInsets.symmetric(horizontal: AppSpacing.md12, vertical: AppSpacing.sm),
+          padding: EdgeInsets.symmetric(
+              horizontal: AppSpacing.md12, vertical: AppSpacing.sm),
           child: Row(
             mainAxisSize: MainAxisSize.min,
             children: [

@@ -23,6 +23,7 @@ import 'package:mobile_bisa/features/follow/presentation/bloc/follow_cubit.dart'
 import 'package:mobile_bisa/features/notifications/presentation/bloc/notification_cubit.dart';
 import 'package:mobile_bisa/features/marketplace/presentation/bloc/compare_cubit.dart';
 import 'package:mobile_bisa/core/utils/router.dart';
+import 'package:mobile_bisa/core/utils/translation_util.dart';
 import 'package:mobile_bisa/injection_container.dart' as di;
 import 'package:mobile_bisa/core/constants/app_colors.dart';
 import 'package:mobile_bisa/core/constants/app_font_scale.dart';
@@ -131,6 +132,8 @@ Future<void> _bootstrapBackgroundServices() async {
     await bootstrapLocalization(savedLocale);
     await NotificationService.initialize();
     await FirebaseAnalytics.instance.logAppOpen();
+    // Prefetch model terjemahan ID↔EN supaya chat negosiasi instan.
+    TranslationUtil.warmUp();
   } catch (e, st) {
     debugPrint('[BISA] Startup service init gagal: $e\n$st');
   }

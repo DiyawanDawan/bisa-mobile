@@ -2631,6 +2631,8 @@
   "negotiation.hint_edit_message": "Edit message...",
   "negotiation.hint_write_message": "Write a message... (/help)",
   "negotiation.invoice_from_supplier": "Invoice from Supplier",
+  "negotiation.invoice_panel_show": "Show",
+  "negotiation.invoice_panel_hide": "Hide",
   "negotiation.invoice_paid_buyer": "Invoice has been paid. You can view order details or download the invoice PDF.",
   "negotiation.invoice_paid_subtitle": "The buyer has paid. Shipping coordination can still continue via chat.",
   "negotiation.invoice_paid_title": "Payment Received",

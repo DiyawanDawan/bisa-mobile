@@ -179,7 +179,7 @@ class PostCard extends StatelessWidget {
                     height: 1.6,
                   ),
                 ),
-                ForumMediaGrid(media: post.mediaUrls, compact: true),
+                ForumMediaGrid(media: post.mediaUrls),
                 if (post.tags.isNotEmpty ||
                     post.productMentions.isNotEmpty) ...[
                   SizedBox(height: AppSpacing.md12),

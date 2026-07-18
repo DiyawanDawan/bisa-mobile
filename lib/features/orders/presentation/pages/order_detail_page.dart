@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:io';
 
 import 'package:dartz/dartz.dart' hide State;
@@ -16,6 +17,7 @@ import '../../../../core/constants/app_text_styles.dart';
 import 'package:mobile_bisa/core/utils/payment_status_utils.dart';
 import 'package:mobile_bisa/core/utils/safe_area_utils.dart';
 import 'package:mobile_bisa/core/errors/failures.dart';
+import 'package:mobile_bisa/core/network/api_client.dart';
 import 'package:mobile_bisa/features/invoice/presentation/utils/invoice_export_helper.dart';
 import 'package:mobile_bisa/features/orders/domain/entities/order_entity.dart';
 import 'package:mobile_bisa/features/orders/domain/repositories/order_repository.dart';
@@ -41,13 +43,19 @@ import 'package:mobile_bisa/features/orders/presentation/utils/order_status_i18n
 
 class OrderDetailPage extends StatefulWidget {
   final String orderId;
-  /// Set `true` setelah checkout dari keranjang — otomatis buka picker metode (bukan bayar langsung).
+  /// Set `true` setelah checkout dari keranjang — lanjut bayar tanpa minta metode lagi
+  /// jika [initialPaymentCode] / metode tersimpan sudah ada.
   final bool autoStartPayment;
+  /// Metode yang sudah dipilih di checkout — jangan tampilkan picker lagi.
+  final String? initialPaymentCode;
+  final String? initialPaymentName;
 
   const OrderDetailPage({
     super.key,
     required this.orderId,
     this.autoStartPayment = false,
+    this.initialPaymentCode,
+    this.initialPaymentName,
   });
 
   @override
@@ -70,6 +78,19 @@ class _OrderDetailPageState extends State<OrderDetailPage> {
   List<String> _batchOrderIds = const [];
   bool _batchContextLoaded = false;
 
+  @override
+  void initState() {
+    super.initState();
+    final code = widget.initialPaymentCode?.trim();
+    if (code != null && code.isNotEmpty) {
+      _selectedChannelCode = code;
+      _selectedChannelName =
+          widget.initialPaymentName?.trim().isNotEmpty == true
+              ? widget.initialPaymentName!.trim()
+              : code;
+    }
+  }
+
   void _applyOrder(OrderEntity order) {
     setState(() {
       _order = order;
@@ -86,8 +107,26 @@ class _OrderDetailPageState extends State<OrderDetailPage> {
             _selectedChannelCode;
       }
     });
+    unawaited(_maybeHydrateSavedPayment(order));
     _maybeAutoPickPaymentMethod(order);
     _loadBatchPaymentContext(order);
+  }
+
+  /// Prefill metode dari profil jika belum ada — supaya tidak kosong di UI.
+  Future<void> _maybeHydrateSavedPayment(OrderEntity order) async {
+    if (order.status != 'PENDING') return;
+    if (_selectedChannelCode != null && _selectedChannelCode!.isNotEmpty) {
+      return;
+    }
+    final saved = await _loadSavedPaymentPreference();
+    if (!mounted || saved == null) return;
+    if (_selectedChannelCode != null && _selectedChannelCode!.isNotEmpty) {
+      return;
+    }
+    setState(() {
+      _selectedChannelCode = saved.code;
+      _selectedChannelName = saved.name;
+    });
   }
 
   Future<void> _loadBatchPaymentContext(OrderEntity order) async {
@@ -147,10 +186,52 @@ class _OrderDetailPageState extends State<OrderDetailPage> {
     if (!widget.autoStartPayment || _autoPickTriggered) return;
     if (order.status != 'PENDING') return;
     _autoPickTriggered = true;
-    WidgetsBinding.instance.addPostFrameCallback((_) {
+    WidgetsBinding.instance.addPostFrameCallback((_) async {
       if (!mounted || _order == null) return;
-      _pickPaymentMethod(context, _order!);
+
+      // Sudah punya metode (dari checkout / initial) → langsung bayar, jangan picker lagi.
+      if (_hasPaymentMethodSelected(_order!)) {
+        await _continueToPayment(context, _order!);
+        return;
+      }
+
+      // Fallback: metode tersimpan di profil.
+      final saved = await _loadSavedPaymentPreference();
+      if (!mounted || _order == null) return;
+      if (saved != null) {
+        setState(() {
+          _selectedChannelCode = saved.code;
+          _selectedChannelName = saved.name;
+        });
+        await _continueToPayment(context, _order!);
+        return;
+      }
+
+      // Baru minta pilih jika belum ada sama sekali.
+      await _pickPaymentMethod(context, _order!);
     });
+  }
+
+  Future<PaymentMethodChoice?> _loadSavedPaymentPreference() async {
+    try {
+      final res = await sl<ApiClient>().dio.get('/users/me/saved-payments');
+      final list = res.data['data'] as List? ?? [];
+      if (list.isEmpty) return null;
+      final def = list.cast<Map>().firstWhere(
+            (e) => e['isDefault'] == true,
+            orElse: () => list.first,
+          );
+      final code = '${def['channelCode']}'.trim();
+      if (code.isEmpty) return null;
+      return PaymentMethodChoice(
+        code: code,
+        name: '${def['channelName']}'.trim().isEmpty
+            ? code
+            : '${def['channelName']}'.trim(),
+      );
+    } catch (_) {
+      return null;
+    }
   }
 
   Future<void> _openPaymentInstructions(Map<String, dynamic> data) async {
@@ -531,11 +612,7 @@ class _OrderDetailPageState extends State<OrderDetailPage> {
             ),
           ]),
           SizedBox(height: AppSpacing.md12),
-          _buildPaymentStatusSection(o),
-          if (o.status == 'PENDING') ...[
-            SizedBox(height: AppSpacing.md12),
-            _buildPaymentMethodSection(context, o),
-          ],
+          _buildPaymentStatusSection(context, o),
           SizedBox(height: AppSpacing.xl),
           _buildActions(context),
           SizedBox(height: MediaQuery.paddingOf(context).bottom + AppSpacing.xl),
@@ -589,111 +666,6 @@ class _OrderDetailPageState extends State<OrderDetailPage> {
     );
   }
 
-  Widget _buildPaymentMethodSection(BuildContext context, OrderEntity o) {
-    final channelCode = _resolvedChannelCode(o);
-    final channelName = _resolvedChannelName(o);
-    final hasSelection = channelCode != null && channelCode.isNotEmpty;
-    final selectedDiffersFromInitialized = _pendingPayment != null &&
-        _pendingPayment!['channelCode']?.toString().toUpperCase() !=
-            channelCode?.toUpperCase();
-
-    return _buildSection('orders.section_payment_method'.tr(), [
-      if (hasSelection) ...[
-        Container(
-          width: double.infinity,
-          padding: EdgeInsets.all(AppSpacing.md12),
-          decoration: BoxDecoration(
-            color: AppColors.primary.withValues(alpha: 0.06),
-            borderRadius: BorderRadius.circular(AppRadius.md),
-            border: Border.all(color: AppColors.primary.withValues(alpha: 0.2)),
-          ),
-          child: Row(
-            children: [
-              Icon(LucideIcons.wallet, size: 18.sp, color: AppColors.primary),
-              SizedBox(width: AppSpacing.sm10),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      'orders.method_selected_label'.tr(),
-                      style: AppTextStyles.caption(color: AppColors.textSecondary),
-                    ),
-                    SizedBox(height: 2.h),
-                    Text(
-                      channelName ?? 'orders.payment_fallback'.tr(),
-                      style: TextStyle(
-                        fontSize: 15.sp,
-                        fontWeight: FontWeight.w900,
-                        color: AppColors.primary,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-              TextButton(
-                onPressed: () => _pickPaymentMethod(context, o),
-                style: TextButton.styleFrom(
-                  foregroundColor: AppColors.primary,
-                  padding: EdgeInsets.symmetric(
-                    horizontal: AppSpacing.sm,
-                    vertical: AppSpacing.xs,
-                  ),
-                  minimumSize: Size.zero,
-                  tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-                ),
-                child: Text(
-                  'orders.change_method'.tr(),
-                  style: TextStyle(
-                    fontSize: 13.sp,
-                    fontWeight: FontWeight.w800,
-                  ),
-                ),
-              ),
-            ],
-          ),
-        ),
-        if (selectedDiffersFromInitialized) ...[
-          SizedBox(height: AppSpacing.sm),
-          Text(
-            'orders.method_changed_hint'.tr(),
-            style: TextStyle(
-              fontSize: 11.sp,
-              color: AppColors.warning,
-              height: 1.4,
-            ),
-          ),
-        ],
-      ] else ...[
-        OutlinedButton.icon(
-          onPressed: () => _pickPaymentMethod(context, o),
-          icon: Icon(LucideIcons.wallet, size: 16.sp),
-          label: Text(
-            'orders.pick_payment_method'.tr(),
-            style: TextStyle(fontSize: 13.sp, fontWeight: FontWeight.w700),
-          ),
-          style: OutlinedButton.styleFrom(
-            foregroundColor: AppColors.primary,
-            side: BorderSide(color: AppColors.primary.withValues(alpha: 0.5)),
-            minimumSize: Size(double.infinity, 44.h),
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(AppRadius.md),
-            ),
-          ),
-        ),
-        SizedBox(height: 6.h),
-        Text(
-          'orders.pick_method_hint'.tr(),
-          style: TextStyle(
-            fontSize: 11.sp,
-            color: AppColors.textHint,
-            height: 1.4,
-          ),
-        ),
-      ],
-    ]);
-  }
-
   String _paymentStatusLabel(OrderEntity o) {
     return orderPaymentStatusLabel(o.transaction?.paymentStatus);
   }
@@ -719,12 +691,14 @@ class _OrderDetailPageState extends State<OrderDetailPage> {
     return orderEscrowStatusLabel(o.transaction?.status);
   }
 
-  Widget _buildPaymentStatusSection(OrderEntity o) {
+  Widget _buildPaymentStatusSection(BuildContext context, OrderEntity o) {
     final tx = o.transaction;
     final paymentLabel = _paymentStatusLabel(o);
     final paymentColor = _paymentStatusColor(o);
     final channelName = _resolvedChannelName(o);
+    final hasMethod = _hasPaymentMethodSelected(o);
     final paidAt = tx?.paidAt;
+    final isPendingOrder = o.status == 'PENDING';
 
     final isPaymentExpired =
         tx?.paymentStatus?.toUpperCase() == 'EXPIRED';
@@ -747,53 +721,129 @@ class _OrderDetailPageState extends State<OrderDetailPage> {
           borderRadius: BorderRadius.circular(AppRadius.lg),
           border: Border.all(color: paymentColor.withValues(alpha: 0.25)),
         ),
-        child: Row(
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Icon(
-              tx?.paymentStatus?.toUpperCase() == 'SUCCESS'
-                  ? LucideIcons.circleCheck
-                  : isPaymentExpired
-                      ? LucideIcons.circleX
-                      : LucideIcons.creditCard,
-              size: 20.sp,
-              color: paymentColor,
+            Row(
+              children: [
+                Icon(
+                  tx?.paymentStatus?.toUpperCase() == 'SUCCESS'
+                      ? LucideIcons.circleCheck
+                      : isPaymentExpired
+                          ? LucideIcons.circleX
+                          : LucideIcons.creditCard,
+                  size: 20.sp,
+                  color: paymentColor,
+                ),
+                SizedBox(width: AppSpacing.sm10),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        paymentLabel,
+                        style: TextStyle(
+                          fontSize: 15.sp,
+                          fontWeight: FontWeight.w900,
+                          color: paymentColor,
+                        ),
+                      ),
+                      if (tx != null) ...[
+                        SizedBox(height: 4.h),
+                        Text(
+                          'orders.escrow_prefix'.tr(
+                            namedArgs: {'status': _escrowStatusLabel(o)},
+                          ),
+                          style: AppTextStyles.caption(
+                              color: AppColors.textSecondary),
+                        ),
+                      ],
+                    ],
+                  ),
+                ),
+              ],
             ),
-            SizedBox(width: AppSpacing.sm10),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
+            // Metode + Ubah dalam kartu yang sama (tidak duplikat section).
+            if (hasMethod) ...[
+              SizedBox(height: AppSpacing.md12),
+              Divider(height: 1, color: paymentColor.withValues(alpha: 0.2)),
+              SizedBox(height: AppSpacing.md12),
+              Row(
                 children: [
-                  Text(
-                    paymentLabel,
-                    style: TextStyle(
-                      fontSize: 15.sp,
-                      fontWeight: FontWeight.w900,
-                      color: paymentColor,
+                  Icon(LucideIcons.wallet, size: 16.sp, color: AppColors.primary),
+                  SizedBox(width: AppSpacing.sm),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          'orders.field_method'.tr(),
+                          style: AppTextStyles.caption(
+                              color: AppColors.textSecondary),
+                        ),
+                        SizedBox(height: 2.h),
+                        Text(
+                          channelName ?? 'orders.payment_fallback'.tr(),
+                          style: TextStyle(
+                            fontSize: 14.sp,
+                            fontWeight: FontWeight.w800,
+                            color: AppColors.textPrimary,
+                          ),
+                        ),
+                      ],
                     ),
                   ),
-                  if (tx != null) ...[
-                    SizedBox(height: 4.h),
-                    Text(
-                      'orders.escrow_prefix'.tr(
-                        namedArgs: {'status': _escrowStatusLabel(o)},
+                  if (isPendingOrder)
+                    TextButton(
+                      onPressed: () => _pickPaymentMethod(context, o),
+                      style: TextButton.styleFrom(
+                        foregroundColor: AppColors.primary,
+                        padding: EdgeInsets.symmetric(
+                          horizontal: AppSpacing.sm,
+                          vertical: AppSpacing.xs,
+                        ),
+                        minimumSize: Size.zero,
+                        tapTargetSize: MaterialTapTargetSize.shrinkWrap,
                       ),
-                      style: AppTextStyles.caption(color: AppColors.textSecondary),
+                      child: Text(
+                        'orders.change_method'.tr(),
+                        style: TextStyle(
+                          fontSize: 13.sp,
+                          fontWeight: FontWeight.w800,
+                        ),
+                      ),
                     ),
-                  ],
                 ],
               ),
-            ),
+            ] else if (isPendingOrder) ...[
+              SizedBox(height: AppSpacing.md12),
+              OutlinedButton.icon(
+                onPressed: () => _pickPaymentMethod(context, o),
+                icon: Icon(LucideIcons.wallet, size: 16.sp),
+                label: Text(
+                  'orders.pick_payment_method'.tr(),
+                  style: TextStyle(fontSize: 13.sp, fontWeight: FontWeight.w700),
+                ),
+                style: OutlinedButton.styleFrom(
+                  foregroundColor: AppColors.primary,
+                  side: BorderSide(
+                      color: AppColors.primary.withValues(alpha: 0.5)),
+                  minimumSize: Size(double.infinity, 40.h),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(AppRadius.md),
+                  ),
+                ),
+              ),
+            ],
           ],
         ),
       ),
-      if (channelName != null && channelName.isNotEmpty)
-        _infoRow('orders.field_method'.tr(), channelName),
       if (paidAt != null)
         _infoRow(
           'orders.field_paid_at'.tr(),
           DateFormat('dd MMM yyyy, HH:mm').format(paidAt),
         ),
-      if (tx == null)
+      if (tx == null && !hasMethod)
         Padding(
           padding: EdgeInsets.only(top: 4.h),
           child: Text(
@@ -820,26 +870,54 @@ class _OrderDetailPageState extends State<OrderDetailPage> {
 
     final isBuyer = currentUser.role == 'BUYER';
     final isSupplier = currentUser.role == 'SUPPLIER';
+    final isPendingPayment = o.status == 'PENDING';
 
     return Column(
       children: [
-        if (o.status != 'CANCELLED')
+        // PENDING: Unduh Invoice (kiri) + Lanjut bayar (kanan) sejajar.
+        if (isBuyer && isPendingPayment) ...[
+          Padding(
+            padding: EdgeInsets.only(bottom: AppSpacing.md12),
+            child: Row(
+              children: [
+                Expanded(
+                  child: CustomButton(
+                    text: 'orders.action_download_invoice'.tr(),
+                    isOutlined: true,
+                    backgroundColor: AppColors.primary,
+                    onPressed: () =>
+                        InvoiceExportHelper.exportOrder(context, o),
+                  ),
+                ),
+                SizedBox(width: AppSpacing.sm10),
+                Expanded(
+                  child: CustomButton(
+                    text: 'orders.action_continue_payment'.tr(),
+                    useGradient: true,
+                    onPressed: _hasPaymentMethodSelected(o) && !_paymentBusy
+                        ? () => _continueToPayment(context, o)
+                        : null,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
+        if (!isPendingPayment && o.status != 'CANCELLED')
           _actionButton(
             'orders.action_download_invoice'.tr(),
             AppColors.primary,
             () => InvoiceExportHelper.exportOrder(context, o),
             isOutlined: true,
           ),
-        if (isBuyer && o.status == 'PENDING') ...[
+        // Supplier / non-buyer di PENDING: tetap bisa unduh invoice penuh.
+        if (!isBuyer && isPendingPayment && o.status != 'CANCELLED')
           _actionButton(
-            'orders.action_continue_payment'.tr(),
+            'orders.action_download_invoice'.tr(),
             AppColors.primary,
-            _hasPaymentMethodSelected(o) && !_paymentBusy
-                ? () => _continueToPayment(context, o)
-                : null,
-            useGradient: true,
+            () => InvoiceExportHelper.exportOrder(context, o),
+            isOutlined: true,
           ),
-        ],
         if (isBuyer &&
             (o.status == 'SHIPPED' || o.status == 'PROCESSING')) ...[
           if (o.status == 'SHIPPED')

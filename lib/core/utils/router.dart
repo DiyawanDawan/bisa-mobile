@@ -326,9 +326,15 @@ final goRouter = GoRouter(
             final queryAutoPay = state.uri.queryParameters['autoPay'] == '1';
             final autoPay =
                 queryAutoPay || (extra is Map && extra['autoPay'] == true);
+            final paymentCode = state.uri.queryParameters['paymentCode'] ??
+                (extra is Map ? extra['paymentCode']?.toString() : null);
+            final paymentName = state.uri.queryParameters['paymentName'] ??
+                (extra is Map ? extra['paymentName']?.toString() : null);
             return OrderDetailPage(
               orderId: state.pathParameters['id']!,
               autoStartPayment: autoPay,
+              initialPaymentCode: paymentCode,
+              initialPaymentName: paymentName,
             );
           },
         ),

@@ -24,10 +24,26 @@ void leavePaymentInstruction(
 
 /// Rute setelah order dibuat tetapi inisialisasi pembayaran gagal.
 /// Tidak boleh ke `/checkout-result` (itu untuk alur sukses).
-String? paymentInitFailureRoute(String? leadOrderId, {bool autoPay = true}) {
+/// [paymentCode]/[paymentName] diteruskan agar tidak minta pilih metode lagi.
+String? paymentInitFailureRoute(
+  String? leadOrderId, {
+  bool autoPay = true,
+  String? paymentCode,
+  String? paymentName,
+}) {
   if (leadOrderId == null || leadOrderId.isEmpty) return null;
-  final suffix = autoPay ? '?autoPay=1' : '';
-  return '/order/$leadOrderId$suffix';
+  final params = <String, String>{};
+  if (autoPay) params['autoPay'] = '1';
+  final code = paymentCode?.trim();
+  if (code != null && code.isNotEmpty) {
+    params['paymentCode'] = code;
+  }
+  final name = paymentName?.trim();
+  if (name != null && name.isNotEmpty) {
+    params['paymentName'] = name;
+  }
+  final query = params.isEmpty ? '' : '?${Uri(queryParameters: params).query}';
+  return '/order/$leadOrderId$query';
 }
 
 /// Buka detail checkout multi-supplier jika memungkinkan.

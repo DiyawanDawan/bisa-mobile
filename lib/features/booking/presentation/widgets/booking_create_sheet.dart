@@ -184,7 +184,10 @@ import 'package:lucide_icons_flutter/lucide_icons.dart';
       final p = widget.product;
       final qty = _parseQty() ?? 0;
       final subtotal = qty * p.pricePerUnit;
-      final bottomInset = MediaQuery.viewInsetsOf(context).bottom;
+      final media = MediaQuery.of(context);
+      final bottomInset = media.viewInsets.bottom;
+      // Sisakan ruang di atas keyboard supaya tombol submit tetap terlihat.
+      final maxSheetHeight = media.size.height * 0.92 - bottomInset;
 
       return Padding(
         padding: EdgeInsets.fromLTRB(
@@ -195,157 +198,199 @@ import 'package:lucide_icons_flutter/lucide_icons.dart';
         ),
         child: BlocBuilder<BookingCubit, BookingState>(
           builder: (context, state) {
-            return Column(
-              mainAxisSize: MainAxisSize.min,
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Center(
-                  child: Container(
-                    width: 40.w,
-                    height: 4.h,
-                    decoration: BoxDecoration(
-                      color: AppColors.grey200,
-                      borderRadius: BorderRadius.circular(2),
-                    ),
-                  ),
-                ),
-                SizedBox(height: AppSpacing.md),
-                Row(
-                  children: [
-                    Icon(LucideIcons.calendarClock, color: AppColors.primary, size: 22.sp),
-                    SizedBox(width: AppSpacing.sm),
-                    Expanded(
-                      child: Text(
-                        'booking.create_title'.tr(),
-                        style: TextStyle(fontSize: 17.sp, fontWeight: FontWeight.w800),
-                      ),
-                    ),
-                  ],
-                ),
-                SizedBox(height: AppSpacing.sm),
-                Text(
-                  p.name,
-                  style: TextStyle(fontSize: 14.sp, color: AppColors.textSecondary),
-                ),
-                SizedBox(height: AppSpacing.md),
-                Container(
-                  width: double.infinity,
-                  padding: EdgeInsets.all(AppSpacing.md),
-                  decoration: BoxDecoration(
-                    color: AppColors.primary.withValues(alpha: 0.06),
-                    borderRadius: BorderRadius.circular(AppRadius.tile),
-                  ),
-                  child: Text(
-                    'booking.create_banner'.tr(namedArgs: {
-                      'stock': '${p.stock}',
-                      'unit': p.unit,
-                    }),
-                    style: TextStyle(fontSize: 12.sp, color: AppColors.primary),
-                  ),
-                ),
-                SizedBox(height: AppSpacing.md),
-                if (_isLoadingLots) ...[
-                  const LinearProgressIndicator(),
-                  SizedBox(height: AppSpacing.sm),
-                ],
-                if (_lotOptions.isNotEmpty) ...[
-                  Text(
-                    'Pilih batch panen (opsional)',
-                    style: TextStyle(fontSize: 12.sp, color: AppColors.textSecondary),
-                  ),
-                  SizedBox(height: AppSpacing.sm),
-                  DropdownButtonFormField<String?>(
-                    initialValue: _selectedLotId,
-                    items: [
-                      const DropdownMenuItem<String?>(
-                        value: null,
-                        child: Text('Tanpa lot panen (stok siap kirim)'),
-                      ),
-                      ..._lotOptions.map(
-                        (lot) => DropdownMenuItem<String?>(
-                          value: lot.id,
-                          child: Text(
-                            '${DateFormat('dd MMM yyyy').format(lot.expectedHarvestDate)} · ~${lot.availableQuantityTon} ton',
-                            overflow: TextOverflow.ellipsis,
+            return ConstrainedBox(
+              constraints: BoxConstraints(
+                maxHeight: maxSheetHeight.clamp(280.0, media.size.height),
+              ),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Flexible(
+                    child: SingleChildScrollView(
+                      keyboardDismissBehavior:
+                          ScrollViewKeyboardDismissBehavior.onDrag,
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Center(
+                            child: Container(
+                              width: 40.w,
+                              height: 4.h,
+                              decoration: BoxDecoration(
+                                color: AppColors.grey200,
+                                borderRadius: BorderRadius.circular(2),
+                              ),
+                            ),
                           ),
-                        ),
+                          SizedBox(height: AppSpacing.md),
+                          Row(
+                            children: [
+                              Icon(LucideIcons.calendarClock,
+                                  color: AppColors.primary, size: 22.sp),
+                              SizedBox(width: AppSpacing.sm),
+                              Expanded(
+                                child: Text(
+                                  'booking.create_title'.tr(),
+                                  style: TextStyle(
+                                      fontSize: 17.sp,
+                                      fontWeight: FontWeight.w800),
+                                ),
+                              ),
+                            ],
+                          ),
+                          SizedBox(height: AppSpacing.sm),
+                          Text(
+                            p.name,
+                            style: TextStyle(
+                                fontSize: 14.sp,
+                                color: AppColors.textSecondary),
+                          ),
+                          SizedBox(height: AppSpacing.md),
+                          Container(
+                            width: double.infinity,
+                            padding: EdgeInsets.all(AppSpacing.md),
+                            decoration: BoxDecoration(
+                              color: AppColors.primary.withValues(alpha: 0.06),
+                              borderRadius:
+                                  BorderRadius.circular(AppRadius.tile),
+                            ),
+                            child: Text(
+                              'booking.create_banner'.tr(namedArgs: {
+                                'stock': '${p.stock}',
+                                'unit': p.unit,
+                              }),
+                              style: TextStyle(
+                                  fontSize: 12.sp, color: AppColors.primary),
+                            ),
+                          ),
+                          SizedBox(height: AppSpacing.md),
+                          if (_isLoadingLots) ...[
+                            const LinearProgressIndicator(),
+                            SizedBox(height: AppSpacing.sm),
+                          ],
+                          if (_lotOptions.isNotEmpty) ...[
+                            Text(
+                              'Pilih batch panen (opsional)',
+                              style: TextStyle(
+                                  fontSize: 12.sp,
+                                  color: AppColors.textSecondary),
+                            ),
+                            SizedBox(height: AppSpacing.sm),
+                            DropdownButtonFormField<String?>(
+                              initialValue: _selectedLotId,
+                              items: [
+                                const DropdownMenuItem<String?>(
+                                  value: null,
+                                  child: Text(
+                                      'Tanpa lot panen (stok siap kirim)'),
+                                ),
+                                ..._lotOptions.map(
+                                  (lot) => DropdownMenuItem<String?>(
+                                    value: lot.id,
+                                    child: Text(
+                                      '${DateFormat('dd MMM yyyy').format(lot.expectedHarvestDate)} · ~${lot.availableQuantityTon} ton',
+                                      overflow: TextOverflow.ellipsis,
+                                    ),
+                                  ),
+                                ),
+                              ],
+                              onChanged: (value) =>
+                                  setState(() => _selectedLotId = value),
+                              decoration: InputDecoration(
+                                border: OutlineInputBorder(
+                                  borderRadius:
+                                      BorderRadius.circular(AppRadius.tile),
+                                ),
+                                isDense: true,
+                              ),
+                            ),
+                            SizedBox(height: AppSpacing.sm),
+                          ],
+                          ListTile(
+                            contentPadding: EdgeInsets.zero,
+                            title: Text('Target kirim (opsional)',
+                                style: TextStyle(fontSize: 13.sp)),
+                            subtitle: Text(
+                              _expectedDeliveryDate == null
+                                  ? '-'
+                                  : DateFormat('dd MMM yyyy')
+                                      .format(_expectedDeliveryDate!),
+                            ),
+                            trailing: IconButton(
+                              icon: const Icon(LucideIcons.calendar),
+                              onPressed: () async {
+                                final now = DateTime.now();
+                                final picked = await showDatePicker(
+                                  context: context,
+                                  initialDate: _expectedDeliveryDate ??
+                                      now.add(const Duration(days: 7)),
+                                  firstDate: now,
+                                  lastDate:
+                                      now.add(const Duration(days: 730)),
+                                );
+                                if (picked != null) {
+                                  setState(
+                                      () => _expectedDeliveryDate = picked);
+                                }
+                              },
+                            ),
+                          ),
+                          SizedBox(height: AppSpacing.sm),
+                          CustomTextField(
+                            label: 'booking.field_quantity'
+                                .tr(namedArgs: {'unit': p.unit}),
+                            controller: _qtyController,
+                            keyboardType:
+                                const TextInputType.numberWithOptions(
+                                    decimal: true),
+                            hint: '${p.minOrder} ${p.unit}',
+                            onChanged: (_) => setState(() {}),
+                          ),
+                          SizedBox(height: AppSpacing.sm),
+                          CustomTextField(
+                            label: 'booking.field_notes'.tr(),
+                            controller: _notesController,
+                            maxLines: 2,
+                            hint: 'booking.field_notes_hint'.tr(),
+                          ),
+                          SizedBox(height: AppSpacing.md),
+                          Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                            children: [
+                              Text('booking.field_subtotal'.tr(),
+                                  style: TextStyle(fontSize: 13.sp)),
+                              Text(
+                                formatMoneyDisplay(subtotal),
+                                style: TextStyle(
+                                  fontSize: 16.sp,
+                                  fontWeight: FontWeight.w800,
+                                  color: AppColors.primary,
+                                ),
+                              ),
+                            ],
+                          ),
+                          SizedBox(height: AppSpacing.sm),
+                        ],
                       ),
-                    ],
-                    onChanged: (value) => setState(() => _selectedLotId = value),
-                    decoration: InputDecoration(
-                      border: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(AppRadius.tile),
-                      ),
-                      isDense: true,
                     ),
+                  ),
+                  // Tombol selalu di atas keyboard (tidak ikut tersembunyi).
+                  SizedBox(height: AppSpacing.sm),
+                  CustomButton(
+                    text: 'booking.submit'.tr(),
+                    isLoading: state.isSubmitting,
+                    onPressed: state.isSubmitting ? null : _submit,
                   ),
                   SizedBox(height: AppSpacing.sm),
+                  Text(
+                    'booking.hold_note'.tr(),
+                    style: TextStyle(
+                        fontSize: 11.sp, color: AppColors.textSecondary),
+                    textAlign: TextAlign.center,
+                  ),
                 ],
-                ListTile(
-                  contentPadding: EdgeInsets.zero,
-                  title: Text('Target kirim (opsional)', style: TextStyle(fontSize: 13.sp)),
-                  subtitle: Text(
-                    _expectedDeliveryDate == null
-                        ? '-'
-                        : DateFormat('dd MMM yyyy').format(_expectedDeliveryDate!),
-                  ),
-                  trailing: IconButton(
-                    icon: const Icon(LucideIcons.calendar),
-                    onPressed: () async {
-                      final now = DateTime.now();
-                      final picked = await showDatePicker(
-                        context: context,
-                        initialDate: _expectedDeliveryDate ?? now.add(const Duration(days: 7)),
-                        firstDate: now,
-                        lastDate: now.add(const Duration(days: 730)),
-                      );
-                      if (picked != null) setState(() => _expectedDeliveryDate = picked);
-                    },
-                  ),
-                ),
-                SizedBox(height: AppSpacing.sm),
-                CustomTextField(
-                  label: 'booking.field_quantity'.tr(namedArgs: {'unit': p.unit}),
-                  controller: _qtyController,
-                  keyboardType: const TextInputType.numberWithOptions(decimal: true),
-                  hint: '${p.minOrder} ${p.unit}',
-                  onChanged: (_) => setState(() {}),
-                ),
-                SizedBox(height: AppSpacing.sm),
-                CustomTextField(
-                  label: 'booking.field_notes'.tr(),
-                  controller: _notesController,
-                  maxLines: 2,
-                  hint: 'booking.field_notes_hint'.tr(),
-                ),
-                SizedBox(height: AppSpacing.md),
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    Text('booking.field_subtotal'.tr(), style: TextStyle(fontSize: 13.sp)),
-                    Text(
-                      formatMoneyDisplay(subtotal),
-                      style: TextStyle(
-                        fontSize: 16.sp,
-                        fontWeight: FontWeight.w800,
-                        color: AppColors.primary,
-                      ),
-                    ),
-                  ],
-                ),
-                SizedBox(height: AppSpacing.md),
-                CustomButton(
-                  text: 'booking.submit'.tr(),
-                  isLoading: state.isSubmitting,
-                  onPressed: state.isSubmitting ? null : _submit,
-                ),
-                SizedBox(height: AppSpacing.sm),
-                Text(
-                  'booking.hold_note'.tr(),
-                  style: TextStyle(fontSize: 11.sp, color: AppColors.textSecondary),
-                  textAlign: TextAlign.center,
-                ),
-              ],
+              ),
             );
           },
         ),
