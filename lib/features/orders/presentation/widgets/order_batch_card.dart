@@ -530,23 +530,37 @@ class _SupplierSection extends StatelessWidget {
                   ),
                   SizedBox(width: AppSpacing.sm),
                   Expanded(
-                    child: Text(
-                      item.productName,
-                      style: TextStyle(
-                        fontSize: 11.sp,
-                        fontWeight: FontWeight.w600,
-                        color: AppColors.textPrimary,
-                      ),
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          item.productName,
+                          style: TextStyle(
+                            fontSize: 11.sp,
+                            fontWeight: FontWeight.w600,
+                            color: AppColors.textPrimary,
+                          ),
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                        SizedBox(height: 1.h),
+                        Text(
+                          '${item.quantity.toStringAsFixed(0)}× ${formatMoneyIdr(item.pricePerUnit)}',
+                          style: TextStyle(
+                            fontSize: 10.sp,
+                            fontWeight: FontWeight.w700,
+                            color: AppColors.textSecondary,
+                          ),
+                        ),
+                      ],
                     ),
                   ),
                   Text(
-                    '${item.quantity.toStringAsFixed(0)}×',
+                    formatMoneyIdr(item.subtotal),
                     style: TextStyle(
-                      fontSize: 10.sp,
-                      fontWeight: FontWeight.w700,
-                      color: AppColors.textSecondary,
+                      fontSize: 11.sp,
+                      fontWeight: FontWeight.w800,
+                      color: AppColors.textPrimary,
                     ),
                   ),
                 ],
@@ -562,6 +576,29 @@ class _SupplierSection extends StatelessWidget {
                 color: AppColors.primary,
               ),
             ),
+          SizedBox(height: 4.h),
+          Row(
+            children: [
+              Expanded(
+                child: Text(
+                  'orders.store_subtotal'.tr(),
+                  style: TextStyle(
+                    fontSize: 10.sp,
+                    fontWeight: FontWeight.w600,
+                    color: AppColors.textSecondary,
+                  ),
+                ),
+              ),
+              Text(
+                formatMoneyIdr(order.totalAmount),
+                style: TextStyle(
+                  fontSize: 12.sp,
+                  fontWeight: FontWeight.w900,
+                  color: AppColors.primary,
+                ),
+              ),
+            ],
+          ),
           if (hasTracking) ...[
             SizedBox(height: 6.h),
             Row(
