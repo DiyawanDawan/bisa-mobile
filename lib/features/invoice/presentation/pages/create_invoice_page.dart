@@ -39,6 +39,8 @@ class _CreateInvoicePageState extends State<CreateInvoicePage> {
   final _qtyController = TextEditingController();
   final _priceController = TextEditingController();
   bool _termsInitialized = false;
+  /// 0 = kesepakatan, 1 = pengiriman + terbitkan
+  int _step = 0;
 
   @override
   void dispose() {
@@ -146,6 +148,7 @@ class _CreateInvoicePageState extends State<CreateInvoicePage> {
 
             return Column(
               children: [
+                _stepHeader(),
                 Expanded(
                   child: SingleChildScrollView(
                     physics: const BouncingScrollPhysics(),
@@ -154,127 +157,130 @@ class _CreateInvoicePageState extends State<CreateInvoicePage> {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         _headerCard(preview, buyerLabel),
-                        SizedBox(height: 14.h),
-                        _sectionTitle('invoice.deal_summary'.tr()),
-                        SizedBox(height: 8.h),
-                        Container(
-                          width: double.infinity,
-                          padding: EdgeInsets.all(14.w),
-                          decoration: BoxDecoration(
-                            color: AppColors.surface,
-                            borderRadius: BorderRadius.circular(14.r),
-                            border: Border.all(color: AppColors.grey200),
-                          ),
-                          child: Column(
-                            children: [
-                              CustomTextField(
-                                label: 'invoice.qty_adjust_label'.tr(
-                                  namedArgs: {'unit': preview.productUnit},
-                                ),
-                                hint: 'invoice.qty_adjust_hint'.tr(),
-                                controller: _qtyController,
-                                keyboardType: TextInputType.number,
-                                isRequired: true,
-                                onChanged: (v) {
-                                  final qty = double.tryParse(v);
-                                  if (qty == null) return;
-                                  final cubit = context.read<CreateInvoiceCubit>();
-                                  cubit.updateDraft(draft.copyWith(quantity: qty));
-                                  cubit.refreshPreview(widget.negotiationId);
-                                },
-                              ),
-                              SizedBox(height: 12.h),
-                              CustomTextField(
-                                label: 'invoice.price_adjust_label'.tr(
-                                  namedArgs: {'unit': preview.productUnit},
-                                ),
-                                hint: 'invoice.price_adjust_hint'.tr(),
-                                controller: _priceController,
-                                keyboardType: TextInputType.number,
-                                isRequired: true,
-                                onChanged: (v) {
-                                  final price = double.tryParse(v);
-                                  if (price == null) return;
-                                  final cubit = context.read<CreateInvoiceCubit>();
-                                  cubit.updateDraft(draft.copyWith(pricePerUnit: price));
-                                  cubit.refreshPreview(widget.negotiationId);
-                                },
-                              ),
-                            ],
-                          ),
-                        ),
-                        if (exportPreview.economics != null) ...[
+                        if (_step == 0) ...[
                           SizedBox(height: 14.h),
-                          InvoiceDealEconomicsCard(
-                            economics: exportPreview.economics!,
+                          _sectionTitle('invoice.deal_summary'.tr()),
+                          SizedBox(height: 8.h),
+                          Container(
+                            width: double.infinity,
+                            padding: EdgeInsets.all(14.w),
+                            decoration: BoxDecoration(
+                              color: AppColors.surface,
+                              borderRadius: BorderRadius.circular(14.r),
+                              border: Border.all(color: AppColors.grey200),
+                            ),
+                            child: Column(
+                              children: [
+                                CustomTextField(
+                                  label: 'invoice.qty_adjust_label'.tr(
+                                    namedArgs: {'unit': preview.productUnit},
+                                  ),
+                                  hint: 'invoice.qty_adjust_hint'.tr(),
+                                  controller: _qtyController,
+                                  keyboardType: TextInputType.number,
+                                  isRequired: true,
+                                  onChanged: (v) {
+                                    final qty = double.tryParse(v);
+                                    if (qty == null) return;
+                                    final cubit = context.read<CreateInvoiceCubit>();
+                                    cubit.updateDraft(draft.copyWith(quantity: qty));
+                                    cubit.refreshPreview(widget.negotiationId);
+                                  },
+                                ),
+                                SizedBox(height: 12.h),
+                                CustomTextField(
+                                  label: 'invoice.price_adjust_label'.tr(
+                                    namedArgs: {'unit': preview.productUnit},
+                                  ),
+                                  hint: 'invoice.price_adjust_hint'.tr(),
+                                  controller: _priceController,
+                                  keyboardType: TextInputType.number,
+                                  isRequired: true,
+                                  onChanged: (v) {
+                                    final price = double.tryParse(v);
+                                    if (price == null) return;
+                                    final cubit = context.read<CreateInvoiceCubit>();
+                                    cubit.updateDraft(draft.copyWith(pricePerUnit: price));
+                                    cubit.refreshPreview(widget.negotiationId);
+                                  },
+                                ),
+                              ],
+                            ),
                           ),
-                        ],
-                        SizedBox(height: 14.h),
-                        _sectionTitle('invoice.shipping_section'.tr()),
-                        SizedBox(height: 8.h),
-                        InvoiceShippingRouteOverview(
-                          sellerSnapshot: state.sellerShippingSnapshot ??
-                              exportPreview.sellerShippingSnapshot,
-                          buyerDraft: draft,
-                          sellerOriginLabel: state.sellerOriginLabel ??
-                              exportPreview.sellerOriginLabel,
-                          sellerOriginResolved: (state.sellerOriginId ??
-                                  exportPreview.sellerOriginId) !=
-                              null,
-                        ),
-                        SizedBox(height: 12.h),
-                        _sectionTitle('invoice.buyer_shipping_title'.tr()),
-                        SizedBox(height: 8.h),
-                        InvoiceBuyerShippingPanel(
-                          negotiationId: widget.negotiationId,
-                          draft: draft,
-                          onDraftChanged: (updated) async {
-                            final cubit = context.read<CreateInvoiceCubit>();
-                            final shouldRefresh = cubit.updateDraft(updated);
-                            if (shouldRefresh) {
-                              await cubit.refreshPreview(widget.negotiationId);
-                            }
-                          },
-                        ),
-                        SizedBox(height: 14.h),
-                        InvoiceNegotiationShippingCard(
-                          negotiationId: widget.negotiationId,
-                        ),
-                        SizedBox(height: 14.h),
-                        InvoiceBreakdownCard(
-                          title: 'invoice.breakdown_title'.tr(),
-                          subtotal: exportPreview.subtotal,
-                          platformFee: exportPreview.platformFee,
-                          logisticsFee: exportPreview.logisticsFee,
-                          vatAmount: exportPreview.vatAmount,
-                          totalAmount: exportPreview.totalAmount,
-                        ),
-                        SizedBox(height: 14.h),
-                        _sectionTitle('invoice.notes_section'.tr()),
-                        SizedBox(height: 8.h),
-                        Container(
-                          width: double.infinity,
-                          padding: EdgeInsets.all(14.w),
-                          decoration: BoxDecoration(
-                            color: AppColors.surface,
-                            borderRadius: BorderRadius.circular(14.r),
-                            border: Border.all(color: AppColors.grey200),
+                          if (exportPreview.economics != null) ...[
+                            SizedBox(height: 14.h),
+                            InvoiceDealEconomicsCard(
+                              economics: exportPreview.economics!,
+                            ),
+                          ],
+                          SizedBox(height: 14.h),
+                          _sectionTitle('invoice.notes_section'.tr()),
+                          SizedBox(height: 8.h),
+                          Container(
+                            width: double.infinity,
+                            padding: EdgeInsets.all(14.w),
+                            decoration: BoxDecoration(
+                              color: AppColors.surface,
+                              borderRadius: BorderRadius.circular(14.r),
+                              border: Border.all(color: AppColors.grey200),
+                            ),
+                            child: CustomTextField(
+                              label: 'invoice.notes_label'.tr(),
+                              hint: 'invoice.notes_hint'.tr(),
+                              controller: _specsController,
+                              maxLines: 4,
+                              isOptional: true,
+                              onChanged: (v) {
+                                context
+                                    .read<CreateInvoiceCubit>()
+                                    .updateDraft(draft.copyWith(specifications: v));
+                              },
+                            ),
                           ),
-                          child: CustomTextField(
-                            label: 'invoice.notes_label'.tr(),
-                            hint: 'invoice.notes_hint'.tr(),
-                            controller: _specsController,
-                            maxLines: 4,
-                            isOptional: true,
-                            onChanged: (v) {
-                              context
-                                  .read<CreateInvoiceCubit>()
-                                  .updateDraft(draft.copyWith(specifications: v));
+                        ] else ...[
+                          SizedBox(height: 14.h),
+                          _sectionTitle('invoice.shipping_section'.tr()),
+                          SizedBox(height: 8.h),
+                          InvoiceShippingRouteOverview(
+                            sellerSnapshot: state.sellerShippingSnapshot ??
+                                exportPreview.sellerShippingSnapshot,
+                            buyerDraft: draft,
+                            sellerOriginLabel: state.sellerOriginLabel ??
+                                exportPreview.sellerOriginLabel,
+                            sellerOriginResolved: (state.sellerOriginId ??
+                                    exportPreview.sellerOriginId) !=
+                                null,
+                          ),
+                          SizedBox(height: 12.h),
+                          _sectionTitle('invoice.buyer_shipping_title'.tr()),
+                          SizedBox(height: 8.h),
+                          InvoiceBuyerShippingPanel(
+                            negotiationId: widget.negotiationId,
+                            draft: draft,
+                            onDraftChanged: (updated) async {
+                              final cubit = context.read<CreateInvoiceCubit>();
+                              final shouldRefresh = cubit.updateDraft(updated);
+                              if (shouldRefresh) {
+                                await cubit.refreshPreview(widget.negotiationId);
+                              }
                             },
                           ),
-                        ),
-                        SizedBox(height: 14.h),
-                        InvoiceIssueChecklistCard(readiness: readiness),
+                          SizedBox(height: 14.h),
+                          InvoiceNegotiationShippingCard(
+                            negotiationId: widget.negotiationId,
+                          ),
+                          SizedBox(height: 14.h),
+                          InvoiceBreakdownCard(
+                            title: 'invoice.breakdown_title'.tr(),
+                            subtotal: exportPreview.subtotal,
+                            platformFee: exportPreview.platformFee,
+                            logisticsFee: exportPreview.logisticsFee,
+                            vatAmount: exportPreview.vatAmount,
+                            totalAmount: exportPreview.totalAmount,
+                          ),
+                          SizedBox(height: 14.h),
+                          InvoiceIssueChecklistCard(readiness: readiness),
+                        ],
                       ],
                     ),
                   ),
@@ -289,6 +295,55 @@ class _CreateInvoicePageState extends State<CreateInvoicePage> {
               ],
             );
           },
+        ),
+      ),
+    );
+  }
+
+  Widget _stepHeader() {
+    return Container(
+      width: double.infinity,
+      color: AppColors.surface,
+      padding: EdgeInsets.fromLTRB(16.w, 8.h, 16.w, 12.h),
+      child: Row(
+        children: [
+          _stepChip(0, 'invoice.step_deal'.tr()),
+          Padding(
+            padding: EdgeInsets.symmetric(horizontal: 8.w),
+            child: Icon(Icons.chevron_right, size: 16.sp, color: AppColors.grey400),
+          ),
+          _stepChip(1, 'invoice.step_shipping'.tr()),
+        ],
+      ),
+    );
+  }
+
+  Widget _stepChip(int step, String label) {
+    final active = _step == step;
+    return Expanded(
+      child: InkWell(
+        onTap: () => setState(() => _step = step),
+        borderRadius: BorderRadius.circular(20.r),
+        child: Container(
+          padding: EdgeInsets.symmetric(vertical: 8.h, horizontal: 10.w),
+          decoration: BoxDecoration(
+            color: active
+                ? AppColors.primary.withValues(alpha: 0.1)
+                : AppColors.grey50,
+            borderRadius: BorderRadius.circular(20.r),
+            border: Border.all(
+              color: active ? AppColors.primary : AppColors.grey200,
+            ),
+          ),
+          child: Text(
+            '${step + 1}. $label',
+            textAlign: TextAlign.center,
+            style: TextStyle(
+              fontSize: 11.sp,
+              fontWeight: FontWeight.w800,
+              color: active ? AppColors.primary : AppColors.textSecondary,
+            ),
+          ),
         ),
       ),
     );
@@ -322,28 +377,42 @@ class _CreateInvoicePageState extends State<CreateInvoicePage> {
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              CustomButton(
-                text: isSubmitting
-                    ? 'invoice.issue_updating'.tr()
-                    : 'invoice.issue_button'.tr(),
-                useGradient: canIssue,
-                height: 48.h,
-                onPressed: canIssue
-                    ? () => context
-                        .read<CreateInvoiceCubit>()
-                        .issueInvoice(widget.negotiationId)
-                    : null,
-              ),
-              SizedBox(height: 6.h),
-              Text(
-                'invoice.issue_footer_note'.tr(),
-                textAlign: TextAlign.center,
-                style: TextStyle(
-                  fontSize: 11.sp,
-                  color: AppColors.textHint,
-                  height: 1.35,
+              if (_step == 0)
+                CustomButton(
+                  text: 'invoice.step_continue_shipping'.tr(),
+                  useGradient: true,
+                  height: 48.h,
+                  onPressed: () => setState(() => _step = 1),
+                )
+              else ...[
+                CustomButton(
+                  text: isSubmitting
+                      ? 'invoice.issue_updating'.tr()
+                      : 'invoice.issue_button'.tr(),
+                  useGradient: canIssue,
+                  height: 48.h,
+                  onPressed: canIssue
+                      ? () => context
+                          .read<CreateInvoiceCubit>()
+                          .issueInvoice(widget.negotiationId)
+                      : null,
                 ),
-              ),
+                SizedBox(height: 6.h),
+                Text(
+                  'invoice.issue_footer_note'.tr(),
+                  textAlign: TextAlign.center,
+                  style: TextStyle(
+                    fontSize: 11.sp,
+                    color: AppColors.textHint,
+                    height: 1.35,
+                  ),
+                ),
+                SizedBox(height: 8.h),
+                TextButton(
+                  onPressed: isSubmitting ? null : () => setState(() => _step = 0),
+                  child: Text('invoice.step_back_deal'.tr()),
+                ),
+              ],
               SizedBox(height: 12.h),
               Row(
                 children: [

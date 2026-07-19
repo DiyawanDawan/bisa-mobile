@@ -8,9 +8,11 @@ import 'package:go_router/go_router.dart';
 import '../../../../core/constants/app_layout.dart';
 import '../../../../core/constants/app_colors.dart';
 import '../../../../core/constants/app_text_styles.dart';
+import '../../../../core/utils/app_feedback.dart';
 import '../../../../core/utils/money_format.dart';
 import '../../../../shared/widgets/bisa_app_bar.dart';
 import '../../../../shared/widgets/bisa_network_image.dart';
+import '../../../commerce/presentation/bloc/commerce_cubit.dart';
 import '../../domain/entities/product_entity.dart';
 import '../bloc/compare_cubit.dart';
 import '../utils/product_specs_mapper.dart';
@@ -449,7 +451,7 @@ class _ProductHeaderCell extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      height: 190.h,
+      height: 220.h,
       decoration: const BoxDecoration(
         color: AppColors.surface,
         border: Border(
@@ -523,6 +525,56 @@ class _ProductHeaderCell extends StatelessWidget {
               overflow: TextOverflow.ellipsis,
               style: AppTextStyles.caption(fontWeight: FontWeight.w700),
             ),
+          ),
+          Row(
+            children: [
+              Expanded(
+                child: OutlinedButton(
+                  onPressed: () async {
+                    final ok = await context.read<CommerceCubit>().addToCart(
+                          product.id,
+                          product.minOrder,
+                        );
+                    if (!context.mounted) return;
+                    if (ok) {
+                      showSuccessSnackBar(
+                        context,
+                        'marketplace.added_to_cart'.tr(namedArgs: {
+                          'qty': ProductPricingInfo.formatQty(product.minOrder),
+                          'unit': product.unit,
+                        }),
+                      );
+                    } else {
+                      showErrorSnackBar(context, 'errors.generic'.tr());
+                    }
+                  },
+                  style: OutlinedButton.styleFrom(
+                    padding: EdgeInsets.symmetric(vertical: 4.h),
+                    minimumSize: Size.zero,
+                    tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                    visualDensity: VisualDensity.compact,
+                    side: const BorderSide(color: AppColors.primary),
+                  ),
+                  child: Icon(LucideIcons.shoppingCart, size: 14.sp, color: AppColors.primary),
+                ),
+              ),
+              SizedBox(width: 4.w),
+              Expanded(
+                child: OutlinedButton(
+                  onPressed: () => context.push(
+                    '/product/${product.id}?negotiate=1',
+                  ),
+                  style: OutlinedButton.styleFrom(
+                    padding: EdgeInsets.symmetric(vertical: 4.h),
+                    minimumSize: Size.zero,
+                    tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                    visualDensity: VisualDensity.compact,
+                    side: const BorderSide(color: AppColors.secondary),
+                  ),
+                  child: Icon(LucideIcons.messageCircle, size: 14.sp, color: AppColors.secondary),
+                ),
+              ),
+            ],
           ),
           TextButton(
             onPressed: () => context.push('/product/${product.id}'),

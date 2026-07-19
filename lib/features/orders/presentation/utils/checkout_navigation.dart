@@ -23,7 +23,8 @@ void leavePaymentInstruction(
 }
 
 /// Rute setelah order dibuat tetapi inisialisasi pembayaran gagal.
-/// Tidak boleh ke `/checkout-result` (itu untuk alur sukses).
+/// Tidak boleh ke `/checkout-result` (itu untuk ringkasan order sukses).
+/// Prefers `/checkout` untuk alur checkout keranjang.
 /// [paymentCode]/[paymentName] diteruskan agar tidak minta pilih metode lagi.
 String? paymentInitFailureRoute(
   String? leadOrderId, {

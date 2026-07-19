@@ -220,7 +220,7 @@ class _MarketplacePageState extends State<MarketplacePage> {
                     slivers: [
                       SliverToBoxAdapter(
                         child: Padding(
-                          padding: EdgeInsets.only(bottom: AppSpacing.md12),
+                          padding: EdgeInsets.only(bottom: AppSpacing.xs),
                           child: MarketplaceBanner(productMode: _activeProductMode),
                         ),
                       ),
@@ -230,7 +230,7 @@ class _MarketplacePageState extends State<MarketplacePage> {
                             AppSpacing.md,
                             0,
                             AppSpacing.md,
-                            AppSpacing.md12,
+                            AppSpacing.sm,
                           ),
                           child: _buildFeatureCards(context, user),
                         ),

@@ -1,145 +1,84 @@
-import 'package:equatable/equatable.dart';
+import 'package:freezed_annotation/freezed_annotation.dart';
 
-class PartnershipUserEntity extends Equatable {
-  final String id;
-  final String fullName;
-  final String? avatarUrl;
-  final String role;
-  final String? province;
-  final String? regency;
-  final bool isVerified;
-  final String? companyName;
-  final String? businessType;
+part 'partnership_entity.freezed.dart';
 
-  const PartnershipUserEntity({
-    required this.id,
-    required this.fullName,
-    this.avatarUrl,
-    required this.role,
-    this.province,
-    this.regency,
-    this.isVerified = false,
-    this.companyName,
-    this.businessType,
-  });
-
-  @override
-  List<Object?> get props => [id, fullName, role];
+@freezed
+abstract class PartnershipUserEntity with _$PartnershipUserEntity {
+  const factory PartnershipUserEntity({
+    required String id,
+    required String fullName,
+    String? avatarUrl,
+    required String role,
+    String? province,
+    String? regency,
+    @Default(false) bool isVerified,
+    String? companyName,
+    String? businessType,
+  }) = _PartnershipUserEntity;
 }
 
-class PartnershipSignatureEntity extends Equatable {
-  final String party;
-  final String label;
-  final DateTime? signedAt;
-  final String? signerName;
-  final String? signerTitle;
-  final String? companyName;
-
-  const PartnershipSignatureEntity({
-    required this.party,
-    required this.label,
-    this.signedAt,
-    this.signerName,
-    this.signerTitle,
-    this.companyName,
-  });
-
-  @override
-  List<Object?> get props => [party, signedAt, signerName];
+@freezed
+abstract class PartnershipSignatureEntity with _$PartnershipSignatureEntity {
+  const factory PartnershipSignatureEntity({
+    required String party,
+    required String label,
+    DateTime? signedAt,
+    String? signerName,
+    String? signerTitle,
+    String? companyName,
+  }) = _PartnershipSignatureEntity;
 }
 
-class PartnershipEntity extends Equatable {
-  final String id;
-  final String contractNumber;
-  final String buyerId;
-  final String supplierId;
-  final String tier;
-  final String status;
-  final String title;
-  final String? description;
-  final String? productCategory;
-  final double? estimatedMonthlyQty;
-  final String? priceAgreement;
-  final String? deliveryTerms;
-  final String? paymentTerms;
-  final String? specialTerms;
-  final DateTime startDate;
-  final DateTime endDate;
-  final DateTime? buyerSignedAt;
-  final DateTime? sellerSignedAt;
-  final DateTime? platformSignedAt;
-  final String? buyerSignerName;
-  final String? buyerSignerTitle;
-  final String? buyerCompanyName;
-  final String? sellerSignerName;
-  final String? sellerSignerTitle;
-  final String? sellerCompanyName;
-  final String? platformSignerName;
-  final String? platformSignerTitle;
-  final bool isFullySigned;
-  final int requiredSigners;
-  final int signedCount;
-  final List<PartnershipSignatureEntity> signatures;
-  final String? rejectionReason;
-  final DateTime? terminatedAt;
-  final int renewalCount;
-  final DateTime? renewalProposedEndDate;
-  final String? renewalRequestedBy;
-  final String? renewalNote;
-  final int? daysUntilExpiry;
-  final String? contractPhase;
-  final bool canRenew;
-  final bool isRenewalPending;
-  final DateTime createdAt;
-  final PartnershipUserEntity buyer;
-  final PartnershipUserEntity supplier;
+@freezed
+abstract class PartnershipEntity with _$PartnershipEntity {
+  const PartnershipEntity._();
 
-  const PartnershipEntity({
-    required this.id,
-    required this.contractNumber,
-    required this.buyerId,
-    required this.supplierId,
-    required this.tier,
-    required this.status,
-    required this.title,
-    this.description,
-    this.productCategory,
-    this.estimatedMonthlyQty,
-    this.priceAgreement,
-    this.deliveryTerms,
-    this.paymentTerms,
-    this.specialTerms,
-    required this.startDate,
-    required this.endDate,
-    this.buyerSignedAt,
-    this.sellerSignedAt,
-    this.platformSignedAt,
-    this.buyerSignerName,
-    this.buyerSignerTitle,
-    this.buyerCompanyName,
-    this.sellerSignerName,
-    this.sellerSignerTitle,
-    this.sellerCompanyName,
-    this.platformSignerName,
-    this.platformSignerTitle,
-    this.isFullySigned = false,
-    this.requiredSigners = 3,
-    this.signedCount = 0,
-    this.signatures = const [],
-    this.rejectionReason,
-    this.terminatedAt,
-    this.renewalCount = 0,
-    this.renewalProposedEndDate,
-    this.renewalRequestedBy,
-    this.renewalNote,
-    this.daysUntilExpiry,
-    this.contractPhase,
-    this.canRenew = false,
-    this.isRenewalPending = false,
-    required this.createdAt,
-    required this.buyer,
-    required this.supplier,
-  });
+  const factory PartnershipEntity({
+    required String id,
+    required String contractNumber,
+    required String buyerId,
+    required String supplierId,
+    required String tier,
+    required String status,
+    required String title,
+    String? description,
+    String? productCategory,
+    double? estimatedMonthlyQty,
+    String? priceAgreement,
+    String? deliveryTerms,
+    String? paymentTerms,
+    String? specialTerms,
+    required DateTime startDate,
+    required DateTime endDate,
+    DateTime? buyerSignedAt,
+    DateTime? sellerSignedAt,
+    DateTime? platformSignedAt,
+    String? buyerSignerName,
+    String? buyerSignerTitle,
+    String? buyerCompanyName,
+    String? sellerSignerName,
+    String? sellerSignerTitle,
+    String? sellerCompanyName,
+    String? platformSignerName,
+    String? platformSignerTitle,
+    @Default(false) bool isFullySigned,
+    @Default(3) int requiredSigners,
+    @Default(0) int signedCount,
+    @Default([]) List<PartnershipSignatureEntity> signatures,
+    String? rejectionReason,
+    DateTime? terminatedAt,
+    @Default(0) int renewalCount,
+    DateTime? renewalProposedEndDate,
+    String? renewalRequestedBy,
+    String? renewalNote,
+    int? daysUntilExpiry,
+    String? contractPhase,
+    @Default(false) bool canRenew,
+    @Default(false) bool isRenewalPending,
+    required DateTime createdAt,
+    required PartnershipUserEntity buyer,
+    required PartnershipUserEntity supplier,
+  }) = _PartnershipEntity;
 
   bool get isActive => status == 'ACTIVE';
   bool get isExpired => status == 'EXPIRED';
@@ -152,7 +91,4 @@ class PartnershipEntity extends Equatable {
     }
     return null;
   }
-
-  @override
-  List<Object?> get props => [id, status, contractNumber, endDate];
 }

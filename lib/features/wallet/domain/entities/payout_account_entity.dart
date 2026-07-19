@@ -1,32 +1,16 @@
-import 'package:equatable/equatable.dart';
+import 'package:freezed_annotation/freezed_annotation.dart';
 
-class PayoutAccountEntity extends Equatable {
-  final String id;
-  final String bankId;
-  final String bankName;
-  final String bankCode;
-  final String accountNumber;
-  final String accountName;
-  final bool isMain;
+part 'payout_account_entity.freezed.dart';
 
-  const PayoutAccountEntity({
-    required this.id,
-    required this.bankId,
-    required this.bankName,
-    required this.bankCode,
-    required this.accountNumber,
-    required this.accountName,
-    this.isMain = false,
-  });
-
-  @override
-  List<Object?> get props => [
-    id,
-    bankId,
-    bankName,
-    bankCode,
-    accountNumber,
-    accountName,
-    isMain,
-  ];
+@freezed
+abstract class PayoutAccountEntity with _$PayoutAccountEntity {
+  const factory PayoutAccountEntity({
+    required String id,
+    required String bankId,
+    required String bankName,
+    required String bankCode,
+    required String accountNumber,
+    required String accountName,
+    @Default(false) bool isMain,
+  }) = _PayoutAccountEntity;
 }

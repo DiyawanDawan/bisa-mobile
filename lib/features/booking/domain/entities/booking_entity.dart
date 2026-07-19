@@ -1,141 +1,85 @@
-import 'package:equatable/equatable.dart';
+import 'package:freezed_annotation/freezed_annotation.dart';
 
-class BookingUserEntity extends Equatable {
-  final String id;
-  final String fullName;
-  final String? avatarUrl;
-  final String? companyName;
+part 'booking_entity.freezed.dart';
 
-  const BookingUserEntity({
-    required this.id,
-    required this.fullName,
-    this.avatarUrl,
-    this.companyName,
-  });
-
-  @override
-  List<Object?> get props => [id, fullName];
+@freezed
+abstract class BookingUserEntity with _$BookingUserEntity {
+  const factory BookingUserEntity({
+    required String id,
+    required String fullName,
+    String? avatarUrl,
+    String? companyName,
+  }) = _BookingUserEntity;
 }
 
-class BookingProductEntity extends Equatable {
-  final String id;
-  final String name;
-  final String? thumbnailUrl;
-  final String productMode;
-  final String unit;
-  final double stock;
-  final double reservedStock;
-  final double availableStock;
-  final double pricePerUnit;
-  final String availabilityType;
-
-  const BookingProductEntity({
-    required this.id,
-    required this.name,
-    this.thumbnailUrl,
-    required this.productMode,
-    required this.unit,
-    required this.stock,
-    this.reservedStock = 0,
-    required this.availableStock,
-    required this.pricePerUnit,
-    required this.availabilityType,
-  });
-
-  @override
-  List<Object?> get props => [id, name];
+@freezed
+abstract class BookingProductEntity with _$BookingProductEntity {
+  const factory BookingProductEntity({
+    required String id,
+    required String name,
+    String? thumbnailUrl,
+    required String productMode,
+    required String unit,
+    required double stock,
+    @Default(0) double reservedStock,
+    required double availableStock,
+    required double pricePerUnit,
+    required String availabilityType,
+  }) = _BookingProductEntity;
 }
 
-class BookingHarvestLotEntity extends Equatable {
-  final String id;
-  final String? seasonLabel;
-  final DateTime expectedHarvestDate;
-  final double expectedQuantityTon;
-  final double reservedQuantityTon;
-  final double availableQuantityTon;
-  final String status;
-
-  const BookingHarvestLotEntity({
-    required this.id,
-    this.seasonLabel,
-    required this.expectedHarvestDate,
-    required this.expectedQuantityTon,
-    this.reservedQuantityTon = 0,
-    required this.availableQuantityTon,
-    required this.status,
-  });
-
-  @override
-  List<Object?> get props => [id];
+@freezed
+abstract class BookingHarvestLotEntity with _$BookingHarvestLotEntity {
+  const factory BookingHarvestLotEntity({
+    required String id,
+    String? seasonLabel,
+    required DateTime expectedHarvestDate,
+    required double expectedQuantityTon,
+    @Default(0) double reservedQuantityTon,
+    required double availableQuantityTon,
+    required String status,
+  }) = _BookingHarvestLotEntity;
 }
 
-class BookingOrderRefEntity extends Equatable {
-  final String id;
-  final String orderNumber;
-  final String status;
-
-  const BookingOrderRefEntity({
-    required this.id,
-    required this.orderNumber,
-    required this.status,
-  });
-
-  @override
-  List<Object?> get props => [id];
+@freezed
+abstract class BookingOrderRefEntity with _$BookingOrderRefEntity {
+  const factory BookingOrderRefEntity({
+    required String id,
+    required String orderNumber,
+    required String status,
+  }) = _BookingOrderRefEntity;
 }
 
-class BookingEntity extends Equatable {
-  final String id;
-  final String bookingNumber;
-  final String buyerId;
-  final String supplierId;
-  final String productId;
-  final String? harvestLotId;
-  final String productMode;
-  final double quantity;
-  final String unit;
-  final double priceSnapshot;
-  final double subtotalSnapshot;
-  final String status;
-  final DateTime expiresAt;
-  final DateTime? expectedDeliveryDate;
-  final String? notes;
-  final String? orderId;
-  final DateTime? confirmedAt;
-  final bool isExpired;
-  final DateTime createdAt;
-  final BookingUserEntity buyer;
-  final BookingUserEntity supplier;
-  final BookingProductEntity product;
-  final BookingHarvestLotEntity? harvestLot;
-  final BookingOrderRefEntity? order;
+@freezed
+abstract class BookingEntity with _$BookingEntity {
+  const BookingEntity._();
 
-  const BookingEntity({
-    required this.id,
-    required this.bookingNumber,
-    required this.buyerId,
-    required this.supplierId,
-    required this.productId,
-    this.harvestLotId,
-    required this.productMode,
-    required this.quantity,
-    required this.unit,
-    required this.priceSnapshot,
-    required this.subtotalSnapshot,
-    required this.status,
-    required this.expiresAt,
-    this.expectedDeliveryDate,
-    this.notes,
-    this.orderId,
-    this.confirmedAt,
-    this.isExpired = false,
-    required this.createdAt,
-    required this.buyer,
-    required this.supplier,
-    required this.product,
-    this.harvestLot,
-    this.order,
-  });
+  const factory BookingEntity({
+    required String id,
+    required String bookingNumber,
+    required String buyerId,
+    required String supplierId,
+    required String productId,
+    String? harvestLotId,
+    required String productMode,
+    required double quantity,
+    required String unit,
+    required double priceSnapshot,
+    required double subtotalSnapshot,
+    required String status,
+    required DateTime expiresAt,
+    DateTime? expectedDeliveryDate,
+    String? notes,
+    String? orderId,
+    DateTime? confirmedAt,
+    @Default(false) bool isExpired,
+    required DateTime createdAt,
+    required BookingUserEntity buyer,
+    required BookingUserEntity supplier,
+    required BookingProductEntity product,
+    BookingHarvestLotEntity? harvestLot,
+    BookingOrderRefEntity? order,
+  }) = _BookingEntity;
 
   bool get canCheckout =>
       (status == 'PENDING_PAYMENT' || status == 'CONFIRMED') && !isExpired;
@@ -146,7 +90,4 @@ class BookingEntity extends Equatable {
   bool get canConfirm => status == 'PENDING_PAYMENT' && !isExpired;
 
   Duration get timeLeft => expiresAt.difference(DateTime.now());
-
-  @override
-  List<Object?> get props => [id, status, bookingNumber];
 }

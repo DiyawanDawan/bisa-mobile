@@ -129,6 +129,16 @@ class _InvoiceBuyerShippingPanelState extends State<InvoiceBuyerShippingPanel> {
         _selectedKey = def.key;
       }
     });
+
+    // Auto-apply alamat default jika draft belum punya alamat lengkap.
+    final addressEmpty = widget.draft.address.trim().isEmpty;
+    if (!widget.readOnly && addressEmpty && options.isNotEmpty) {
+      final def = options.firstWhere(
+        (o) => o.isDefault,
+        orElse: () => options.first,
+      );
+      await _applyOption(def);
+    }
   }
 
   List<_BuyerAddressOption> _legacyOptionsFromData(Map<String, dynamic> data) {

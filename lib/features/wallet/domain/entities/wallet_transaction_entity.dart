@@ -1,4 +1,6 @@
-import 'package:equatable/equatable.dart';
+import 'package:freezed_annotation/freezed_annotation.dart';
+
+part 'wallet_transaction_entity.freezed.dart';
 
 enum WalletTransactionType { sales, payout, subscription, unknown }
 
@@ -11,48 +13,20 @@ enum WalletTransactionStatus {
   unknown,
 }
 
-class WalletTransactionEntity extends Equatable {
-  final String id;
-  final double amount;
-  final double sellerAmount;
-  final double platformFee;
-  final WalletTransactionStatus status;
-  final WalletTransactionType type;
-  final String? externalId;
-  final DateTime? paidAt;
-  final DateTime? escrowReleasedAt;
-  final DateTime createdAt;
-  final String? orderNumber;
-  final String? paymentMethod;
-
-  const WalletTransactionEntity({
-    required this.id,
-    required this.amount,
-    required this.sellerAmount,
-    required this.platformFee,
-    required this.status,
-    required this.type,
-    this.externalId,
-    this.paidAt,
-    this.escrowReleasedAt,
-    required this.createdAt,
-    this.orderNumber,
-    this.paymentMethod,
-  });
-
-  @override
-  List<Object?> get props => [
-    id,
-    amount,
-    sellerAmount,
-    platformFee,
-    status,
-    type,
-    externalId,
-    paidAt,
-    escrowReleasedAt,
-    createdAt,
-    orderNumber,
-    paymentMethod,
-  ];
+@freezed
+abstract class WalletTransactionEntity with _$WalletTransactionEntity {
+  const factory WalletTransactionEntity({
+    required String id,
+    required double amount,
+    required double sellerAmount,
+    required double platformFee,
+    required WalletTransactionStatus status,
+    required WalletTransactionType type,
+    String? externalId,
+    DateTime? paidAt,
+    DateTime? escrowReleasedAt,
+    required DateTime createdAt,
+    String? orderNumber,
+    String? paymentMethod,
+  }) = _WalletTransactionEntity;
 }

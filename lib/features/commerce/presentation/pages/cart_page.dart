@@ -17,7 +17,6 @@ import '../../../../core/utils/app_feedback.dart';
 import '../../../../core/utils/money_format.dart';
 import '../../../../core/utils/safe_area_utils.dart' show clearBisaSnackBars;
 import '../../../../core/utils/safe_navigator.dart';
-import '../../../../core/network/api_client.dart';
 import '../../../../injection_container.dart';
 import '../../../auth/domain/repositories/auth_repository.dart';
 import '../../../profile/domain/entities/address_entity.dart';
@@ -35,6 +34,7 @@ import 'package:skeletonizer/skeletonizer.dart';
 import '../../../orders/data/shipping_destination_cache.dart';
 import '../../../orders/presentation/bloc/order_cubit.dart';
 import '../../../orders/presentation/utils/checkout_navigation.dart';
+import '../../../orders/presentation/utils/payment_method_resolver.dart';
 import '../../../orders/presentation/widgets/payment_method_picker_sheet.dart';
 import '../../data/datasources/commerce_remote_data_source.dart';
 import '../../domain/repositories/commerce_repository.dart';
@@ -42,7 +42,7 @@ import '../widgets/mode_product_catalog.dart';
 import '../bloc/commerce_cubit.dart';
 
 class CartPage extends StatefulWidget {
-  /// `true` pada rute `/checkout-result`: alamat, ongkir, breakdown, bayar.
+  /// `true` pada rute `/checkout`: alamat, ongkir, breakdown, bayar.
   final bool checkoutMode;
 
   /// ID item keranjang yang dipilih di halaman keranjang.
@@ -131,22 +131,12 @@ class _CartPageState extends State<CartPage> {
   }
 
   Future<void> _loadSavedPaymentPreference() async {
-    try {
-      final res = await sl<ApiClient>().dio.get('/users/me/saved-payments');
-      final list = res.data['data'] as List? ?? [];
-      if (list.isEmpty || !mounted) return;
-      final def = list.cast<Map>().firstWhere(
-            (e) => e['isDefault'] == true,
-            orElse: () => list.first,
-          );
-      setState(() {
-        _savedPaymentPref = PaymentMethodChoice(
-          code: '${def['channelCode']}',
-          name: '${def['channelName']}',
-        );
-        _selectedPayment ??= _savedPaymentPref;
-      });
-    } catch (_) {}
+    final saved = await PaymentMethodResolver.loadSaved();
+    if (saved == null || !mounted) return;
+    setState(() {
+      _savedPaymentPref = saved;
+      _selectedPayment ??= _savedPaymentPref;
+    });
   }
 
   Future<void> _applyVoucher(CartSummary cart) async {
@@ -370,6 +360,42 @@ class _CartPageState extends State<CartPage> {
       orElse: () => addresses.first,
     );
     _applyProfileAddress(primary, silent: true);
+    if (_isCheckoutFlow) {
+      final cart = context.read<CommerceCubit>().state.cart;
+      if (cart != null) {
+        unawaited(_autoSetupMissingShipping(cart));
+      }
+    }
+  }
+
+  /// Prefill ongkir termurah untuk setiap toko yang belum punya pilihan.
+  Future<void> _autoSetupMissingShipping(CartSummary cart) async {
+    if (!_isCheckoutFlow) return;
+    if (_shippingAddressQuery == null || _shippingAddressQuery!.isEmpty) return;
+
+    final selectedItems = cart.items
+        .where((it) => _selectedItemIds.contains(it.id))
+        .toList();
+    if (selectedItems.isEmpty) return;
+
+    final groups = <String, _SellerGroup>{};
+    for (final item in selectedItems) {
+      final p = item.product.toEntity();
+      groups
+          .putIfAbsent(
+            p.seller.id,
+            () => _SellerGroup(seller: p.seller, items: []),
+          )
+          .items
+          .add(item);
+    }
+
+    for (final group in groups.values) {
+      if (_shippingSelectionBySeller.containsKey(group.seller.id)) continue;
+      if (_shippingLoadingSellerIds.contains(group.seller.id)) continue;
+      await _calculateSellerShipping(group);
+      if (!mounted) return;
+    }
   }
 
   /// Sync selection state setiap kali cart berubah (item ditambah/dihapus dst).
@@ -651,7 +677,7 @@ class _CartPageState extends State<CartPage> {
       return;
     }
     context.push(
-      '/checkout-result',
+      '/checkout',
       extra: {'selectedItemIds': _selectedItemIds.toList()},
     );
   }
@@ -1007,13 +1033,21 @@ class _CartPageState extends State<CartPage> {
         throw Exception('cart.courier_unavailable'.tr());
       }
 
-      final selected = await _pickShippingOptionSheet(
-        options: options,
-        sellerName: group.seller.companyName?.isNotEmpty == true
-            ? group.seller.companyName!
-            : group.seller.name,
-      );
+      final hadSelection = _shippingSelectionBySeller.containsKey(group.seller.id);
+      // Setup pertama: auto-pilih tarif termurah. "Ganti": buka sheet.
+      final Map<String, dynamic>? selected;
+      if (hadSelection) {
+        selected = await _pickShippingOptionSheet(
+          options: options,
+          sellerName: group.seller.companyName?.isNotEmpty == true
+              ? group.seller.companyName!
+              : group.seller.name,
+        );
+      } else {
+        selected = _cheapestShippingOption(options);
+      }
       if (!mounted || selected == null) return;
+      final chosen = selected;
 
       setState(() {
         _shippingSelectionBySeller[group.seller.id] = {
@@ -1026,14 +1060,14 @@ class _CartPageState extends State<CartPage> {
               ? buyerDestinationLabel
               : destination?['label']?.toString(),
           'weightGrams': weightGrams,
-          'courierCode': selected['code']?.toString() ?? '',
-          'serviceCode': selected['service']?.toString(),
-          'serviceName': selected['description']?.toString() ??
-              selected['service']?.toString(),
-          'cost': (selected['cost'] as num?)?.toDouble() ??
-              double.tryParse(selected['cost']?.toString() ?? '0') ??
+          'courierCode': chosen['code']?.toString() ?? '',
+          'serviceCode': chosen['service']?.toString(),
+          'serviceName': chosen['description']?.toString() ??
+              chosen['service']?.toString(),
+          'cost': (chosen['cost'] as num?)?.toDouble() ??
+              double.tryParse(chosen['cost']?.toString() ?? '0') ??
               0,
-          'etd': selected['etd']?.toString(),
+          'etd': chosen['etd']?.toString(),
         };
       });
       await _refreshCheckoutPreview(context.read<CommerceCubit>().state.cart!);
@@ -1357,6 +1391,25 @@ class _CartPageState extends State<CartPage> {
       return sum + (gramPerUnit * item.quantity);
     });
     return total.round().clamp(1, 500000);
+  }
+
+  Map<String, dynamic> _cheapestShippingOption(
+    List<Map<String, dynamic>> options,
+  ) {
+    Map<String, dynamic> best = options.first;
+    var bestCost = (best['cost'] as num?)?.toDouble() ??
+        double.tryParse(best['cost']?.toString() ?? '') ??
+        double.infinity;
+    for (final opt in options.skip(1)) {
+      final cost = (opt['cost'] as num?)?.toDouble() ??
+          double.tryParse(opt['cost']?.toString() ?? '') ??
+          double.infinity;
+      if (cost < bestCost) {
+        best = opt;
+        bestCost = cost;
+      }
+    }
+    return best;
   }
 
   Future<Map<String, dynamic>?> _pickShippingOptionSheet({

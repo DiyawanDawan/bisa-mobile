@@ -1,25 +1,25 @@
-class PartnershipUserModel {
-  final String id;
-  final String fullName;
-  final String? avatarUrl;
-  final String role;
-  final String? province;
-  final String? regency;
-  final bool isVerified;
-  final String? companyName;
-  final String? businessType;
+import 'package:freezed_annotation/freezed_annotation.dart';
 
-  PartnershipUserModel({
-    required this.id,
-    required this.fullName,
-    this.avatarUrl,
-    required this.role,
-    this.province,
-    this.regency,
-    this.isVerified = false,
-    this.companyName,
-    this.businessType,
-  });
+part 'partnership_models.freezed.dart';
+
+DateTime? _dt(dynamic v) {
+  if (v == null) return null;
+  return DateTime.tryParse(v.toString());
+}
+
+@Freezed(fromJson: false, toJson: false)
+abstract class PartnershipUserModel with _$PartnershipUserModel {
+  const factory PartnershipUserModel({
+    required String id,
+    required String fullName,
+    String? avatarUrl,
+    required String role,
+    String? province,
+    String? regency,
+    @Default(false) bool isVerified,
+    String? companyName,
+    String? businessType,
+  }) = _PartnershipUserModel;
 
   factory PartnershipUserModel.fromJson(Map<String, dynamic> json) {
     return PartnershipUserModel(
@@ -36,30 +36,22 @@ class PartnershipUserModel {
   }
 }
 
-class PartnershipSignatureModel {
-  final String party;
-  final String label;
-  final DateTime? signedAt;
-  final String? signerName;
-  final String? signerTitle;
-  final String? companyName;
-
-  PartnershipSignatureModel({
-    required this.party,
-    required this.label,
-    this.signedAt,
-    this.signerName,
-    this.signerTitle,
-    this.companyName,
-  });
+@Freezed(fromJson: false, toJson: false)
+abstract class PartnershipSignatureModel with _$PartnershipSignatureModel {
+  const factory PartnershipSignatureModel({
+    required String party,
+    required String label,
+    DateTime? signedAt,
+    String? signerName,
+    String? signerTitle,
+    String? companyName,
+  }) = _PartnershipSignatureModel;
 
   factory PartnershipSignatureModel.fromJson(Map<String, dynamic> json) {
     return PartnershipSignatureModel(
       party: json['party'] as String? ?? '',
       label: json['label'] as String? ?? '',
-      signedAt: json['signedAt'] != null
-          ? DateTime.parse(json['signedAt'] as String)
-          : null,
+      signedAt: _dt(json['signedAt']),
       signerName: json['signerName'] as String?,
       signerTitle: json['signerTitle'] as String?,
       companyName: json['companyName'] as String?,
@@ -67,104 +59,57 @@ class PartnershipSignatureModel {
   }
 }
 
-class PartnershipModel {
-  final String id;
-  final String contractNumber;
-  final String buyerId;
-  final String supplierId;
-  final String tier;
-  final String status;
-  final String title;
-  final String? description;
-  final String? productCategory;
-  final double? estimatedMonthlyQty;
-  final String? priceAgreement;
-  final String? deliveryTerms;
-  final String? paymentTerms;
-  final String? specialTerms;
-  final DateTime startDate;
-  final DateTime endDate;
-  final DateTime? buyerSignedAt;
-  final DateTime? sellerSignedAt;
-  final DateTime? platformSignedAt;
-  final String? buyerSignerName;
-  final String? buyerSignerTitle;
-  final String? buyerCompanyName;
-  final String? sellerSignerName;
-  final String? sellerSignerTitle;
-  final String? sellerCompanyName;
-  final String? platformSignerName;
-  final String? platformSignerTitle;
-  final bool isFullySigned;
-  final int requiredSigners;
-  final int signedCount;
-  final List<PartnershipSignatureModel> signatures;
-  final String? rejectionReason;
-  final DateTime? terminatedAt;
-  final String? terminatedBy;
-  final int renewalCount;
-  final DateTime? renewalProposedEndDate;
-  final String? renewalRequestedBy;
-  final DateTime? renewalRequestedAt;
-  final String? renewalNote;
-  final int? daysUntilExpiry;
-  final String? contractPhase;
-  final bool canRenew;
-  final bool isRenewalPending;
-  final DateTime createdAt;
-  final DateTime updatedAt;
-  final PartnershipUserModel buyer;
-  final PartnershipUserModel supplier;
-
-  PartnershipModel({
-    required this.id,
-    required this.contractNumber,
-    required this.buyerId,
-    required this.supplierId,
-    required this.tier,
-    required this.status,
-    required this.title,
-    this.description,
-    this.productCategory,
-    this.estimatedMonthlyQty,
-    this.priceAgreement,
-    this.deliveryTerms,
-    this.paymentTerms,
-    this.specialTerms,
-    required this.startDate,
-    required this.endDate,
-    this.buyerSignedAt,
-    this.sellerSignedAt,
-    this.platformSignedAt,
-    this.buyerSignerName,
-    this.buyerSignerTitle,
-    this.buyerCompanyName,
-    this.sellerSignerName,
-    this.sellerSignerTitle,
-    this.sellerCompanyName,
-    this.platformSignerName,
-    this.platformSignerTitle,
-    this.isFullySigned = false,
-    this.requiredSigners = 3,
-    this.signedCount = 0,
-    this.signatures = const [],
-    this.rejectionReason,
-    this.terminatedAt,
-    this.terminatedBy,
-    this.renewalCount = 0,
-    this.renewalProposedEndDate,
-    this.renewalRequestedBy,
-    this.renewalRequestedAt,
-    this.renewalNote,
-    this.daysUntilExpiry,
-    this.contractPhase,
-    this.canRenew = false,
-    this.isRenewalPending = false,
-    required this.createdAt,
-    required this.updatedAt,
-    required this.buyer,
-    required this.supplier,
-  });
+@Freezed(fromJson: false, toJson: false)
+abstract class PartnershipModel with _$PartnershipModel {
+  const factory PartnershipModel({
+    required String id,
+    required String contractNumber,
+    required String buyerId,
+    required String supplierId,
+    required String tier,
+    required String status,
+    required String title,
+    String? description,
+    String? productCategory,
+    double? estimatedMonthlyQty,
+    String? priceAgreement,
+    String? deliveryTerms,
+    String? paymentTerms,
+    String? specialTerms,
+    required DateTime startDate,
+    required DateTime endDate,
+    DateTime? buyerSignedAt,
+    DateTime? sellerSignedAt,
+    DateTime? platformSignedAt,
+    String? buyerSignerName,
+    String? buyerSignerTitle,
+    String? buyerCompanyName,
+    String? sellerSignerName,
+    String? sellerSignerTitle,
+    String? sellerCompanyName,
+    String? platformSignerName,
+    String? platformSignerTitle,
+    @Default(false) bool isFullySigned,
+    @Default(3) int requiredSigners,
+    @Default(0) int signedCount,
+    @Default([]) List<PartnershipSignatureModel> signatures,
+    String? rejectionReason,
+    DateTime? terminatedAt,
+    String? terminatedBy,
+    @Default(0) int renewalCount,
+    DateTime? renewalProposedEndDate,
+    String? renewalRequestedBy,
+    DateTime? renewalRequestedAt,
+    String? renewalNote,
+    int? daysUntilExpiry,
+    String? contractPhase,
+    @Default(false) bool canRenew,
+    @Default(false) bool isRenewalPending,
+    required DateTime createdAt,
+    required DateTime updatedAt,
+    required PartnershipUserModel buyer,
+    required PartnershipUserModel supplier,
+  }) = _PartnershipModel;
 
   factory PartnershipModel.fromJson(Map<String, dynamic> json) {
     final sigList = json['signatures'] as List? ?? [];
@@ -185,15 +130,9 @@ class PartnershipModel {
       specialTerms: json['specialTerms'] as String?,
       startDate: DateTime.parse(json['startDate'] as String),
       endDate: DateTime.parse(json['endDate'] as String),
-      buyerSignedAt: json['buyerSignedAt'] != null
-          ? DateTime.parse(json['buyerSignedAt'] as String)
-          : null,
-      sellerSignedAt: json['sellerSignedAt'] != null
-          ? DateTime.parse(json['sellerSignedAt'] as String)
-          : null,
-      platformSignedAt: json['platformSignedAt'] != null
-          ? DateTime.parse(json['platformSignedAt'] as String)
-          : null,
+      buyerSignedAt: _dt(json['buyerSignedAt']),
+      sellerSignedAt: _dt(json['sellerSignedAt']),
+      platformSignedAt: _dt(json['platformSignedAt']),
       buyerSignerName: json['buyerSignerName'] as String?,
       buyerSignerTitle: json['buyerSignerTitle'] as String?,
       buyerCompanyName: json['buyerCompanyName'] as String?,
@@ -206,21 +145,19 @@ class PartnershipModel {
       requiredSigners: json['requiredSigners'] as int? ?? 3,
       signedCount: json['signedCount'] as int? ?? 0,
       signatures: sigList
-          .map((e) => PartnershipSignatureModel.fromJson(e as Map<String, dynamic>))
+          .map(
+            (e) => PartnershipSignatureModel.fromJson(
+              e as Map<String, dynamic>,
+            ),
+          )
           .toList(),
       rejectionReason: json['rejectionReason'] as String?,
-      terminatedAt: json['terminatedAt'] != null
-          ? DateTime.parse(json['terminatedAt'] as String)
-          : null,
+      terminatedAt: _dt(json['terminatedAt']),
       terminatedBy: json['terminatedBy'] as String?,
       renewalCount: json['renewalCount'] as int? ?? 0,
-      renewalProposedEndDate: json['renewalProposedEndDate'] != null
-          ? DateTime.parse(json['renewalProposedEndDate'] as String)
-          : null,
+      renewalProposedEndDate: _dt(json['renewalProposedEndDate']),
       renewalRequestedBy: json['renewalRequestedBy'] as String?,
-      renewalRequestedAt: json['renewalRequestedAt'] != null
-          ? DateTime.parse(json['renewalRequestedAt'] as String)
-          : null,
+      renewalRequestedAt: _dt(json['renewalRequestedAt']),
       renewalNote: json['renewalNote'] as String?,
       daysUntilExpiry: json['daysUntilExpiry'] as int?,
       contractPhase: json['contractPhase'] as String?,
@@ -228,24 +165,23 @@ class PartnershipModel {
       isRenewalPending: json['isRenewalPending'] as bool? ?? false,
       createdAt: DateTime.parse(json['createdAt'] as String),
       updatedAt: DateTime.parse(json['updatedAt'] as String),
-      buyer: PartnershipUserModel.fromJson(json['buyer'] as Map<String, dynamic>),
-      supplier: PartnershipUserModel.fromJson(json['supplier'] as Map<String, dynamic>),
+      buyer:
+          PartnershipUserModel.fromJson(json['buyer'] as Map<String, dynamic>),
+      supplier: PartnershipUserModel.fromJson(
+        json['supplier'] as Map<String, dynamic>,
+      ),
     );
   }
 }
 
-class PartnershipListModel {
-  final List<PartnershipModel> partnerships;
-  final int total;
-  final int page;
-  final int limit;
-
-  PartnershipListModel({
-    required this.partnerships,
-    required this.total,
-    required this.page,
-    required this.limit,
-  });
+@Freezed(fromJson: false, toJson: false)
+abstract class PartnershipListModel with _$PartnershipListModel {
+  const factory PartnershipListModel({
+    required List<PartnershipModel> partnerships,
+    required int total,
+    required int page,
+    required int limit,
+  }) = _PartnershipListModel;
 
   factory PartnershipListModel.fromJson(Map<String, dynamic> json) {
     final list = json['partnerships'] as List? ?? [];
@@ -260,24 +196,22 @@ class PartnershipListModel {
   }
 }
 
-class PartnershipCheckModel {
-  final bool hasPartnership;
-  final PartnershipModel? partnership;
-  final bool canCreateNew;
-  final bool canRenew;
-
-  PartnershipCheckModel({
-    required this.hasPartnership,
-    this.partnership,
-    this.canCreateNew = true,
-    this.canRenew = false,
-  });
+@Freezed(fromJson: false, toJson: false)
+abstract class PartnershipCheckModel with _$PartnershipCheckModel {
+  const factory PartnershipCheckModel({
+    required bool hasPartnership,
+    PartnershipModel? partnership,
+    @Default(true) bool canCreateNew,
+    @Default(false) bool canRenew,
+  }) = _PartnershipCheckModel;
 
   factory PartnershipCheckModel.fromJson(Map<String, dynamic> json) {
     return PartnershipCheckModel(
       hasPartnership: json['hasPartnership'] as bool? ?? false,
       partnership: json['partnership'] != null
-          ? PartnershipModel.fromJson(json['partnership'] as Map<String, dynamic>)
+          ? PartnershipModel.fromJson(
+              json['partnership'] as Map<String, dynamic>,
+            )
           : null,
       canCreateNew: json['canCreateNew'] as bool? ?? true,
       canRenew: json['canRenew'] as bool? ?? false,

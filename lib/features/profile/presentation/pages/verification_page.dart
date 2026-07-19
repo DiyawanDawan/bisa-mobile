@@ -1,4 +1,5 @@
 import 'package:easy_localization/easy_localization.dart';
+import 'dart:async';
 import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
@@ -6,6 +7,7 @@ import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
 import 'package:mobile_bisa/core/core.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import '../../../../core/utils/text_recognition_util.dart';
 import '../../../../core/utils/face_detector_util.dart';
 import 'package:cunning_document_scanner/cunning_document_scanner.dart';
@@ -16,6 +18,7 @@ import '../../../auth/domain/entities/user_entity.dart';
 import '../../../auth/domain/repositories/auth_repository.dart';
 import '../../../auth/presentation/bloc/auth_cubit.dart';
 import '../../../../injection_container.dart';
+import '../../data/kyc_draft_store.dart';
 import '../widgets/verification_photo_guide.dart';
 
 class VerificationPage extends StatefulWidget {
@@ -26,11 +29,17 @@ class VerificationPage extends StatefulWidget {
 }
 
 class _VerificationPageState extends State<VerificationPage> {
+  static const _maxStep = 3;
+
   @override
   void initState() {
     super.initState();
+    _businessNameCtrl.addListener(_onBusinessFieldChanged);
+    _taxIdCtrl.addListener(_onBusinessFieldChanged);
+    _businessAddressCtrl.addListener(_onBusinessFieldChanged);
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (mounted) context.read<AuthCubit>().checkAuth();
+      unawaited(_restoreDraft());
     });
   }
 
@@ -46,15 +55,102 @@ class _VerificationPageState extends State<VerificationPage> {
   bool _isSubmitting = false;
   String? _uploadStatus;
   bool _scanningDocument = false;
+  bool _draftLoaded = false;
+  int _step = 0;
+  Timer? _autosaveDebounce;
+  String? _autosaveHint;
 
   final _picker = ImagePicker();
 
   @override
   void dispose() {
+    _autosaveDebounce?.cancel();
+    _businessNameCtrl.removeListener(_onBusinessFieldChanged);
+    _taxIdCtrl.removeListener(_onBusinessFieldChanged);
+    _businessAddressCtrl.removeListener(_onBusinessFieldChanged);
     _businessNameCtrl.dispose();
     _taxIdCtrl.dispose();
     _businessAddressCtrl.dispose();
     super.dispose();
+  }
+
+  void _onBusinessFieldChanged() {
+    _scheduleAutosave();
+  }
+
+  Future<KycDraftStore> _store() async {
+    final prefs = await SharedPreferences.getInstance();
+    return KycDraftStore(prefs);
+  }
+
+  Future<void> _restoreDraft() async {
+    final store = await _store();
+    final draft = await store.load();
+    if (!mounted) return;
+    if (draft != null) {
+      setState(() {
+        _step = draft.step.clamp(0, _maxStep);
+        _ktpPath = draft.ktpPath;
+        _selfiePath = draft.selfiePath;
+        _nibPath = draft.nibPath;
+        _siupPath = draft.siupPath;
+        _businessNameCtrl.text = draft.businessName;
+        _taxIdCtrl.text = draft.taxId;
+        _businessAddressCtrl.text = draft.businessAddress;
+        _draftLoaded = true;
+        if (draft.ktpPath != null ||
+            draft.selfiePath != null ||
+            draft.businessName.isNotEmpty) {
+          _autosaveHint = 'verification.draft_restored'.tr();
+        }
+      });
+    } else {
+      setState(() => _draftLoaded = true);
+    }
+  }
+
+  KycDraft _currentDraft() => KycDraft(
+        step: _step,
+        ktpPath: _ktpPath,
+        selfiePath: _selfiePath,
+        nibPath: _nibPath,
+        siupPath: _siupPath,
+        businessName: _businessNameCtrl.text.trim(),
+        taxId: _taxIdCtrl.text.trim(),
+        businessAddress: _businessAddressCtrl.text.trim(),
+      );
+
+  void _scheduleAutosave() {
+    _autosaveDebounce?.cancel();
+    _autosaveDebounce = Timer(const Duration(milliseconds: 450), () {
+      unawaited(_persistDraft());
+    });
+  }
+
+  Future<void> _persistDraft() async {
+    final store = await _store();
+    await store.save(_currentDraft());
+    if (!mounted) return;
+    setState(() => _autosaveHint = 'verification.draft_saved'.tr());
+  }
+
+  Future<void> _clearDraft() async {
+    final store = await _store();
+    await store.clear();
+  }
+
+  void _goToStep(int step) {
+    setState(() => _step = step.clamp(0, _maxStep));
+    _scheduleAutosave();
+  }
+
+  bool _canContinueFromStep(int step) {
+    return switch (step) {
+      0 => _ktpPath != null,
+      1 => _selfiePath != null,
+      2 => true, // optional docs + business
+      _ => _ktpPath != null && _selfiePath != null,
+    };
   }
 
   Future<void> _pickImage(String type) async {
@@ -131,6 +227,7 @@ class _VerificationPageState extends State<VerificationPage> {
           break;
       }
     });
+    _scheduleAutosave();
   }
 
   Future<ImageSource?> _showImageSourceSheet() async {
@@ -251,6 +348,7 @@ class _VerificationPageState extends State<VerificationPage> {
 
     if (selected != null && mounted) {
       setState(() => controller.text = selected);
+      _scheduleAutosave();
     }
   }
 
@@ -319,6 +417,7 @@ class _VerificationPageState extends State<VerificationPage> {
         );
       },
       (_) async {
+        await _clearDraft();
         await context.read<AuthCubit>().checkAuth();
         if (!mounted) return;
         showSuccessSnackBar(context, 'dokumen_verifikasi_berhasil_di');
@@ -375,51 +474,90 @@ class _VerificationPageState extends State<VerificationPage> {
                               _buildRejectionCard(user!.kycRejectionReason!),
                               SizedBox(height: 16.h),
                             ],
-                            _buildUploadSection(
-                              title: 'verification.ktp_required'.tr(),
-                              type: 'ktp',
-                              path: _ktpPath,
-                              guideType: VerificationGuideType.ktp,
-                              enabled: canUpload,
-                            ),
-                            _buildUploadSection(
-                              title: 'verification.selfie_required'.tr(),
-                              type: 'selfie',
-                              path: _selfiePath,
-                              guideType: VerificationGuideType.selfie,
-                              enabled: canUpload,
-                            ),
-                            _buildUploadSection(
-                              title: 'verification.nib_optional'.tr(),
-                              type: 'nib',
-                              path: _nibPath,
-                              guideType: VerificationGuideType.nib,
-                              enabled: canUpload,
-                            ),
-                            _buildUploadSection(
-                              title: 'verification.siup_optional'.tr(),
-                              type: 'siup',
-                              path: _siupPath,
-                              guideType: VerificationGuideType.siup,
-                              enabled: canUpload,
-                            ),
-                            _buildBusinessDetailsSection(canUpload),
+                            _buildWizardProgress(),
+                            if (_autosaveHint != null) ...[
+                              SizedBox(height: 8.h),
+                              Text(
+                                _autosaveHint!,
+                                style: TextStyle(
+                                  fontSize: 11.sp,
+                                  color: AppColors.textSecondary,
+                                  fontWeight: FontWeight.w600,
+                                ),
+                              ),
+                            ],
+                            SizedBox(height: 14.h),
+                            if (!_draftLoaded)
+                              const Padding(
+                                padding: EdgeInsets.symmetric(vertical: 24),
+                                child: Center(child: CircularProgressIndicator()),
+                              )
+                            else ...[
+                              Text(
+                                _stepTitle(),
+                                style: TextStyle(
+                                  fontSize: 15.sp,
+                                  fontWeight: FontWeight.w800,
+                                  color: AppColors.textPrimary,
+                                ),
+                              ),
+                              SizedBox(height: 6.h),
+                              Text(
+                                _stepSubtitle(),
+                                style: TextStyle(
+                                  fontSize: 12.sp,
+                                  color: AppColors.textSecondary,
+                                  height: 1.35,
+                                ),
+                              ),
+                              SizedBox(height: 14.h),
+                              if (_step == 0)
+                                _buildUploadSection(
+                                  title: 'verification.ktp_required'.tr(),
+                                  type: 'ktp',
+                                  path: _ktpPath,
+                                  guideType: VerificationGuideType.ktp,
+                                  enabled: canUpload,
+                                )
+                              else if (_step == 1)
+                                _buildUploadSection(
+                                  title: 'verification.selfie_required'.tr(),
+                                  type: 'selfie',
+                                  path: _selfiePath,
+                                  guideType: VerificationGuideType.selfie,
+                                  enabled: canUpload,
+                                )
+                              else if (_step == 2) ...[
+                                _buildUploadSection(
+                                  title: 'verification.nib_optional'.tr(),
+                                  type: 'nib',
+                                  path: _nibPath,
+                                  guideType: VerificationGuideType.nib,
+                                  enabled: canUpload,
+                                ),
+                                _buildUploadSection(
+                                  title: 'verification.siup_optional'.tr(),
+                                  type: 'siup',
+                                  path: _siupPath,
+                                  guideType: VerificationGuideType.siup,
+                                  enabled: canUpload,
+                                ),
+                                _buildBusinessDetailsSection(canUpload),
+                              ]
+                              else
+                                _buildReviewStep(),
+                            ],
                           ],
                         ],
                       ),
                     ),
                   ),
-                  if (canUpload)
+                  if (canUpload && _draftLoaded)
                     SafeArea(
                       top: false,
                       child: Padding(
                         padding: EdgeInsets.fromLTRB(16.w, 8.h, 16.w, 8.h),
-                        child: CustomButton(
-                          text: 'verification.submit_documents'.tr(),
-                          height: 50.h,
-                          isLoading: _isSubmitting,
-                          onPressed: canSubmit ? _submit : null,
-                        ),
+                        child: _buildWizardFooter(canSubmit: canSubmit),
                       ),
                     ),
                 ],
@@ -429,6 +567,253 @@ class _VerificationPageState extends State<VerificationPage> {
           ),
         );
       },
+    );
+  }
+
+  String _stepTitle() => switch (_step) {
+        0 => 'verification.step_ktp_title'.tr(),
+        1 => 'verification.step_selfie_title'.tr(),
+        2 => 'verification.step_business_title'.tr(),
+        _ => 'verification.step_review_title'.tr(),
+      };
+
+  String _stepSubtitle() => switch (_step) {
+        0 => 'verification.step_ktp_body'.tr(),
+        1 => 'verification.step_selfie_body'.tr(),
+        2 => 'verification.step_business_body'.tr(),
+        _ => 'verification.step_review_body'.tr(),
+      };
+
+  Widget _buildWizardProgress() {
+    final labels = [
+      'verification.step_short_ktp'.tr(),
+      'verification.step_short_selfie'.tr(),
+      'verification.step_short_business'.tr(),
+      'verification.step_short_review'.tr(),
+    ];
+    return Row(
+      children: List.generate(labels.length, (i) {
+        final active = i == _step;
+        final done = i < _step;
+        return Expanded(
+          child: Padding(
+            padding: EdgeInsets.only(right: i == labels.length - 1 ? 0 : 6.w),
+            child: InkWell(
+              onTap: () {
+                // Boleh loncat ke langkah sebelumnya atau yang sudah lengkap.
+                if (i <= _step || (i == 1 && _ktpPath != null) || (i >= 2 && _ktpPath != null && _selfiePath != null)) {
+                  _goToStep(i);
+                }
+              },
+              borderRadius: BorderRadius.circular(10.r),
+              child: Container(
+                padding: EdgeInsets.symmetric(vertical: 8.h, horizontal: 4.w),
+                decoration: BoxDecoration(
+                  color: active
+                      ? AppColors.primary.withValues(alpha: 0.12)
+                      : done
+                          ? AppColors.success.withValues(alpha: 0.1)
+                          : AppColors.grey50,
+                  borderRadius: BorderRadius.circular(10.r),
+                  border: Border.all(
+                    color: active
+                        ? AppColors.primary
+                        : done
+                            ? AppColors.success
+                            : AppColors.grey200,
+                  ),
+                ),
+                child: Column(
+                  children: [
+                    Text(
+                      '${i + 1}',
+                      style: TextStyle(
+                        fontSize: 11.sp,
+                        fontWeight: FontWeight.w900,
+                        color: active
+                            ? AppColors.primary
+                            : done
+                                ? AppColors.success
+                                : AppColors.textSecondary,
+                      ),
+                    ),
+                    SizedBox(height: 2.h),
+                    Text(
+                      labels[i],
+                      textAlign: TextAlign.center,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: TextStyle(
+                        fontSize: 9.sp,
+                        fontWeight: FontWeight.w700,
+                        color: active
+                            ? AppColors.primary
+                            : done
+                                ? AppColors.success
+                                : AppColors.textSecondary,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ),
+        );
+      }),
+    );
+  }
+
+  Widget _buildWizardFooter({required bool canSubmit}) {
+    if (_step < _maxStep) {
+      return Row(
+        children: [
+          if (_step > 0)
+            Expanded(
+              child: CustomButton(
+                text: 'verification.step_back'.tr(),
+                height: 48.h,
+                isOutlined: true,
+                onPressed: _isSubmitting ? null : () => _goToStep(_step - 1),
+              ),
+            ),
+          if (_step > 0) SizedBox(width: 10.w),
+          Expanded(
+            flex: 2,
+            child: CustomButton(
+              text: 'verification.step_next'.tr(),
+              height: 48.h,
+              useGradient: true,
+              onPressed: !_isSubmitting && _canContinueFromStep(_step)
+                  ? () => _goToStep(_step + 1)
+                  : null,
+            ),
+          ),
+        ],
+      );
+    }
+
+    return Row(
+      children: [
+        Expanded(
+          child: CustomButton(
+            text: 'verification.step_back'.tr(),
+            height: 48.h,
+            isOutlined: true,
+            onPressed: _isSubmitting ? null : () => _goToStep(_step - 1),
+          ),
+        ),
+        SizedBox(width: 10.w),
+        Expanded(
+          flex: 2,
+          child: CustomButton(
+            text: 'verification.submit_documents'.tr(),
+            height: 48.h,
+            isLoading: _isSubmitting,
+            onPressed: canSubmit ? _submit : null,
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildReviewStep() {
+    Widget row(String label, String value, {bool ok = true}) {
+      return Padding(
+        padding: EdgeInsets.only(bottom: 10.h),
+        child: Row(
+          children: [
+            Icon(
+              ok ? LucideIcons.circleCheck : LucideIcons.circle,
+              size: 16.sp,
+              color: ok ? AppColors.success : AppColors.grey400,
+            ),
+            SizedBox(width: 8.w),
+            Expanded(
+              child: Text(
+                label,
+                style: TextStyle(
+                  fontSize: 12.sp,
+                  fontWeight: FontWeight.w700,
+                  color: AppColors.textPrimary,
+                ),
+              ),
+            ),
+            Flexible(
+              child: Text(
+                value,
+                textAlign: TextAlign.end,
+                style: TextStyle(
+                  fontSize: 11.sp,
+                  color: AppColors.textSecondary,
+                ),
+              ),
+            ),
+          ],
+        ),
+      );
+    }
+
+    return Container(
+      width: double.infinity,
+      padding: EdgeInsets.all(14.w),
+      decoration: BoxDecoration(
+        color: AppColors.surface,
+        borderRadius: BorderRadius.circular(12.r),
+        border: Border.all(color: AppColors.grey200),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          row(
+            'verification.doc_ktp'.tr(),
+            _ktpPath != null
+                ? 'verification.photo_uploaded'.tr()
+                : 'verification.review_missing'.tr(),
+            ok: _ktpPath != null,
+          ),
+          row(
+            'verification.doc_selfie'.tr(),
+            _selfiePath != null
+                ? 'verification.photo_uploaded'.tr()
+                : 'verification.review_missing'.tr(),
+            ok: _selfiePath != null,
+          ),
+          row(
+            'verification.doc_nib'.tr(),
+            _nibPath != null
+                ? 'verification.photo_uploaded'.tr()
+                : 'verification.review_optional_empty'.tr(),
+            ok: _nibPath != null,
+          ),
+          row(
+            'verification.doc_siup'.tr(),
+            _siupPath != null
+                ? 'verification.photo_uploaded'.tr()
+                : 'verification.review_optional_empty'.tr(),
+            ok: _siupPath != null,
+          ),
+          const Divider(height: 20),
+          row(
+            'verification.business_name_label'.tr(),
+            _businessNameCtrl.text.trim().isEmpty
+                ? '—'
+                : _businessNameCtrl.text.trim(),
+            ok: _businessNameCtrl.text.trim().isNotEmpty,
+          ),
+          row(
+            'verification.tax_id_label'.tr(),
+            _taxIdCtrl.text.trim().isEmpty ? '—' : _taxIdCtrl.text.trim(),
+            ok: _taxIdCtrl.text.trim().isNotEmpty,
+          ),
+          row(
+            'verification.business_address_label'.tr(),
+            _businessAddressCtrl.text.trim().isEmpty
+                ? '—'
+                : _businessAddressCtrl.text.trim(),
+            ok: _businessAddressCtrl.text.trim().isNotEmpty,
+          ),
+        ],
+      ),
     );
   }
 

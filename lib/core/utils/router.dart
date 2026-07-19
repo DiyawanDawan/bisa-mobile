@@ -95,7 +95,20 @@ import '../../features/auth/domain/entities/user_entity.dart';
 import '../../injection_container.dart';
 import '../network/token_repository.dart';
 
-Widget _buildCheckoutRoute(Object? extra) {
+Widget _buildCheckoutFlowRoute(Object? extra) {
+  if (extra is Map) {
+    final rawIds = extra['selectedItemIds'];
+    if (rawIds is List && rawIds.isNotEmpty) {
+      return CartPage(
+        checkoutMode: true,
+        initialSelectedIds: rawIds.map((e) => e.toString()).toSet(),
+      );
+    }
+  }
+  return const CartPage(checkoutMode: true);
+}
+
+Widget _buildCheckoutResultRoute(Object? extra) {
   if (extra is Map) {
     final orders = DirectCheckoutResultPage.ordersFromExtra(extra);
     if (orders.isNotEmpty) {
@@ -105,12 +118,10 @@ Widget _buildCheckoutRoute(Object? extra) {
             DirectCheckoutResultPage.selectedPaymentCodeFromExtra(extra),
       );
     }
+    // Kompatibilitas: extra lama dengan selectedItemIds masih ke alur checkout.
     final rawIds = extra['selectedItemIds'];
     if (rawIds is List && rawIds.isNotEmpty) {
-      return CartPage(
-        checkoutMode: true,
-        initialSelectedIds: rawIds.map((e) => e.toString()).toSet(),
-      );
+      return _buildCheckoutFlowRoute(extra);
     }
   }
   return const CartPage(checkoutMode: true);
@@ -660,8 +671,12 @@ final goRouter = GoRouter(
     ),
     GoRoute(path: '/cart', builder: (context, state) => const CartPage()),
     GoRoute(
+      path: '/checkout',
+      builder: (context, state) => _buildCheckoutFlowRoute(state.extra),
+    ),
+    GoRoute(
       path: '/checkout-result',
-      builder: (context, state) => _buildCheckoutRoute(state.extra),
+      builder: (context, state) => _buildCheckoutResultRoute(state.extra),
     ),
     GoRoute(
       path: '/wishlist',

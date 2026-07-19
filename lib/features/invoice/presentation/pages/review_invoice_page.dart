@@ -17,6 +17,9 @@ import 'package:mobile_bisa/features/invoice/presentation/widgets/invoice_breakd
 import 'package:mobile_bisa/features/invoice/presentation/widgets/invoice_shipping_card.dart';
 import 'package:mobile_bisa/features/invoice/presentation/widgets/invoice_status_banner.dart';
 import 'package:mobile_bisa/features/orders/domain/entities/order_entity.dart';
+import 'package:mobile_bisa/features/orders/domain/repositories/order_repository.dart';
+import 'package:mobile_bisa/features/orders/presentation/utils/payment_method_resolver.dart';
+import 'package:mobile_bisa/features/orders/presentation/utils/payment_result_utils.dart';
 import 'package:mobile_bisa/injection_container.dart';
 import '../../../stretch/data/datasources/stretch_remote_data_source.dart';
 import 'package:mobile_bisa/shared/widgets/bisa_app_bar.dart';
@@ -41,10 +44,83 @@ class ReviewInvoicePage extends StatelessWidget {
   }
 }
 
-class _ReviewInvoiceBody extends StatelessWidget {
+class _ReviewInvoiceBody extends StatefulWidget {
   final String negotiationId;
 
   const _ReviewInvoiceBody({required this.negotiationId});
+
+  @override
+  State<_ReviewInvoiceBody> createState() => _ReviewInvoiceBodyState();
+}
+
+class _ReviewInvoiceBodyState extends State<_ReviewInvoiceBody> {
+  bool _payBusy = false;
+
+  String get negotiationId => widget.negotiationId;
+
+  /// Sign (jika perlu) → pilih/default metode → init pay → instruksi (skip order detail).
+  Future<void> _signAndPay(OrderEntity order, {required bool needsSign}) async {
+    if (_payBusy) return;
+    setState(() => _payBusy = true);
+    try {
+      if (needsSign) {
+        await sl<StretchRemoteDataSource>().signOrderContract(order.id);
+        if (!mounted) return;
+        showSuccessSnackBar(context, 'invoice.contract_signed'.tr());
+        // Supplier belum tanda tangan → jangan lanjut bayar.
+        if (order.sellerSignedAt == null) {
+          context.read<ReviewInvoiceCubit>().load(negotiationId);
+          return;
+        }
+        context.read<ReviewInvoiceCubit>().load(negotiationId);
+      }
+
+      final payment = await PaymentMethodResolver.resolve(
+        context,
+        amount: order.totalAmount,
+      );
+      if (!mounted || payment == null) return;
+
+      final result = await sl<OrderRepository>().initializePayment(
+        order.id,
+        payment.code,
+      );
+      if (!mounted) return;
+
+      await result.fold(
+        (failure) async {
+          showErrorSnackBar(context, failure.message.localizedFailure);
+        },
+        (data) async {
+          final payData = Map<String, dynamic>.from(data);
+          if (!mounted) return;
+          if (!paymentInstructionsReady(payData) &&
+              payData['invoiceUrl'] == null &&
+              payData['paymentData'] is! Map) {
+            showErrorSnackBar(context, 'cart.payment_init_failed'.tr());
+            return;
+          }
+          context.pushReplacement(
+            '/payment-instruction',
+            extra: {
+              'orderId': order.id,
+              'orderNumber': order.orderNumber,
+              'amount': payData['amount'] ?? order.totalAmount,
+              'paymentResult': payData,
+              'orderCreatedAt': order.createdAt,
+              'paymentStatus': order.transaction?.paymentStatus,
+            },
+          );
+        },
+      );
+    } catch (_) {
+      if (mounted) {
+        showErrorSnackBar(context, 'errors.generic'.tr());
+      }
+    } finally {
+      if (mounted) setState(() => _payBusy = false);
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -517,35 +593,73 @@ class _ReviewInvoiceBody extends StatelessWidget {
               if (!order.isDigitalSigned) ...[
                 _signatureStatus(order),
                 SizedBox(height: AppSpacing.sm),
-                if ((isSupplier && order.sellerSignedAt == null) ||
-                    (!isSupplier && order.buyerSignedAt == null))
-                  CustomButton(
-                    text: 'invoice.action_sign_contract'.tr(),
-                    height: 44.h,
-                    useGradient: true,
-                    onPressed: () => _signContract(context, negotiationId, order.id),
-                  ),
-                if ((isSupplier && order.sellerSignedAt == null) ||
-                    (!isSupplier && order.buyerSignedAt == null))
-                  SizedBox(height: AppSpacing.sm),
               ],
-              if (!isSupplier && canPay && order.isDigitalSigned)
-                CustomButton(
-                  text: 'invoice.action_agree_pay'.tr(),
-                  useGradient: true,
-                  height: 48.h,
-                  onPressed: () => context.push(
-                    '/order/${order.id}',
-                    extra: {'autoPay': true},
-                  ),
-                )
-              else if (!isSupplier)
+              // Buyer: satu CTA — tanda tangan (jika perlu) + bayar langsung ke instruksi.
+              if (!isSupplier && canPay) ...[
+                Builder(
+                  builder: (context) {
+                    final buyerNeedsSign = order.buyerSignedAt == null;
+                    final sellerSigned = order.sellerSignedAt != null;
+                    if (order.isDigitalSigned) {
+                      return CustomButton(
+                        text: 'invoice.action_agree_pay'.tr(),
+                        useGradient: true,
+                        height: 48.h,
+                        isLoading: _payBusy,
+                        onPressed: _payBusy
+                            ? null
+                            : () => _signAndPay(order, needsSign: false),
+                      );
+                    }
+                    if (buyerNeedsSign && sellerSigned) {
+                      return CustomButton(
+                        text: 'invoice.action_sign_and_pay'.tr(),
+                        useGradient: true,
+                        height: 48.h,
+                        isLoading: _payBusy,
+                        onPressed: _payBusy
+                            ? null
+                            : () => _signAndPay(order, needsSign: true),
+                      );
+                    }
+                    if (buyerNeedsSign) {
+                      return CustomButton(
+                        text: 'invoice.action_sign_contract'.tr(),
+                        height: 44.h,
+                        useGradient: true,
+                        onPressed: () =>
+                            _signContract(context, negotiationId, order.id),
+                      );
+                    }
+                    return CustomButton(
+                      text: 'invoice.contract_pending_signature'.tr(),
+                      height: 48.h,
+                      onPressed: null,
+                    );
+                  },
+                ),
+                SizedBox(height: AppSpacing.sm),
+              ] else if (!isSupplier) ...[
                 CustomButton(
                   text: 'invoice.payment_processed'.tr(),
                   height: 48.h,
                   onPressed: null,
                 ),
-              if (!isSupplier && canPay) SizedBox(height: AppSpacing.sm),
+                SizedBox(height: AppSpacing.sm),
+              ],
+              // Supplier masih bisa tanda tangan terpisah (tanpa bayar).
+              if (isSupplier &&
+                  !order.isDigitalSigned &&
+                  order.sellerSignedAt == null) ...[
+                CustomButton(
+                  text: 'invoice.action_sign_contract'.tr(),
+                  height: 44.h,
+                  useGradient: true,
+                  onPressed: () =>
+                      _signContract(context, negotiationId, order.id),
+                ),
+                SizedBox(height: AppSpacing.sm),
+              ],
               if (isSupplier && canPay) ...[
                 CustomButton(
                   text: 'invoice.action_edit'.tr(),

@@ -17,11 +17,11 @@ import '../../../../core/constants/app_text_styles.dart';
 import 'package:mobile_bisa/core/utils/payment_status_utils.dart';
 import 'package:mobile_bisa/core/utils/safe_area_utils.dart';
 import 'package:mobile_bisa/core/errors/failures.dart';
-import 'package:mobile_bisa/core/network/api_client.dart';
 import 'package:mobile_bisa/features/invoice/presentation/utils/invoice_export_helper.dart';
 import 'package:mobile_bisa/features/orders/domain/entities/order_entity.dart';
 import 'package:mobile_bisa/features/orders/domain/repositories/order_repository.dart';
 import 'package:mobile_bisa/features/orders/presentation/bloc/order_cubit.dart';
+import 'package:mobile_bisa/features/orders/presentation/utils/payment_method_resolver.dart';
 import 'package:mobile_bisa/features/orders/presentation/utils/payment_result_utils.dart';
 import 'package:mobile_bisa/features/orders/presentation/widgets/order_dispute_section.dart';
 import 'package:mobile_bisa/features/orders/presentation/widgets/payment_expiry_banner.dart';
@@ -213,27 +213,8 @@ class _OrderDetailPageState extends State<OrderDetailPage> {
     });
   }
 
-  Future<PaymentMethodChoice?> _loadSavedPaymentPreference() async {
-    try {
-      final res = await sl<ApiClient>().dio.get('/users/me/saved-payments');
-      final list = res.data['data'] as List? ?? [];
-      if (list.isEmpty) return null;
-      final def = list.cast<Map>().firstWhere(
-            (e) => e['isDefault'] == true,
-            orElse: () => list.first,
-          );
-      final code = '${def['channelCode']}'.trim();
-      if (code.isEmpty) return null;
-      return PaymentMethodChoice(
-        code: code,
-        name: '${def['channelName']}'.trim().isEmpty
-            ? code
-            : '${def['channelName']}'.trim(),
-      );
-    } catch (_) {
-      return null;
-    }
-  }
+  Future<PaymentMethodChoice?> _loadSavedPaymentPreference() =>
+      PaymentMethodResolver.loadSaved();
 
   Future<void> _openPaymentInstructions(Map<String, dynamic> data) async {
     // POST /pay sudah selesai — jangan tampilkan overlay VA saat buka / kembali.
