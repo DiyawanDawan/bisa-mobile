@@ -117,6 +117,55 @@ class AuthCubit extends Cubit<AuthState> {
     }
   }
 
+  /// Facebook → Firebase Auth (`signInWithProvider`) → kirim ID token ke `/auth/facebook`.
+  /// OAuth redirect memakai https://bisa-51853.firebaseapp.com/__/auth/handler
+  Future<void> loginWithFacebook() async {
+    try {
+      emit(const AuthState.loading());
+      await _ensureFirebaseReady();
+
+      final facebookProvider = FacebookAuthProvider()
+        ..addScope('email')
+        ..addScope('public_profile')
+        ..setCustomParameters({'display': 'popup'});
+
+      final userCredential =
+          await FirebaseAuth.instance.signInWithProvider(facebookProvider);
+      final firebaseIdToken = await userCredential.user?.getIdToken(true);
+
+      if (firebaseIdToken == null || firebaseIdToken.isEmpty) {
+        await _signOutSocialProviders();
+        emit(const AuthState.error('auth.facebook_token_failed'));
+        return;
+      }
+
+      final result = await _repository.loginWithFacebook(firebaseIdToken);
+      await result.fold(
+        (failure) async {
+          await _signOutSocialProviders();
+          emit(AuthState.error(failure.message));
+        },
+        (user) async => emit(AuthState.authenticated(user)),
+      );
+    } on FirebaseAuthException catch (e) {
+      if (kDebugMode) {
+        debugPrint('[Auth] Facebook FirebaseAuthException: ${e.code} ${e.message}');
+      }
+      await _signOutSocialProviders();
+      if (e.code == 'canceled' || e.code == 'web-context-canceled') {
+        emit(const AuthState.initial());
+        return;
+      }
+      emit(AuthState.error(e.message ?? 'errors.facebook_sign_in'));
+    } catch (e, st) {
+      if (kDebugMode) {
+        debugPrint('[Auth] Facebook sign-in failed: $e\n$st');
+      }
+      await _signOutSocialProviders();
+      emit(const AuthState.error('errors.facebook_sign_in'));
+    }
+  }
+
   Future<void> registerBuyer({
     required String fullName,
     required String email,

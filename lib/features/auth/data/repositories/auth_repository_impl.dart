@@ -62,6 +62,26 @@ class AuthRepositoryImpl implements AuthRepository {
   }
 
   @override
+  Future<Either<Failure, UserEntity>> loginWithFacebook(String idToken) async {
+    try {
+      final data = await remoteDataSource.loginWithFacebook(idToken);
+      final userModel = UserModel.fromJson(data['user']);
+      final tokens = data['token'];
+
+      await tokenRepository.saveTokens(
+        accessToken: tokens['accessToken'],
+        refreshToken: tokens['refreshToken'],
+      );
+
+      return Right(userModel.toEntity());
+    } on DioException catch (e) {
+      return Left(_mapDioExceptionToFailure(e));
+    } catch (e) {
+      return const Left(UnexpectedFailure());
+    }
+  }
+
+  @override
   Future<Either<Failure, UserEntity>> getCurrentUser() async {
     try {
       final userModel = await remoteDataSource.getMe();

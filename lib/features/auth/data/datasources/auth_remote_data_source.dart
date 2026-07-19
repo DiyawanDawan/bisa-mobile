@@ -5,6 +5,7 @@ import '../models/user_model.dart';
 abstract class AuthRemoteDataSource {
   Future<Map<String, dynamic>> login(String email, String password);
   Future<Map<String, dynamic>> loginWithGoogle(String idToken);
+  Future<Map<String, dynamic>> loginWithFacebook(String idToken);
   Future<UserModel> getMe();
   Future<UserModel> updateProfile({
     String? fullName,
@@ -75,6 +76,14 @@ class AuthRemoteDataSourceImpl implements AuthRemoteDataSource {
   @override
   Future<Map<String, dynamic>> loginWithGoogle(String idToken) async {
     final response = await dio.post('/auth/google', data: {
+      'token': idToken,
+    });
+    return response.data['data'];
+  }
+
+  @override
+  Future<Map<String, dynamic>> loginWithFacebook(String idToken) async {
+    final response = await dio.post('/auth/facebook', data: {
       'token': idToken,
     });
     return response.data['data'];

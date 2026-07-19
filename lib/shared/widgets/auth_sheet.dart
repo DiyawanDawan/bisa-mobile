@@ -308,55 +308,90 @@ class _AuthSheetState extends State<AuthSheet> {
                       loading: () => true,
                       orElse: () => false,
                     );
-                    return Material(
-                      color: AppColors.transparent,
-                      child: InkWell(
-                        onTap: isLoading
-                            ? null
-                            : () => context.read<AuthCubit>().loginWithGoogle(),
-                        borderRadius: BorderRadius.circular(AppRadius.xl),
-                        child: Ink(
-                          height: AppSpacing.buttonHeightLg,
-                          decoration: BoxDecoration(
-                            color: AppColors.surface,
+                    Widget socialBtn({
+                      required String label,
+                      required String iconUrl,
+                      required IconData fallback,
+                      required VoidCallback? onTap,
+                    }) {
+                      return Expanded(
+                        child: Material(
+                          color: AppColors.transparent,
+                          child: InkWell(
+                            onTap: onTap,
                             borderRadius: BorderRadius.circular(AppRadius.xl),
-                            border: Border.all(color: AppColors.grey200),
-                          ),
-                          child: Row(
-                            mainAxisAlignment: MainAxisAlignment.center,
-                            children: [
-                              if (isLoading)
-                                SizedBox(
-                                  width: 22.w,
-                                  height: 22.w,
-                                  child: const CircularProgressIndicator(
-                                    strokeWidth: 2,
-                                    color: AppColors.primary,
-                                  ),
-                                )
-                              else
-                                SvgPicture.network(
-                                  'https://www.vectorlogo.zone/logos/google/google-icon.svg',
-                                  width: 20.w,
-                                  height: 20.w,
-                                  placeholderBuilder: (context) => Icon(
-                                    Icons.g_mobiledata_rounded,
-                                    size: 24.sp,
-                                    color: AppColors.textPrimary,
-                                  ),
-                                ),
-                              SizedBox(width: AppSpacing.sm10),
-                              Text(
-                                'shared.google_sign_in'.tr(),
-                                style: AppTextStyles.body(
-                                  fontWeight: FontWeight.w700,
-                                  color: AppColors.textPrimary,
-                                ),
+                            child: Ink(
+                              height: AppSpacing.buttonHeightLg,
+                              decoration: BoxDecoration(
+                                color: AppColors.surface,
+                                borderRadius: BorderRadius.circular(AppRadius.xl),
+                                border: Border.all(color: AppColors.grey200),
                               ),
-                            ],
+                              child: Row(
+                                mainAxisAlignment: MainAxisAlignment.center,
+                                children: [
+                                  if (isLoading)
+                                    SizedBox(
+                                      width: 18.w,
+                                      height: 18.w,
+                                      child: const CircularProgressIndicator(
+                                        strokeWidth: 2,
+                                        color: AppColors.primary,
+                                      ),
+                                    )
+                                  else
+                                    SvgPicture.network(
+                                      iconUrl,
+                                      width: 18.w,
+                                      height: 18.w,
+                                      placeholderBuilder: (context) => Icon(
+                                        fallback,
+                                        size: 22.sp,
+                                        color: AppColors.textPrimary,
+                                      ),
+                                    ),
+                                  SizedBox(width: AppSpacing.sm),
+                                  Flexible(
+                                    child: Text(
+                                      label,
+                                      overflow: TextOverflow.ellipsis,
+                                      style: AppTextStyles.body(
+                                        fontWeight: FontWeight.w700,
+                                        color: AppColors.textPrimary,
+                                      ),
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
                           ),
                         ),
-                      ),
+                      );
+                    }
+
+                    return Row(
+                      children: [
+                        socialBtn(
+                          label: 'shared.google_sign_in'.tr(),
+                          iconUrl:
+                              'https://www.vectorlogo.zone/logos/google/google-icon.svg',
+                          fallback: Icons.g_mobiledata_rounded,
+                          onTap: isLoading
+                              ? null
+                              : () => context.read<AuthCubit>().loginWithGoogle(),
+                        ),
+                        SizedBox(width: AppSpacing.md),
+                        socialBtn(
+                          label: 'facebook_1'.tr(),
+                          iconUrl:
+                              'https://www.vectorlogo.zone/logos/facebook/facebook-icon.svg',
+                          fallback: Icons.facebook,
+                          onTap: isLoading
+                              ? null
+                              : () =>
+                                  context.read<AuthCubit>().loginWithFacebook(),
+                        ),
+                      ],
                     );
                   },
                 ),

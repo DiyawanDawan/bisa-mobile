@@ -439,13 +439,25 @@ class _LoginPageState extends State<LoginPage> {
           builder: (context, state) {
             final isLoading = state.maybeWhen(loading: () => true, orElse: () => false);
             return Row(
-              mainAxisAlignment: MainAxisAlignment.center,
               children: [
                 _socialIcon(
                   label: 'google_1'.tr(),
+                  iconUrl:
+                      'https://www.vectorlogo.zone/logos/google/google-icon.svg',
+                  fallbackIcon: Icons.g_mobiledata_rounded,
                   onTap: isLoading
                       ? null
                       : () => context.read<AuthCubit>().loginWithGoogle(),
+                ),
+                SizedBox(width: AppSpacing.md),
+                _socialIcon(
+                  label: 'facebook_1'.tr(),
+                  iconUrl:
+                      'https://www.vectorlogo.zone/logos/facebook/facebook-icon.svg',
+                  fallbackIcon: Icons.facebook,
+                  onTap: isLoading
+                      ? null
+                      : () => context.read<AuthCubit>().loginWithFacebook(),
                 ),
               ],
             );
@@ -457,6 +469,8 @@ class _LoginPageState extends State<LoginPage> {
 
   Widget _socialIcon({
     required String label,
+    required String iconUrl,
+    required IconData fallbackIcon,
     String? comingSoonLabel,
     VoidCallback? onTap,
   }) {
@@ -478,11 +492,11 @@ class _LoginPageState extends State<LoginPage> {
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
                 SvgPicture.network(
-                  'https://www.vectorlogo.zone/logos/google/google-icon.svg',
+                  iconUrl,
                   width: AppSpacing.lg,
                   height: AppSpacing.lg,
                   placeholderBuilder: (context) => Icon(
-                    Icons.g_mobiledata_rounded,
+                    fallbackIcon,
                     size: 24.sp,
                     color: AppColors.textPrimary,
                   ),
