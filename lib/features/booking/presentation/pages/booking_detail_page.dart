@@ -12,7 +12,9 @@ import '../../../../core/utils/app_feedback.dart';
 import '../../../../core/utils/money_format.dart';
 import '../../../../injection_container.dart';
 import '../../../../shared/widgets/bisa_app_bar.dart';
+import '../../../../shared/widgets/bisa_network_image.dart';
 import '../../../../shared/widgets/custom_button.dart';
+import '../../../../shared/widgets/seller_identity_row.dart';
 import '../../../auth/presentation/bloc/auth_cubit.dart';
 import '../../domain/entities/booking_entity.dart';
 import '../bloc/booking_cubit.dart';
@@ -85,18 +87,57 @@ class _BookingDetailBody extends StatelessWidget {
                       _Section(
                         title: 'booking.section_product'.tr(),
                         children: [
-                          _Row('booking.field_product'.tr(), b.product.name),
-                          _Row(
-                            'booking.field_quantity'.tr(),
-                            '${b.quantity} ${b.unit}',
-                          ),
-                          _Row(
-                            'booking.field_price'.tr(),
-                            formatMoneyDisplay(b.priceSnapshot),
-                          ),
-                          _Row(
-                            'booking.field_subtotal'.tr(),
-                            formatMoneyDisplay(b.subtotalSnapshot),
+                          Row(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              ClipRRect(
+                                borderRadius: BorderRadius.circular(AppRadius.lg),
+                                child: SizedBox(
+                                  width: 72.w,
+                                  height: 72.w,
+                                  child: BisaNetworkImage(
+                                    imageUrl: b.product.thumbnailUrl,
+                                    fit: BoxFit.cover,
+                                    errorWidget: (_, __, ___) => Container(
+                                      color: AppColors.grey100,
+                                      child: Icon(
+                                        LucideIcons.package,
+                                        color: AppColors.grey400,
+                                        size: 28.sp,
+                                      ),
+                                    ),
+                                  ),
+                                ),
+                              ),
+                              SizedBox(width: AppSpacing.sm10),
+                              Expanded(
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Text(
+                                      b.product.name,
+                                      style: TextStyle(
+                                        fontSize: 14.sp,
+                                        fontWeight: FontWeight.w800,
+                                      ),
+                                    ),
+                                    SizedBox(height: 6.h),
+                                    _Row(
+                                      'booking.field_quantity'.tr(),
+                                      '${b.quantity} ${b.unit}',
+                                    ),
+                                    _Row(
+                                      'booking.field_price'.tr(),
+                                      formatMoneyDisplay(b.priceSnapshot),
+                                    ),
+                                    _Row(
+                                      'booking.field_subtotal'.tr(),
+                                      formatMoneyDisplay(b.subtotalSnapshot),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            ],
                           ),
                         ],
                       ),
@@ -104,12 +145,23 @@ class _BookingDetailBody extends StatelessWidget {
                       _Section(
                         title: 'booking.section_party'.tr(),
                         children: [
-                          _Row(
-                            'booking.counterparty'.tr(),
-                            counterparty.companyName?.isNotEmpty == true
+                          SellerIdentityRow(
+                            displayName: counterparty.companyName?.trim().isNotEmpty == true
                                 ? counterparty.companyName!
                                 : counterparty.fullName,
+                            avatarUrl: counterparty.avatarUrl,
+                            isVerified: counterparty.isVerified,
+                            avatarRadius: 16.r,
+                            fallbackIcon:
+                                isSupplier ? LucideIcons.user : LucideIcons.store,
+                            nameStyle: TextStyle(
+                              fontSize: 14.sp,
+                              fontWeight: FontWeight.w700,
+                              color: AppColors.textPrimary,
+                            ),
+                            maxNameLines: 2,
                           ),
+                          SizedBox(height: AppSpacing.sm),
                           _Row(
                             'booking.field_created'.tr(),
                             dateFmt.format(b.createdAt),

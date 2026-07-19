@@ -243,6 +243,9 @@ class _MarketplacePageState extends State<MarketplacePage> {
                         SliverToBoxAdapter(child: _buildOrganicAvailabilityBar()),
                       SliverToBoxAdapter(
                         child: HorizontalProductSection(
+                          key: ValueKey(
+                            'new-$_activeProductMode-$_selectedBiomassaType',
+                          ),
                           title: _activeProductMode == 'ORGANIC_PRODUCE'
                               ? 'marketplace.new_rec_organic'.tr()
                               : 'marketplace.new_rec_biochar'.tr(),
@@ -250,6 +253,9 @@ class _MarketplacePageState extends State<MarketplacePage> {
                           sortOrder: 'desc',
                           limit: 20,
                           productMode: _activeProductMode,
+                          biomassaType: _activeProductMode == 'BIOMASS_MATERIAL'
+                              ? _selectedBiomassaType
+                              : null,
                           onShowAll: () {
                             context.push(
                               '/collection-products',
@@ -260,6 +266,8 @@ class _MarketplacePageState extends State<MarketplacePage> {
                                 'sortBy': 'createdAt',
                                 'sortOrder': 'desc',
                                 'productMode': _activeProductMode,
+                                if (_activeProductMode == 'BIOMASS_MATERIAL')
+                                  'biomassaType': _selectedBiomassaType,
                               },
                             );
                           },
@@ -267,6 +275,9 @@ class _MarketplacePageState extends State<MarketplacePage> {
                       ),
                       SliverToBoxAdapter(
                         child: HorizontalProductSection(
+                          key: ValueKey(
+                            'cheap-$_activeProductMode-$_selectedBiomassaType',
+                          ),
                           title: _activeProductMode == 'ORGANIC_PRODUCE'
                               ? 'marketplace.cheapest_organic'.tr()
                               : 'marketplace.cheapest_biochar'.tr(),
@@ -274,6 +285,9 @@ class _MarketplacePageState extends State<MarketplacePage> {
                           sortOrder: 'asc',
                           limit: 10,
                           productMode: _activeProductMode,
+                          biomassaType: _activeProductMode == 'BIOMASS_MATERIAL'
+                              ? _selectedBiomassaType
+                              : null,
                           onShowAll: () {
                             context.push(
                               '/collection-products',
@@ -284,6 +298,8 @@ class _MarketplacePageState extends State<MarketplacePage> {
                                 'sortBy': 'pricePerUnit',
                                 'sortOrder': 'asc',
                                 'productMode': _activeProductMode,
+                                if (_activeProductMode == 'BIOMASS_MATERIAL')
+                                  'biomassaType': _selectedBiomassaType,
                               },
                             );
                           },
@@ -343,9 +359,9 @@ class _MarketplacePageState extends State<MarketplacePage> {
                               }
                               return SliverPadding(
                                 padding: EdgeInsets.fromLTRB(
-                                  AppSpacing.md12,
+                                  AppSpacing.sm,
                                   0,
-                                  AppSpacing.md12,
+                                  AppSpacing.sm,
                                   mainShellBottomPadding(
                                   context,
                                   kind: MainShellScrollKind.grid,
@@ -353,10 +369,13 @@ class _MarketplacePageState extends State<MarketplacePage> {
                                 ),
                                 sliver: SliverMasonryGrid.count(
                                   crossAxisCount: 2,
-                                  mainAxisSpacing: AppSpacing.md,
-                                  crossAxisSpacing: AppSpacing.md12,
+                                  mainAxisSpacing: AppSpacing.sm,
+                                  crossAxisSpacing: AppSpacing.sm,
                                   itemBuilder: (context, index) =>
-                                      ProductCard(product: products[index]),
+                                      ProductCard(
+                                        product: products[index],
+                                        imageHeight: 152.h,
+                                      ),
                                   childCount: products.length,
                                 ),
                               );
@@ -782,6 +801,12 @@ class _MarketplacePageState extends State<MarketplacePage> {
         label: 'marketplace.supplier_directory'.tr(),
         color: AppColors.primary,
         onTap: () => context.push('/supplier-directory'),
+      ),
+      _FeatureItem(
+        icon: LucideIcons.columns3,
+        label: 'product.compare_tray_open'.tr(),
+        color: AppColors.info,
+        onTap: () => context.push('/compare-products'),
       ),
       if (isBuyer)
         _FeatureItem(

@@ -448,6 +448,111 @@ class _CartPageState extends State<CartPage> {
     }
   }
 
+  void _toggleSelectAll(CartSummary cart, bool select) {
+    setState(() {
+      for (final it in cart.items) {
+        if (it.product.toEntity().stock <= 0) continue;
+        if (select) {
+          _selectedItemIds.add(it.id);
+        } else {
+          _selectedItemIds.remove(it.id);
+        }
+      }
+    });
+    if (_isCheckoutFlow) {
+      _refreshCheckoutPreview(cart);
+    }
+  }
+
+  Widget _buildSelectAllBar(CartSummary cart) {
+    final selectable = cart.items
+        .where((it) => it.product.toEntity().stock > 0)
+        .toList();
+    final selectedCount =
+        selectable.where((it) => _selectedItemIds.contains(it.id)).length;
+    final allSelected =
+        selectable.isNotEmpty && selectedCount == selectable.length;
+    final partiallySelected = selectedCount > 0 && !allSelected;
+    final totalCount = cart.items.length;
+
+    return Container(
+      margin: EdgeInsets.only(bottom: AppSpacing.sm),
+      padding: EdgeInsets.symmetric(
+        horizontal: AppSpacing.sm10,
+        vertical: AppSpacing.sm,
+      ),
+      decoration: BoxDecoration(
+        color: AppColors.surface,
+        borderRadius: BorderRadius.circular(AppRadius.lg),
+        border: Border.all(color: AppColors.grey200),
+      ),
+      child: Row(
+        children: [
+          SizedBox(
+            width: 22.w,
+            height: 22.w,
+            child: Checkbox(
+              value: allSelected
+                  ? true
+                  : (partiallySelected ? null : false),
+              tristate: true,
+              onChanged: selectable.isEmpty
+                  ? null
+                  : (_) => _toggleSelectAll(cart, !allSelected),
+              activeColor: AppColors.primary,
+              materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(6.r),
+              ),
+            ),
+          ),
+          SizedBox(width: AppSpacing.sm),
+          Expanded(
+            child: GestureDetector(
+              behavior: HitTestBehavior.opaque,
+              onTap: selectable.isEmpty
+                  ? null
+                  : () => _toggleSelectAll(cart, !allSelected),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    'cart.select_all'.tr(),
+                    style: TextStyle(
+                      fontSize: 13.sp,
+                      fontWeight: FontWeight.w800,
+                      color: AppColors.textPrimary,
+                    ),
+                  ),
+                  SizedBox(height: 2.h),
+                  Text(
+                    'cart.products_selected'.tr(
+                      namedArgs: {
+                        'total': '$totalCount',
+                        'selected': '$selectedCount',
+                      },
+                    ),
+                    style: AppTextStyles.caption(color: AppColors.textSecondary),
+                  ),
+                ],
+              ),
+            ),
+          ),
+          Text(
+            'cart.items_count_badge'.tr(
+              namedArgs: {'count': '$totalCount'},
+            ),
+            style: TextStyle(
+              fontSize: 11.sp,
+              fontWeight: FontWeight.w700,
+              color: AppColors.primary,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
   Future<void> _onCheckout(BuildContext context, CartSummary cart) async {
     final selectedItems = cart.items
         .where((it) => _selectedItemIds.contains(it.id))
@@ -1671,12 +1776,23 @@ class _CartPageState extends State<CartPage> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
+    return BlocBuilder<CommerceCubit, CommerceState>(
+      buildWhen: (prev, curr) =>
+          prev.cart?.items.length != curr.cart?.items.length,
+      builder: (context, commerce) {
+        final itemCount = commerce.cart?.items.length ?? 0;
+        final cartTitle = _isCheckoutFlow
+            ? 'cart.checkout_title'.tr()
+            : (itemCount > 0
+                ? 'cart.title_with_count'.tr(
+                    namedArgs: {'count': '$itemCount'},
+                  )
+                : 'cart.title'.tr());
+
+        return Scaffold(
       backgroundColor: AppColors.background,
       appBar: BisaAppBar(
-        title: _isCheckoutFlow
-            ? 'cart.checkout_title'.tr()
-            : 'cart.title'.tr(),
+        title: cartTitle,
         backgroundColor: AppColors.surface,
         onBackTap: _isCheckoutFlow
             ? () {
@@ -1817,6 +1933,7 @@ class _CartPageState extends State<CartPage> {
                     parent: BouncingScrollPhysics(),
                   ),
                   children: [
+                    _buildSelectAllBar(cart),
                     for (var i = 0; i < groupList.length; i++) ...[
                       if (i > 0) SizedBox(height: AppSpacing.section),
                       _buildSellerCard(context, groupList[i],
@@ -1844,6 +1961,8 @@ class _CartPageState extends State<CartPage> {
             _buildCheckoutProcessingOverlay(),
         ],
       ),
+    );
+      },
     );
   }
 
@@ -3724,16 +3843,17 @@ class _CartRecommendationSectionState
                   _buildHeader('cart.rec_loading'.tr()),
                   SizedBox(height: AppSpacing.md12),
                   SizedBox(
-                    height: ProductCardSkeleton.horizontalListViewportHeight,
+                    height: ProductCard.horizontalViewportHeight,
                     child: ListView.separated(
                       scrollDirection: Axis.horizontal,
                       padding: EdgeInsets.symmetric(horizontal: AppSpacing.md),
                       itemCount: 3,
-                      separatorBuilder: (_, __) => SizedBox(width: AppSpacing.md12),
+                      separatorBuilder: (_, __) => SizedBox(width: AppSpacing.sm),
                       itemBuilder: (_, __) => SizedBox(
-                        width: 160.w,
+                        width: ProductCard.horizontalWidth,
+                        height: ProductCard.horizontalViewportHeight,
                         child: ProductCardSkeleton(
-                          imageHeight: 120.h,
+                          imageHeight: ProductCard.horizontalImageHeight,
                           showSellerInfo: true,
                         ),
                       ),

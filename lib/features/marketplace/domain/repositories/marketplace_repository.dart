@@ -51,8 +51,16 @@ abstract class MarketplaceRepository {
   Future<Either<Failure, void>> deleteProduct(String id);
   Future<Either<Failure, ProductStatsEntity>> getProductStats(String id);
   Future<Either<Failure, ProductEntity>> duplicateProduct(String id);
-  Future<Either<Failure, List<SupplierModel>>> getSuppliers(
-      {String? search, int page = 1, int limit = 20});
+  Future<Either<Failure, List<SupplierModel>>> getSuppliers({
+    String? search,
+    bool? verified,
+    String? productMode,
+    String? biomassaType,
+    String? province,
+    String? regency,
+    int page = 1,
+    int limit = 20,
+  });
   Future<Either<Failure, SupplierModel>> getSupplierProfile(String id);
   Future<Either<Failure, List<ProductEntity>>> getFeaturedProducts();
   Future<Either<Failure, List<ProductCollectionEntity>>> getCollections();

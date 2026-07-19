@@ -79,6 +79,25 @@ class AiCubit extends HydratedCubit<AiState> {
     }
   }
 
+  /// Tambah pasangan pesan user + asisten tanpa memanggil API (mis. handoff CS).
+  void appendLocalExchange({
+    required String userText,
+    required String assistantText,
+  }) {
+    final now = DateTime.now();
+    _messages.add(
+      ChatMessage(text: userText, isUser: true, timestamp: now),
+    );
+    _messages.add(
+      ChatMessage(
+        text: assistantText,
+        isUser: false,
+        timestamp: now.add(const Duration(milliseconds: 50)),
+      ),
+    );
+    emit(AiState.chatLoaded(List.from(_messages), isTyping: false));
+  }
+
   void clearChat() {
     _messages.clear();
     emit(const AiState.initial());

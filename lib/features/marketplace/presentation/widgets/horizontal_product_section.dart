@@ -17,6 +17,8 @@ class HorizontalProductSection extends StatefulWidget {
   final int limit;
   final String? collectionSlug;
   final String? productMode;
+  final String? biomassaType;
+  final String? categoryId;
 
   const HorizontalProductSection({
     super.key,
@@ -27,6 +29,8 @@ class HorizontalProductSection extends StatefulWidget {
     this.limit = 10,
     this.collectionSlug,
     this.productMode,
+    this.biomassaType,
+    this.categoryId,
   });
 
   @override
@@ -56,6 +60,10 @@ class _HorizontalProductSectionState extends State<HorizontalProductSection> {
         sortOrder: widget.sortOrder,
         limit: widget.limit,
         productMode: widget.productMode,
+        biomassaType: widget.productMode == 'BIOMASS_MATERIAL'
+            ? widget.biomassaType
+            : null,
+        categoryId: widget.categoryId,
       );
     }
   }
@@ -63,7 +71,11 @@ class _HorizontalProductSectionState extends State<HorizontalProductSection> {
   @override
   void didUpdateWidget(covariant HorizontalProductSection oldWidget) {
     super.didUpdateWidget(oldWidget);
-    if (oldWidget.productMode != widget.productMode) {
+    if (oldWidget.productMode != widget.productMode ||
+        oldWidget.biomassaType != widget.biomassaType ||
+        oldWidget.categoryId != widget.categoryId ||
+        oldWidget.sortBy != widget.sortBy ||
+        oldWidget.sortOrder != widget.sortOrder) {
       _fetchData();
     }
   }
@@ -72,6 +84,17 @@ class _HorizontalProductSectionState extends State<HorizontalProductSection> {
   void dispose() {
     _cubit.close();
     super.dispose();
+  }
+
+  Widget _buildHorizontalCard({required Widget child}) {
+    return SizedBox(
+      width: ProductCard.horizontalWidth,
+      height: ProductCard.horizontalViewportHeight,
+      child: ClipRRect(
+        borderRadius: BorderRadius.circular(AppRadius.xl),
+        child: child,
+      ),
+    );
   }
 
   @override
@@ -83,16 +106,15 @@ class _HorizontalProductSectionState extends State<HorizontalProductSection> {
           return state.maybeWhen(
             initial: () => const SizedBox.shrink(),
             loading: () => SizedBox(
-              height: ProductCardSkeleton.horizontalListViewportHeight,
+              height: ProductCard.horizontalViewportHeight,
               child: ListView.separated(
                 scrollDirection: Axis.horizontal,
                 padding: EdgeInsets.symmetric(horizontal: AppSpacing.md),
                 itemCount: 3,
-                separatorBuilder: (_, __) => SizedBox(width: AppSpacing.md12),
-                itemBuilder: (_, __) => SizedBox(
-                  width: 160.w,
+                separatorBuilder: (_, __) => SizedBox(width: AppSpacing.sm),
+                itemBuilder: (_, __) => _buildHorizontalCard(
                   child: ProductCardSkeleton(
-                    imageHeight: 120.h,
+                    imageHeight: ProductCard.horizontalImageHeight,
                     showSellerInfo: true,
                   ),
                 ),
@@ -134,25 +156,21 @@ class _HorizontalProductSectionState extends State<HorizontalProductSection> {
                       ],
                     ),
                   ),
-                  SingleChildScrollView(
-                    scrollDirection: Axis.horizontal,
-                    physics: const BouncingScrollPhysics(),
-                    padding: EdgeInsets.symmetric(horizontal: AppSpacing.md),
-                    child: IntrinsicHeight(
-                      child: Row(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          for (var i = 0; i < products.length; i++) ...[
-                            if (i > 0) SizedBox(width: AppSpacing.sm),
-                            SizedBox(
-                              width: 165.w,
-                              child: ProductCard(
-                                product: products[i],
-                                imageHeight: 120.h,
-                              ),
-                            ),
-                          ],
-                        ],
+                  SizedBox(
+                    height: ProductCard.horizontalViewportHeight,
+                    child: ListView.separated(
+                      scrollDirection: Axis.horizontal,
+                      physics: const BouncingScrollPhysics(),
+                      padding: EdgeInsets.symmetric(horizontal: AppSpacing.md),
+                      itemCount: products.length,
+                      separatorBuilder: (_, __) =>
+                          SizedBox(width: AppSpacing.sm),
+                      itemBuilder: (context, i) => _buildHorizontalCard(
+                        child: ProductCard(
+                          product: products[i],
+                          imageHeight: ProductCard.horizontalImageHeight,
+                          compact: true,
+                        ),
                       ),
                     ),
                   ),
@@ -161,7 +179,10 @@ class _HorizontalProductSectionState extends State<HorizontalProductSection> {
               );
             },
             error: (message) => Padding(
-              padding: EdgeInsets.symmetric(horizontal: AppSpacing.lg, vertical: AppSpacing.sm),
+              padding: EdgeInsets.symmetric(
+                horizontal: AppSpacing.lg,
+                vertical: AppSpacing.sm,
+              ),
               child: Text(
                 message,
                 style: TextStyle(fontSize: 12.sp, color: AppColors.error),

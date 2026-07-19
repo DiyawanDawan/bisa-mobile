@@ -184,12 +184,11 @@ class SupplierProductTile extends StatelessWidget {
                     crossAxisAlignment: WrapCrossAlignment.center,
                     children: [
                       _metaChip(
-                        LucideIcons.package,
-                        'marketplace.stock_chip'.tr(namedArgs: {
-                          'stock': _trimNum(product.stock),
-                          'unit': product.unit,
-                        }),
-                        AppColors.info,
+                        LucideIcons.star,
+                        product.averageRating > 0
+                            ? product.averageRating.toStringAsFixed(1)
+                            : '0',
+                        AppColors.warning,
                       ),
                       _metaChip(
                         LucideIcons.shoppingBag,
@@ -197,6 +196,14 @@ class SupplierProductTile extends StatelessWidget {
                           'count': '${product.totalSold}',
                         }),
                         AppColors.success,
+                      ),
+                      _metaChip(
+                        LucideIcons.package,
+                        'marketplace.stock_chip'.tr(namedArgs: {
+                          'stock': _trimNum(product.stock),
+                          'unit': product.unit,
+                        }),
+                        AppColors.info,
                       ),
                       if (product.isCertified)
                         _iconPill(LucideIcons.award, AppColors.success),

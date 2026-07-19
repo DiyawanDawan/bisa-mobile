@@ -17,14 +17,24 @@ abstract class BookingUserModel with _$BookingUserModel {
     required String fullName,
     String? avatarUrl,
     String? companyName,
+    @Default(false) bool isVerified,
   }) = _BookingUserModel;
 
   factory BookingUserModel.fromJson(Map<String, dynamic> json) {
+    final profile = json['profile'] is Map
+        ? Map<String, dynamic>.from(json['profile'] as Map)
+        : null;
+    final verification = json['verification'] is Map
+        ? Map<String, dynamic>.from(json['verification'] as Map)
+        : null;
     return BookingUserModel(
       id: json['id'] as String,
       fullName: json['fullName'] as String? ?? '',
       avatarUrl: json['avatarUrl'] as String?,
-      companyName: json['companyName'] as String?,
+      companyName: json['companyName'] as String? ??
+          profile?['companyName'] as String?,
+      isVerified: json['isVerified'] == true ||
+          verification?['isVerified'] == true,
     );
   }
 }

@@ -19,6 +19,7 @@ class CollectionProductsPage extends StatefulWidget {
   final String? sortBy;
   final String? sortOrder;
   final String? productMode;
+  final String? biomassaType;
 
   const CollectionProductsPage({
     super.key,
@@ -27,6 +28,7 @@ class CollectionProductsPage extends StatefulWidget {
     this.sortBy,
     this.sortOrder,
     this.productMode,
+    this.biomassaType,
   });
 
   @override
@@ -56,6 +58,9 @@ class _CollectionProductsPageState extends State<CollectionProductsPage> {
         sortBy: widget.sortBy,
         sortOrder: widget.sortOrder,
         productMode: widget.productMode,
+        biomassaType: widget.productMode == 'BIOMASS_MATERIAL'
+            ? widget.biomassaType
+            : null,
         refresh: refresh,
       );
     }

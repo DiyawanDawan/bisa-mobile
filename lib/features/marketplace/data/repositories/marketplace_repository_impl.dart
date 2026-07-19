@@ -179,12 +179,22 @@ class MarketplaceRepositoryImpl implements MarketplaceRepository {
   @override
   Future<Either<Failure, List<SupplierModel>>> getSuppliers({
     String? search,
+    bool? verified,
+    String? productMode,
+    String? biomassaType,
+    String? province,
+    String? regency,
     int page = 1,
     int limit = 20,
   }) async {
     try {
       final models = await remoteDataSource.getSuppliers(
         search: search,
+        verified: verified,
+        productMode: productMode,
+        biomassaType: biomassaType,
+        province: province,
+        regency: regency,
         page: page,
         limit: limit,
       );

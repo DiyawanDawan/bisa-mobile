@@ -12,8 +12,25 @@ class ForumGroupRepositoryImpl implements ForumGroupRepository {
 
   Failure _mapDio(DioException e) {
     final data = e.response?.data;
-    if (data is Map && data['meta']?['message'] != null) {
-      return ServerFailure(message: data['meta']['message'].toString());
+    if (data is Map) {
+      final metaMessage = data['meta']?['message']?.toString();
+      // Backend errorResponse menaruh detail Zod di `data` (array {field,message}).
+      final details = data['data'];
+      String? fieldMessage;
+      if (details is List && details.isNotEmpty) {
+        final first = details.first;
+        if (first is Map && first['message'] != null) {
+          final field = first['field']?.toString();
+          final msg = first['message'].toString();
+          fieldMessage = (field != null && field.isNotEmpty) ? '$field: $msg' : msg;
+        }
+      }
+      if (fieldMessage != null && fieldMessage.isNotEmpty) {
+        return ServerFailure(message: fieldMessage);
+      }
+      if (metaMessage != null && metaMessage.isNotEmpty) {
+        return ServerFailure(message: metaMessage);
+      }
     }
     return ServerFailure(message: e.message ?? 'Terjadi kesalahan jaringan');
   }

@@ -9,11 +9,13 @@ import '../../../../core/constants/app_layout.dart';
 import '../../../../core/i18n/failure_messages.dart';
 import '../../../../core/utils/money_format.dart';
 import '../../../../injection_container.dart';
+import '../../../../shared/widgets/bisa_app_bar.dart';
+import '../../../../shared/widgets/bisa_network_image.dart';
+import '../../../../shared/widgets/seller_identity_row.dart';
 import '../../../auth/presentation/bloc/auth_cubit.dart';
 import '../../domain/entities/booking_entity.dart';
 import '../bloc/booking_cubit.dart';
 import '../widgets/booking_status_chip.dart';
-import '../../../../shared/widgets/bisa_app_bar.dart';
 
 class BookingListPage extends StatefulWidget {
   const BookingListPage({super.key});
@@ -130,6 +132,9 @@ class _BookingCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final counterparty = isSupplier ? booking.buyer : booking.supplier;
+    final counterpartyName = counterparty.companyName?.trim().isNotEmpty == true
+        ? counterparty.companyName!
+        : counterparty.fullName;
     final dateFmt = DateFormat('dd MMM yyyy, HH:mm');
 
     return Material(
@@ -144,43 +149,94 @@ class _BookingCard extends StatelessWidget {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Expanded(
-                    child: Text(
-                      booking.product.name,
-                      style: TextStyle(fontSize: 15.sp, fontWeight: FontWeight.w700),
-                      maxLines: 2,
-                      overflow: TextOverflow.ellipsis,
+                  ClipRRect(
+                    borderRadius: BorderRadius.circular(AppRadius.lg),
+                    child: SizedBox(
+                      width: 72.w,
+                      height: 72.w,
+                      child: BisaNetworkImage(
+                        imageUrl: booking.product.thumbnailUrl,
+                        fit: BoxFit.cover,
+                        errorWidget: (_, __, ___) => Container(
+                          color: AppColors.grey100,
+                          child: Icon(
+                            LucideIcons.package,
+                            color: AppColors.grey400,
+                            size: 28.sp,
+                          ),
+                        ),
+                      ),
                     ),
                   ),
-                  BookingStatusChip(status: booking.status),
+                  SizedBox(width: AppSpacing.sm10),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Row(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Expanded(
+                              child: Text(
+                                booking.product.name,
+                                style: TextStyle(
+                                  fontSize: 14.sp,
+                                  fontWeight: FontWeight.w800,
+                                ),
+                                maxLines: 2,
+                                overflow: TextOverflow.ellipsis,
+                              ),
+                            ),
+                            SizedBox(width: 6.w),
+                            BookingStatusChip(status: booking.status),
+                          ],
+                        ),
+                        SizedBox(height: 4.h),
+                        Text(
+                          booking.bookingNumber,
+                          style: TextStyle(
+                            fontSize: 11.sp,
+                            color: AppColors.textSecondary,
+                          ),
+                        ),
+                        SizedBox(height: 6.h),
+                        SellerIdentityRow(
+                          displayName: counterpartyName,
+                          avatarUrl: counterparty.avatarUrl,
+                          isVerified: counterparty.isVerified,
+                          avatarRadius: 12.r,
+                          fallbackIcon: isSupplier
+                              ? LucideIcons.user
+                              : LucideIcons.store,
+                          nameStyle: TextStyle(
+                            fontSize: 12.sp,
+                            fontWeight: FontWeight.w700,
+                            color: AppColors.textPrimary,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
                 ],
               ),
-              SizedBox(height: AppSpacing.sm),
-              Text(
-                booking.bookingNumber,
-                style: TextStyle(fontSize: 12.sp, color: AppColors.textSecondary),
-              ),
-              SizedBox(height: AppSpacing.sm),
-              Text(
-                counterparty.companyName?.isNotEmpty == true
-                    ? counterparty.companyName!
-                    : counterparty.fullName,
-                style: TextStyle(fontSize: 13.sp),
-              ),
-              SizedBox(height: AppSpacing.sm),
+              SizedBox(height: AppSpacing.sm10),
               Row(
                 children: [
                   Text(
                     '${booking.quantity} ${booking.unit}',
-                    style: TextStyle(fontSize: 13.sp, fontWeight: FontWeight.w600),
+                    style: TextStyle(
+                      fontSize: 13.sp,
+                      fontWeight: FontWeight.w700,
+                    ),
                   ),
                   const Spacer(),
                   Text(
                     formatMoneyDisplay(booking.subtotalSnapshot),
                     style: TextStyle(
                       fontSize: 14.sp,
-                      fontWeight: FontWeight.w700,
+                      fontWeight: FontWeight.w800,
                       color: AppColors.primary,
                     ),
                   ),
@@ -192,11 +248,16 @@ class _BookingCard extends StatelessWidget {
                   children: [
                     Icon(LucideIcons.timer, size: 14.sp, color: AppColors.warning),
                     SizedBox(width: 4.w),
-                    Text(
-                      'booking.expires_at'.tr(namedArgs: {
-                        'date': dateFmt.format(booking.expiresAt),
-                      }),
-                      style: TextStyle(fontSize: 11.sp, color: AppColors.warning),
+                    Expanded(
+                      child: Text(
+                        'booking.expires_at'.tr(namedArgs: {
+                          'date': dateFmt.format(booking.expiresAt),
+                        }),
+                        style: TextStyle(
+                          fontSize: 11.sp,
+                          color: AppColors.warning,
+                        ),
+                      ),
                     ),
                   ],
                 ),

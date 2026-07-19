@@ -84,8 +84,10 @@ class ForumGroupRemoteDataSourceImpl implements ForumGroupRemoteDataSource {
         'name': name,
         if (description != null && description.trim().isNotEmpty)
           'description': description.trim(),
-        if (avatarUrl != null) 'avatarUrl': avatarUrl,
-        if (bannerUrl != null) 'bannerUrl': bannerUrl,
+        if (avatarUrl != null && avatarUrl.trim().isNotEmpty)
+          'avatarUrl': avatarUrl.trim(),
+        if (bannerUrl != null && bannerUrl.trim().isNotEmpty)
+          'bannerUrl': bannerUrl.trim(),
         'isPublic': isPublic,
       },
     );
@@ -117,6 +119,11 @@ class ForumGroupRemoteDataSourceImpl implements ForumGroupRemoteDataSource {
       localPath: localPath,
       folder: 'forum-groups',
     );
-    return uploaded.url ?? uploaded.path;
+    // url kosong ("") harus diabaikan — `??` tidak fallback bila string kosong.
+    final url = uploaded.url?.trim();
+    final path = uploaded.path.trim();
+    if (url != null && url.isNotEmpty) return url;
+    if (path.isNotEmpty) return path;
+    throw StateError('Upload gambar gagal: URL kosong.');
   }
 }

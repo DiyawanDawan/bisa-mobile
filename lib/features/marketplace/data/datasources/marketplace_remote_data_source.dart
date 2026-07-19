@@ -54,6 +54,11 @@ abstract class MarketplaceRemoteDataSource {
   Future<ProductModel> duplicateProduct(String id);
   Future<List<SupplierModel>> getSuppliers({
     String? search,
+    bool? verified,
+    String? productMode,
+    String? biomassaType,
+    String? province,
+    String? regency,
     int page = 1,
     int limit = 20,
   });
@@ -262,19 +267,41 @@ class MarketplaceRemoteDataSourceImpl implements MarketplaceRemoteDataSource {
   @override
   Future<List<SupplierModel>> getSuppliers({
     String? search,
+    bool? verified,
+    String? productMode,
+    String? biomassaType,
+    String? province,
+    String? regency,
     int page = 1,
     int limit = 20,
   }) async {
     final response = await dio.get(
       '/suppliers',
       queryParameters: {
-        if (search != null) 'search': search,
+        if (search != null && search.trim().isNotEmpty) 'search': search.trim(),
+        if (verified == true) 'verified': 'true',
+        if (productMode != null && productMode.isNotEmpty)
+          'productMode': productMode,
+        if (biomassaType != null && biomassaType.isNotEmpty)
+          'biomassaType': biomassaType,
+        if (province != null && province.trim().isNotEmpty)
+          'province': province.trim(),
+        if (regency != null && regency.trim().isNotEmpty)
+          'regency': regency.trim(),
         'page': page,
         'limit': limit,
       },
     );
-    final List data = response.data['data'];
-    return data.map((e) => SupplierModel.fromJson(e)).toList();
+    final raw = response.data['data'];
+    final List data = raw is List
+        ? raw
+        : (raw is Map && raw['suppliers'] is List)
+            ? raw['suppliers'] as List
+            : const [];
+    return data
+        .whereType<Map>()
+        .map((e) => SupplierModel.fromJson(Map<String, dynamic>.from(e)))
+        .toList();
   }
 
   @override

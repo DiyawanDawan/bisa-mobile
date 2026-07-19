@@ -14,7 +14,7 @@ T _$identity<T>(T value) => value;
 /// @nodoc
 mixin _$BookingUserModel {
 
- String get id; String get fullName; String? get avatarUrl; String? get companyName;
+ String get id; String get fullName; String? get avatarUrl; String? get companyName; bool get isVerified;
 /// Create a copy of BookingUserModel
 /// with the given fields replaced by the non-null parameter values.
 @JsonKey(includeFromJson: false, includeToJson: false)
@@ -25,16 +25,16 @@ $BookingUserModelCopyWith<BookingUserModel> get copyWith => _$BookingUserModelCo
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is BookingUserModel&&(identical(other.id, id) || other.id == id)&&(identical(other.fullName, fullName) || other.fullName == fullName)&&(identical(other.avatarUrl, avatarUrl) || other.avatarUrl == avatarUrl)&&(identical(other.companyName, companyName) || other.companyName == companyName));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is BookingUserModel&&(identical(other.id, id) || other.id == id)&&(identical(other.fullName, fullName) || other.fullName == fullName)&&(identical(other.avatarUrl, avatarUrl) || other.avatarUrl == avatarUrl)&&(identical(other.companyName, companyName) || other.companyName == companyName)&&(identical(other.isVerified, isVerified) || other.isVerified == isVerified));
 }
 
 
 @override
-int get hashCode => Object.hash(runtimeType,id,fullName,avatarUrl,companyName);
+int get hashCode => Object.hash(runtimeType,id,fullName,avatarUrl,companyName,isVerified);
 
 @override
 String toString() {
-  return 'BookingUserModel(id: $id, fullName: $fullName, avatarUrl: $avatarUrl, companyName: $companyName)';
+  return 'BookingUserModel(id: $id, fullName: $fullName, avatarUrl: $avatarUrl, companyName: $companyName, isVerified: $isVerified)';
 }
 
 
@@ -45,7 +45,7 @@ abstract mixin class $BookingUserModelCopyWith<$Res>  {
   factory $BookingUserModelCopyWith(BookingUserModel value, $Res Function(BookingUserModel) _then) = _$BookingUserModelCopyWithImpl;
 @useResult
 $Res call({
- String id, String fullName, String? avatarUrl, String? companyName
+ String id, String fullName, String? avatarUrl, String? companyName, bool isVerified
 });
 
 
@@ -62,13 +62,14 @@ class _$BookingUserModelCopyWithImpl<$Res>
 
 /// Create a copy of BookingUserModel
 /// with the given fields replaced by the non-null parameter values.
-@pragma('vm:prefer-inline') @override $Res call({Object? id = null,Object? fullName = null,Object? avatarUrl = freezed,Object? companyName = freezed,}) {
+@pragma('vm:prefer-inline') @override $Res call({Object? id = null,Object? fullName = null,Object? avatarUrl = freezed,Object? companyName = freezed,Object? isVerified = null,}) {
   return _then(_self.copyWith(
 id: null == id ? _self.id : id // ignore: cast_nullable_to_non_nullable
 as String,fullName: null == fullName ? _self.fullName : fullName // ignore: cast_nullable_to_non_nullable
 as String,avatarUrl: freezed == avatarUrl ? _self.avatarUrl : avatarUrl // ignore: cast_nullable_to_non_nullable
 as String?,companyName: freezed == companyName ? _self.companyName : companyName // ignore: cast_nullable_to_non_nullable
-as String?,
+as String?,isVerified: null == isVerified ? _self.isVerified : isVerified // ignore: cast_nullable_to_non_nullable
+as bool,
   ));
 }
 
@@ -153,10 +154,10 @@ return $default(_that);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( String id,  String fullName,  String? avatarUrl,  String? companyName)?  $default,{required TResult orElse(),}) {final _that = this;
+@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( String id,  String fullName,  String? avatarUrl,  String? companyName,  bool isVerified)?  $default,{required TResult orElse(),}) {final _that = this;
 switch (_that) {
 case _BookingUserModel() when $default != null:
-return $default(_that.id,_that.fullName,_that.avatarUrl,_that.companyName);case _:
+return $default(_that.id,_that.fullName,_that.avatarUrl,_that.companyName,_that.isVerified);case _:
   return orElse();
 
 }
@@ -174,10 +175,10 @@ return $default(_that.id,_that.fullName,_that.avatarUrl,_that.companyName);case 
 /// }
 /// ```
 
-@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( String id,  String fullName,  String? avatarUrl,  String? companyName)  $default,) {final _that = this;
+@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( String id,  String fullName,  String? avatarUrl,  String? companyName,  bool isVerified)  $default,) {final _that = this;
 switch (_that) {
 case _BookingUserModel():
-return $default(_that.id,_that.fullName,_that.avatarUrl,_that.companyName);case _:
+return $default(_that.id,_that.fullName,_that.avatarUrl,_that.companyName,_that.isVerified);case _:
   throw StateError('Unexpected subclass');
 
 }
@@ -194,10 +195,10 @@ return $default(_that.id,_that.fullName,_that.avatarUrl,_that.companyName);case 
 /// }
 /// ```
 
-@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( String id,  String fullName,  String? avatarUrl,  String? companyName)?  $default,) {final _that = this;
+@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( String id,  String fullName,  String? avatarUrl,  String? companyName,  bool isVerified)?  $default,) {final _that = this;
 switch (_that) {
 case _BookingUserModel() when $default != null:
-return $default(_that.id,_that.fullName,_that.avatarUrl,_that.companyName);case _:
+return $default(_that.id,_that.fullName,_that.avatarUrl,_that.companyName,_that.isVerified);case _:
   return null;
 
 }
@@ -209,13 +210,14 @@ return $default(_that.id,_that.fullName,_that.avatarUrl,_that.companyName);case 
 
 
 class _BookingUserModel implements BookingUserModel {
-  const _BookingUserModel({required this.id, required this.fullName, this.avatarUrl, this.companyName});
+  const _BookingUserModel({required this.id, required this.fullName, this.avatarUrl, this.companyName, this.isVerified = false});
   
 
 @override final  String id;
 @override final  String fullName;
 @override final  String? avatarUrl;
 @override final  String? companyName;
+@override@JsonKey() final  bool isVerified;
 
 /// Create a copy of BookingUserModel
 /// with the given fields replaced by the non-null parameter values.
@@ -227,16 +229,16 @@ _$BookingUserModelCopyWith<_BookingUserModel> get copyWith => __$BookingUserMode
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is _BookingUserModel&&(identical(other.id, id) || other.id == id)&&(identical(other.fullName, fullName) || other.fullName == fullName)&&(identical(other.avatarUrl, avatarUrl) || other.avatarUrl == avatarUrl)&&(identical(other.companyName, companyName) || other.companyName == companyName));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is _BookingUserModel&&(identical(other.id, id) || other.id == id)&&(identical(other.fullName, fullName) || other.fullName == fullName)&&(identical(other.avatarUrl, avatarUrl) || other.avatarUrl == avatarUrl)&&(identical(other.companyName, companyName) || other.companyName == companyName)&&(identical(other.isVerified, isVerified) || other.isVerified == isVerified));
 }
 
 
 @override
-int get hashCode => Object.hash(runtimeType,id,fullName,avatarUrl,companyName);
+int get hashCode => Object.hash(runtimeType,id,fullName,avatarUrl,companyName,isVerified);
 
 @override
 String toString() {
-  return 'BookingUserModel(id: $id, fullName: $fullName, avatarUrl: $avatarUrl, companyName: $companyName)';
+  return 'BookingUserModel(id: $id, fullName: $fullName, avatarUrl: $avatarUrl, companyName: $companyName, isVerified: $isVerified)';
 }
 
 
@@ -247,7 +249,7 @@ abstract mixin class _$BookingUserModelCopyWith<$Res> implements $BookingUserMod
   factory _$BookingUserModelCopyWith(_BookingUserModel value, $Res Function(_BookingUserModel) _then) = __$BookingUserModelCopyWithImpl;
 @override @useResult
 $Res call({
- String id, String fullName, String? avatarUrl, String? companyName
+ String id, String fullName, String? avatarUrl, String? companyName, bool isVerified
 });
 
 
@@ -264,13 +266,14 @@ class __$BookingUserModelCopyWithImpl<$Res>
 
 /// Create a copy of BookingUserModel
 /// with the given fields replaced by the non-null parameter values.
-@override @pragma('vm:prefer-inline') $Res call({Object? id = null,Object? fullName = null,Object? avatarUrl = freezed,Object? companyName = freezed,}) {
+@override @pragma('vm:prefer-inline') $Res call({Object? id = null,Object? fullName = null,Object? avatarUrl = freezed,Object? companyName = freezed,Object? isVerified = null,}) {
   return _then(_BookingUserModel(
 id: null == id ? _self.id : id // ignore: cast_nullable_to_non_nullable
 as String,fullName: null == fullName ? _self.fullName : fullName // ignore: cast_nullable_to_non_nullable
 as String,avatarUrl: freezed == avatarUrl ? _self.avatarUrl : avatarUrl // ignore: cast_nullable_to_non_nullable
 as String?,companyName: freezed == companyName ? _self.companyName : companyName // ignore: cast_nullable_to_non_nullable
-as String?,
+as String?,isVerified: null == isVerified ? _self.isVerified : isVerified // ignore: cast_nullable_to_non_nullable
+as bool,
   ));
 }
 

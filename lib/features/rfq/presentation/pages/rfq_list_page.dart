@@ -5,6 +5,7 @@ import 'package:go_router/go_router.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
 
 import '../../../../core/constants/app_colors.dart';
+import '../../../../core/constants/app_layout.dart';
 import '../../../../core/constants/app_text_styles.dart';
 import '../../../../shared/widgets/bisa_app_bar.dart';
 import '../../data/datasources/rfq_remote_data_source.dart';
@@ -42,6 +43,19 @@ class _RfqListPageState extends State<RfqListPage> {
     }
   }
 
+  String _statusLabel(String? raw) {
+    switch ((raw ?? '').toUpperCase()) {
+      case 'OPEN':
+        return 'rfq.status_open'.tr();
+      case 'CLOSED':
+        return 'rfq.status_closed'.tr();
+      case 'CANCELLED':
+        return 'rfq.status_cancelled'.tr();
+      default:
+        return raw ?? '-';
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -50,6 +64,7 @@ class _RfqListPageState extends State<RfqListPage> {
         title: 'rfq.list_title'.tr(),
         actions: [
           IconButton(
+            tooltip: 'rfq.create_title'.tr(),
             onPressed: () async {
               final ok = await context.push<bool>('/rfq/create');
               if (ok == true) _load();
@@ -60,37 +75,101 @@ class _RfqListPageState extends State<RfqListPage> {
       ),
       body: _loading
           ? const Center(child: CircularProgressIndicator())
-          : _items.isEmpty
-              ? Center(child: Text('rfq.empty'.tr()))
-              : RefreshIndicator(
-                  onRefresh: _load,
-                  child: ListView.separated(
-                    padding: EdgeInsets.all(16.w),
-                    itemCount: _items.length,
-                    separatorBuilder: (_, __) => SizedBox(height: 10.h),
-                    itemBuilder: (context, i) {
-                      final r = _items[i];
+          : RefreshIndicator(
+              onRefresh: _load,
+              child: ListView(
+                padding: EdgeInsets.all(16.w),
+                children: [
+                  _introCard(),
+                  SizedBox(height: AppSpacing.md12),
+                  if (_items.isEmpty)
+                    Padding(
+                      padding: EdgeInsets.only(top: 48.h),
+                      child: Column(
+                        children: [
+                          Icon(
+                            LucideIcons.fileText,
+                            size: 40.sp,
+                            color: AppColors.textSecondary,
+                          ),
+                          SizedBox(height: AppSpacing.sm),
+                          Text(
+                            'rfq.empty'.tr(),
+                            style: AppTextStyles.body(fontWeight: FontWeight.w700),
+                          ),
+                          SizedBox(height: 4.h),
+                          Text(
+                            'rfq.empty_hint'.tr(),
+                            textAlign: TextAlign.center,
+                            style: AppTextStyles.caption(),
+                          ),
+                          SizedBox(height: AppSpacing.md),
+                          FilledButton.icon(
+                            onPressed: () async {
+                              final ok = await context.push<bool>('/rfq/create');
+                              if (ok == true) _load();
+                            },
+                            icon: const Icon(LucideIcons.plus),
+                            label: Text('rfq.create_title'.tr()),
+                          ),
+                        ],
+                      ),
+                    )
+                  else
+                    ..._items.map((r) {
+                      final id = r['id']?.toString() ?? '';
                       final responses = (r['responses'] as List?)?.length ?? 0;
-                      return ListTile(
-                        tileColor: AppColors.surface,
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(12.r),
+                      return Padding(
+                        padding: EdgeInsets.only(bottom: 10.h),
+                        child: ListTile(
+                          onTap: id.isEmpty
+                              ? null
+                              : () => context.push('/rfq/$id'),
+                          tileColor: AppColors.surface,
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(12.r),
+                          ),
+                          title: Text(
+                            '${r['title']}',
+                            style: AppTextStyles.body(fontWeight: FontWeight.w700),
+                          ),
+                          subtitle: Text(
+                            'rfq.list_meta'.tr(namedArgs: {
+                              'status': _statusLabel(r['status']?.toString()),
+                              'responses': '$responses',
+                            }),
+                          ),
+                          trailing: const Icon(LucideIcons.chevronRight),
                         ),
-                        title: Text(
-                          '${r['title']}',
-                          style: AppTextStyles.body(fontWeight: FontWeight.w700),
-                        ),
-                        subtitle: Text(
-                          'rfq.list_meta'.tr(namedArgs: {
-                            'status': '${r['status']}',
-                            'responses': '$responses',
-                          }),
-                        ),
-                        trailing: const Icon(LucideIcons.chevronRight),
                       );
-                    },
-                  ),
-                ),
+                    }),
+                ],
+              ),
+            ),
+    );
+  }
+
+  Widget _introCard() {
+    return Container(
+      padding: EdgeInsets.all(AppSpacing.md12),
+      decoration: BoxDecoration(
+        color: AppColors.primaryLight.withValues(alpha: 0.4),
+        borderRadius: BorderRadius.circular(AppRadius.xl),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            'rfq.what_is_title'.tr(),
+            style: AppTextStyles.bodySm(fontWeight: FontWeight.w800),
+          ),
+          SizedBox(height: 4.h),
+          Text(
+            'rfq.what_is_body'.tr(),
+            style: AppTextStyles.caption(height: 1.45),
+          ),
+        ],
+      ),
     );
   }
 }

@@ -1,3 +1,4 @@
+import 'package:dio/dio.dart';
 import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -7,6 +8,7 @@ import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
 import '../../../../core/constants/app_colors.dart';
 import '../../../../core/i18n/failure_messages.dart';
+import '../../../../shared/widgets/auth_sheet.dart';
 import '../../../../shared/widgets/bisa_app_bar.dart';
 import '../../../../shared/widgets/bisa_logo.dart';
 import '../../../../injection_container.dart';
@@ -14,8 +16,29 @@ import '../bloc/ai_cubit.dart';
 import 'package:mobile_bisa/shared/widgets/pro_required_placeholder.dart';
 import 'package:mobile_bisa/shared/widgets/shimmer_loading.dart';
 import 'package:skeletonizer/skeletonizer.dart';
+import '../../../auth/presentation/bloc/auth_cubit.dart';
 import '../../../support/data/datasources/support_remote_data_source.dart';
 import '../../../support/data/models/support_ticket.dart';
+
+/// Deteksi permintaan hubungkan ke CS dari teks chat (bukan lewat AI).
+bool looksLikeCsHandoffRequest(String raw) {
+  final t = raw.toLowerCase().trim();
+  if (t.isEmpty) return false;
+  if (RegExp(
+    r'\b(customer\s*service|customer\s*support|live\s*agent|live\s*chat|chat\s*cs)\b',
+  ).hasMatch(t)) {
+    return true;
+  }
+  // "cs" sebagai kata utuh (hindari false positive seperti "pcs")
+  if (RegExp(r'(^|\s)cs(\s|$)').hasMatch(t)) return true;
+  final wantsConnect = RegExp(
+    r'hubung|hubungkan|sambung|alihkan|transfer|bicara|hubungi|bantuan',
+  ).hasMatch(t);
+  final mentionsCs = RegExp(
+    r'\b(cs|support|admin|manusia|operator|agen)\b',
+  ).hasMatch(t);
+  return wantsConnect && mentionsCs;
+}
 
 class AiChatPage extends StatefulWidget {
   const AiChatPage({super.key});
@@ -85,6 +108,20 @@ class _AiChatPageState extends State<AiChatPage> {
 
   Future<void> _openCustomerService(BuildContext blocContext) async {
     if (_startingHandoff) return;
+
+    final isLoggedIn = blocContext.read<AuthCubit>().state.maybeWhen(
+          authenticated: (_) => true,
+          orElse: () => false,
+        );
+    if (!isLoggedIn) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('support.login_required'.tr())),
+      );
+      AuthSheet.show(context);
+      return;
+    }
+
     if (_activeSupportTicket != null) {
       await context.push('/support/${_activeSupportTicket!.id}');
       await _checkActiveSupport();
@@ -113,20 +150,21 @@ class _AiChatPageState extends State<AiChatPage> {
     if (confirmed != true || !mounted) return;
 
     final transcript = messages
+        .where((m) => m.text.trim().isNotEmpty)
         .take(30)
         .map(
           (message) => {
             'role': message.isUser ? 'user' : 'assistant',
             'content': message.text.length > 2000
                 ? message.text.substring(0, 2000)
-                : message.text,
+                : message.text.trim(),
           },
         )
         .toList();
     String? lastUserMessage;
     for (final message in messages.reversed) {
-      if (message.isUser) {
-        lastUserMessage = message.text;
+      if (message.isUser && message.text.trim().isNotEmpty) {
+        lastUserMessage = message.text.trim();
         break;
       }
     }
@@ -147,6 +185,43 @@ class _AiChatPageState extends State<AiChatPage> {
       await context.push('/support/${ticket.id}');
       await _checkActiveSupport();
       if (mounted) _syncCsHandoffFlag(blocContext);
+    } on DioException catch (e) {
+      if (!mounted) return;
+      final status = e.response?.statusCode;
+      if (status == 401 || status == 403) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('support.login_required'.tr())),
+        );
+        AuthSheet.show(context);
+        return;
+      }
+      final existing = await _supportApi.getActiveTicket().catchError(
+        (_) => null,
+      );
+      if (!mounted) return;
+      if (existing != null) {
+        setState(() => _activeSupportTicket = existing);
+        _syncCsHandoffFlag(blocContext);
+        await context.push('/support/${existing.id}');
+        return;
+      }
+      final data = e.response?.data;
+      String detail = 'support.handoff_failed'.tr();
+      if (data is Map) {
+        final metaMsg = data['meta']?['message']?.toString();
+        final details = data['data'];
+        if (details is List && details.isNotEmpty) {
+          final first = details.first;
+          if (first is Map && first['message'] != null) {
+            detail = first['message'].toString();
+          }
+        } else if (metaMsg != null && metaMsg.isNotEmpty) {
+          detail = metaMsg;
+        }
+      }
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(detail)),
+      );
     } catch (_) {
       if (!mounted) return;
       final existing = await _supportApi.getActiveTicket().catchError(
@@ -843,8 +918,20 @@ class _AiChatPageState extends State<AiChatPage> {
   void _submitMessage(BuildContext context) {
     final text = _messageController.text.trim();
     if (text.isEmpty) return;
-    context.read<AiCubit>().sendMessage(text);
     _messageController.clear();
+
+    if (looksLikeCsHandoffRequest(text)) {
+      context.read<AiCubit>().appendLocalExchange(
+            userText: text,
+            assistantText: 'ai.cs_handoff_ack'.tr(),
+          );
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (mounted) _openCustomerService(context);
+      });
+      return;
+    }
+
+    context.read<AiCubit>().sendMessage(text);
   }
 }
 

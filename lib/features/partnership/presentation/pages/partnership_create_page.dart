@@ -146,6 +146,7 @@ class _PartnershipCreatePageState extends State<PartnershipCreatePage> {
       title: _titleCtrl.text.trim(),
       buyerName: user.name,
       buyerCompany: user.companyName,
+      buyerLocation: user.address,
       supplierName: widget.supplierName,
       description: _descCtrl.text.trim().isEmpty ? null : _descCtrl.text.trim(),
       productCategory:

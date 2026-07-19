@@ -70,39 +70,20 @@ class MarketplaceHeader extends StatelessWidget {
                 _buildLoginCTA(context, height: guestBarHeight),
               ],
             )
-          else ...[
+          else
             Row(
+              crossAxisAlignment: CrossAxisAlignment.center,
               children: [
                 Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        'marketplace.welcome'.tr(),
-                        style: TextStyle(
-                          color: AppColors.textSecondary,
-                          fontSize: 13.sp,
-                          fontWeight: FontWeight.w600,
-                        ),
-                      ),
-                      Text(
-                        userName!,
-                        style: TextStyle(
-                          color: AppColors.textPrimary,
-                          fontSize: 20.sp,
-                          fontWeight: FontWeight.w800,
-                          letterSpacing: -0.5,
-                        ),
-                      ),
-                    ],
+                  child: _buildSearchBar(
+                    height: guestBarHeight,
+                    compact: true,
                   ),
                 ),
+                SizedBox(width: AppSpacing.sm10),
                 _buildActionIcons(context),
               ],
             ),
-            SizedBox(height: AppSpacing.md),
-            _buildSearchBar(),
-          ],
         ],
       ),
     );
@@ -144,11 +125,6 @@ class MarketplaceHeader extends StatelessWidget {
           children: [
             const NotificationBellButton(useAppBarStyle: false),
             if (isBuyer) ...[
-              SizedBox(width: AppSpacing.sm),
-              _iconBtn(
-                LucideIcons.heart,
-                () => context.push('/wishlist'),
-              ),
               SizedBox(width: AppSpacing.sm),
               Stack(
                 clipBehavior: Clip.none,

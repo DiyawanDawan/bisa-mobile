@@ -85,19 +85,25 @@ class _ProductRecommendationsSectionState
           ),
         ),
         SizedBox(
-          height: 260.h,
+          height: ProductCard.horizontalViewportHeight,
           child: ListView.separated(
             scrollDirection: Axis.horizontal,
             padding: EdgeInsets.symmetric(horizontal: AppSpacing.lg),
             itemCount: _items.length,
-            separatorBuilder: (_, __) => SizedBox(width: AppSpacing.md12),
+            separatorBuilder: (_, __) => SizedBox(width: AppSpacing.sm),
             itemBuilder: (context, i) {
               final p = _items[i].toEntity();
               return SizedBox(
-                width: 160.w,
-                child: ProductCard(
-                  product: p,
-                  onTap: () => context.push('/product/${p.id}'),
+                width: ProductCard.horizontalWidth,
+                height: ProductCard.horizontalViewportHeight,
+                child: ClipRRect(
+                  borderRadius: BorderRadius.circular(AppRadius.xl),
+                  child: ProductCard(
+                    product: p,
+                    imageHeight: ProductCard.horizontalImageHeight,
+                    compact: true,
+                    onTap: () => context.push('/product/${p.id}'),
+                  ),
                 ),
               );
             },

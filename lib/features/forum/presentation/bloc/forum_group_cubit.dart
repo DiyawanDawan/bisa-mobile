@@ -72,7 +72,14 @@ class ForumGroupCubit extends Cubit<ForumGroupState> {
     if (avatarPath != null) {
       final upload = await _repository.uploadImage(avatarPath);
       String? err;
-      upload.fold((f) => err = f.message, (url) => avatarUrl = url);
+      upload.fold((f) => err = f.message, (url) {
+        final cleaned = url.trim();
+        if (cleaned.isEmpty) {
+          err = 'Upload avatar gagal: URL kosong.';
+        } else {
+          avatarUrl = cleaned;
+        }
+      });
       if (err != null) {
         emit(ForumGroupError(err!));
         return null;
@@ -81,7 +88,14 @@ class ForumGroupCubit extends Cubit<ForumGroupState> {
     if (bannerPath != null) {
       final upload = await _repository.uploadImage(bannerPath);
       String? err;
-      upload.fold((f) => err = f.message, (url) => bannerUrl = url);
+      upload.fold((f) => err = f.message, (url) {
+        final cleaned = url.trim();
+        if (cleaned.isEmpty) {
+          err = 'Upload banner gagal: URL kosong.';
+        } else {
+          bannerUrl = cleaned;
+        }
+      });
       if (err != null) {
         emit(ForumGroupError(err!));
         return null;

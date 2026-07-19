@@ -1,7 +1,13 @@
+import 'dart:async';
+
+import 'package:firebase_auth/firebase_auth.dart';
+import 'package:firebase_core/firebase_core.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import '../../../../core/config/app_config.dart';
 import 'package:freezed_annotation/freezed_annotation.dart';
 import 'package:google_sign_in/google_sign_in.dart';
+import 'package:mobile_bisa/firebase_options.dart';
+import '../../../../core/config/app_config.dart';
 import '../../domain/entities/user_entity.dart';
 import '../../../profile/domain/entities/address_entity.dart';
 import '../../domain/repositories/auth_repository.dart';
@@ -13,6 +19,25 @@ class AuthCubit extends Cubit<AuthState> {
   final AuthRepository _repository;
 
   AuthCubit(this._repository) : super(const AuthState.initial());
+
+  Future<void> _ensureFirebaseReady() async {
+    if (Firebase.apps.isNotEmpty) return;
+    await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
+  }
+
+  Future<void> _signOutSocialProviders() async {
+    try {
+      await GoogleSignIn(
+        scopes: ['email', 'profile'],
+        serverClientId: AppConfig.googleServerClientId,
+      ).signOut();
+    } catch (_) {}
+    try {
+      if (Firebase.apps.isNotEmpty) {
+        await FirebaseAuth.instance.signOut();
+      }
+    } catch (_) {}
+  }
 
   Future<void> login(String email, String password) async {
     emit(const AuthState.loading());
@@ -29,10 +54,14 @@ class AuthCubit extends Cubit<AuthState> {
     );
   }
 
+  /// Google Sign-In → Firebase Auth → kirim Firebase ID token ke backend.
+  /// Backend memverifikasi dengan Firebase Admin (`verifyIdToken`).
   Future<void> loginWithGoogle() async {
     try {
       emit(const AuthState.loading());
-      final GoogleSignIn googleSignIn = GoogleSignIn(
+      await _ensureFirebaseReady();
+
+      final googleSignIn = GoogleSignIn(
         scopes: ['email', 'profile'],
         serverClientId: AppConfig.googleServerClientId,
       );
@@ -44,23 +73,47 @@ class AuthCubit extends Cubit<AuthState> {
       }
 
       final googleAuth = await googleUser.authentication;
-      final String? idToken = googleAuth.idToken;
-
-      if (idToken == null) {
+      final googleIdToken = googleAuth.idToken;
+      if (googleIdToken == null || googleIdToken.isEmpty) {
+        await googleSignIn.signOut();
         emit(const AuthState.error('auth.google_token_failed'));
         return;
       }
 
-      final result = await _repository.loginWithGoogle(idToken);
-      result.fold(
-        (failure) {
-          googleSignIn.signOut();
+      final credential = GoogleAuthProvider.credential(
+        idToken: googleIdToken,
+        accessToken: googleAuth.accessToken,
+      );
+      final userCredential =
+          await FirebaseAuth.instance.signInWithCredential(credential);
+      final firebaseIdToken = await userCredential.user?.getIdToken(true);
+
+      if (firebaseIdToken == null || firebaseIdToken.isEmpty) {
+        await _signOutSocialProviders();
+        emit(const AuthState.error('auth.google_token_failed'));
+        return;
+      }
+
+      final result = await _repository.loginWithGoogle(firebaseIdToken);
+      await result.fold(
+        (failure) async {
+          await _signOutSocialProviders();
           emit(AuthState.error(failure.message));
         },
-        (user) => emit(AuthState.authenticated(user)),
+        (user) async => emit(AuthState.authenticated(user)),
       );
-    } catch (e) {
-      emit(AuthState.error('errors.google_sign_in'));
+    } on FirebaseAuthException catch (e) {
+      if (kDebugMode) {
+        debugPrint('[Auth] Google FirebaseAuthException: ${e.code} ${e.message}');
+      }
+      await _signOutSocialProviders();
+      emit(AuthState.error(e.message ?? 'errors.google_sign_in'));
+    } catch (e, st) {
+      if (kDebugMode) {
+        debugPrint('[Auth] Google sign-in failed: $e\n$st');
+      }
+      await _signOutSocialProviders();
+      emit(const AuthState.error('errors.google_sign_in'));
     }
   }
 
@@ -217,10 +270,12 @@ class AuthCubit extends Cubit<AuthState> {
 
   Future<void> logout() async {
     await _repository.logout();
+    await _signOutSocialProviders();
     emit(const AuthState.unauthenticated());
   }
 
   void sessionExpired() {
+    unawaited(_signOutSocialProviders());
     emit(const AuthState.unauthenticated());
   }
 

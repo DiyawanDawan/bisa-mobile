@@ -14,6 +14,7 @@ import '../../features/marketplace/presentation/pages/supplier_directory_page.da
 import '../../features/marketplace/presentation/pages/compare_products_page.dart';
 import '../../features/marketplace/presentation/pages/bulk_product_upload_page.dart';
 import '../../features/rfq/presentation/pages/rfq_create_page.dart';
+import '../../features/rfq/presentation/pages/rfq_detail_page.dart';
 import '../../features/rfq/presentation/pages/rfq_inbox_page.dart';
 import '../../features/rfq/presentation/pages/rfq_list_page.dart';
 import '../../features/negotiation/presentation/pages/negotiation_room_page.dart';
@@ -232,6 +233,7 @@ final goRouter = GoRouter(
               sortBy: extra?['sortBy'] as String?,
               sortOrder: extra?['sortOrder'] as String?,
               productMode: extra?['productMode'] as String?,
+              biomassaType: extra?['biomassaType'] as String?,
             );
           },
         ),
@@ -702,6 +704,12 @@ final goRouter = GoRouter(
     GoRoute(
       path: '/rfq/inbox',
       builder: (context, state) => const RfqInboxPage(),
+    ),
+    GoRoute(
+      path: '/rfq/:id',
+      builder: (context, state) => RfqDetailPage(
+        rfqId: state.pathParameters['id']!,
+      ),
     ),
   ],
 );

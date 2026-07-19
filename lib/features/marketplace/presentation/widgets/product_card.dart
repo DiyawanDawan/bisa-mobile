@@ -23,6 +23,8 @@ class ProductCard extends StatelessWidget {
   final double? imageHeight;
   /// Sembunyikan baris toko/lokasi hanya jika UI duplikat (jarang dipakai).
   final bool showSellerInfo;
+  /// Listing horizontal: tinggi tetap, badge minimal, aman overflow.
+  final bool compact;
 
   const ProductCard({
     super.key,
@@ -30,7 +32,12 @@ class ProductCard extends StatelessWidget {
     this.onTap,
     this.imageHeight,
     this.showSellerInfo = true,
+    this.compact = false,
   });
+
+  static double get horizontalWidth => 156.w;
+  static double get horizontalImageHeight => 108.h;
+  static double get horizontalViewportHeight => 236.h;
 
   String get _sellerDisplayName =>
       product.seller.companyName ?? product.seller.name;
@@ -73,13 +80,15 @@ class ProductCard extends StatelessWidget {
           borderRadius: BorderRadius.circular(AppRadius.xl),
           boxShadow: AppColors.softShadow,
         ),
+        clipBehavior: Clip.antiAlias,
         child: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
+          mainAxisSize: compact ? MainAxisSize.max : MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
             // Image area with fixed height
             Container(
-              height: imageHeight ?? 140.h,
+              height: imageHeight ??
+                  (compact ? horizontalImageHeight : 140.h),
               width: double.infinity,
               decoration: BoxDecoration(
                 borderRadius: BorderRadius.vertical(top: Radius.circular(AppRadius.xl)),
@@ -266,16 +275,16 @@ class ProductCard extends StatelessWidget {
                     children: [
                       Text(
                         product.name,
-                        maxLines: 2,
+                        maxLines: compact ? 1 : 2,
                         overflow: TextOverflow.ellipsis,
                         style: TextStyle(
-                          fontSize: 14.sp,
+                          fontSize: compact ? 12.sp : 14.sp,
                           fontWeight: FontWeight.w800,
                           color: AppColors.textPrimary,
                           height: 1.15,
                         ),
                       ),
-                      SizedBox(height: 5.h),
+                      SizedBox(height: compact ? 3.h : 5.h),
                       Row(
                         crossAxisAlignment: CrossAxisAlignment.end,
                         children: [
@@ -312,7 +321,7 @@ class ProductCard extends StatelessWidget {
                                   maxLines: 1,
                                   overflow: TextOverflow.ellipsis,
                                   style: TextStyle(
-                                    fontSize: 15.sp,
+                                    fontSize: compact ? 13.sp : 15.sp,
                                     fontWeight: FontWeight.w900,
                                     color: AppColors.primary,
                                   ),
@@ -347,153 +356,184 @@ class ProductCard extends StatelessWidget {
                           avatarUrl: product.seller.avatarUrl,
                           isVerified: product.seller.isVerified,
                           onTap: () => _openSupplierStore(context),
-                          showChevron: true,
-                          avatarRadius: AppRadius.md,
+                          showChevron: !compact,
+                          avatarRadius: compact ? 9.r : AppRadius.md,
                         ),
-                        SizedBox(height: 3.h),
-                        Row(
-                          children: [
-                            Icon(
-                              LucideIcons.mapPin,
-                              size: 11.sp,
-                              color: AppColors.textHint,
-                            ),
-                            SizedBox(width: AppSpacing.xs),
-                            Expanded(
-                              child: Text(
-                                product.regency ?? product.province,
-                                maxLines: 1,
-                                overflow: TextOverflow.ellipsis,
-                                style: TextStyle(
-                                  fontSize: 11.sp,
-                                  color: AppColors.textSecondary,
-                                  fontWeight: FontWeight.w500,
-                                ),
-                              ),
-                            ),
-                          ],
-                        ),
-                        if (product.totalSold > 0) ...[
+                        if (!compact) ...[
                           SizedBox(height: 3.h),
                           Row(
                             children: [
                               Icon(
-                                LucideIcons.shoppingBag,
+                                LucideIcons.mapPin,
                                 size: 11.sp,
                                 color: AppColors.textHint,
                               ),
                               SizedBox(width: AppSpacing.xs),
-                              Text(
-                                'marketplace.sold_count'.tr(
-                                  namedArgs: {
-                                    'count': '${product.totalSold}',
-                                  },
-                                ),
-                                style: TextStyle(
-                                  fontSize: 11.sp,
-                                  color: AppColors.textSecondary,
-                                  fontWeight: FontWeight.bold,
+                              Expanded(
+                                child: Text(
+                                  product.regency ?? product.province,
+                                  maxLines: 1,
+                                  overflow: TextOverflow.ellipsis,
+                                  style: TextStyle(
+                                    fontSize: 11.sp,
+                                    color: AppColors.textSecondary,
+                                    fontWeight: FontWeight.w500,
+                                  ),
                                 ),
                               ),
                             ],
                           ),
                         ],
+                        SizedBox(height: compact ? 3.h : 4.h),
+                        Wrap(
+                          spacing: AppSpacing.xs,
+                          runSpacing: AppSpacing.xs,
+                          children: [
+                            _buildSmallBadge(
+                              LucideIcons.star,
+                              product.averageRating > 0
+                                  ? product.averageRating.toStringAsFixed(1)
+                                  : '0',
+                              AppColors.warning,
+                            ),
+                            _buildSmallBadge(
+                              LucideIcons.shoppingBag,
+                              'marketplace.sold_count'.tr(
+                                namedArgs: {
+                                  'count': '${product.totalSold}',
+                                },
+                              ),
+                              AppColors.primary,
+                            ),
+                          ],
+                        ),
                       ],
                     ),
-                  if (product.productMode == 'ORGANIC_PRODUCE' ||
-                      product.isCertified ||
-                      product.isIotMonitored ||
-                      product.isEscrowProtected) ...[
-                    if (showSellerInfo) SizedBox(height: 6.h),
+                  if (!showSellerInfo) ...[
+                    SizedBox(height: 4.h),
                     Wrap(
                       spacing: AppSpacing.xs,
                       runSpacing: AppSpacing.xs,
                       children: [
-                        if (product.productMode == 'ORGANIC_PRODUCE') ...[
-                          if (product.fertilizerType != null &&
-                              product.fertilizerType!.isNotEmpty)
-                            _buildSmallBadge(
-                              LucideIcons.leaf,
-                              product.fertilizerType!
-                                      .toUpperCase()
-                                      .contains('BIOCHAR')
-                                  ? 'marketplace.badge_biochar_soil'.tr()
-                                  : product.fertilizerType!,
-                              AppColors.secondary,
-                            ),
-                        ] else ...[
-                          if (product.grade != null)
-                            _buildSmallBadge(
-                              LucideIcons.medal,
-                              'marketplace.badge_grade'.tr(
-                                namedArgs: {'grade': '${product.grade}'},
+                        _buildSmallBadge(
+                          LucideIcons.star,
+                          product.averageRating > 0
+                              ? product.averageRating.toStringAsFixed(1)
+                              : '0',
+                          AppColors.warning,
+                        ),
+                        _buildSmallBadge(
+                          LucideIcons.shoppingBag,
+                          'marketplace.sold_count'.tr(
+                            namedArgs: {
+                              'count': '${product.totalSold}',
+                            },
+                          ),
+                          AppColors.primary,
+                        ),
+                      ],
+                    ),
+                  ],
+                  // Badge ekstra hanya di grid penuh — horizontal compact dibatasi.
+                  if (!compact) ...[
+                    if (product.productMode == 'ORGANIC_PRODUCE' ||
+                        product.isCertified ||
+                        product.isIotMonitored ||
+                        product.isEscrowProtected) ...[
+                      if (showSellerInfo) SizedBox(height: 6.h),
+                      Wrap(
+                        spacing: AppSpacing.xs,
+                        runSpacing: AppSpacing.xs,
+                        children: [
+                          if (product.productMode == 'ORGANIC_PRODUCE') ...[
+                            if (product.fertilizerType != null &&
+                                product.fertilizerType!.isNotEmpty)
+                              _buildSmallBadge(
+                                LucideIcons.leaf,
+                                product.fertilizerType!
+                                        .toUpperCase()
+                                        .contains('BIOCHAR')
+                                    ? 'marketplace.badge_biochar_soil'.tr()
+                                    : product.fertilizerType!,
+                                AppColors.secondary,
                               ),
-                              AppColors.warning,
+                          ] else ...[
+                            if (product.grade != null)
+                              _buildSmallBadge(
+                                LucideIcons.medal,
+                                'marketplace.badge_grade'.tr(
+                                  namedArgs: {'grade': '${product.grade}'},
+                                ),
+                                AppColors.warning,
+                              ),
+                          ],
+                          if (product.isCertified)
+                            _buildSmallBadge(
+                              LucideIcons.award,
+                              'marketplace.badge_certified'.tr(),
+                              AppColors.success,
+                            ),
+                          if (product.isIotMonitored)
+                            Tooltip(
+                              message: 'marketplace.badge_iot_tooltip'.tr(),
+                              child: _buildSmallBadge(
+                                LucideIcons.cpu,
+                                'marketplace.badge_iot'.tr(),
+                                AppColors.info,
+                              ),
+                            ),
+                          if (product.isEscrowProtected)
+                            _buildSmallBadge(
+                              LucideIcons.shieldCheck,
+                              'marketplace.badge_secure'.tr(),
+                              AppColors.ocean,
                             ),
                         ],
-                        if (product.isCertified)
-                          _buildSmallBadge(
-                            LucideIcons.award,
-                            'marketplace.badge_certified'.tr(),
-                            AppColors.success,
+                      ),
+                    ],
+                    SizedBox(height: 6.h),
+                    Wrap(
+                      spacing: AppSpacing.xs,
+                      runSpacing: AppSpacing.xs,
+                      children: [
+                        _buildSmallBadge(
+                          LucideIcons.package,
+                          'marketplace.stock_line'.tr(
+                            namedArgs: {
+                              'stock': product.availableStock.toStringAsFixed(
+                                product.availableStock % 1 == 0 ? 0 : 1,
+                              ),
+                              'unit': product.unit,
+                            },
                           ),
-                        if (product.isIotMonitored)
-                          Tooltip(
-                            message: 'marketplace.badge_iot_tooltip'.tr(),
-                            child: _buildSmallBadge(
-                              LucideIcons.cpu,
-                              'marketplace.badge_iot'.tr(),
-                              AppColors.info,
-                            ),
-                          ),
-                        if (product.isEscrowProtected)
+                          product.availableStock > 0
+                              ? AppColors.success
+                              : AppColors.error,
+                        ),
+                        if (product.reservedStock > 0)
                           _buildSmallBadge(
-                            LucideIcons.shieldCheck,
-                            'marketplace.badge_secure'.tr(),
-                            AppColors.ocean,
+                            LucideIcons.lock,
+                            'marketplace.booked_line'.tr(namedArgs: {
+                              'qty': product.reservedStock.toStringAsFixed(
+                                product.reservedStock % 1 == 0 ? 0 : 1,
+                              ),
+                              'unit': product.unit,
+                            }),
+                            AppColors.warning,
+                          ),
+                        if (product.productMode == 'ORGANIC_PRODUCE' &&
+                            (product.availabilityType == 'PRE_HARVEST' ||
+                                product.availabilityType == 'MIXED'))
+                          _buildSmallBadge(
+                            LucideIcons.calendarClock,
+                            product.nextHarvestDate != null
+                                ? 'Panen ${DateFormat('dd MMM').format(product.nextHarvestDate!)}'
+                                : 'marketplace.availability_preharvest'.tr(),
+                            AppColors.warning,
                           ),
                       ],
                     ),
                   ],
-                  SizedBox(height: 6.h),
-                  Wrap(
-                    spacing: AppSpacing.xs,
-                    runSpacing: AppSpacing.xs,
-                    children: [
-                      _buildSmallBadge(
-                        LucideIcons.package,
-                        'marketplace.stock_line'.tr(
-                          namedArgs: {
-                            'stock': product.availableStock
-                                .toStringAsFixed(product.availableStock % 1 == 0 ? 0 : 1),
-                            'unit': product.unit,
-                          },
-                        ),
-                        product.availableStock > 0 ? AppColors.success : AppColors.error,
-                      ),
-                      if (product.reservedStock > 0)
-                        _buildSmallBadge(
-                          LucideIcons.lock,
-                          'marketplace.booked_line'.tr(namedArgs: {
-                            'qty': product.reservedStock.toStringAsFixed(
-                              product.reservedStock % 1 == 0 ? 0 : 1,
-                            ),
-                            'unit': product.unit,
-                          }),
-                          AppColors.warning,
-                        ),
-                      if (product.productMode == 'ORGANIC_PRODUCE' &&
-                          (product.availabilityType == 'PRE_HARVEST' ||
-                              product.availabilityType == 'MIXED'))
-                        _buildSmallBadge(
-                          LucideIcons.calendarClock,
-                          product.nextHarvestDate != null
-                              ? 'Panen ${DateFormat('dd MMM').format(product.nextHarvestDate!)}'
-                              : 'marketplace.availability_preharvest'.tr(),
-                          AppColors.warning,
-                        ),
-                    ],
-                  ),
                 ],
               ),
             ),

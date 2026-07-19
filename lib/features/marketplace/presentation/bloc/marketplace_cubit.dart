@@ -226,12 +226,22 @@ class MarketplaceCubit extends Cubit<MarketplaceState> {
 
   Future<void> getSuppliers({
     String? search,
+    bool? verified,
+    String? productMode,
+    String? biomassaType,
+    String? province,
+    String? regency,
     int page = 1,
     int limit = 20,
   }) async {
     _emitSafe(const MarketplaceState.loading());
     final result = await _repository.getSuppliers(
       search: search,
+      verified: verified,
+      productMode: productMode,
+      biomassaType: biomassaType,
+      province: province,
+      regency: regency,
       page: page,
       limit: limit,
     );

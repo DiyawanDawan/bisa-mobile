@@ -9,6 +9,7 @@ abstract class BookingUserEntity with _$BookingUserEntity {
     required String fullName,
     String? avatarUrl,
     String? companyName,
+    @Default(false) bool isVerified,
   }) = _BookingUserEntity;
 }
 

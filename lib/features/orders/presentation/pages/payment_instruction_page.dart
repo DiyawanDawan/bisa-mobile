@@ -10,6 +10,7 @@ import 'package:image_picker/image_picker.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
 import 'package:qr_flutter/qr_flutter.dart';
 import 'package:url_launcher/url_launcher.dart' as url_launcher;
+import 'package:mobile_bisa/core/config/app_config.dart';
 import 'package:mobile_bisa/core/constants/app_layout.dart';
 import 'package:mobile_bisa/core/constants/app_colors.dart';
 import 'package:mobile_bisa/core/utils/payment_status_utils.dart';
@@ -85,7 +86,9 @@ class _PaymentInstructionPageState extends State<PaymentInstructionPage> {
 
   bool get _isMockPayment => _paymentResult['isMockPayment'] == true;
 
-  bool get _showSimulateButton => kDebugMode;
+  /// Debug, APK development (`APP_ENV!=production`), atau mock payment.
+  bool get _showSimulateButton =>
+      kDebugMode || AppConfig.isDevelopment || _isMockPayment;
 
   bool get _hasRealPaymentRequest {
     final id = _paymentResult['paymentRequestId']?.toString() ?? '';
@@ -486,76 +489,69 @@ class _PaymentInstructionPageState extends State<PaymentInstructionPage> {
           ),
         ],
       ),
-      padding: EdgeInsets.fromLTRB(16.w, 12.h, 16.w, 12.h + bottomInset),
+      padding: EdgeInsets.fromLTRB(16.w, 10.h, 16.w, 8.h + bottomInset),
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
           if (!_paymentConfirmed && !_hasPayableInstructionData) ...[
-            SizedBox(height: AppSpacing.sm),
             CustomButton(
               text: 'orders.action_generate_va'.tr(),
               backgroundColor: AppColors.primary,
               onPressed: _busy ? null : _regeneratePaymentInstructions,
             ),
+            SizedBox(height: AppSpacing.sm),
           ],
+          // Simulasi tetap ada (debug / APP_ENV development / mock)
           if (_showSimulateButton && !_paymentConfirmed) ...[
             CustomButton(
               text: 'orders.action_simulate_payment'.tr(),
               backgroundColor: AppColors.warning,
               onPressed: _busy ? null : _simulatePayment,
             ),
-            if (!_isMockPayment && kDebugMode && _hasRealPaymentRequest)
-              Padding(
-                padding: EdgeInsets.only(top: 4.h, bottom: 8.h),
-                child: Text(
-                  'orders.simulate_xendit_hint'.tr(),
-                  textAlign: TextAlign.center,
-                  style: TextStyle(
-                    fontSize: 10.sp,
-                    color: AppColors.textSecondary,
-                  ),
-                ),
-              )
-            else if (!_isMockPayment && kDebugMode)
-              Padding(
-                padding: EdgeInsets.only(top: 4.h, bottom: 8.h),
-                child: Text(
-                  'orders.simulate_mode_hint'.tr(),
-                  textAlign: TextAlign.center,
-                  style: TextStyle(
-                    fontSize: 10.sp,
-                    color: AppColors.textSecondary,
-                  ),
-                ),
-              )
-            else
-              SizedBox(height: AppSpacing.sm),
-          ],
-          if (!_paymentConfirmed) ...[
-            CustomButton(
-              text: 'orders.action_change_method'.tr(),
-              isOutlined: true,
-              onPressed: _busy ? null : _changePaymentMethod,
-            ),
             SizedBox(height: AppSpacing.sm),
           ],
-          CustomButton(
-            text: _paymentConfirmed
-                ? (_isBatchPayment
-                    ? 'orders.action_back_to_orders'.tr()
-                    : 'orders.action_back_to_detail'.tr())
-                : 'orders.action_back'.tr(),
-            useGradient: true,
-            onPressed: (_busy || _blockExitTap) ? null : _handleLeavePage,
-          ),
-          SizedBox(height: 4.h),
+          // Satu baris: Ganti metode + Kembali
+          if (!_paymentConfirmed)
+            Row(
+              children: [
+                Expanded(
+                  child: CustomButton(
+                    text: 'orders.action_change_method_short'.tr(),
+                    isOutlined: true,
+                    onPressed: _busy ? null : _changePaymentMethod,
+                  ),
+                ),
+                SizedBox(width: AppSpacing.sm),
+                Expanded(
+                  child: CustomButton(
+                    text: 'orders.action_back'.tr(),
+                    useGradient: true,
+                    onPressed:
+                        (_busy || _blockExitTap) ? null : _handleLeavePage,
+                  ),
+                ),
+              ],
+            )
+          else
+            CustomButton(
+              text: _isBatchPayment
+                  ? 'orders.action_back_to_orders'.tr()
+                  : 'orders.action_back_to_detail'.tr(),
+              useGradient: true,
+              onPressed: (_busy || _blockExitTap) ? null : _handleLeavePage,
+            ),
           if (!_paymentConfirmed)
             TextButton(
+              style: TextButton.styleFrom(
+                padding: EdgeInsets.symmetric(vertical: 4.h),
+                minimumSize: Size.zero,
+                tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+              ),
               onPressed: _busy ? null : _cancelPayment,
               child: Text(
                 'orders.action_cancel_payment'.tr(),
                 style: TextStyle(
-                  fontSize: 13.sp,
+                  fontSize: 12.sp,
                   color: AppColors.error,
                   fontWeight: FontWeight.w700,
                 ),

@@ -5,6 +5,7 @@ import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:go_router/go_router.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
 import '../../../../core/constants/app_colors.dart';
+import '../../../../core/constants/app_layout.dart';
 import '../../../auth/presentation/bloc/auth_cubit.dart';
 import '../../../home/presentation/pages/main_screen.dart';
 import '../../../../shared/widgets/bisa_app_bar.dart';
@@ -32,7 +33,8 @@ class ProfileAllMenuPage extends StatelessWidget {
       body: ListView(
         padding: EdgeInsets.fromLTRB(16.w, 12.h, 16.w, 24.h),
         children: [
-          _MenuGrid(
+          _MenuSection(
+            title: 'profile.menu_important_features'.tr(),
             items: [
               _MenuGridItem(
                 icon: LucideIcons.sparkles,
@@ -42,10 +44,10 @@ class ProfileAllMenuPage extends StatelessWidget {
               ),
             ],
           ),
-          SizedBox(height: 14.h),
           if (isAuthenticated) ...[
-            _sectionTitle('profile.all_menu_section_account'.tr()),
-            _MenuGrid(
+            SizedBox(height: AppSpacing.md),
+            _MenuSection(
+              title: 'profile.all_menu_section_account'.tr(),
               items: [
                 _MenuGridItem(
                   icon: LucideIcons.user,
@@ -100,9 +102,9 @@ class ProfileAllMenuPage extends StatelessWidget {
             ),
           ],
           if (isAuthenticated && !isSupplier) ...[
-            SizedBox(height: 14.h),
-            _sectionTitle('profile.all_menu_section_shopping'.tr()),
-            _MenuGrid(
+            SizedBox(height: AppSpacing.md),
+            _MenuSection(
+              title: 'profile.all_menu_section_shopping'.tr(),
               items: [
                 _MenuGridItem(
                   icon: LucideIcons.package,
@@ -150,9 +152,9 @@ class ProfileAllMenuPage extends StatelessWidget {
             ),
           ],
           if (isAuthenticated && isSupplier) ...[
-            SizedBox(height: 14.h),
-            _sectionTitle('profile.section_business'.tr()),
-            _MenuGrid(
+            SizedBox(height: AppSpacing.md),
+            _MenuSection(
+              title: 'profile.section_business'.tr(),
               items: [
                 _MenuGridItem(
                   icon: LucideIcons.store,
@@ -208,9 +210,9 @@ class ProfileAllMenuPage extends StatelessWidget {
               ],
             ),
           ],
-          SizedBox(height: 14.h),
-          _sectionTitle('profile.all_menu_section_community'.tr()),
-          _MenuGrid(
+          SizedBox(height: AppSpacing.md),
+          _MenuSection(
+            title: 'profile.all_menu_section_community'.tr(),
             items: [
               _MenuGridItem(
                 icon: LucideIcons.users,
@@ -250,9 +252,9 @@ class ProfileAllMenuPage extends StatelessWidget {
                 ),
             ],
           ),
-          SizedBox(height: 14.h),
-          _sectionTitle('profile.section_market_insight'.tr()),
-          _MenuGrid(
+          SizedBox(height: AppSpacing.md),
+          _MenuSection(
+            title: 'profile.section_market_insight'.tr(),
             items: [
               _MenuGridItem(
                 icon: LucideIcons.trendingUp,
@@ -282,9 +284,9 @@ class ProfileAllMenuPage extends StatelessWidget {
                 ),
             ],
           ),
-          SizedBox(height: 14.h),
-          _sectionTitle('profile.all_menu_section_help_legal'.tr()),
-          _MenuGrid(
+          SizedBox(height: AppSpacing.md),
+          _MenuSection(
+            title: 'profile.all_menu_section_help_legal'.tr(),
             items: [
               _MenuGridItem(
                 icon: LucideIcons.handHelping,
@@ -316,36 +318,38 @@ class ProfileAllMenuPage extends StatelessWidget {
       ),
     );
   }
-
-  Widget _sectionTitle(String title) {
-    return Padding(
-      padding: EdgeInsets.only(bottom: 6.h, left: 2.w),
-      child: Text(
-        title,
-        style: TextStyle(
-          fontSize: 13.sp,
-          fontWeight: FontWeight.w800,
-          color: AppColors.textPrimary,
-        ),
-      ),
-    );
-  }
 }
 
-class _MenuGrid extends StatelessWidget {
-  const _MenuGrid({required this.items});
+/// Satu section menu dalam kartu dengan judul + pembatas.
+class _MenuSection extends StatelessWidget {
+  const _MenuSection({
+    required this.title,
+    required this.items,
+  });
 
+  final String title;
   final List<_MenuGridItem> items;
 
   @override
   Widget build(BuildContext context) {
-    return SizedBox(
-      height: 88.h,
-      child: ListView.separated(
-        scrollDirection: Axis.horizontal,
-        itemCount: items.length,
-        separatorBuilder: (_, __) => SizedBox(width: 6.w),
-        itemBuilder: (context, index) => items[index],
+    if (items.isEmpty) return const SizedBox.shrink();
+
+    return Supplier3DSectionCard(
+      title: title,
+      padding: EdgeInsets.fromLTRB(
+        AppSpacing.md,
+        AppSpacing.md,
+        AppSpacing.md,
+        AppSpacing.md,
+      ),
+      child: SizedBox(
+        height: 88.h,
+        child: ListView.separated(
+          scrollDirection: Axis.horizontal,
+          itemCount: items.length,
+          separatorBuilder: (_, __) => SizedBox(width: 8.w),
+          itemBuilder: (context, index) => items[index],
+        ),
       ),
     );
   }

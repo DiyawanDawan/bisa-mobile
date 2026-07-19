@@ -15,6 +15,7 @@ class BookingRepositoryImpl implements BookingRepository {
         fullName: m.fullName,
         avatarUrl: m.avatarUrl,
         companyName: m.companyName,
+        isVerified: m.isVerified,
       );
 
   BookingEntity _map(BookingModel m) => BookingEntity(

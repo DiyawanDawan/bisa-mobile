@@ -16,7 +16,8 @@ class ProductCardSkeleton extends StatelessWidget {
   });
 
   /// Tinggi aman untuk [ListView] horizontal (rekomendasi, cart).
-  static double get horizontalListViewportHeight => 218.h;
+  /// Selaras dengan [ProductCard.horizontalViewportHeight].
+  static double get horizontalListViewportHeight => 236.h;
 
   final double? imageHeight;
   final bool showSellerInfo;

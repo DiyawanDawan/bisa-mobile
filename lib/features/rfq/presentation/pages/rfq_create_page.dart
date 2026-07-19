@@ -78,7 +78,7 @@ class _RfqCreatePageState extends State<RfqCreatePage> {
       _error = null;
     });
     try {
-      await _ds.createRfq({
+      final created = await _ds.createRfq({
         'title': _titleCtrl.text.trim(),
         'productMode': _productMode,
         'quantity': qty,
@@ -87,8 +87,17 @@ class _RfqCreatePageState extends State<RfqCreatePage> {
           'budgetMax': double.tryParse(_budgetCtrl.text.trim()),
       });
       if (!mounted) return;
-      showSuccessSnackBar(context, 'rfq.create_success'.tr());
-      context.pop(true);
+      final matched = created['matchedSuppliers'];
+      final msg = matched != null
+          ? 'rfq.create_success_with_count'.tr(namedArgs: {'count': '$matched'})
+          : 'rfq.create_success'.tr();
+      showSuccessSnackBar(context, msg);
+      final id = created['id']?.toString();
+      if (id != null && id.isNotEmpty) {
+        context.pushReplacement('/rfq/$id');
+      } else {
+        context.pop(true);
+      }
     } on DioException catch (e) {
       if (!mounted) return;
       final failure = dioExceptionToFailure(e);
@@ -122,6 +131,28 @@ class _RfqCreatePageState extends State<RfqCreatePage> {
       body: ListView(
         padding: EdgeInsets.all(AppSpacing.xl),
         children: [
+          Container(
+            padding: EdgeInsets.all(AppSpacing.md12),
+            decoration: BoxDecoration(
+              color: AppColors.primaryLight.withValues(alpha: 0.4),
+              borderRadius: BorderRadius.circular(AppRadius.xl),
+            ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  'rfq.create_explain_title'.tr(),
+                  style: AppTextStyles.bodySm(fontWeight: FontWeight.w800),
+                ),
+                SizedBox(height: AppSpacing.sm),
+                Text(
+                  'rfq.create_explain_body'.tr(),
+                  style: AppTextStyles.caption(height: 1.45),
+                ),
+              ],
+            ),
+          ),
+          SizedBox(height: AppSpacing.md),
           Text('rfq.create_hint'.tr(), style: AppTextStyles.caption()),
           SizedBox(height: AppSpacing.md),
           CustomTextField(
@@ -164,6 +195,12 @@ class _RfqCreatePageState extends State<RfqCreatePage> {
             isLoading: _loading,
             onPressed: _loading ? null : _submit,
             icon: LucideIcons.send,
+          ),
+          SizedBox(height: AppSpacing.sm),
+          Text(
+            'rfq.submit_note'.tr(),
+            textAlign: TextAlign.center,
+            style: AppTextStyles.caption(color: AppColors.textSecondary),
           ),
         ],
       ),

@@ -9,6 +9,11 @@ class RfqRemoteDataSource {
     return Map<String, dynamic>.from(res.data['data'] as Map);
   }
 
+  Future<Map<String, dynamic>> getRfqDetail(String id) async {
+    final res = await _dio.get('/rfqs/$id');
+    return Map<String, dynamic>.from(res.data['data'] as Map);
+  }
+
   Future<List<Map<String, dynamic>>> listMyRfqs({int page = 1}) async {
     final res = await _dio.get('/rfqs', queryParameters: {'page': page, 'limit': 20});
     final data = res.data['data'] as List? ?? [];

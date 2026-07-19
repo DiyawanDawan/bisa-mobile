@@ -13,6 +13,12 @@ abstract class ContractVerifyUrl {
     return '${baseUrl()}/verify/$encoded';
   }
 
+  /// QR / tautan verifikasi surat kontrak kerjasama (nomor kontrak).
+  static String verifyPartnership(String contractNumber) {
+    final encoded = Uri.encodeComponent(contractNumber.trim());
+    return '${baseUrl()}/verify/$encoded';
+  }
+
   static String track(String orderNumber) {
     final encoded = Uri.encodeComponent(orderNumber.trim());
     return '${baseUrl()}/track/$encoded';

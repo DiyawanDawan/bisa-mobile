@@ -11,7 +11,6 @@ part of 'supplier_model.dart';
 
 // dart format off
 T _$identity<T>(T value) => value;
-
 /// @nodoc
 mixin _$SupplierModel {
 
@@ -215,11 +214,11 @@ return $default(_that.id,_that.name,_that.avatar,_that.phone,_that.address,_that
 }
 
 /// @nodoc
-@JsonSerializable()
+@JsonSerializable(createFactory: false)
 
 class _SupplierModel implements SupplierModel {
   const _SupplierModel({required this.id, required this.name, this.avatar, this.phone, this.address, this.province, this.regency, this.isVerified = false, this.rating = 0.0, this.totalProducts = 0});
-  factory _SupplierModel.fromJson(Map<String, dynamic> json) => _$SupplierModelFromJson(json);
+  
 
 @override final  String id;
 @override final  String name;
