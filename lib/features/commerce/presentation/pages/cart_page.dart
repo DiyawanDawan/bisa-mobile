@@ -2622,12 +2622,6 @@ class _CartPageState extends State<CartPage> {
         : num.tryParse(previewTotal?.toString() ?? '') ?? 0;
 
     return Container(
-      margin: EdgeInsets.fromLTRB(
-        AppSpacing.md,
-        0,
-        AppSpacing.md,
-        AppSpacing.md12,
-      ),
       padding: EdgeInsets.fromLTRB(
         AppSpacing.section,
         AppSpacing.md12,
@@ -2731,12 +2725,6 @@ class _CartPageState extends State<CartPage> {
                 ? _shippingFullAddress!
                 : null;
     return Container(
-      margin: EdgeInsets.fromLTRB(
-        AppSpacing.md,
-        0,
-        AppSpacing.md,
-        AppSpacing.md12,
-      ),
       padding: EdgeInsets.fromLTRB(
         AppSpacing.section,
         AppSpacing.md12,

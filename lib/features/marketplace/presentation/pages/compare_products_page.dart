@@ -150,7 +150,7 @@ class _CompareProductsPageState extends State<CompareProductsPage> {
                                         ),
                                         SizedBox(height: AppSpacing.sm),
                                         Text(
-                                          'Spesifikasi',
+                                          'product.compare_spec'.tr(),
                                           style: AppTextStyles.caption(
                                             fontWeight: FontWeight.w800,
                                             color: AppColors.primary,
@@ -158,7 +158,7 @@ class _CompareProductsPageState extends State<CompareProductsPage> {
                                         ),
                                         SizedBox(height: AppSpacing.xs),
                                         Text(
-                                          'Bandingkan detail produk',
+                                          'product.compare_spec_subtitle'.tr(),
                                           style: AppTextStyles.caption(
                                             color: AppColors.textSecondary,
                                           ).copyWith(
@@ -244,7 +244,7 @@ class _CompareProductsPageState extends State<CompareProductsPage> {
                     color: AppColors.surface,
                     boxShadow: [
                       BoxShadow(
-                        color: Colors.black.withValues(alpha: 0.1),
+                        color: AppColors.black.withValues(alpha: 0.1),
                         blurRadius: 4,
                         offset: Offset(0, -2),
                       ),
@@ -261,7 +261,7 @@ class _CompareProductsPageState extends State<CompareProductsPage> {
                           onPressed: () {
                             // TODO: Implement Simpan Draft
                           },
-                          child: Text('Simpan Draft'),
+                          child: Text('product.compare_save_draft'.tr()),
                         ),
                       ),
                       SizedBox(width: AppSpacing.md),
@@ -273,7 +273,7 @@ class _CompareProductsPageState extends State<CompareProductsPage> {
                                 }
                               : null,
                           icon: Icon(LucideIcons.mail),
-                          label: Text('Buat Surat Negosiasi'),
+                          label: Text('product.compare_create_letter'.tr()),
                         ),
                       ),
                     ],
@@ -290,16 +290,16 @@ class _CompareProductsPageState extends State<CompareProductsPage> {
     final widgets = <Widget>[];
 
     // Price
-    widgets.add(_specLabelCell('Harga Satuan', isEven: true));
+    widgets.add(_specLabelCell('product.compare_unit_price'.tr(), isEven: true));
 
     // Min Order
-    widgets.add(_specLabelCell('Min. Order (MOQ)', isEven: false));
+    widgets.add(_specLabelCell('product.compare_moq_full'.tr(), isEven: false));
 
     // Rating
-    widgets.add(_specLabelCell('Rating', isEven: true));
+    widgets.add(_specLabelCell('product.compare_rating'.tr(), isEven: true));
 
     // Stock
-    widgets.add(_specLabelCell('Stock', isEven: false));
+    widgets.add(_specLabelCell('product.compare_stock'.tr(), isEven: false));
 
     // Additional Specs
     final labels = <String>{};
@@ -603,7 +603,7 @@ class _AddProductCell extends StatelessWidget {
                 ),
                 SizedBox(height: AppSpacing.sm),
                 Text(
-                  'Tambah',
+                  'product.compare_add'.tr(),
                   style: AppTextStyles.caption(
                     color: AppColors.primary,
                     fontWeight: FontWeight.w700,
@@ -638,7 +638,7 @@ class _BuildNegotiationStrategy extends StatelessWidget {
               Icon(LucideIcons.lightbulb, color: AppColors.primary),
               SizedBox(width: AppSpacing.sm),
               Text(
-                'Strategi Negosiasi Terdeteksi',
+                'product.compare_strategy_title'.tr(),
                 style: AppTextStyles.body(
                   fontWeight: FontWeight.w700,
                   color: AppColors.primary,
@@ -660,14 +660,14 @@ class _BuildNegotiationStrategy extends StatelessWidget {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
-                        'Potensi Penghematan',
+                        'product.compare_savings_title'.tr(),
                         style: AppTextStyles.caption(
                           fontWeight: FontWeight.w700,
                         ),
                       ),
                       SizedBox(height: AppSpacing.xs),
                       Text(
-                        'Pabrik Baja Utama menawarkan diskon volume terbesar. Cocok untuk proyek jangka panjang.',
+                        'product.compare_savings_body'.tr(),
                         style: AppTextStyles.caption(
                           color: AppColors.textSecondary,
                         ),
@@ -688,14 +688,14 @@ class _BuildNegotiationStrategy extends StatelessWidget {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
-                        'Kecepatan Logistik',
+                        'product.compare_logistics_title'.tr(),
                         style: AppTextStyles.caption(
                           fontWeight: FontWeight.w700,
                         ),
                       ),
                       SizedBox(height: AppSpacing.xs),
                       Text(
-                        'Logam Hijau Lestari memiliki lead time tercepat (7 hari). Gunakan ini untuk vendor lain.',
+                        'product.compare_logistics_body'.tr(),
                         style: AppTextStyles.caption(
                           color: AppColors.textSecondary,
                         ),
@@ -729,7 +729,7 @@ class _BuildDraftNegotiation extends StatelessWidget {
         borderRadius: BorderRadius.circular(12.r),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withValues(alpha: 0.2),
+            color: AppColors.black.withValues(alpha: 0.2),
             blurRadius: 8,
             offset: Offset(0, 4),
           ),
@@ -740,17 +740,19 @@ class _BuildDraftNegotiation extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
-            'Draft Negosiasi',
+            'product.compare_draft_title'.tr(),
             style: AppTextStyles.body(
               fontWeight: FontWeight.w700,
-              color: Colors.white,
+              color: AppColors.textOnPrimary,
             ),
           ),
           SizedBox(height: AppSpacing.xs),
           Text(
-            'Anda telah memilih $selectedCount produk untuk proses negosiasi lanjutan.',
+            'product.compare_draft_body'.tr(
+              namedArgs: {'count': '$selectedCount'},
+            ),
             style: AppTextStyles.caption(
-              color: Colors.white.withValues(alpha: 0.9),
+              color: AppColors.textOnPrimary.withValues(alpha: 0.9),
             ),
           ),
           SizedBox(height: AppSpacing.md),
@@ -760,7 +762,7 @@ class _BuildDraftNegotiation extends StatelessWidget {
               Text(
                 '$selectedCount',
                 style: AppTextStyles.sheetTitle(
-                  color: Colors.white,
+                  color: AppColors.textOnPrimary,
                 ),
               ),
               SizedBox(width: AppSpacing.sm),
@@ -768,9 +770,9 @@ class _BuildDraftNegotiation extends StatelessWidget {
                 child: Padding(
                   padding: EdgeInsets.only(top: AppSpacing.xs),
                   child: Text(
-                    'PRODUK TERPILIH',
+                    'product.compare_selected_label'.tr(),
                     style: AppTextStyles.caption(
-                      color: Colors.white,
+                      color: AppColors.textOnPrimary,
                       fontWeight: FontWeight.w700,
                     ),
                   ),
@@ -787,7 +789,7 @@ class _BuildDraftNegotiation extends StatelessWidget {
                     child: Icon(
                       LucideIcons.pencil,
                       size: 18.sp,
-                      color: Colors.white,
+                      color: AppColors.textOnPrimary,
                     ),
                   ),
                 ),
@@ -823,7 +825,7 @@ class _BuildDraftNegotiation extends StatelessWidget {
                       '+${selectedProducts.length - 2}',
                       style: AppTextStyles.body(
                         fontWeight: FontWeight.w700,
-                        color: Colors.white,
+                        color: AppColors.textOnPrimary,
                       ),
                     ),
                   ),
@@ -831,9 +833,9 @@ class _BuildDraftNegotiation extends StatelessWidget {
               SizedBox(width: AppSpacing.sm),
               Expanded(
                 child: Text(
-                  'Menunggu untuk dinegosiasikan...',
+                  'product.compare_awaiting'.tr(),
                   style: AppTextStyles.caption(
-                    color: Colors.white,
+                    color: AppColors.textOnPrimary,
                   ),
                 ),
               ),

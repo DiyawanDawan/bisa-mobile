@@ -787,111 +787,119 @@ class _MarketplacePageState extends State<MarketplacePage> {
         _FeatureItem(
           icon: LucideIcons.fileText,
           label: 'rfq.menu_title'.tr(),
-          color: const Color(0xFF6366F1),
+          color: AppColors.info,
           onTap: () => context.push('/rfq'),
         ),
       if (isSupplier)
         _FeatureItem(
           icon: LucideIcons.inbox,
           label: 'rfq.inbox_title'.tr(),
-          color: const Color(0xFF6366F1),
+          color: AppColors.info,
           onTap: () => context.push('/rfq/inbox'),
         ),
       if (isBuyer)
         _FeatureItem(
           icon: LucideIcons.package,
           label: 'marketplace.buyer_products_title'.tr(),
-          color: const Color(0xFF0EA5E9),
+          color: AppColors.ocean,
           onTap: () => context.push('/buyer-products'),
         ),
       _FeatureItem(
         icon: LucideIcons.truck,
         label: 'profile.menu_public_track'.tr(),
-        color: const Color(0xFFF59E0B),
+        color: AppColors.warning,
         onTap: () => context.push('/track'),
       ),
       if (isLoggedIn)
         _FeatureItem(
           icon: LucideIcons.handshake,
           label: 'profile.menu_my_contracts'.tr(),
-          color: const Color(0xFF10B981),
+          color: AppColors.secondary,
           onTap: () => context.push('/partnerships'),
         ),
       if (isLoggedIn)
         _FeatureItem(
           icon: LucideIcons.messageSquare,
           label: 'profile.menu_negotiations'.tr(),
-          color: const Color(0xFF8B5CF6),
+          color: AppColors.primaryMedium,
           onTap: () => MainShellScope.maybeOf(context)?.selectTab(1),
         ),
       if (isLoggedIn)
         _FeatureItem(
           icon: LucideIcons.shoppingBag,
           label: 'profile.menu_orders'.tr(),
-          color: const Color(0xFFEC4899),
+          color: AppColors.accent,
           onTap: () => MainShellScope.maybeOf(context)?.selectTab(3),
         ),
       _FeatureItem(
         icon: LucideIcons.radio,
         label: 'live.title'.tr(),
-        color: const Color(0xFFEF4444),
+        color: AppColors.error,
         onTap: () => context.push('/live'),
       ),
     ];
 
-    return Wrap(
-      spacing: AppSpacing.sm,
-      runSpacing: AppSpacing.sm,
-      children: features.map((f) => _featureCard(f)).toList(),
+    final cardW = (MediaQuery.of(context).size.width - AppSpacing.md * 2 - AppSpacing.md12 * 2) / 5;
+
+    return Container(
+      padding: EdgeInsets.symmetric(
+        horizontal: AppSpacing.md12,
+        vertical: AppSpacing.sm10,
+      ),
+      decoration: BoxDecoration(
+        color: AppColors.surface,
+        borderRadius: BorderRadius.circular(AppRadius.xl),
+        boxShadow: [
+          BoxShadow(
+            color: AppColors.black.withValues(alpha: 0.06),
+            blurRadius: 12,
+            offset: const Offset(0, 3),
+          ),
+        ],
+      ),
+      child: SingleChildScrollView(
+        scrollDirection: Axis.horizontal,
+        physics: const BouncingScrollPhysics(),
+        child: Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: features
+              .map((f) => SizedBox(width: cardW, child: _featureCard(f)))
+              .toList(),
+        ),
+      ),
     );
   }
 
   Widget _featureCard(_FeatureItem item) {
-    final cardWidth = (MediaQuery.of(context).size.width - AppSpacing.md * 2 - AppSpacing.sm * 3) / 4;
-    return SizedBox(
-      width: cardWidth,
-      child: Material(
-        color: AppColors.transparent,
-        child: InkWell(
-          onTap: item.onTap,
-          borderRadius: BorderRadius.circular(AppRadius.tile),
-          child: Ink(
-            padding: EdgeInsets.symmetric(
-              vertical: AppSpacing.sm,
-              horizontal: AppSpacing.xs,
+    return InkWell(
+      onTap: item.onTap,
+      child: Padding(
+        padding: EdgeInsets.symmetric(vertical: AppSpacing.xs),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Container(
+              padding: EdgeInsets.all(10.r),
+              decoration: BoxDecoration(
+                color: item.color.withValues(alpha: 0.10),
+                shape: BoxShape.circle,
+              ),
+              child: Icon(item.icon, color: item.color, size: 22.sp),
             ),
-            decoration: BoxDecoration(
-              color: AppColors.surface,
-              borderRadius: BorderRadius.circular(AppRadius.tile),
-              border: Border.all(color: AppColors.grey100),
+            SizedBox(height: 6.h),
+            Text(
+              item.label,
+              textAlign: TextAlign.center,
+              maxLines: 2,
+              overflow: TextOverflow.ellipsis,
+              style: TextStyle(
+                color: AppColors.textPrimary,
+                fontSize: 10.sp,
+                fontWeight: FontWeight.w500,
+                height: 1.2,
+              ),
             ),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Container(
-                  padding: EdgeInsets.all(8.r),
-                  decoration: BoxDecoration(
-                    color: item.color.withValues(alpha: 0.10),
-                    borderRadius: BorderRadius.circular(AppRadius.md),
-                  ),
-                  child: Icon(item.icon, color: item.color, size: 20.sp),
-                ),
-                SizedBox(height: 6.h),
-                Text(
-                  item.label,
-                  textAlign: TextAlign.center,
-                  maxLines: 2,
-                  overflow: TextOverflow.ellipsis,
-                  style: TextStyle(
-                    color: AppColors.textPrimary,
-                    fontSize: 10.sp,
-                    fontWeight: FontWeight.w600,
-                    height: 1.2,
-                  ),
-                ),
-              ],
-            ),
-          ),
+          ],
         ),
       ),
     );

@@ -500,9 +500,9 @@ class _AiChatPageState extends State<AiChatPage> {
         onDismissed: (direction) {
           context.read<AiCubit>().deleteMessage(message.id);
           ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(
-              content: Text('Pesan berhasil dihapus'),
-              duration: Duration(seconds: 1),
+            SnackBar(
+              content: Text('ai.message_deleted'.tr()),
+              duration: const Duration(seconds: 1),
             ),
           );
         },
@@ -548,7 +548,7 @@ class _AiChatPageState extends State<AiChatPage> {
   void _showMessageOptions(BuildContext context, ChatMessage message) {
     showModalBottomSheet(
       context: context,
-      backgroundColor: Colors.transparent,
+      backgroundColor: AppColors.transparent,
       builder: (bottomSheetContext) {
         return Container(
           decoration: const BoxDecoration(
@@ -574,7 +574,7 @@ class _AiChatPageState extends State<AiChatPage> {
               Align(
                 alignment: Alignment.centerLeft,
                 child: Text(
-                  'Opsi Pesan',
+                  'ai.message_options'.tr(),
                   style: TextStyle(
                     fontSize: 16.sp,
                     fontWeight: FontWeight.w800,
@@ -586,7 +586,7 @@ class _AiChatPageState extends State<AiChatPage> {
               ListTile(
                 leading: const Icon(LucideIcons.copy, color: AppColors.primary),
                 title: Text(
-                  'Salin Pesan',
+                  'ai.copy_message'.tr(),
                   style: TextStyle(
                     fontSize: 14.sp,
                     fontWeight: FontWeight.w600,
@@ -597,9 +597,9 @@ class _AiChatPageState extends State<AiChatPage> {
                   Clipboard.setData(ClipboardData(text: message.text));
                   Navigator.pop(bottomSheetContext);
                   ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(
-                      content: Text('Pesan disalin ke papan klip'),
-                      duration: Duration(seconds: 2),
+                    SnackBar(
+                      content: Text('ai.message_copied'.tr()),
+                      duration: const Duration(seconds: 2),
                     ),
                   );
                 },
@@ -611,7 +611,7 @@ class _AiChatPageState extends State<AiChatPage> {
                   color: AppColors.secondary,
                 ),
                 title: Text(
-                  'Edit Pesan',
+                  'ai.edit_message'.tr(),
                   style: TextStyle(
                     fontSize: 14.sp,
                     fontWeight: FontWeight.w600,
@@ -627,7 +627,7 @@ class _AiChatPageState extends State<AiChatPage> {
               ListTile(
                 leading: const Icon(LucideIcons.trash2, color: AppColors.error),
                 title: Text(
-                  'Hapus Pesan',
+                  'ai.delete_message'.tr(),
                   style: TextStyle(
                     fontSize: 14.sp,
                     fontWeight: FontWeight.w600,
@@ -638,9 +638,9 @@ class _AiChatPageState extends State<AiChatPage> {
                   Navigator.pop(bottomSheetContext);
                   context.read<AiCubit>().deleteMessage(message.id);
                   ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(
-                      content: Text('Pesan berhasil dihapus'),
-                      duration: Duration(seconds: 1),
+                    SnackBar(
+                      content: Text('ai.message_deleted'.tr()),
+                      duration: const Duration(seconds: 1),
                     ),
                   );
                 },
@@ -660,7 +660,7 @@ class _AiChatPageState extends State<AiChatPage> {
         return AlertDialog(
           backgroundColor: AppColors.surface,
           title: Text(
-            'Edit Pesan',
+            'ai.edit_message'.tr(),
             style: TextStyle(
               fontSize: 16.sp,
               fontWeight: FontWeight.w800,
@@ -670,16 +670,16 @@ class _AiChatPageState extends State<AiChatPage> {
           content: TextField(
             controller: controller,
             maxLines: null,
-            decoration: const InputDecoration(
-              hintText: 'Edit pesan Anda...',
-              border: OutlineInputBorder(),
+            decoration: InputDecoration(
+              hintText: 'ai.edit_message_hint'.tr(),
+              border: const OutlineInputBorder(),
             ),
             style: TextStyle(fontSize: 14.sp, color: AppColors.textPrimary),
           ),
           actions: [
             TextButton(
               onPressed: () => Navigator.pop(dialogContext),
-              child: const Text('Batal'),
+              child: Text('batal'.tr()),
             ),
             TextButton(
               onPressed: () {
@@ -689,12 +689,12 @@ class _AiChatPageState extends State<AiChatPage> {
                 }
                 Navigator.pop(dialogContext);
                 ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(content: Text('Pesan diperbarui')),
+                  SnackBar(content: Text('ai.message_updated'.tr())),
                 );
               },
-              child: const Text(
-                'Simpan',
-                style: TextStyle(
+              child: Text(
+                'simpan'.tr(),
+                style: const TextStyle(
                   color: AppColors.primary,
                   fontWeight: FontWeight.w700,
                 ),
@@ -713,7 +713,7 @@ class _AiChatPageState extends State<AiChatPage> {
         return AlertDialog(
           backgroundColor: AppColors.surface,
           title: Text(
-            'Hapus Semua Chat?',
+            'ai.clear_chat_title'.tr(),
             style: TextStyle(
               fontSize: 16.sp,
               fontWeight: FontWeight.w800,
@@ -721,25 +721,25 @@ class _AiChatPageState extends State<AiChatPage> {
             ),
           ),
           content: Text(
-            'Tindakan ini akan menghapus seluruh riwayat percakapan Anda dengan asisten.',
+            'ai.clear_chat_body'.tr(),
             style: TextStyle(fontSize: 14.sp, color: AppColors.textSecondary),
           ),
           actions: [
             TextButton(
               onPressed: () => Navigator.pop(dialogContext),
-              child: const Text('Batal'),
+              child: Text('batal'.tr()),
             ),
             TextButton(
               onPressed: () {
                 Navigator.pop(dialogContext);
                 context.read<AiCubit>().clearChat();
                 ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(content: Text('Riwayat chat dihapus')),
+                  SnackBar(content: Text('ai.chat_history_cleared'.tr())),
                 );
               },
-              child: const Text(
-                'Hapus',
-                style: TextStyle(color: AppColors.error),
+              child: Text(
+                'hapus'.tr(),
+                style: const TextStyle(color: AppColors.error),
               ),
             ),
           ],

@@ -309,7 +309,7 @@ import 'package:lucide_icons_flutter/lucide_icons.dart';
                           ],
                           ListTile(
                             contentPadding: EdgeInsets.zero,
-                            title: Text('Target kirim (opsional)',
+                            title: Text('booking.field_delivery_target'.tr(),
                                 style: TextStyle(fontSize: 13.sp)),
                             subtitle: Text(
                               _expectedDeliveryDate == null

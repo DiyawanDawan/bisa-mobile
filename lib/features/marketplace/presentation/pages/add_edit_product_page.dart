@@ -581,9 +581,7 @@ class _AddEditProductPageState extends State<AddEditProductPage> {
                                       vertical: 4.h,
                                     ),
                                     decoration: BoxDecoration(
-                                      gradient: const LinearGradient(
-                                        colors: [Color(0xFF6366F1), Color(0xFF8B5CF6)],
-                                      ),
+                                      gradient: AppColors.primaryGradient,
                                       borderRadius: BorderRadius.circular(20),
                                     ),
                                     child: _isGeneratingDesc
@@ -595,7 +593,7 @@ class _AddEditProductPageState extends State<AddEditProductPage> {
                                                 height: 10.sp,
                                                 child: const CircularProgressIndicator(
                                                   strokeWidth: 1.5,
-                                                  color: Colors.white,
+                                                  color: AppColors.textOnPrimary,
                                                 ),
                                               ),
                                               SizedBox(width: 4.w),
@@ -603,7 +601,7 @@ class _AddEditProductPageState extends State<AddEditProductPage> {
                                                 'marketplace.generate_desc_loading'.tr(),
                                                 style: TextStyle(
                                                   fontSize: 11.sp,
-                                                  color: Colors.white,
+                                                  color: AppColors.textOnPrimary,
                                                   fontWeight: FontWeight.w600,
                                                 ),
                                               ),
@@ -613,7 +611,7 @@ class _AddEditProductPageState extends State<AddEditProductPage> {
                                             'marketplace.generate_desc_btn'.tr(),
                                             style: TextStyle(
                                               fontSize: 11.sp,
-                                              color: Colors.white,
+                                              color: AppColors.textOnPrimary,
                                               fontWeight: FontWeight.w600,
                                             ),
                                           ),

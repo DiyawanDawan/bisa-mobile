@@ -40,16 +40,11 @@ android {
         versionCode = flutter.versionCode
         versionName = flutter.versionName
         multiDexEnabled = true
-        // Real devices only — skip x86/x86_64 to avoid Windows strip file-lock races.
-        ndk {
-            abiFilters += listOf("armeabi-v7a", "arm64-v8a")
-        }
     }
 
     packaging {
         jniLibs {
-            // Avoid :app:stripReleaseDebugSymbols file locks on Windows.
-            keepDebugSymbols += listOf("**/*.so")
+            useLegacyPackaging = false
         }
     }
 
@@ -58,7 +53,7 @@ android {
         if (hasReleaseKeystore) {
             create("release") {
                 keyAlias = keystoreProperties["keyAlias"] as String?
-                keyPassword = keystoreProperties["keyAlias"] as String?
+                keyPassword = keystoreProperties["keyPassword"] as String?
                 storeFile = keystoreProperties["storeFile"]?.let { file(it as String) }
                 storePassword = keystoreProperties["storePassword"] as String?
             }
@@ -81,16 +76,12 @@ android {
                 debugSymbolLevel = "NONE"
             }
 
-            // Sementara nonaktifkan R8: path "Mobile Apps" (spasi) sering
-            // memicu NoSuchFileException di minifyReleaseWithR8 di Windows.
-            isMinifyEnabled = false
-            isShrinkResources = false
-            // isMinifyEnabled = true
-            // isShrinkResources = true
-            // proguardFiles(
-            //     getDefaultProguardFile("proguard-android-optimize.txt"),
-            //     "proguard-rules.pro",
-            // )
+            isMinifyEnabled = true
+            isShrinkResources = true
+            proguardFiles(
+                getDefaultProguardFile("proguard-android-optimize.txt"),
+                "proguard-rules.pro",
+            )
         }
     }
 }

@@ -1116,7 +1116,7 @@ class _NegotiationRoomPageState extends State<NegotiationRoomPage> {
                           ),
                           // Own bubble (hijau): biru muda supaya kontras; peer: biru info.
                           linkColor: isMe
-                              ? const Color(0xFFBFDBFE)
+                              ? AppColors.infoBorder
                               : AppColors.info,
                         ),
                       if (msg.attachmentUrl != null &&
@@ -1810,7 +1810,7 @@ class _NegotiationRoomPageState extends State<NegotiationRoomPage> {
                             showModalBottomSheet(
                               context: context,
                               isScrollControlled: true,
-                              backgroundColor: Colors.transparent,
+                              backgroundColor: AppColors.transparent,
                               builder: (_) => HandwritingInputSheet(
                                 onResult: (text) {
                                   _messageController.text =

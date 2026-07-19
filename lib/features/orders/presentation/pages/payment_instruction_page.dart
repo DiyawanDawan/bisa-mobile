@@ -1384,18 +1384,20 @@ class _PaymentInstructionPageState extends State<PaymentInstructionPage> {
                 Container(
                   padding: EdgeInsets.symmetric(horizontal: 8.w, vertical: 4.h),
                   decoration: BoxDecoration(
-                    color: Colors.green.shade50,
+                    color: AppColors.primaryLight,
                     borderRadius: BorderRadius.circular(20.r),
-                    border: Border.all(color: Colors.green.shade200),
+                    border: Border.all(
+                      color: AppColors.secondary.withValues(alpha: 0.35),
+                    ),
                   ),
                   child: Row(
                     mainAxisSize: MainAxisSize.min,
                     children: [
-                      Icon(LucideIcons.circleCheck, size: 12.r, color: Colors.green.shade700),
+                      Icon(LucideIcons.circleCheck, size: 12.r, color: AppColors.primaryMedium),
                       SizedBox(width: 4.w),
                       Text(
                         'orders.proof_sent'.tr(),
-                        style: TextStyle(fontSize: 10.sp, color: Colors.green.shade700, fontWeight: FontWeight.w600),
+                        style: TextStyle(fontSize: 10.sp, color: AppColors.primaryMedium, fontWeight: FontWeight.w600),
                       ),
                     ],
                   ),
@@ -1476,8 +1478,8 @@ class _PaymentInstructionPageState extends State<PaymentInstructionPage> {
               if (_ocrResult!.isAmountMatch)
                 _ocrChip(
                   icon: LucideIcons.circleCheck,
-                  color: Colors.green.shade700,
-                  bgColor: Colors.green.shade50,
+                  color: AppColors.primaryMedium,
+                  bgColor: AppColors.primaryLight,
                   text: 'orders.proof_ocr_match'.tr(
                     namedArgs: {'amount': 'Rp ${_formatAmount(_ocrResult!.detectedAmount!)}'},
                   ),
@@ -1485,8 +1487,8 @@ class _PaymentInstructionPageState extends State<PaymentInstructionPage> {
               else if (hasMismatch)
                 _ocrChip(
                   icon: LucideIcons.triangleAlert,
-                  color: Colors.orange.shade700,
-                  bgColor: Colors.orange.shade50,
+                  color: AppColors.warning,
+                  bgColor: AppColors.warning.withValues(alpha: 0.12),
                   text: 'orders.proof_ocr_mismatch'.tr(
                     namedArgs: {
                       'detected': 'Rp ${_formatAmount(_ocrResult!.detectedAmount!)}',
@@ -1542,21 +1544,23 @@ class _PaymentInstructionPageState extends State<PaymentInstructionPage> {
             Container(
               padding: EdgeInsets.all(10.r),
               decoration: BoxDecoration(
-                color: Colors.orange.shade50,
+                color: AppColors.warning.withValues(alpha: 0.12),
                 borderRadius: BorderRadius.circular(10.r),
-                border: Border.all(color: Colors.orange.shade200),
+                border: Border.all(
+                  color: AppColors.warning.withValues(alpha: 0.35),
+                ),
               ),
               child: Row(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Icon(LucideIcons.triangleAlert, size: 14.r, color: Colors.orange.shade700),
+                  Icon(LucideIcons.triangleAlert, size: 14.r, color: AppColors.warning),
                   SizedBox(width: 6.w),
                   Expanded(
                     child: Text(
                       'orders.proof_mismatch_warning'.tr(
                         namedArgs: {'expected': 'Rp ${_formatAmount(widget.amount)}'},
                       ),
-                      style: TextStyle(fontSize: 11.sp, color: Colors.orange.shade800, height: 1.5),
+                      style: TextStyle(fontSize: 11.sp, color: AppColors.warning, height: 1.5),
                     ),
                   ),
                 ],
@@ -1573,7 +1577,7 @@ class _PaymentInstructionPageState extends State<PaymentInstructionPage> {
                   : 'orders.proof_submit'.tr(),
               isLoading: _proofUploading,
               onPressed: _proofUploading ? null : _submitProof,
-              backgroundColor: hasMismatch ? Colors.orange.shade600 : AppColors.primary,
+              backgroundColor: hasMismatch ? AppColors.warning : AppColors.primary,
             ),
 
           // Sudah terkirim — info
@@ -1581,18 +1585,20 @@ class _PaymentInstructionPageState extends State<PaymentInstructionPage> {
             Container(
               padding: EdgeInsets.all(10.r),
               decoration: BoxDecoration(
-                color: Colors.green.shade50,
+                color: AppColors.primaryLight,
                 borderRadius: BorderRadius.circular(10.r),
-                border: Border.all(color: Colors.green.shade200),
+                border: Border.all(
+                  color: AppColors.secondary.withValues(alpha: 0.35),
+                ),
               ),
               child: Row(
                 children: [
-                  Icon(LucideIcons.circleCheck, size: 14.r, color: Colors.green.shade700),
+                  Icon(LucideIcons.circleCheck, size: 14.r, color: AppColors.primaryMedium),
                   SizedBox(width: 6.w),
                   Expanded(
                     child: Text(
                       'orders.proof_submitted_info'.tr(),
-                      style: TextStyle(fontSize: 11.sp, color: Colors.green.shade800),
+                      style: TextStyle(fontSize: 11.sp, color: AppColors.primaryDark),
                     ),
                   ),
                 ],

@@ -187,7 +187,7 @@ class _HandwritingInputSheetState extends State<HandwritingInputSheet> {
                       (_isRecognizing || _allStrokes.isEmpty) ? null : _recognize,
                   style: ElevatedButton.styleFrom(
                     backgroundColor: AppColors.primary,
-                    foregroundColor: Colors.white,
+                    foregroundColor: AppColors.textOnPrimary,
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(AppRadius.button),
                     ),
@@ -199,7 +199,7 @@ class _HandwritingInputSheetState extends State<HandwritingInputSheet> {
                           height: 18.sp,
                           child: const CircularProgressIndicator(
                             strokeWidth: 2,
-                            color: Colors.white,
+                            color: AppColors.textOnPrimary,
                           ),
                         )
                       : Text(

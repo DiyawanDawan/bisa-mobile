@@ -165,7 +165,7 @@ class _UnitToggle extends StatelessWidget {
   Widget _unitChip(BatchWeightUnit value, String key, String fallback) {
     final selected = unit == value;
     return Material(
-      color: selected ? AppColors.primaryLight : Colors.transparent,
+      color: selected ? AppColors.primaryLight : AppColors.transparent,
       borderRadius: BorderRadius.circular(8.r),
       child: InkWell(
         onTap: () => onChanged(value),
