@@ -16,6 +16,7 @@ import '../../../auth/presentation/bloc/auth_cubit.dart';
 import '../../domain/entities/partnership_entity.dart';
 import '../bloc/partnership_cubit.dart';
 import '../widgets/partnership_status_chip.dart';
+import '../utils/partnership_pdf_export_helper.dart';
 
 class PartnershipDetailPage extends StatelessWidget {
   final String partnershipId;
@@ -36,6 +37,47 @@ class _PartnershipDetailBody extends StatelessWidget {
 
   const _PartnershipDetailBody({required this.partnershipId});
 
+  Future<void> _sendPartnershipToChat(
+    BuildContext context,
+    PartnershipEntity p,
+  ) async {
+    showDialog<void>(
+      context: context,
+      barrierDismissible: false,
+      builder: (_) => const Center(
+        child: CircularProgressIndicator(color: AppColors.primary),
+      ),
+    );
+
+    final userId = context.read<AuthCubit>().state.maybeWhen(
+          authenticated: (u) => u.id,
+          orElse: () => null,
+        );
+    final counterpartyId =
+        userId == p.buyerId ? p.supplierId : p.buyerId;
+    final negotiationId =
+        await PartnershipPdfExportHelper.findNegotiationIdWithUser(
+      counterpartyId,
+    );
+
+    if (context.mounted) {
+      Navigator.of(context, rootNavigator: true).pop();
+    }
+
+    if (!context.mounted) return;
+
+    if (negotiationId == null) {
+      showErrorSnackBar(context, 'partnership.chat_no_room'.tr());
+      return;
+    }
+
+    await PartnershipPdfExportHelper.showSendProposalSheet(
+      context,
+      negotiationId: negotiationId,
+      partnership: p,
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final userId = context.watch<AuthCubit>().state.maybeWhen(
@@ -52,6 +94,22 @@ class _PartnershipDetailBody extends StatelessWidget {
       appBar: BisaAppBar(
         backgroundColor: AppColors.surface,
         title: 'partnership.detail_title'.tr(),
+        actions: [
+          BlocBuilder<PartnershipCubit, PartnershipState>(
+            builder: (context, state) {
+              final p = state.selected;
+              if (p == null) return const SizedBox.shrink();
+              return IconButton(
+                tooltip: p.isFullySigned
+                    ? 'partnership.pdf_download'.tr()
+                    : 'partnership.pdf_download_draft'.tr(),
+                onPressed: () =>
+                    PartnershipPdfExportHelper.exportEntity(context, p),
+                icon: Icon(LucideIcons.download, size: 20.sp),
+              );
+            },
+          ),
+        ],
       ),
       body: BlocConsumer<PartnershipCubit, PartnershipState>(
         listener: (context, state) {
@@ -173,8 +231,33 @@ class _PartnershipDetailBody extends StatelessWidget {
                           Text(p.rejectionReason!, style: TextStyle(fontSize: 13.sp)),
                         ]),
                       ],
+                      SizedBox(height: AppSpacing.md),
+                      OutlinedButton.icon(
+                        onPressed: () =>
+                            PartnershipPdfExportHelper.exportEntity(context, p),
+                        icon: Icon(LucideIcons.download, size: 18.sp),
+                        label: Text(
+                          p.isFullySigned
+                              ? 'partnership.pdf_download'.tr()
+                              : 'partnership.pdf_download_draft'.tr(),
+                        ),
+                        style: OutlinedButton.styleFrom(
+                          minimumSize: Size(double.infinity, 48.h),
+                          foregroundColor: AppColors.primary,
+                        ),
+                      ),
+                      SizedBox(height: AppSpacing.sm10),
+                      OutlinedButton.icon(
+                        onPressed: () => _sendPartnershipToChat(context, p),
+                        icon: Icon(LucideIcons.messageSquare, size: 18.sp),
+                        label: Text('partnership.chat_send_cta'.tr()),
+                        style: OutlinedButton.styleFrom(
+                          minimumSize: Size(double.infinity, 48.h),
+                          foregroundColor: AppColors.success,
+                        ),
+                      ),
                       if (p.isActive) ...[
-                        SizedBox(height: AppSpacing.md),
+                        SizedBox(height: AppSpacing.sm10),
                         OutlinedButton.icon(
                           onPressed: () => context.push(
                             '/supplier/${p.supplierId}',

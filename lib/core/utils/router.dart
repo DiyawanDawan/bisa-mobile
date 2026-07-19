@@ -453,6 +453,7 @@ final goRouter = GoRouter(
                 return PartnershipCreatePage(
                   supplierId: state.pathParameters['supplierId']!,
                   supplierName: extra?['name'] as String? ?? 'Supplier',
+                  negotiationId: extra?['negotiationId'] as String?,
                 );
               },
             ),

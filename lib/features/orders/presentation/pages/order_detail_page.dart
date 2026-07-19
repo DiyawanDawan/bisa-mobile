@@ -40,6 +40,7 @@ import 'package:mobile_bisa/injection_container.dart';
 import 'package:mobile_bisa/features/orders/presentation/utils/order_dispute_i18n.dart';
 import 'package:mobile_bisa/features/orders/presentation/utils/order_shipment_utils.dart';
 import 'package:mobile_bisa/features/orders/presentation/utils/order_status_i18n.dart';
+import 'package:mobile_bisa/features/partnership/presentation/utils/partnership_pdf_export_helper.dart';
 
 class OrderDetailPage extends StatefulWidget {
   final String orderId;
@@ -1131,6 +1132,8 @@ class _OrderDetailPageState extends State<OrderDetailPage> {
               ),
             ),
           ],
+          SizedBox(height: AppSpacing.md12),
+          _buildPartnershipInviteCard(context, o),
         ],
         if (isSupplier && (o.status == 'PROCESSING' || o.status == 'SHIPPED'))
           _actionButton(
@@ -1327,6 +1330,129 @@ class _OrderDetailPageState extends State<OrderDetailPage> {
         useGradient: useGradient,
         backgroundColor: isOutlined ? color : color,
       ),
+    );
+  }
+
+  Widget _buildPartnershipInviteCard(BuildContext context, OrderEntity order) {
+    final negotiationId = order.negotiationId;
+
+    return Container(
+      width: double.infinity,
+      margin: EdgeInsets.only(bottom: AppSpacing.md12),
+      padding: EdgeInsets.all(AppSpacing.md),
+      decoration: BoxDecoration(
+        color: AppColors.success.withValues(alpha: 0.06),
+        borderRadius: BorderRadius.circular(AppRadius.tile),
+        border: Border.all(color: AppColors.success.withValues(alpha: 0.25)),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Container(
+                padding: EdgeInsets.all(AppSpacing.sm),
+                decoration: BoxDecoration(
+                  color: AppColors.success.withValues(alpha: 0.12),
+                  borderRadius: BorderRadius.circular(AppRadius.md),
+                ),
+                child: Icon(
+                  LucideIcons.handshake,
+                  color: AppColors.success,
+                  size: 18.sp,
+                ),
+              ),
+              SizedBox(width: AppSpacing.sm10),
+              Expanded(
+                child: Text(
+                  'orders.partnership_invite_title'.tr(),
+                  style: TextStyle(
+                    fontSize: 14.sp,
+                    fontWeight: FontWeight.w800,
+                    color: AppColors.textPrimary,
+                  ),
+                ),
+              ),
+            ],
+          ),
+          SizedBox(height: AppSpacing.sm),
+          Text(
+            'orders.partnership_invite_subtitle'.tr(
+              namedArgs: {'name': order.seller.name},
+            ),
+            style: TextStyle(
+              fontSize: 12.sp,
+              color: AppColors.textSecondary,
+              height: 1.4,
+            ),
+          ),
+          SizedBox(height: AppSpacing.md12),
+          CustomButton(
+            text: 'orders.partnership_invite_cta'.tr(),
+            backgroundColor: AppColors.success,
+            onPressed: () {
+              context.push(
+                '/partnerships/create/${order.seller.id}',
+                extra: {
+                  'name': order.seller.name,
+                  if (negotiationId != null) 'negotiationId': negotiationId,
+                },
+              );
+            },
+          ),
+          if (negotiationId != null) ...[
+            SizedBox(height: AppSpacing.sm10),
+            CustomButton(
+              text: 'orders.partnership_send_chat_cta'.tr(),
+              isOutlined: true,
+              backgroundColor: AppColors.success,
+              onPressed: () => _sendPartnershipProposalFromOrder(context, order),
+            ),
+            SizedBox(height: AppSpacing.sm),
+            TextButton.icon(
+              onPressed: () => context.push('/negotiation/$negotiationId'),
+              icon: Icon(LucideIcons.messageSquare, size: 16.sp),
+              label: Text('orders.partnership_open_chat_cta'.tr()),
+              style: TextButton.styleFrom(foregroundColor: AppColors.success),
+            ),
+          ],
+        ],
+      ),
+    );
+  }
+
+  Future<void> _sendPartnershipProposalFromOrder(
+    BuildContext context,
+    OrderEntity order,
+  ) async {
+    final negotiationId = order.negotiationId;
+    if (negotiationId == null) return;
+
+    final existing =
+        await PartnershipPdfExportHelper.findPartnershipWithSupplier(
+      order.seller.id,
+    );
+    if (!context.mounted) return;
+
+    if (existing != null &&
+        existing.status != 'REJECTED' &&
+        existing.status != 'TERMINATED') {
+      await PartnershipPdfExportHelper.showSendProposalSheet(
+        context,
+        negotiationId: negotiationId,
+        partnership: existing,
+      );
+      return;
+    }
+
+    // Belum ada kontrak — arahkan buat dulu (dengan kirim ke chat).
+    if (!context.mounted) return;
+    context.push(
+      '/partnerships/create/${order.seller.id}',
+      extra: {
+        'name': order.seller.name,
+        'negotiationId': negotiationId,
+      },
     );
   }
 

@@ -58,6 +58,7 @@ class _CreateForumGroupPageState extends State<CreateForumGroupPage> {
                   label: 'Nama Grup',
                   hint: 'Contoh: Komunitas Biochar Sulsel',
                   controller: _name,
+                  isRequired: true,
                 ),
                 SizedBox(height: 12.h),
                 CustomTextField(
@@ -65,6 +66,7 @@ class _CreateForumGroupPageState extends State<CreateForumGroupPage> {
                   hint: 'Tuliskan tujuan grup...',
                   controller: _desc,
                   maxLines: 4,
+                  isOptional: true,
                 ),
                 SizedBox(height: 12.h),
                 Row(

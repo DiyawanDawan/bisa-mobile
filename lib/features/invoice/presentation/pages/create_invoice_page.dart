@@ -174,6 +174,7 @@ class _CreateInvoicePageState extends State<CreateInvoicePage> {
                                 hint: 'invoice.qty_adjust_hint'.tr(),
                                 controller: _qtyController,
                                 keyboardType: TextInputType.number,
+                                isRequired: true,
                                 onChanged: (v) {
                                   final qty = double.tryParse(v);
                                   if (qty == null) return;
@@ -190,6 +191,7 @@ class _CreateInvoicePageState extends State<CreateInvoicePage> {
                                 hint: 'invoice.price_adjust_hint'.tr(),
                                 controller: _priceController,
                                 keyboardType: TextInputType.number,
+                                isRequired: true,
                                 onChanged: (v) {
                                   final price = double.tryParse(v);
                                   if (price == null) return;
@@ -263,6 +265,7 @@ class _CreateInvoicePageState extends State<CreateInvoicePage> {
                             hint: 'invoice.notes_hint'.tr(),
                             controller: _specsController,
                             maxLines: 4,
+                            isOptional: true,
                             onChanged: (v) {
                               context
                                   .read<CreateInvoiceCubit>()

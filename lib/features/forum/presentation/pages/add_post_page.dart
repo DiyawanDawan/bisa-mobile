@@ -363,6 +363,7 @@ class _AddPostPageState extends State<AddPostPage> {
                           hint: 'forum.hint_title'.tr(),
                           controller: _titleController,
                           maxLines: 2,
+                          isRequired: true,
                         ),
                         SizedBox(height: AppSpacing.md),
                         CustomTextField(
@@ -370,6 +371,7 @@ class _AddPostPageState extends State<AddPostPage> {
                           hint: 'forum.hint_content'.tr(),
                           controller: _contentController,
                           maxLines: 10,
+                          isRequired: true,
                         ),
                         SizedBox(height: AppSpacing.md),
                         if (_existingMedia.isNotEmpty) ...[

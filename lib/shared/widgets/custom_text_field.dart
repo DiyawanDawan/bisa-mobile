@@ -1,3 +1,4 @@
+import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
@@ -18,6 +19,10 @@ class CustomTextField extends StatefulWidget {
   final int maxLines;
   final ValueChanged<String>? onChanged;
   final List<TextInputFormatter>? inputFormatters;
+  /// Tampilkan tanda * merah di label (field wajib).
+  final bool isRequired;
+  /// Tampilkan hint "(Opsional)" di label.
+  final bool isOptional;
 
   const CustomTextField({
     super.key,
@@ -33,6 +38,8 @@ class CustomTextField extends StatefulWidget {
     this.maxLines = 1,
     this.onChanged,
     this.inputFormatters,
+    this.isRequired = false,
+    this.isOptional = false,
   });
 
   @override
@@ -50,9 +57,30 @@ class _CustomTextFieldState extends State<CustomTextField> {
       children: [
         Padding(
           padding: EdgeInsets.only(left: AppSpacing.xs),
-          child: Text(
-            widget.label,
-            style: AppTextStyles.fieldLabel(),
+          child: Text.rich(
+            TextSpan(
+              text: widget.label,
+              style: AppTextStyles.fieldLabel(),
+              children: [
+                if (widget.isRequired)
+                  TextSpan(
+                    text: ' *',
+                    style: AppTextStyles.fieldLabel().copyWith(
+                      color: AppColors.error,
+                      fontWeight: FontWeight.w800,
+                    ),
+                  ),
+                if (widget.isOptional && !widget.isRequired)
+                  TextSpan(
+                    text: ' (${'common.optional'.tr()})',
+                    style: AppTextStyles.fieldLabel().copyWith(
+                      color: AppColors.textHint,
+                      fontWeight: FontWeight.w500,
+                      fontSize: 11.sp,
+                    ),
+                  ),
+              ],
+            ),
           ),
         ),
         SizedBox(height: AppSpacing.sm),

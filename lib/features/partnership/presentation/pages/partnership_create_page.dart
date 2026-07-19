@@ -16,15 +16,19 @@ import '../../../../shared/widgets/custom_button.dart';
 import '../../../../shared/widgets/custom_text_field.dart';
 import '../../../auth/presentation/bloc/auth_cubit.dart';
 import '../bloc/partnership_cubit.dart';
+import '../utils/partnership_pdf_export_helper.dart';
+import '../../data/services/partnership_pdf_service.dart';
 
 class PartnershipCreatePage extends StatefulWidget {
   final String supplierId;
   final String supplierName;
+  final String? negotiationId;
 
   const PartnershipCreatePage({
     super.key,
     required this.supplierId,
     required this.supplierName,
+    this.negotiationId,
   });
 
   @override
@@ -43,6 +47,7 @@ class _PartnershipCreatePageState extends State<PartnershipCreatePage> {
   DateTime _startDate = DateTime.now();
   late DateTime _endDate = DateTime.now().add(const Duration(days: 365));
   String? _error;
+  bool _sendToChatAfterCreate = true;
 
   @override
   void dispose() {
@@ -75,6 +80,95 @@ class _PartnershipCreatePageState extends State<PartnershipCreatePage> {
         _endDate = picked;
       }
     });
+  }
+
+  Future<void> _downloadDraft(BuildContext context) async {
+    if (_titleCtrl.text.trim().length < 5) {
+      setState(() => _error = 'partnership.form_invalid'.tr());
+      return;
+    }
+    if (_endDate.isBefore(_startDate) || _endDate.isAtSameMomentAs(_startDate)) {
+      setState(() => _error = 'partnership.date_invalid'.tr());
+      return;
+    }
+    setState(() => _error = null);
+
+    final qty = _qtyCtrl.text.trim().isEmpty
+        ? null
+        : double.tryParse(_qtyCtrl.text.trim());
+
+    await PartnershipPdfExportHelper.exportDraftForm(
+      context,
+      title: _titleCtrl.text.trim(),
+      supplierName: widget.supplierName,
+      description: _descCtrl.text.trim().isEmpty ? null : _descCtrl.text.trim(),
+      productCategory:
+          _categoryCtrl.text.trim().isEmpty ? null : _categoryCtrl.text.trim(),
+      estimatedMonthlyQty: qty != null && qty > 0 ? qty : null,
+      priceAgreement:
+          _priceCtrl.text.trim().isEmpty ? null : _priceCtrl.text.trim(),
+      deliveryTerms:
+          _deliveryCtrl.text.trim().isEmpty ? null : _deliveryCtrl.text.trim(),
+      paymentTerms:
+          _paymentCtrl.text.trim().isEmpty ? null : _paymentCtrl.text.trim(),
+      specialTerms:
+          _specialCtrl.text.trim().isEmpty ? null : _specialCtrl.text.trim(),
+      startDate: _startDate,
+      endDate: _endDate,
+    );
+  }
+
+  Future<void> _sendDraftToChat(BuildContext context) async {
+    final negotiationId = widget.negotiationId;
+    if (negotiationId == null || negotiationId.isEmpty) return;
+
+    if (_titleCtrl.text.trim().length < 5) {
+      setState(() => _error = 'partnership.form_invalid'.tr());
+      return;
+    }
+    if (_endDate.isBefore(_startDate) || _endDate.isAtSameMomentAs(_startDate)) {
+      setState(() => _error = 'partnership.date_invalid'.tr());
+      return;
+    }
+    setState(() => _error = null);
+
+    final user = context.read<AuthCubit>().state.maybeWhen(
+          authenticated: (u) => u,
+          orElse: () => null,
+        );
+    if (user == null) return;
+
+    final qty = _qtyCtrl.text.trim().isEmpty
+        ? null
+        : double.tryParse(_qtyCtrl.text.trim());
+
+    final draft = PartnershipPdfData.fromDraftForm(
+      title: _titleCtrl.text.trim(),
+      buyerName: user.name,
+      buyerCompany: user.companyName,
+      supplierName: widget.supplierName,
+      description: _descCtrl.text.trim().isEmpty ? null : _descCtrl.text.trim(),
+      productCategory:
+          _categoryCtrl.text.trim().isEmpty ? null : _categoryCtrl.text.trim(),
+      estimatedMonthlyQty: qty != null && qty > 0 ? qty : null,
+      priceAgreement:
+          _priceCtrl.text.trim().isEmpty ? null : _priceCtrl.text.trim(),
+      deliveryTerms:
+          _deliveryCtrl.text.trim().isEmpty ? null : _deliveryCtrl.text.trim(),
+      paymentTerms:
+          _paymentCtrl.text.trim().isEmpty ? null : _paymentCtrl.text.trim(),
+      specialTerms:
+          _specialCtrl.text.trim().isEmpty ? null : _specialCtrl.text.trim(),
+      startDate: _startDate,
+      endDate: _endDate,
+    );
+
+    await PartnershipPdfExportHelper.showSendProposalSheet(
+      context,
+      negotiationId: negotiationId,
+      draftData: draft,
+      counterpartyName: widget.supplierName,
+    );
   }
 
   Future<void> _submit(BuildContext context) async {
@@ -123,7 +217,21 @@ class _PartnershipCreatePageState extends State<PartnershipCreatePage> {
         return;
       }
       showSuccessSnackBar(context, 'partnership.create_success'.tr());
-      final id = cubit.state.selected?.id;
+      final created = cubit.state.selected;
+      final negotiationId = widget.negotiationId;
+      if (created != null &&
+          negotiationId != null &&
+          negotiationId.isNotEmpty &&
+          _sendToChatAfterCreate) {
+        await PartnershipPdfExportHelper.sendEntityToChat(
+          context,
+          partnership: created,
+          negotiationId: negotiationId,
+          openChatAfter: true,
+        );
+        return;
+      }
+      final id = created?.id;
       if (id != null) {
         context.go('/partnerships/$id');
       } else {
@@ -215,11 +323,20 @@ class _PartnershipCreatePageState extends State<PartnershipCreatePage> {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   _InfoBanner(supplierName: widget.supplierName),
+                  SizedBox(height: AppSpacing.sm),
+                  Text(
+                    'partnership.required_legend'.tr(),
+                    style: TextStyle(
+                      fontSize: 11.sp,
+                      color: AppColors.textSecondary,
+                    ),
+                  ),
                   SizedBox(height: AppSpacing.md),
                   CustomTextField(
                     controller: _titleCtrl,
                     label: 'partnership.field_title'.tr(),
                     hint: 'partnership.field_title_hint'.tr(),
+                    isRequired: true,
                   ),
                   SizedBox(height: AppSpacing.md12),
                   CustomTextField(
@@ -227,12 +344,14 @@ class _PartnershipCreatePageState extends State<PartnershipCreatePage> {
                     label: 'partnership.field_description'.tr(),
                     hint: 'partnership.field_description_hint'.tr(),
                     maxLines: 3,
+                    isOptional: true,
                   ),
                   SizedBox(height: AppSpacing.md12),
                   CustomTextField(
                     controller: _categoryCtrl,
                     label: 'partnership.field_category'.tr(),
                     hint: 'partnership.field_category_hint'.tr(),
+                    isOptional: true,
                   ),
                   SizedBox(height: AppSpacing.md12),
                   CustomTextField(
@@ -240,6 +359,7 @@ class _PartnershipCreatePageState extends State<PartnershipCreatePage> {
                     label: 'partnership.field_qty'.tr(),
                     hint: '100',
                     keyboardType: TextInputType.number,
+                    isOptional: true,
                   ),
                   SizedBox(height: AppSpacing.md12),
                   CustomTextField(
@@ -247,6 +367,7 @@ class _PartnershipCreatePageState extends State<PartnershipCreatePage> {
                     label: 'partnership.field_price'.tr(),
                     hint: 'partnership.field_price_hint'.tr(),
                     maxLines: 2,
+                    isOptional: true,
                   ),
                   SizedBox(height: AppSpacing.md12),
                   CustomTextField(
@@ -254,6 +375,7 @@ class _PartnershipCreatePageState extends State<PartnershipCreatePage> {
                     label: 'partnership.field_delivery'.tr(),
                     hint: '${'partnership.field_delivery'.tr()}...',
                     maxLines: 2,
+                    isOptional: true,
                   ),
                   SizedBox(height: AppSpacing.md12),
                   CustomTextField(
@@ -261,6 +383,7 @@ class _PartnershipCreatePageState extends State<PartnershipCreatePage> {
                     label: 'partnership.field_payment'.tr(),
                     hint: '${'partnership.field_payment'.tr()}...',
                     maxLines: 2,
+                    isOptional: true,
                   ),
                   SizedBox(height: AppSpacing.md12),
                   CustomTextField(
@@ -268,24 +391,73 @@ class _PartnershipCreatePageState extends State<PartnershipCreatePage> {
                     label: 'partnership.field_special'.tr(),
                     hint: '${'partnership.field_special'.tr()}...',
                     maxLines: 2,
+                    isOptional: true,
                   ),
                   SizedBox(height: AppSpacing.md12),
                   _DateRow(
                     label: 'partnership.field_start'.tr(),
                     value: dateFmt.format(_startDate),
                     onTap: () => _pickDate(isStart: true),
+                    isRequired: true,
                   ),
                   SizedBox(height: AppSpacing.sm10),
                   _DateRow(
                     label: 'partnership.field_end'.tr(),
                     value: dateFmt.format(_endDate),
                     onTap: () => _pickDate(isStart: false),
+                    isRequired: true,
                   ),
                   if (_error != null) ...[
                     SizedBox(height: AppSpacing.md),
                     Text(_error!, style: TextStyle(color: AppColors.error, fontSize: 13.sp)),
                   ],
                   SizedBox(height: AppSpacing.xl),
+                  if (widget.negotiationId != null) ...[
+                    CheckboxListTile(
+                      contentPadding: EdgeInsets.zero,
+                      value: _sendToChatAfterCreate,
+                      onChanged: (v) =>
+                          setState(() => _sendToChatAfterCreate = v ?? true),
+                      controlAffinity: ListTileControlAffinity.leading,
+                      title: Text(
+                        'partnership.send_to_chat_after_create'.tr(),
+                        style: TextStyle(
+                          fontSize: 13.sp,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                      subtitle: Text(
+                        'partnership.send_to_chat_after_create_hint'.tr(),
+                        style: TextStyle(
+                          fontSize: 11.sp,
+                          color: AppColors.textSecondary,
+                        ),
+                      ),
+                    ),
+                    SizedBox(height: AppSpacing.md12),
+                  ],
+                  OutlinedButton.icon(
+                    onPressed: () => _downloadDraft(context),
+                    icon: Icon(LucideIcons.download, size: 18.sp),
+                    label: Text('partnership.pdf_download_draft'.tr()),
+                    style: OutlinedButton.styleFrom(
+                      minimumSize: Size(double.infinity, 48.h),
+                      foregroundColor: AppColors.primary,
+                    ),
+                  ),
+                  if (widget.negotiationId != null) ...[
+                    SizedBox(height: AppSpacing.sm10),
+                    OutlinedButton.icon(
+                      onPressed: () => _sendDraftToChat(context),
+                      icon: Icon(LucideIcons.messageSquare, size: 18.sp),
+                      label: Text('partnership.chat_send_draft_cta'.tr()),
+                      style: OutlinedButton.styleFrom(
+                        minimumSize: Size(double.infinity, 48.h),
+                        foregroundColor: AppColors.success,
+                      ),
+                    ),
+                  ],
+                  SizedBox(height: AppSpacing.sm10),
                   BlocBuilder<PartnershipCubit, PartnershipState>(
                     builder: (context, submitState) {
                       return CustomButton(
@@ -347,8 +519,14 @@ class _DateRow extends StatelessWidget {
   final String label;
   final String value;
   final VoidCallback onTap;
+  final bool isRequired;
 
-  const _DateRow({required this.label, required this.value, required this.onTap});
+  const _DateRow({
+    required this.label,
+    required this.value,
+    required this.onTap,
+    this.isRequired = false,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -368,7 +546,23 @@ class _DateRow extends StatelessWidget {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text(label, style: TextStyle(fontSize: 12.sp, color: AppColors.textHint)),
+                  Text.rich(
+                    TextSpan(
+                      text: label,
+                      style: TextStyle(fontSize: 12.sp, color: AppColors.textHint),
+                      children: [
+                        if (isRequired)
+                          TextSpan(
+                            text: ' *',
+                            style: TextStyle(
+                              fontSize: 12.sp,
+                              color: AppColors.error,
+                              fontWeight: FontWeight.w800,
+                            ),
+                          ),
+                      ],
+                    ),
+                  ),
                   SizedBox(height: 4.h),
                   Text(value, style: TextStyle(fontSize: 14.sp, fontWeight: FontWeight.w600)),
                 ],

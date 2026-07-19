@@ -94,6 +94,7 @@ class _ChangePasswordPageState extends State<ChangePasswordPage> {
               controller: _newPasswordController,
               isPassword: true,
               prefixIcon: LucideIcons.key,
+              isRequired: true,
             ),
             SizedBox(height: 20.h),
             CustomTextField(
@@ -102,6 +103,7 @@ class _ChangePasswordPageState extends State<ChangePasswordPage> {
               controller: _confirmPasswordController,
               isPassword: true,
               prefixIcon: LucideIcons.shieldCheck,
+              isRequired: true,
             ),
             SizedBox(height: 40.h),
             CustomButton(

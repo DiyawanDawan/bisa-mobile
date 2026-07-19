@@ -153,6 +153,7 @@ class _EditProfilePageState extends State<EditProfilePage> {
                     hint: 'profile.edit_full_name_hint'.tr(),
                     controller: _nameController,
                     prefixIcon: LucideIcons.user,
+                    isRequired: true,
                     validator: (value) {
                       if (value == null || value.isEmpty) {
                         return 'profile.edit_name_required'.tr();
@@ -167,6 +168,7 @@ class _EditProfilePageState extends State<EditProfilePage> {
                     controller: _companyController,
                     prefixIcon:
                         _isSupplier ? LucideIcons.store : LucideIcons.building2,
+                    isRequired: true,
                     validator: (value) {
                       if (value == null || value.trim().isEmpty) {
                         return 'profile.edit_field_required'.tr(
@@ -183,6 +185,7 @@ class _EditProfilePageState extends State<EditProfilePage> {
                     controller: _phoneController,
                     prefixIcon: LucideIcons.phone,
                     keyboardType: TextInputType.phone,
+                    isOptional: true,
                   ),
                   SizedBox(height: 40.h),
                   BlocBuilder<ProfileCubit, ProfileState>(

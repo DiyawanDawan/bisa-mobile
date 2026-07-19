@@ -20,6 +20,7 @@ import '../../../../core/utils/app_feedback.dart';
 import '../../../../core/utils/safe_area_utils.dart';
 import '../../../../core/utils/media_url_utils.dart';
 import '../../../auth/presentation/bloc/auth_cubit.dart';
+import '../../../home/presentation/pages/main_screen.dart';
 import '../../../../shared/widgets/bisa_app_bar.dart';
 import '../../../../shared/widgets/notification_bell_button.dart';
 import '../../../../shared/widgets/app_version_label.dart';
@@ -559,6 +560,7 @@ class ProfilePage extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
+          // ── Pintasan ──────────────────────────────────────────
           _menuCard([
             _menuItem(
               LucideIcons.sparkles,
@@ -571,6 +573,8 @@ class ProfilePage extends StatelessWidget {
               () => context.push('/profile/all-menu'),
             ),
           ]),
+
+          // ── Akun ──────────────────────────────────────────────
           SizedBox(height: AppSpacing.md12),
           _sectionTitle('profile.section_account'.tr()),
           SizedBox(height: AppSpacing.sm),
@@ -602,30 +606,123 @@ class ProfilePage extends StatelessWidget {
                 'profile.menu_change_password'.tr(),
                 () => context.push('/change-password'),
               ),
+              _menuItem(
+                LucideIcons.users,
+                'profile.menu_connections'.tr(),
+                () => context.push('/follows'),
+              ),
             ],
             _menuItem(
               LucideIcons.languages,
               'settings.change_language'.tr(),
               () => showLanguagePickerSheet(context),
             ),
+            _menuItem(
+              LucideIcons.settings,
+              'profile.settings_title'.tr(),
+              () => context.push('/settings'),
+            ),
           ]),
-          if (isAuthenticated && !isSupplier) ...[
+
+          // ── Belanja & Pesanan (buyer) / Transaksi (supplier) ──
+          if (isAuthenticated) ...[
             SizedBox(height: AppSpacing.md12),
-            _sectionTitle('profile.section_my_products'.tr()),
+            _sectionTitle(
+              isSupplier
+                  ? 'profile.section_transactions'.tr()
+                  : 'profile.section_shopping'.tr(),
+            ),
             SizedBox(height: AppSpacing.sm),
             _menuCard([
+              if (!isSupplier) ...[
+                _menuItem(
+                  LucideIcons.shoppingCart,
+                  'profile.menu_cart'.tr(),
+                  () => context.push('/cart'),
+                ),
+                _menuItem(
+                  LucideIcons.package,
+                  'profile.menu_my_products'.tr(),
+                  () => context.push('/buyer-products'),
+                ),
+                _menuItem(
+                  LucideIcons.heart,
+                  'profile.menu_wishlist'.tr(),
+                  () => context.push('/wishlist'),
+                ),
+                _menuItem(
+                  LucideIcons.calendarClock,
+                  'booking.menu_title'.tr(),
+                  () => context.push('/bookings'),
+                ),
+              ],
               _menuItem(
-                LucideIcons.package,
-                'profile.menu_my_products'.tr(),
-                () => context.push('/buyer-products'),
+                LucideIcons.messageSquare,
+                'profile.menu_negotiations'.tr(),
+                () => MainShellScope.maybeOf(context)?.selectTab(1),
               ),
               _menuItem(
-                LucideIcons.heart,
-                'profile.menu_wishlist'.tr(),
-                () => context.push('/wishlist'),
+                LucideIcons.shoppingBag,
+                'profile.menu_orders'.tr(),
+                () => MainShellScope.maybeOf(context)?.selectTab(3),
+              ),
+              _menuItem(
+                LucideIcons.truck,
+                'profile.menu_public_track'.tr(),
+                () => context.push('/track'),
+              ),
+              _menuItem(
+                LucideIcons.badgeCheck,
+                'profile.menu_verify_contract'.tr(),
+                () => context.push('/verify'),
               ),
             ]),
           ],
+
+          // ── Kontrak & Kemitraan ───────────────────────────────
+          if (isAuthenticated) ...[
+            SizedBox(height: AppSpacing.md12),
+            _sectionTitle('profile.section_contracts'.tr()),
+            SizedBox(height: AppSpacing.sm),
+            _menuCard([
+              _menuItem(
+                LucideIcons.handshake,
+                'profile.menu_my_contracts'.tr(),
+                () => context.push('/partnerships'),
+              ),
+            ]),
+          ],
+
+          // ── Katalog & RFQ ─────────────────────────────────────
+          SizedBox(height: AppSpacing.md12),
+          _sectionTitle('profile.section_catalog'.tr()),
+          SizedBox(height: AppSpacing.sm),
+          _menuCard([
+            _menuItem(
+              LucideIcons.building2,
+              'marketplace.supplier_directory'.tr(),
+              () => context.push('/supplier-directory'),
+            ),
+            _menuItem(
+              LucideIcons.layoutGrid,
+              'profile.features_browse_catalog_title'.tr(),
+              () => MainShellScope.maybeOf(context)?.selectTab(0),
+            ),
+            if (isAuthenticated && !isSupplier)
+              _menuItem(
+                LucideIcons.fileText,
+                'rfq.menu_title'.tr(),
+                () => context.push('/rfq'),
+              ),
+            if (isAuthenticated && isSupplier)
+              _menuItem(
+                LucideIcons.inbox,
+                'rfq.inbox_title'.tr(),
+                () => context.push('/rfq/inbox'),
+              ),
+          ]),
+
+          // ── Manajemen Bisnis (supplier only) ──────────────────
           if (isAuthenticated && isSupplier) ...[
             SizedBox(height: AppSpacing.md12),
             _sectionTitle('profile.section_business'.tr()),
@@ -635,6 +732,21 @@ class ProfilePage extends StatelessWidget {
                 LucideIcons.store,
                 'profile.menu_store_management'.tr(),
                 () => context.push('/store-management'),
+              ),
+              _menuItem(
+                LucideIcons.package,
+                'profile.menu_manage_products'.tr(),
+                () => MainShellScope.maybeOf(context)?.selectTab(0),
+              ),
+              _menuItem(
+                LucideIcons.plus,
+                'profile.menu_add_product'.tr(),
+                () => context.push('/add-product'),
+              ),
+              _menuItem(
+                LucideIcons.calendarClock,
+                'booking.incoming_title'.tr(),
+                () => context.push('/bookings'),
               ),
               _menuItem(
                 LucideIcons.chartBar,
@@ -652,8 +764,33 @@ class ProfilePage extends StatelessWidget {
                 'profile.menu_wallet'.tr(),
                 () => context.push('/wallet'),
               ),
+              _menuItem(
+                LucideIcons.plug,
+                'erp.title'.tr(),
+                () => context.push('/erp-integration'),
+              ),
             ]),
           ],
+
+          // ── Komunitas ─────────────────────────────────────────
+          SizedBox(height: AppSpacing.md12),
+          _sectionTitle('profile.section_community'.tr()),
+          SizedBox(height: AppSpacing.sm),
+          _menuCard([
+            _menuItem(
+              LucideIcons.messagesSquare,
+              'profile.menu_forum'.tr(),
+              () => MainShellScope.maybeOf(context)?.selectTab(2),
+            ),
+            if (isAuthenticated)
+              _menuItem(
+                LucideIcons.fileText,
+                'profile.menu_my_posts'.tr(),
+                () => context.push('/my-forum-posts'),
+              ),
+          ]),
+
+          // ── Wawasan Pasar ─────────────────────────────────────
           SizedBox(height: AppSpacing.md12),
           _sectionTitle('profile.section_market_insight'.tr()),
           SizedBox(height: AppSpacing.sm),
@@ -663,7 +800,6 @@ class ProfilePage extends StatelessWidget {
               'profile.menu_market_intelligence'.tr(),
               () => context.push('/market-insight'),
             ),
-            // Analitik Mendalam = fitur Pro, khusus Supplier.
             if (isSupplier)
               _menuItem(
                 LucideIcons.sparkles,
@@ -683,21 +819,42 @@ class ProfilePage extends StatelessWidget {
               () => context.push('/waste-mapping'),
             ),
           ]),
+
+          // ── Pertumbuhan ───────────────────────────────────────
+          SizedBox(height: AppSpacing.md12),
+          _sectionTitle('profile.section_growth'.tr()),
+          SizedBox(height: AppSpacing.sm),
+          _menuCard([
+            if (isAuthenticated)
+              _menuItem(
+                LucideIcons.gift,
+                'referral.title'.tr(),
+                () => context.push('/referral'),
+              ),
+            _menuItem(
+              LucideIcons.radio,
+              'live.title'.tr(),
+              () => context.push('/live'),
+            ),
+            if (isAuthenticated && isSupplier)
+              _menuItem(
+                LucideIcons.crown,
+                'profile.menu_bisa_pro'.tr(),
+                () => context.push('/iot-subscription'),
+              ),
+          ]),
+
+          // ── Bantuan & Lainnya ─────────────────────────────────
           SizedBox(height: AppSpacing.md12),
           _sectionTitle('profile.section_other'.tr()),
           SizedBox(height: AppSpacing.sm),
           _menuCard([
-            if (isSupplier)
+            if (isAuthenticated)
               _menuItem(
-                LucideIcons.creditCard,
-                'profile.menu_payment_methods'.tr(),
-                () => context.push('/payment-methods'),
+                LucideIcons.bell,
+                'profile.menu_notifications'.tr(),
+                () => context.push('/notifications'),
               ),
-            _menuItem(
-              LucideIcons.bell,
-              'profile.menu_notifications'.tr(),
-              () => context.push('/notifications'),
-            ),
             _menuItem(
               LucideIcons.handHelping,
               'profile.menu_help_center'.tr(),

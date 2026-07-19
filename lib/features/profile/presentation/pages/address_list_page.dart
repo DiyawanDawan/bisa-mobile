@@ -1113,6 +1113,7 @@ class _AddAddressSheetState extends State<_AddAddressSheet> {
               label: 'profile.address_label'.tr(),
               hint: 'profile.address_label_hint'.tr(),
               controller: _labelController,
+              isRequired: true,
             ),
             SizedBox(height: 12.h),
             CustomTextField(
@@ -1120,6 +1121,7 @@ class _AddAddressSheetState extends State<_AddAddressSheet> {
               hint: 'profile.address_phone_hint'.tr(),
               controller: _phoneController,
               keyboardType: TextInputType.phone,
+              isOptional: true,
             ),
             SizedBox(height: 12.h),
 
@@ -1127,6 +1129,7 @@ class _AddAddressSheetState extends State<_AddAddressSheet> {
             _buildRegionDropdown(
               label: 'profile.address_country'.tr(),
               value: _selectedCountry,
+              isRequired: true,
               onChanged: (val) {
                 setState(() {
                   _selectedCountry = val;
@@ -1144,6 +1147,7 @@ class _AddAddressSheetState extends State<_AddAddressSheet> {
               label: 'profile.address_province'.tr(),
               value: _selectedProvince,
               enabled: _selectedCountry != null,
+              isRequired: true,
               onChanged: (val) {
                 setState(() {
                   _selectedProvince = val;
@@ -1160,6 +1164,7 @@ class _AddAddressSheetState extends State<_AddAddressSheet> {
               label: 'profile.address_regency'.tr(),
               value: _selectedRegency,
               enabled: _selectedProvince != null,
+              isRequired: true,
               onChanged: (val) {
                 setState(() {
                   _selectedRegency = val;
@@ -1175,6 +1180,7 @@ class _AddAddressSheetState extends State<_AddAddressSheet> {
               label: 'profile.address_district'.tr(),
               value: _selectedDistrict,
               enabled: _selectedRegency != null,
+              isRequired: true,
               onChanged: (val) {
                 setState(() {
                   _selectedDistrict = val;
@@ -1189,6 +1195,7 @@ class _AddAddressSheetState extends State<_AddAddressSheet> {
               label: 'profile.address_village'.tr(),
               value: _selectedVillage,
               enabled: _selectedDistrict != null,
+              isRequired: true,
               onChanged: (val) {
                 setState(() {
                   _selectedVillage = val;
@@ -1203,6 +1210,7 @@ class _AddAddressSheetState extends State<_AddAddressSheet> {
               hint: 'profile.address_full_hint'.tr(),
               controller: _fullAddressController,
               maxLines: 3,
+              isRequired: true,
             ),
             SizedBox(height: 12.h),
             CustomTextField(
@@ -1210,6 +1218,7 @@ class _AddAddressSheetState extends State<_AddAddressSheet> {
               hint: 'profile.address_zip_hint'.tr(),
               controller: _zipCodeController,
               keyboardType: TextInputType.number,
+              isRequired: true,
             ),
             SizedBox(height: 16.h),
             Row(
@@ -1275,16 +1284,30 @@ class _AddAddressSheetState extends State<_AddAddressSheet> {
     required Function(RegionEntity?) onChanged,
     required String level,
     bool enabled = true,
+    bool isRequired = false,
   }) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(
-          label,
-          style: TextStyle(
-            fontSize: 13.sp,
-            fontWeight: FontWeight.w600,
-            color: AppColors.textSecondary,
+        Text.rich(
+          TextSpan(
+            text: label,
+            style: TextStyle(
+              fontSize: 13.sp,
+              fontWeight: FontWeight.w600,
+              color: AppColors.textSecondary,
+            ),
+            children: [
+              if (isRequired)
+                TextSpan(
+                  text: ' *',
+                  style: TextStyle(
+                    fontSize: 13.sp,
+                    fontWeight: FontWeight.w800,
+                    color: AppColors.error,
+                  ),
+                ),
+            ],
           ),
         ),
         SizedBox(height: 6.h),

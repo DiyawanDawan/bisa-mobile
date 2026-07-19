@@ -186,6 +186,7 @@ class _AuthSheetState extends State<AuthSheet> {
                   controller: _emailController,
                   keyboardType: TextInputType.emailAddress,
                   prefixIcon: LucideIcons.mail,
+                  isRequired: true,
                 ),
                 SizedBox(height: AppSpacing.lg),
                 CustomTextField(
@@ -194,6 +195,7 @@ class _AuthSheetState extends State<AuthSheet> {
                   controller: _passwordController,
                   isPassword: true,
                   prefixIcon: LucideIcons.lock,
+                  isRequired: true,
                 ),
                 SizedBox(height: AppSpacing.md12),
                 Row(

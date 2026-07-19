@@ -422,12 +422,14 @@ class PayoutAccountsPage extends StatelessWidget {
                               hint: 'wallet.account_number_hint'.tr(),
                               controller: accountNoController,
                               keyboardType: TextInputType.number,
+                              isRequired: true,
                             ),
                             SizedBox(height: 12.h),
                             CustomTextField(
                               label: 'wallet.account_name_label'.tr(),
                               hint: 'wallet.account_name_hint'.tr(),
                               controller: accountNameController,
+                              isRequired: true,
                             ),
                             SizedBox(height: 8.h),
                             Row(

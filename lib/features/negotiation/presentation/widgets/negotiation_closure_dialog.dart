@@ -176,6 +176,7 @@ class _NegotiationClosureSheetState extends State<_NegotiationClosureSheet> {
                 controller: _customController,
                 hint: 'negotiation.closure_custom_hint'.tr(),
                 maxLines: 3,
+                isRequired: true,
               ),
             ],
             if (_error != null) ...[

@@ -293,6 +293,7 @@ class _WriteReviewPageState extends State<WriteReviewPage> {
                     hint: 'marketplace.review_hint'.tr(),
                     controller: _commentController,
                     maxLines: 4,
+                    isRequired: true,
                   ),
                   Padding(
                     padding: EdgeInsets.only(top: 6.h, left: 4.w),

@@ -453,6 +453,7 @@ class _VerificationPageState extends State<VerificationPage> {
           hint: 'verification.business_name_hint'.tr(),
           controller: _businessNameCtrl,
           enabled: canUpload && !_isSubmitting,
+          isOptional: true,
           suffixIcon: _scanningDocument
               ? Padding(
                   padding: EdgeInsets.all(12.w),
@@ -474,6 +475,7 @@ class _VerificationPageState extends State<VerificationPage> {
           hint: 'verification.tax_id_hint'.tr(),
           controller: _taxIdCtrl,
           enabled: canUpload && !_isSubmitting,
+          isOptional: true,
           suffixIcon: _scanningDocument
               ? Padding(
                   padding: EdgeInsets.all(12.w),
@@ -496,6 +498,7 @@ class _VerificationPageState extends State<VerificationPage> {
           controller: _businessAddressCtrl,
           enabled: canUpload && !_isSubmitting,
           maxLines: 3,
+          isOptional: true,
           suffixIcon: _scanningDocument
               ? Padding(
                   padding: EdgeInsets.all(12.w),

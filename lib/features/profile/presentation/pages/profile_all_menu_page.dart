@@ -86,7 +86,7 @@ class ProfileAllMenuPage extends StatelessWidget {
                 ),
                 _MenuGridItem(
                   icon: LucideIcons.handshake,
-                  label: 'partnership.menu_title'.tr(),
+                  label: 'profile.menu_my_contracts'.tr(),
                   color: AppColors.success,
                   onTap: () => context.push('/partnerships'),
                 ),

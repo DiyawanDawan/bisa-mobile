@@ -14,41 +14,13 @@
       },
       "oauth_client": [
         {
-          "client_id": "94564351976-o1k5d6sd9pna74e7angarlr8qrvln2pv.apps.googleusercontent.com",
-          "client_type": 3
-        }
-      ],
-      "api_key": [
-        {
-          "current_key": "AIzaSyBJS4uO42KIFUGcDiyhlA7OQa_CbnzL8UA"
-        }
-      ],
-      "services": {
-        "appinvite_service": {
-          "other_platform_oauth_client": [
-            {
-              "client_id": "94564351976-o1k5d6sd9pna74e7angarlr8qrvln2pv.apps.googleusercontent.com",
-              "client_type": 3
-            },
-            {
-              "client_id": "94564351976-35sat6m9m2pkajrc1upp98rhetq50esi.apps.googleusercontent.com",
-              "client_type": 2,
-              "ios_info": {
-                "bundle_id": "com.apps.mobileBisa"
-              }
-            }
-          ]
-        }
-      }
-    },
-    {
-      "client_info": {
-        "mobilesdk_app_id": "1:94564351976:android:8927fdeaf73e25ec442e5d",
-        "android_client_info": {
-          "package_name": "com.example.mobile_bisa"
-        }
-      },
-      "oauth_client": [
+          "client_id": "94564351976-07k3mm1cif4hhas7jj7m0581k394c6ne.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.apps.mobile_bisa",
+            "certificate_hash": "036bbabc2bfad53ef189e14ae9f8df83088a1394"
+          }
+        },
         {
           "client_id": "94564351976-o1k5d6sd9pna74e7angarlr8qrvln2pv.apps.googleusercontent.com",
           "client_type": 3

@@ -128,6 +128,7 @@ class _RfqCreatePageState extends State<RfqCreatePage> {
             label: 'rfq.field_title'.tr(),
             hint: 'rfq.field_title_hint'.tr(),
             controller: _titleCtrl,
+            isRequired: true,
           ),
           SizedBox(height: AppSpacing.md12),
           CustomTextField(
@@ -135,6 +136,7 @@ class _RfqCreatePageState extends State<RfqCreatePage> {
             hint: '100',
             controller: _qtyCtrl,
             keyboardType: TextInputType.number,
+            isRequired: true,
           ),
           SizedBox(height: AppSpacing.md12),
           CustomTextField(
@@ -142,6 +144,7 @@ class _RfqCreatePageState extends State<RfqCreatePage> {
             hint: 'rfq.field_spec_hint'.tr(),
             controller: _specCtrl,
             maxLines: 3,
+            isOptional: true,
           ),
           SizedBox(height: AppSpacing.md12),
           CustomTextField(
@@ -149,6 +152,7 @@ class _RfqCreatePageState extends State<RfqCreatePage> {
             hint: 'rfq.field_budget_hint'.tr(),
             controller: _budgetCtrl,
             keyboardType: TextInputType.number,
+            isOptional: true,
           ),
           if (_error != null) ...[
             SizedBox(height: AppSpacing.md12),

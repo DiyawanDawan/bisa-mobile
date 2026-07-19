@@ -22,6 +22,7 @@ import 'package:go_router/go_router.dart';
 import 'package:mobile_bisa/features/marketplace/presentation/widgets/category_search_picker.dart';
 import 'package:mobile_bisa/features/marketplace/presentation/marketplace_i18n.dart';
 import 'package:mobile_bisa/features/auth/presentation/bloc/auth_cubit.dart';
+import 'package:mobile_bisa/features/home/presentation/pages/main_screen.dart';
 import 'package:mobile_bisa/shared/widgets/shimmer_loading.dart';
 
 class MarketplacePage extends StatefulWidget {
@@ -231,16 +232,9 @@ class _MarketplacePageState extends State<MarketplacePage> {
                             AppSpacing.md,
                             AppSpacing.md12,
                           ),
-                          child: _buildSupplierDirectoryEntry(context),
+                          child: _buildFeatureCards(context, user),
                         ),
                       ),
-                      if (user != null && user.role == 'BUYER')
-                        SliverToBoxAdapter(
-                          child: Padding(
-                            padding: EdgeInsets.only(bottom: AppSpacing.md12),
-                            child: _buildBuyerProductsBanner(context),
-                          ),
-                        ),
                       SliverToBoxAdapter(child: _buildProductModeSelector()),
                       SliverToBoxAdapter(child: SizedBox(height: AppSpacing.sm)),
                       if (_activeProductMode == 'BIOMASS_MATERIAL')
@@ -777,51 +771,126 @@ class _MarketplacePageState extends State<MarketplacePage> {
     );
   }
 
-  Widget _buildSupplierDirectoryEntry(BuildContext context) {
-    return Material(
-      color: AppColors.transparent,
-      child: InkWell(
+  Widget _buildFeatureCards(BuildContext context, dynamic user) {
+    final isLoggedIn = user != null;
+    final isBuyer = user?.role == 'BUYER';
+    final isSupplier = user?.role == 'SUPPLIER';
+
+    final features = <_FeatureItem>[
+      _FeatureItem(
+        icon: LucideIcons.building2,
+        label: 'marketplace.supplier_directory'.tr(),
+        color: AppColors.primary,
         onTap: () => context.push('/supplier-directory'),
-        borderRadius: BorderRadius.circular(AppRadius.tile),
-        child: Ink(
-          padding: EdgeInsets.symmetric(
-            horizontal: AppSpacing.section,
-            vertical: AppSpacing.md12,
-          ),
-          decoration: BoxDecoration(
-            color: AppColors.surface,
-            borderRadius: BorderRadius.circular(AppRadius.tile),
-            border: Border.all(color: AppColors.grey200),
-            boxShadow: AppColors.softShadow,
-          ),
-          child: Row(
-            children: [
-              Icon(LucideIcons.building2, color: AppColors.primary, size: 22.sp),
-              SizedBox(width: AppSpacing.md12),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      'marketplace.supplier_directory'.tr(),
-                      style: TextStyle(
-                        color: AppColors.textPrimary,
-                        fontSize: 14.sp,
-                        fontWeight: FontWeight.w800,
-                      ),
-                    ),
-                    Text(
-                      'marketplace.supplier_directory_hint'.tr(),
-                      style: TextStyle(
-                        color: AppColors.textSecondary,
-                        fontSize: 11.sp,
-                      ),
-                    ),
-                  ],
+      ),
+      if (isBuyer)
+        _FeatureItem(
+          icon: LucideIcons.fileText,
+          label: 'rfq.menu_title'.tr(),
+          color: const Color(0xFF6366F1),
+          onTap: () => context.push('/rfq'),
+        ),
+      if (isSupplier)
+        _FeatureItem(
+          icon: LucideIcons.inbox,
+          label: 'rfq.inbox_title'.tr(),
+          color: const Color(0xFF6366F1),
+          onTap: () => context.push('/rfq/inbox'),
+        ),
+      if (isBuyer)
+        _FeatureItem(
+          icon: LucideIcons.package,
+          label: 'marketplace.buyer_products_title'.tr(),
+          color: const Color(0xFF0EA5E9),
+          onTap: () => context.push('/buyer-products'),
+        ),
+      _FeatureItem(
+        icon: LucideIcons.truck,
+        label: 'profile.menu_public_track'.tr(),
+        color: const Color(0xFFF59E0B),
+        onTap: () => context.push('/track'),
+      ),
+      if (isLoggedIn)
+        _FeatureItem(
+          icon: LucideIcons.handshake,
+          label: 'profile.menu_my_contracts'.tr(),
+          color: const Color(0xFF10B981),
+          onTap: () => context.push('/partnerships'),
+        ),
+      if (isLoggedIn)
+        _FeatureItem(
+          icon: LucideIcons.messageSquare,
+          label: 'profile.menu_negotiations'.tr(),
+          color: const Color(0xFF8B5CF6),
+          onTap: () => MainShellScope.maybeOf(context)?.selectTab(1),
+        ),
+      if (isLoggedIn)
+        _FeatureItem(
+          icon: LucideIcons.shoppingBag,
+          label: 'profile.menu_orders'.tr(),
+          color: const Color(0xFFEC4899),
+          onTap: () => MainShellScope.maybeOf(context)?.selectTab(3),
+        ),
+      _FeatureItem(
+        icon: LucideIcons.radio,
+        label: 'live.title'.tr(),
+        color: const Color(0xFFEF4444),
+        onTap: () => context.push('/live'),
+      ),
+    ];
+
+    return Wrap(
+      spacing: AppSpacing.sm,
+      runSpacing: AppSpacing.sm,
+      children: features.map((f) => _featureCard(f)).toList(),
+    );
+  }
+
+  Widget _featureCard(_FeatureItem item) {
+    final cardWidth = (MediaQuery.of(context).size.width - AppSpacing.md * 2 - AppSpacing.sm * 3) / 4;
+    return SizedBox(
+      width: cardWidth,
+      child: Material(
+        color: AppColors.transparent,
+        child: InkWell(
+          onTap: item.onTap,
+          borderRadius: BorderRadius.circular(AppRadius.tile),
+          child: Ink(
+            padding: EdgeInsets.symmetric(
+              vertical: AppSpacing.sm,
+              horizontal: AppSpacing.xs,
+            ),
+            decoration: BoxDecoration(
+              color: AppColors.surface,
+              borderRadius: BorderRadius.circular(AppRadius.tile),
+              border: Border.all(color: AppColors.grey100),
+            ),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Container(
+                  padding: EdgeInsets.all(8.r),
+                  decoration: BoxDecoration(
+                    color: item.color.withValues(alpha: 0.10),
+                    borderRadius: BorderRadius.circular(AppRadius.md),
+                  ),
+                  child: Icon(item.icon, color: item.color, size: 20.sp),
                 ),
-              ),
-              Icon(LucideIcons.chevronRight, color: AppColors.grey400, size: 18.sp),
-            ],
+                SizedBox(height: 6.h),
+                Text(
+                  item.label,
+                  textAlign: TextAlign.center,
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
+                  style: TextStyle(
+                    color: AppColors.textPrimary,
+                    fontSize: 10.sp,
+                    fontWeight: FontWeight.w600,
+                    height: 1.2,
+                  ),
+                ),
+              ],
+            ),
           ),
         ),
       ),
@@ -910,62 +979,18 @@ class _MarketplacePageState extends State<MarketplacePage> {
       ),
     );
   }
+}
 
-  Widget _buildBuyerProductsBanner(BuildContext context) {
-    return Padding(
-      padding: EdgeInsets.fromLTRB(
-        AppSpacing.md,
-        AppSpacing.sm,
-        AppSpacing.md,
-        AppSpacing.xs,
-      ),
-      child: Material(
-        color: AppColors.transparent,
-        child: InkWell(
-          onTap: () => context.push('/buyer-products'),
-          borderRadius: BorderRadius.circular(AppRadius.tile),
-          child: Ink(
-            padding: EdgeInsets.symmetric(
-            horizontal: AppSpacing.section,
-            vertical: AppSpacing.md12,
-          ),
-            decoration: BoxDecoration(
-              gradient: AppColors.primaryGradient,
-              borderRadius: BorderRadius.circular(AppRadius.tile),
-              boxShadow: AppColors.mediumShadow,
-            ),
-            child: Row(
-              children: [
-                Icon(LucideIcons.package, color: AppColors.textOnPrimary, size: 22.sp),
-                SizedBox(width: AppSpacing.md12),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        'marketplace.buyer_products_title'.tr(),
-                        style: TextStyle(
-                          color: AppColors.surface,
-                          fontSize: 14.sp,
-                          fontWeight: FontWeight.w800,
-                        ),
-                      ),
-                      Text(
-                        'marketplace.buyer_products_subtitle'.tr(),
-                        style: TextStyle(
-                          color: AppColors.textOnPrimary.withValues(alpha: 0.85),
-                          fontSize: 11.sp,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-                Icon(LucideIcons.chevronRight, color: AppColors.textOnPrimary, size: 18.sp),
-              ],
-            ),
-          ),
-        ),
-      ),
-    );
-  }
+class _FeatureItem {
+  final IconData icon;
+  final String label;
+  final Color color;
+  final VoidCallback onTap;
+
+  const _FeatureItem({
+    required this.icon,
+    required this.label,
+    required this.color,
+    required this.onTap,
+  });
 }

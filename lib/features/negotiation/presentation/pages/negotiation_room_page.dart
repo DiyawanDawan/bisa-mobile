@@ -27,6 +27,7 @@ import 'package:mobile_bisa/shared/widgets/bisa_media_skeleton.dart';
 import 'package:mobile_bisa/shared/widgets/bisa_network_image.dart';
 import 'package:mobile_bisa/shared/widgets/chat_room_skeleton.dart';
 import 'package:mobile_bisa/features/invoice/presentation/utils/invoice_export_helper.dart';
+import 'package:mobile_bisa/features/partnership/presentation/utils/partnership_pdf_export_helper.dart';
 import 'package:mobile_bisa/features/negotiation/presentation/widgets/negotiation_closure_dialog.dart';
 import 'package:mobile_bisa/shared/widgets/handwriting_input_sheet.dart';
 import 'package:mobile_bisa/shared/widgets/linkified_text.dart';
@@ -1393,6 +1394,38 @@ class _NegotiationRoomPageState extends State<NegotiationRoomPage> {
     );
   }
 
+  Future<void> _sendPartnershipProposalToChat(
+    BuildContext context,
+    NegotiationEntity n,
+  ) async {
+    final existing =
+        await PartnershipPdfExportHelper.findPartnershipWithSupplier(n.sellerId);
+    if (!context.mounted) return;
+
+    if (existing != null &&
+        existing.status != 'REJECTED' &&
+        existing.status != 'TERMINATED') {
+      final ok = await PartnershipPdfExportHelper.showSendProposalSheet(
+        context,
+        negotiationId: n.id,
+        partnership: existing,
+        openChatAfter: false,
+      );
+      if (ok && context.mounted) {
+        context.read<NegotiationCubit>().getDetail(n.id, showLoading: false);
+      }
+      return;
+    }
+
+    context.push(
+      '/partnerships/create/${n.sellerId}',
+      extra: {
+        'name': n.seller.name,
+        'negotiationId': n.id,
+      },
+    );
+  }
+
   Future<void> _showAttachOptions(
     BuildContext context,
     NegotiationEntity n,
@@ -1465,6 +1498,26 @@ class _NegotiationRoomPageState extends State<NegotiationRoomPage> {
                           },
                         );
                       }
+                    },
+                  ),
+                if (currentUser?.id == n.buyerId)
+                  ListTile(
+                    leading: Icon(
+                      LucideIcons.handshake,
+                      color: AppColors.success,
+                      size: 22.sp,
+                    ),
+                    title: Text('negotiation.send_partnership_proposal'.tr()),
+                    subtitle: Text(
+                      'negotiation.send_partnership_proposal_hint'.tr(),
+                      style: TextStyle(
+                        fontSize: 11.sp,
+                        color: AppColors.textSecondary,
+                      ),
+                    ),
+                    onTap: () async {
+                      Navigator.pop(sheetContext);
+                      await _sendPartnershipProposalToChat(context, n);
                     },
                   ),
               ],

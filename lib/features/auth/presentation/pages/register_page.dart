@@ -329,6 +329,7 @@ class _RegisterPageState extends State<RegisterPage> {
                               hint: 'masukkan_nama_lengkap'.tr(),
                               controller: _fullNameController,
                               prefixIcon: Icons.person_outline_rounded,
+                              isRequired: true,
                               validator: (v) =>
                                   v == null || v.isEmpty ? 'auth.name_required'.tr() : null,
                             ),
@@ -339,6 +340,7 @@ class _RegisterPageState extends State<RegisterPage> {
                               controller: _emailController,
                               keyboardType: TextInputType.emailAddress,
                               prefixIcon: Icons.alternate_email_rounded,
+                              isRequired: true,
                               validator: (v) {
                                 if (v == null || v.isEmpty) return 'email_required'.tr();
                                 if (!_emailFormat.hasMatch(v)) {
@@ -381,6 +383,7 @@ class _RegisterPageState extends State<RegisterPage> {
                               controller: _phoneController,
                               keyboardType: TextInputType.phone,
                               prefixIcon: Icons.phone_android_rounded,
+                              isOptional: true,
                             ),
                             SizedBox(height: 18.h),
                             CustomTextField(
@@ -389,6 +392,7 @@ class _RegisterPageState extends State<RegisterPage> {
                               controller: _passwordController,
                               isPassword: true,
                               prefixIcon: Icons.lock_outline_rounded,
+                              isRequired: true,
                               validator: (v) {
                                 if (v == null || v.isEmpty) return 'password_required'.tr();
                                 if (v.length < 8) return 'auth.password_min_8'.tr();
@@ -405,6 +409,7 @@ class _RegisterPageState extends State<RegisterPage> {
                               hint: 'auth.referral_code_hint'.tr(),
                               controller: _referralCodeController,
                               prefixIcon: Icons.card_giftcard_outlined,
+                              isOptional: true,
                             ),
                             SizedBox(height: 28.h),
                             BlocBuilder<AuthCubit, AuthState>(

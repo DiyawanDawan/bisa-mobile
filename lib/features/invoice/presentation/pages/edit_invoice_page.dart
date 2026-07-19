@@ -199,6 +199,7 @@ class _EditInvoicePageState extends State<EditInvoicePage> {
                             controller: _specsController,
                             maxLines: 4,
                             enabled: canEdit,
+                            isOptional: true,
                             onChanged: canEdit
                                 ? (v) {
                                     context.read<EditInvoiceCubit>().updateDraft(

@@ -97,6 +97,7 @@ class _ResetPasswordPageState extends State<ResetPasswordPage> {
                     controller: _passwordController,
                     isPassword: true,
                     prefixIcon: Icons.lock_outline_rounded,
+                    isRequired: true,
                     validator: (value) {
                       if (value == null || value.isEmpty) return 'password_required'.tr();
                       if (value.length < 6) return 'password_min'.tr();
@@ -110,6 +111,7 @@ class _ResetPasswordPageState extends State<ResetPasswordPage> {
                     controller: _confirmPasswordController,
                     isPassword: true,
                     prefixIcon: Icons.shield_outlined,
+                    isRequired: true,
                     validator: (value) {
                       if (value != _passwordController.text) return 'auth.password_mismatch'.tr();
                       return null;

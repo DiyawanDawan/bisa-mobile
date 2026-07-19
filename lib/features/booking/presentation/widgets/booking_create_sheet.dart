@@ -346,6 +346,7 @@ import 'package:lucide_icons_flutter/lucide_icons.dart';
                                     decimal: true),
                             hint: '${p.minOrder} ${p.unit}',
                             onChanged: (_) => setState(() {}),
+                            isRequired: true,
                           ),
                           SizedBox(height: AppSpacing.sm),
                           CustomTextField(
@@ -353,6 +354,7 @@ import 'package:lucide_icons_flutter/lucide_icons.dart';
                             controller: _notesController,
                             maxLines: 2,
                             hint: 'booking.field_notes_hint'.tr(),
+                            isOptional: true,
                           ),
                           SizedBox(height: AppSpacing.md),
                           Row(

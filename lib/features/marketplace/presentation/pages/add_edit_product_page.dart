@@ -449,6 +449,7 @@ class _AddEditProductPageState extends State<AddEditProductPage> {
                         hint: _productMode == 'ORGANIC_PRODUCE'
                             ? 'marketplace.product_name_hint_organic'.tr()
                             : 'marketplace.product_name_hint_biomass'.tr(),
+                        isRequired: true,
                         validator: (v) =>
                             v!.isEmpty ? 'marketplace.required_field'.tr() : null,
                       ),
@@ -468,6 +469,7 @@ class _AddEditProductPageState extends State<AddEditProductPage> {
                               controller: _priceController,
                               keyboardType: TextInputType.number,
                               hint: '0',
+                              isRequired: true,
                               validator: (v) =>
                                   v!.isEmpty ? 'marketplace.required_short'.tr() : null,
                             ),
@@ -512,6 +514,7 @@ class _AddEditProductPageState extends State<AddEditProductPage> {
                         controller: _originalPriceController,
                         keyboardType: TextInputType.number,
                         hint: 'marketplace.no_promo_hint'.tr(),
+                        isOptional: true,
                       ),
                     ],
                   ),
@@ -535,6 +538,7 @@ class _AddEditProductPageState extends State<AddEditProductPage> {
                               controller: _stockController,
                               keyboardType: TextInputType.number,
                               hint: '0',
+                              isRequired: true,
                               validator: (v) =>
                                   v!.isEmpty ? 'marketplace.required_short'.tr() : null,
                             ),
@@ -546,6 +550,7 @@ class _AddEditProductPageState extends State<AddEditProductPage> {
                               controller: _minOrderController,
                               keyboardType: TextInputType.number,
                               hint: '100',
+                              isOptional: true,
                             ),
                           ),
                         ],
