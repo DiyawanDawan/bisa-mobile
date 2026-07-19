@@ -1,8 +1,0 @@
-{
-  "API_URL": "https://backend-dev-v1.bisaagri.com/api/v1",
-  "MEDIA_BASE_URL": "https://cdn.bisaagri.com",
-  "PUSHER_KEY": "75bc674822d4fa34a8d4",
-  "PUSHER_CLUSTER": "ap1",
-  "PUBLIC_WEB_URL": "https://www.bisaagri.com",
-  "APP_ENV": "development"
-}

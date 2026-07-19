@@ -60,11 +60,7 @@ app.*.map.json
 dart_define.dev.json
 dart_define.*.json
 !dart_define.example.json
-!dart_define.development.json
 !dart_define.production.json
-!dart_define.emulator.json
-!dart_define.device.json
-!dart_define.device-wifi.json
 
 # Cursor: skills, rules, hooks (workspace lokal)
 .cursor/
