@@ -827,7 +827,7 @@ class _ProductSpecsSheetState extends State<_ProductSpecsSheet> {
                         style: OutlinedButton.styleFrom(
                           foregroundColor: AppColors.primary,
                           side: BorderSide(color: AppColors.primary),
-                          minimumSize: Size(double.infinity, 46.h),
+                          minimumSize: Size(double.infinity, AppSpacing.buttonHeight),
                         ),
                       ),
                     ],

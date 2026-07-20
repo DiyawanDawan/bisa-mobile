@@ -15,6 +15,7 @@ import '../../../../shared/widgets/seller_identity_row.dart';
 import '../../domain/entities/product_entity.dart';
 import '../../../commerce/presentation/widgets/product_like_button.dart';
 import '../../../commerce/presentation/widgets/product_add_to_cart_button.dart';
+import '../../../auth/presentation/bloc/auth_cubit.dart';
 import '../bloc/compare_cubit.dart';
 
 class ProductCard extends StatelessWidget {
@@ -71,6 +72,11 @@ class ProductCard extends StatelessWidget {
         context.push('/product/${product.id}');
       }
     }
+
+    final isLoggedIn = context.watch<AuthCubit>().state.maybeWhen(
+          authenticated: (_) => true,
+          orElse: () => false,
+        );
 
     final card = GestureDetector(
       onTap: handleTap,
@@ -200,10 +206,11 @@ class ProductCard extends StatelessWidget {
                       size: 16,
                     ),
                   ),
-                  Positioned(
-                    bottom: AppSpacing.sm,
-                    right: 44.w,
-                    child: BlocBuilder<CompareCubit, CompareState>(
+                  if (isLoggedIn)
+                    Positioned(
+                      bottom: AppSpacing.sm,
+                      right: 44.w,
+                      child: BlocBuilder<CompareCubit, CompareState>(
                       builder: (context, compareState) {
                         final selected = compareState.contains(product.id);
                         return Material(

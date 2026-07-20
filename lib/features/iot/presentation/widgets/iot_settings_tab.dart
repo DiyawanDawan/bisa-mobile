@@ -155,7 +155,7 @@ class _IotSettingsTabState extends State<IotSettingsTab> {
               ),
               SizedBox(height: 10.h),
               SizedBox(
-                height: 42.h,
+                height: AppSpacing.buttonHeightSm,
                 child: CustomButton(
                   text: 'iot.settings_save'.tr(),
                   onPressed: _save,

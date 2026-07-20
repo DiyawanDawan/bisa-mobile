@@ -515,7 +515,7 @@ class _BottomActions extends StatelessWidget {
               children: [
                 CustomButton(
                   text: 'negotiation.preview_edit_offer'.tr(),
-                  height: 44.h,
+                  height: AppSpacing.buttonHeightSm,
                   isOutlined: true,
                   onPressed: loading ? null : () => context.pop(draft),
                 ),

@@ -794,7 +794,7 @@ class _NegotiationListPageState extends State<NegotiationListPage>
             SizedBox(height: AppSpacing.xl),
             CustomButton(
               text: 'negotiation.empty_browse_products'.tr(),
-              height: 44.h,
+              height: AppSpacing.buttonHeightSm,
               width: 200.w,
               onPressed: () => context.go('/?tab=0'),
             ),
@@ -860,7 +860,7 @@ class _NegotiationListPageState extends State<NegotiationListPage>
               text: hasSearch
                   ? 'negotiation.clear_search'.tr()
                   : 'negotiation.show_all'.tr(),
-              height: 44.h,
+              height: AppSpacing.buttonHeightSm,
               width: 200.w,
               isOutlined: true,
               onPressed: () {

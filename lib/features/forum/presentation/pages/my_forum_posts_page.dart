@@ -112,7 +112,7 @@ class _MyForumPostsPageState extends State<MyForumPostsPage>
                 tabs: _tabMeta
                     .map(
                       (t) => Tab(
-                        height: 44.h,
+                        height: AppSpacing.buttonHeightSm,
                         child: Row(
                           mainAxisAlignment: MainAxisAlignment.center,
                           children: [

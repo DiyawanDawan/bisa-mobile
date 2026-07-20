@@ -7,6 +7,7 @@ import 'package:lucide_icons_flutter/lucide_icons.dart';
 import 'package:mobile_bisa/features/gis/domain/entities/region_entity.dart';
 import 'package:mobile_bisa/features/gis/domain/repositories/gis_repository.dart';
 import 'package:mobile_bisa/features/gis/presentation/bloc/gis_cubit.dart';
+import '../../../../core/constants/app_layout.dart';
 import '../../../../core/constants/app_colors.dart';
 import '../../../../core/utils/app_feedback.dart';
 import '../../../../core/utils/safe_navigator.dart';
@@ -96,7 +97,7 @@ class AddressListPage extends StatelessWidget {
                   padding: EdgeInsets.fromLTRB(16.w, 4.h, 16.w, 10.h),
                   child: CustomButton(
                     text: 'profile.address_add_button'.tr(),
-                    height: 44.h,
+                    height: AppSpacing.buttonHeight,
                     onPressed: () => _showAddAddressDialog(context),
                   ),
                 ),
@@ -940,7 +941,7 @@ class _AddAddressSheetState extends State<_AddAddressSheet> {
         OutlinedButton.icon(
           onPressed: (_pickingMap || _detectingGps) ? null : _useCurrentGps,
           style: OutlinedButton.styleFrom(
-            minimumSize: Size(double.infinity, 42.h),
+            minimumSize: Size(double.infinity, AppSpacing.buttonHeightSm),
             foregroundColor: AppColors.primary,
             side: BorderSide(color: AppColors.primary.withValues(alpha: 0.35)),
             shape: RoundedRectangleBorder(

@@ -6,6 +6,7 @@ import 'package:url_launcher/url_launcher.dart';
 import 'package:go_router/go_router.dart';
 import '../../../../shared/widgets/bisa_app_bar.dart';
 import '../../../../core/constants/app_colors.dart';
+import '../../../../core/constants/app_spacing.dart';
 import '../../../public_orders/data/public_order_api.dart';
 
 class HelpCenterPage extends StatefulWidget {
@@ -190,7 +191,7 @@ class _HelpCenterPageState extends State<HelpCenterPage> {
             style: ElevatedButton.styleFrom(
               backgroundColor: AppColors.surface,
               foregroundColor: AppColors.primary,
-              minimumSize: Size(double.infinity, 44.h),
+              minimumSize: Size(double.infinity, AppSpacing.buttonHeightSm),
               shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(8.r),
               ),
@@ -206,7 +207,7 @@ class _HelpCenterPageState extends State<HelpCenterPage> {
             style: OutlinedButton.styleFrom(
               foregroundColor: AppColors.textOnPrimary,
               side: const BorderSide(color: AppColors.textOnPrimary),
-              minimumSize: Size(double.infinity, 44.h),
+              minimumSize: Size(double.infinity, AppSpacing.buttonHeightSm),
               shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(8.r),
               ),

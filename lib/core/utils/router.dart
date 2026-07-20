@@ -56,6 +56,8 @@ import '../../features/marketplace/domain/entities/product_entity.dart';
 import '../../features/profile/presentation/pages/profile_all_menu_page.dart';
 import '../../features/profile/presentation/pages/edit_profile_page.dart';
 import '../../features/marketplace/presentation/pages/product_reviews_page.dart';
+import '../../features/marketplace/presentation/pages/review_detail_page.dart';
+import '../../features/marketplace/data/models/review_model.dart';
 import '../../features/profile/presentation/pages/verification_page.dart';
 import '../../features/profile/presentation/pages/address_list_page.dart';
 import '../../features/profile/presentation/pages/payment_methods_page.dart';
@@ -155,6 +157,7 @@ final goRouter = GoRouter(
         location.startsWith('/product/') ||
         location.startsWith('/product-reviews/') ||
         location.startsWith('/supplier/') ||
+        location.startsWith('/supplier-directory') ||
         location.startsWith('/collection-products') ||
         location.startsWith('/forum-detail/') ||
         location == '/forum-groups' ||
@@ -247,6 +250,22 @@ final goRouter = GoRouter(
                   extra?['name'] ?? 'marketplace.product_reviews_title'.tr(),
             );
           },
+          routes: [
+            GoRoute(
+              path: 'review/:reviewId',
+              builder: (context, state) {
+                final extra = state.extra as Map<String, dynamic>?;
+                final review = extra?['review'];
+                if (review is! ReviewModel) {
+                  return const _InvalidReviewDetailPage();
+                }
+                return ReviewDetailPage(
+                  review: review,
+                  productName: extra?['productName'] as String? ?? '',
+                );
+              },
+            ),
+          ],
         ),
         GoRoute(
           path: 'negotiation-offer-preview',
@@ -722,6 +741,18 @@ class _InvalidNegotiationDraftPage extends StatelessWidget {
     return ColoredBox(
       color: AppColors.surface,
       child: Center(child: Text('router.invalid_offer_data'.tr())),
+    );
+  }
+}
+
+class _InvalidReviewDetailPage extends StatelessWidget {
+  const _InvalidReviewDetailPage();
+
+  @override
+  Widget build(BuildContext context) {
+    return ColoredBox(
+      color: AppColors.surface,
+      child: Center(child: Text('marketplace.no_reviews_product'.tr())),
     );
   }
 }

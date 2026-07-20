@@ -1278,7 +1278,7 @@ class _OrderDetailPageState extends State<OrderDetailPage> {
                       SizedBox(height: AppSpacing.md),
                       CustomButton(
                         text: 'orders.send'.tr(),
-                        height: 46.h,
+                        height: AppSpacing.buttonHeight,
                         onPressed: () {
                           if (responseController.text.trim().length >= 10) {
                             Navigator.pop(dContext);
@@ -1293,7 +1293,7 @@ class _OrderDetailPageState extends State<OrderDetailPage> {
                       SizedBox(height: AppSpacing.sm),
                       CustomButton(
                         text: 'orders.cancel'.tr(),
-                        height: 46.h,
+                        height: AppSpacing.buttonHeight,
                         isOutlined: true,
                         onPressed: () => Navigator.pop(dContext),
                       ),
@@ -1694,7 +1694,7 @@ class _OrderDetailPageState extends State<OrderDetailPage> {
                       SizedBox(height: AppSpacing.md),
                       CustomButton(
                         text: 'orders.send'.tr(),
-                        height: 46.h,
+                        height: AppSpacing.buttonHeight,
                         onPressed: () {
                           if (reasonController.text.trim().length >= 10) {
                             Navigator.pop(dContext);
@@ -1710,7 +1710,7 @@ class _OrderDetailPageState extends State<OrderDetailPage> {
                       SizedBox(height: AppSpacing.sm),
                       CustomButton(
                         text: 'orders.cancel'.tr(),
-                        height: 46.h,
+                        height: AppSpacing.buttonHeight,
                         isOutlined: true,
                         onPressed: () => Navigator.pop(dContext),
                       ),
@@ -1811,7 +1811,7 @@ class _OrderDetailPageState extends State<OrderDetailPage> {
                 SizedBox(height: AppSpacing.md),
                 CustomButton(
                   text: 'orders.update'.tr(),
-                  height: 46.h,
+                  height: AppSpacing.buttonHeight,
                   onPressed: () async {
                     final vessel = vesselController.text.trim();
                     if (vessel.length < 3) {
@@ -1839,7 +1839,7 @@ class _OrderDetailPageState extends State<OrderDetailPage> {
                 SizedBox(height: AppSpacing.sm),
                 CustomButton(
                   text: 'orders.cancel'.tr(),
-                  height: 46.h,
+                  height: AppSpacing.buttonHeight,
                   isOutlined: true,
                   onPressed: () => Navigator.pop(dContext),
                 ),
@@ -2258,7 +2258,7 @@ class _OrderDetailPageState extends State<OrderDetailPage> {
                       side: BorderSide(
                         color: AppColors.primary.withValues(alpha: 0.5),
                       ),
-                      minimumSize: Size(double.infinity, 42.h),
+                      minimumSize: Size(double.infinity, AppSpacing.buttonHeightSm),
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(AppRadius.md),
                       ),
@@ -2289,7 +2289,7 @@ class _OrderDetailPageState extends State<OrderDetailPage> {
                     side: BorderSide(
                       color: AppColors.primary.withValues(alpha: 0.5),
                     ),
-                    minimumSize: Size(double.infinity, 42.h),
+                    minimumSize: Size(double.infinity, AppSpacing.buttonHeightSm),
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(AppRadius.md),
                     ),

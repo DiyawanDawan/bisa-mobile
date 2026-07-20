@@ -114,7 +114,7 @@ class _MarketplacePageState extends State<MarketplacePage> {
         sortOrder = 'desc';
         break;
       case 'sold':
-        sortBy = 'soldCount';
+        sortBy = 'totalSold';
         sortOrder = 'desc';
         break;
       case 'createdAt':
@@ -401,7 +401,7 @@ class _MarketplacePageState extends State<MarketplacePage> {
 
   Widget _buildBiomassaTypeBar() {
     return Container(
-      height: 44.h,
+      height: AppSpacing.buttonHeightSm,
       margin: EdgeInsets.only(bottom: 4.h),
       child: ListView.builder(
         padding: EdgeInsets.symmetric(horizontal: AppSpacing.lg),
@@ -696,7 +696,7 @@ class _MarketplacePageState extends State<MarketplacePage> {
         AppSpacing.md12,
       ),
       child: Container(
-        height: 50.h,
+        height: AppSpacing.buttonHeight,
         decoration: BoxDecoration(
           color: AppColors.grey100,
           borderRadius: BorderRadius.circular(AppRadius.xl),
@@ -802,12 +802,13 @@ class _MarketplacePageState extends State<MarketplacePage> {
         color: AppColors.primary,
         onTap: () => context.push('/supplier-directory'),
       ),
-      _FeatureItem(
-        icon: LucideIcons.columns3,
-        label: 'product.compare_tray_open'.tr(),
-        color: AppColors.info,
-        onTap: () => context.push('/compare-products'),
-      ),
+      if (isLoggedIn)
+        _FeatureItem(
+          icon: LucideIcons.columns3,
+          label: 'product.compare_tray_open'.tr(),
+          color: AppColors.info,
+          onTap: () => context.push('/compare-products'),
+        ),
       if (isBuyer)
         _FeatureItem(
           icon: LucideIcons.fileText,
@@ -936,7 +937,7 @@ class _MarketplacePageState extends State<MarketplacePage> {
     final bool preHarvestOnly = _preHarvestBookable == true && _availableNow != true;
 
     return Container(
-      height: 44.h,
+      height: AppSpacing.buttonHeightSm,
       margin: EdgeInsets.only(bottom: 4.h),
       child: ListView(
         padding: EdgeInsets.symmetric(horizontal: AppSpacing.lg),

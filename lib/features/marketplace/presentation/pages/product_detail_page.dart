@@ -16,6 +16,7 @@ import '../../../../core/constants/app_text_styles.dart';
 import '../../../../core/utils/app_feedback.dart';
 import '../../../../core/utils/safe_area_utils.dart';
 import '../../../../core/utils/money_format.dart';
+import '../../../../core/utils/product_share_helper.dart';
 import '../../../../core/utils/promo_analytics_tracker.dart';
 import '../../../../core/utils/product_pricing.dart';
 import '../../../../core/utils/rupiah_input_formatter.dart';
@@ -405,7 +406,7 @@ class _ProductDetailPageState extends State<ProductDetailPage> {
                           SizedBox(height: AppSpacing.xxl),
                           CustomButton(
                             text: 'negotiation.preview_edit_offer'.tr(),
-                            height: 44.h,
+                            height: AppSpacing.buttonHeightSm,
                             isOutlined: true,
                             onPressed: sending
                                 ? null
@@ -881,39 +882,49 @@ class _ProductDetailPageState extends State<ProductDetailPage> {
                 ),
               ),
             ),
-            BlocBuilder<CompareCubit, CompareState>(
-              builder: (context, compareState) {
-                final inCompare = compareState.contains(_product!.id);
-                return Padding(
-                  padding: EdgeInsets.all(AppSpacing.sm),
-                  child: CircleAvatar(
-                    backgroundColor: inCompare
-                        ? AppColors.primaryLight
-                        : AppColors.surface,
-                    child: IconButton(
-                      icon: Icon(
-                        LucideIcons.columns3,
-                        color: inCompare
-                            ? AppColors.primary
-                            : AppColors.textPrimary,
-                        size: 18.sp,
+            BlocBuilder<AuthCubit, AuthState>(
+              builder: (context, authState) {
+                final isLoggedIn = authState.maybeWhen(
+                  authenticated: (_) => true,
+                  orElse: () => false,
+                );
+                if (!isLoggedIn) return const SizedBox.shrink();
+
+                return BlocBuilder<CompareCubit, CompareState>(
+                  builder: (context, compareState) {
+                    final inCompare = compareState.contains(_product!.id);
+                    return Padding(
+                      padding: EdgeInsets.all(AppSpacing.sm),
+                      child: CircleAvatar(
+                        backgroundColor: inCompare
+                            ? AppColors.primaryLight
+                            : AppColors.surface,
+                        child: IconButton(
+                          icon: Icon(
+                            LucideIcons.columns3,
+                            color: inCompare
+                                ? AppColors.primary
+                                : AppColors.textPrimary,
+                            size: 18.sp,
+                          ),
+                          onPressed: () {
+                            final cubit = context.read<CompareCubit>();
+                            final wasSelected =
+                                cubit.state.contains(_product!.id);
+                            final err = cubit.toggle(_product!);
+                            if (!context.mounted) return;
+                            if (err != null) {
+                              showErrorSnackBar(context, err.tr());
+                              return;
+                            }
+                            if (!wasSelected) {
+                              context.push('/compare-products');
+                            }
+                          },
+                        ),
                       ),
-                      onPressed: () {
-                        final cubit = context.read<CompareCubit>();
-                        final wasSelected =
-                            cubit.state.contains(_product!.id);
-                        final err = cubit.toggle(_product!);
-                        if (!context.mounted) return;
-                        if (err != null) {
-                          showErrorSnackBar(context, err.tr());
-                          return;
-                        }
-                        if (!wasSelected) {
-                          context.push('/compare-products');
-                        }
-                      },
-                    ),
-                  ),
+                    );
+                  },
                 );
               },
             ),
@@ -935,7 +946,8 @@ class _ProductDetailPageState extends State<ProductDetailPage> {
                     color: AppColors.textPrimary,
                     size: 18.sp,
                   ),
-                  onPressed: () {},
+                  onPressed: () =>
+                      ProductShareHelper.shareProduct(_product!),
                 ),
               ),
             ),
@@ -2078,7 +2090,7 @@ class _ProductDetailPageState extends State<ProductDetailPage> {
                     ),
                     child: SizedBox(
                       width: double.infinity,
-                      height: 44.h,
+                      height: AppSpacing.buttonHeight,
                       child: OutlinedButton.icon(
                         onPressed: _isSampleOrdering
                             ? null
@@ -2116,7 +2128,7 @@ class _ProductDetailPageState extends State<ProductDetailPage> {
                     ),
                     child: SizedBox(
                       width: double.infinity,
-                      height: 44.h,
+                      height: AppSpacing.buttonHeight,
                       child: OutlinedButton.icon(
                         onPressed: () {
                           if (!isAuthenticated) {

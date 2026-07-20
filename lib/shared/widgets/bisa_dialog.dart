@@ -75,7 +75,7 @@ Future<bool?> showBisaConfirmDialog(
                   Expanded(
                     child: CustomButton(
                       text: resolvedCancel,
-                      height: 42.h,
+                      height: AppSpacing.buttonHeight,
                       isOutlined: true,
                       onPressed: () => Navigator.pop(ctx, false),
                     ),
@@ -84,7 +84,7 @@ Future<bool?> showBisaConfirmDialog(
                   Expanded(
                     child: CustomButton(
                       text: resolvedConfirm,
-                      height: 42.h,
+                      height: AppSpacing.buttonHeight,
                       backgroundColor:
                           destructive ? AppColors.error : AppColors.primary,
                       onPressed: () => Navigator.pop(ctx, true),
@@ -158,7 +158,7 @@ void showBisaFormDialog(
                   SizedBox(height: AppSpacing.md),
                   CustomButton(
                     text: submitText,
-                    height: 46.h,
+                    height: AppSpacing.buttonHeight,
                     onPressed: () {
                       if (onSubmit()) Navigator.pop(ctx);
                     },
@@ -166,7 +166,7 @@ void showBisaFormDialog(
                   SizedBox(height: AppSpacing.sm),
                   CustomButton(
                     text: resolvedCancel,
-                    height: 46.h,
+                    height: AppSpacing.buttonHeight,
                     isOutlined: true,
                     onPressed: () => Navigator.pop(ctx),
                   ),

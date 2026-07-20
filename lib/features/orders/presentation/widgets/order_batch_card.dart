@@ -146,7 +146,7 @@ class OrderBatchCard extends StatelessWidget {
                     Expanded(
                       child: CustomButton(
                         text: 'orders.action_track_packages'.tr(),
-                        height: 42.h,
+                        height: AppSpacing.buttonHeightSm,
                         isOutlined: true,
                         onPressed: () => _showTrackingSheet(context),
                       ),
@@ -155,7 +155,7 @@ class OrderBatchCard extends StatelessWidget {
                     Expanded(
                       child: CustomButton(
                         text: 'orders.action_view_detail'.tr(),
-                        height: 42.h,
+                        height: AppSpacing.buttonHeightSm,
                         useGradient: true,
                         onPressed: () => _openBatchDetail(context),
                       ),

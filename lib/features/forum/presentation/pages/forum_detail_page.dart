@@ -6,7 +6,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
-import 'package:share_plus/share_plus.dart';
+import '../../../../core/utils/forum_share_helper.dart';
 import '../../../../core/constants/app_layout.dart';
 import '../../../../core/constants/app_colors.dart';
 import '../../../../core/utils/app_feedback.dart';
@@ -99,71 +99,76 @@ class _ForumDetailPageState extends State<ForumDetailPage> {
                                 crossAxisAlignment: CrossAxisAlignment.start,
                                 children: [
                                   _buildAuthorInfo(context, post),
-                                  IntrinsicHeight(
-                                    child: Row(
-                                      crossAxisAlignment:
-                                          CrossAxisAlignment.stretch,
-                                      children: [
-                                        // Main Thread Line
-                                        Container(
-                                          width: 2.w,
-                                          margin: EdgeInsets.only(
-                                            left: 25.w,
-                                            right: 33.w,
+                                  Row(
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.stretch,
+                                    children: [
+                                      Container(
+                                        width: 2.w,
+                                        margin: EdgeInsets.only(
+                                          left: 25.w,
+                                          right: 33.w,
+                                        ),
+                                        decoration: BoxDecoration(
+                                          color: AppColors.grey100,
+                                          borderRadius: BorderRadius.circular(
+                                            1.r,
                                           ),
-                                          decoration: BoxDecoration(
-                                            color: AppColors.grey100,
-                                            borderRadius: BorderRadius.circular(
-                                              1.r,
+                                        ),
+                                      ),
+                                      Expanded(
+                                        child: Column(
+                                          crossAxisAlignment:
+                                              CrossAxisAlignment.start,
+                                          children: [
+                                            SizedBox(height: AppSpacing.md),
+                                            Text(
+                                              post.title,
+                                              style: TextStyle(
+                                                fontSize: 22.sp,
+                                                fontWeight: FontWeight.w900,
+                                                color: AppColors.textPrimary,
+                                                height: 1.3,
+                                                letterSpacing: -0.8,
+                                              ),
                                             ),
-                                          ),
+                                            SizedBox(height: AppSpacing.md12),
+                                            Text(
+                                              post.content,
+                                              style: TextStyle(
+                                                fontSize: 15.sp,
+                                                color: AppColors.textPrimary
+                                                    .withOpacity(0.8),
+                                                height: 1.7,
+                                                fontWeight: FontWeight.w400,
+                                              ),
+                                            ),
+                                            ForumMediaGrid(
+                                              media: post.mediaUrls,
+                                            ),
+                                            SizedBox(height: AppSpacing.xl),
+                                            _buildInteractionBar(
+                                              builderContext,
+                                              post,
+                                            ),
+                                            SizedBox(height: AppSpacing.xl),
+                                          ],
                                         ),
-                                        Expanded(
-                                          child: Column(
-                                            crossAxisAlignment:
-                                                CrossAxisAlignment.start,
-                                            children: [
-                                              SizedBox(height: AppSpacing.md),
-                                              Text(
-                                                post.title,
-                                                style: TextStyle(
-                                                  fontSize: 22.sp,
-                                                  fontWeight: FontWeight.w900,
-                                                  color: AppColors.textPrimary,
-                                                  height: 1.3,
-                                                  letterSpacing: -0.8,
-                                                ),
-                                              ),
-                                              SizedBox(height: AppSpacing.md12),
-                                              Text(
-                                                post.content,
-                                                style: TextStyle(
-                                                  fontSize: 15.sp,
-                                                  color: AppColors.textPrimary
-                                                      .withOpacity(0.8),
-                                                  height: 1.7,
-                                                  fontWeight: FontWeight.w400,
-                                                ),
-                                              ),
-                                              ForumMediaGrid(media: post.mediaUrls),
-                                              SizedBox(height: AppSpacing.xl),
-                                              _buildInteractionBar(
-                                                builderContext,
-                                                post,
-                                              ),
-                                              SizedBox(height: AppSpacing.xl),
-                                            ],
-                                          ),
-                                        ),
-                                      ],
-                                    ),
+                                      ),
+                                    ],
                                   ),
 
                                   // Comments Header inside the same card
                                   Padding(
-                                    padding: EdgeInsets.symmetric(
-                                      vertical: 16.h,
+                                    padding: EdgeInsets.only(top: 8.h, bottom: 16.h),
+                                    child: Divider(
+                                      height: 1,
+                                      thickness: 1,
+                                      color: AppColors.grey100,
                                     ),
+                                  ),
+                                  Padding(
+                                    padding: EdgeInsets.only(bottom: 16.h),
                                     child: Row(
                                       children: [
                                         Container(
@@ -501,14 +506,8 @@ class _ForumDetailPageState extends State<ForumDetailPage> {
             '',
             AppColors.textSecondary,
             'forum.share'.tr(),
-            onTap: () {
-              Share.share(
-                'forum.share_detail'.tr(namedArgs: {
-                  'title': post.title,
-                  'content': post.contentPreview ?? post.content,
-                }),
-              );
-            },
+            onTap: () =>
+                ForumShareHelper.sharePost(post, fromDetail: true),
           ),
           SizedBox(width: AppSpacing.md12),
           Container(
@@ -569,14 +568,16 @@ class _ForumDetailPageState extends State<ForumDetailPage> {
         onTap: onTap,
         borderRadius: BorderRadius.circular(AppRadius.lg),
         child: Container(
-          height: 40.h,
-          constraints: BoxConstraints(minWidth: label.isEmpty ? 40.h : 0),
+          height: AppSpacing.buttonHeightSm,
+          constraints: BoxConstraints(
+            minWidth: label.isEmpty ? AppSpacing.buttonHeightSm : 0,
+          ),
           padding: EdgeInsets.symmetric(horizontal: label.isEmpty ? 0 : AppSpacing.md12),
           child: Row(
             mainAxisSize: MainAxisSize.min,
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              Icon(icon, size: 20.sp, color: isActive ? AppColors.white : color),
+              Icon(icon, size: 18.sp, color: isActive ? AppColors.white : color),
               if (label.isNotEmpty) ...[
                 SizedBox(width: 6.w),
                 Text(
@@ -584,7 +585,7 @@ class _ForumDetailPageState extends State<ForumDetailPage> {
                   style: TextStyle(
                     color: isActive ? AppColors.white : color,
                     fontWeight: isActive ? FontWeight.w900 : FontWeight.w800,
-                    fontSize: 14.sp,
+                    fontSize: 13.sp,
                   ),
                 ),
               ],

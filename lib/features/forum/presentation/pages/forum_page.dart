@@ -15,7 +15,7 @@ import 'package:mobile_bisa/features/auth/presentation/bloc/auth_cubit.dart';
 import 'package:mobile_bisa/shared/widgets/auth_sheet.dart';
 import 'package:mobile_bisa/shared/widgets/bisa_app_bar.dart';
 import 'package:mobile_bisa/shared/widgets/notification_bell_button.dart';
-import 'package:share_plus/share_plus.dart';
+import 'package:mobile_bisa/core/utils/forum_share_helper.dart';
 import 'package:mobile_bisa/shared/widgets/bisa_filter_chip.dart';
 import 'package:mobile_bisa/shared/widgets/bisa_avatar.dart';
 import 'package:mobile_bisa/shared/widgets/shimmer_loading.dart';
@@ -423,15 +423,8 @@ class _ForumPageState extends State<ForumPage> {
                                           ForumDetailPage(postId: post.id),
                                     ),
                                   ),
-                                  onShare: () {
-                                    Share.share(
-                                      'forum.share_list'.tr(namedArgs: {
-                                        'title': post.title,
-                                        'content': post.contentPreview ?? post.content,
-                                      }),
-                                      subject: post.title,
-                                    );
-                                  },
+                                  onShare: () =>
+                                      ForumShareHelper.sharePost(post),
                                 ),
                               ),
                             )

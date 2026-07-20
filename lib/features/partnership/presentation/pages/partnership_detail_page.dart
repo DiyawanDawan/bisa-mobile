@@ -8,9 +8,10 @@ import '../../../../core/constants/app_colors.dart';
 import '../../../../core/constants/app_layout.dart';
 import '../../../../core/i18n/failure_messages.dart';
 import '../../../../core/utils/app_feedback.dart';
-import '../../../../core/utils/media_url_utils.dart';
+import '../../../../core/utils/safe_area_utils.dart';
 import '../../../../injection_container.dart';
 import '../../../../shared/widgets/bisa_app_bar.dart';
+import '../../../../shared/widgets/bisa_avatar.dart';
 import '../../../../shared/widgets/custom_button.dart';
 import '../../../auth/presentation/bloc/auth_cubit.dart';
 import '../../domain/entities/partnership_entity.dart';
@@ -130,12 +131,27 @@ class _PartnershipDetailBody extends StatelessWidget {
           final isSupplier = userId == p.supplierId;
           final counterparty = isSupplier ? p.buyer : p.supplier;
           final dateFmt = DateFormat('dd MMM yyyy');
+          final hasPrimaryActions = userId != null &&
+              _PartnershipBottomPanel.hasPrimaryActions(
+                partnership: p,
+                userId: userId,
+                isBuyer: isBuyer,
+                isSupplier: isSupplier,
+                userRole: userRole,
+              );
+          final scrollBottomPad = (hasPrimaryActions ? 168.h : 112.h) +
+              systemBottomInset(context);
 
           return Column(
             children: [
               Expanded(
                 child: SingleChildScrollView(
-                  padding: EdgeInsets.all(AppSpacing.md),
+                  padding: EdgeInsets.fromLTRB(
+                    AppSpacing.md,
+                    AppSpacing.md,
+                    AppSpacing.md,
+                    scrollBottomPad,
+                  ),
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
@@ -143,7 +159,16 @@ class _PartnershipDetailBody extends StatelessWidget {
                       SizedBox(height: AppSpacing.md),
                       _ContractPeriodBanner(partnership: p),
                       SizedBox(height: AppSpacing.md),
-                      _PartyCard(user: counterparty, label: 'partnership.counterparty'.tr()),
+                      _PartyCard(
+                        user: counterparty,
+                        label: 'partnership.counterparty'.tr(),
+                        onTap: !isSupplier
+                            ? () => context.push(
+                                  '/supplier/${counterparty.id}',
+                                  extra: {'name': counterparty.fullName},
+                                )
+                            : null,
+                      ),
                       SizedBox(height: AppSpacing.md),
                       _Section(title: 'partnership.section_terms'.tr(), children: [
                         if (p.description?.isNotEmpty == true)
@@ -188,29 +213,15 @@ class _PartnershipDetailBody extends StatelessWidget {
                             fontWeight: FontWeight.w600,
                           ),
                         ),
+                        SizedBox(height: AppSpacing.sm10),
+                        _CompactSignatureStrip(partnership: p),
                         SizedBox(height: AppSpacing.sm),
-                        _SignRow(
-                          label: 'partnership.buyer_sign'.tr(),
-                          signedAt: p.buyerSignedAt,
-                          signerName: p.buyerSignerName ?? p.buyer.fullName,
-                          signerTitle: p.buyerSignerTitle,
-                          companyName: p.buyerCompanyName ?? p.buyer.companyName,
-                        ),
-                        SizedBox(height: AppSpacing.sm),
-                        _SignRow(
-                          label: 'partnership.supplier_sign'.tr(),
-                          signedAt: p.sellerSignedAt,
-                          signerName: p.sellerSignerName ?? p.supplier.fullName,
-                          signerTitle: p.sellerSignerTitle,
-                          companyName: p.sellerCompanyName ?? p.supplier.companyName,
-                        ),
-                        SizedBox(height: AppSpacing.sm),
-                        _SignRow(
-                          label: 'partnership.platform_sign'.tr(),
-                          signedAt: p.platformSignedAt,
-                          signerName: p.platformSignerName ?? 'BISA Agri',
-                          signerTitle: p.platformSignerTitle,
-                          companyName: 'BISA Agri',
+                        Text(
+                          'partnership.signer_tap_detail'.tr(),
+                          style: TextStyle(
+                            fontSize: 10.sp,
+                            color: AppColors.textHint,
+                          ),
                         ),
                       ]),
                       if (p.isRenewalPending && p.renewalProposedEndDate != null) ...[
@@ -231,58 +242,19 @@ class _PartnershipDetailBody extends StatelessWidget {
                           Text(p.rejectionReason!, style: TextStyle(fontSize: 13.sp)),
                         ]),
                       ],
-                      SizedBox(height: AppSpacing.md),
-                      OutlinedButton.icon(
-                        onPressed: () =>
-                            PartnershipPdfExportHelper.exportEntity(context, p),
-                        icon: Icon(LucideIcons.download, size: 18.sp),
-                        label: Text(
-                          p.isFullySigned
-                              ? 'partnership.pdf_download'.tr()
-                              : 'partnership.pdf_download_draft'.tr(),
-                        ),
-                        style: OutlinedButton.styleFrom(
-                          minimumSize: Size(double.infinity, 48.h),
-                          foregroundColor: AppColors.primary,
-                        ),
-                      ),
-                      SizedBox(height: AppSpacing.sm10),
-                      OutlinedButton.icon(
-                        onPressed: () => _sendPartnershipToChat(context, p),
-                        icon: Icon(LucideIcons.messageSquare, size: 18.sp),
-                        label: Text('partnership.chat_send_cta'.tr()),
-                        style: OutlinedButton.styleFrom(
-                          minimumSize: Size(double.infinity, 48.h),
-                          foregroundColor: AppColors.success,
-                        ),
-                      ),
-                      if (p.isActive) ...[
-                        SizedBox(height: AppSpacing.sm10),
-                        OutlinedButton.icon(
-                          onPressed: () => context.push(
-                            '/supplier/${p.supplierId}',
-                            extra: {'name': p.supplier.fullName},
-                          ),
-                          icon: Icon(LucideIcons.store, size: 18.sp),
-                          label: Text('partnership.order_from_partner'.tr()),
-                          style: OutlinedButton.styleFrom(
-                            minimumSize: Size(double.infinity, 48.h),
-                            foregroundColor: AppColors.primary,
-                          ),
-                        ),
-                      ],
                     ],
                   ),
                 ),
               ),
               if (userId != null)
-                _ActionBar(
+                _PartnershipBottomPanel(
                   partnership: p,
-                  userId: userId!,
+                  userId: userId,
                   isBuyer: isBuyer,
                   isSupplier: isSupplier,
                   userRole: userRole,
                   isSubmitting: state.isSubmitting,
+                  onSendToChat: () => _sendPartnershipToChat(context, p),
                 ),
             ],
           );
@@ -425,12 +397,22 @@ class _ContractPeriodBanner extends StatelessWidget {
 class _PartyCard extends StatelessWidget {
   final PartnershipUserEntity user;
   final String label;
+  final VoidCallback? onTap;
 
-  const _PartyCard({required this.user, required this.label});
+  const _PartyCard({
+    required this.user,
+    required this.label,
+    this.onTap,
+  });
 
   @override
   Widget build(BuildContext context) {
-    return Container(
+    final displayName =
+        user.companyName?.isNotEmpty == true ? user.companyName! : user.fullName;
+    final verifiedColor =
+        user.isVerified ? AppColors.success : AppColors.textHint;
+
+    final card = Container(
       padding: EdgeInsets.all(AppSpacing.md),
       decoration: BoxDecoration(
         color: AppColors.surface,
@@ -438,28 +420,92 @@ class _PartyCard extends StatelessWidget {
       ),
       child: Row(
         children: [
-          CircleAvatar(
+          BisaAvatar(
+            imageUrl: user.avatarUrl,
             radius: 24.r,
-            backgroundImage: resolveMediaImageProvider(user.avatarUrl),
-            child: user.avatarUrl == null
-                ? Icon(LucideIcons.building2, color: AppColors.primary)
-                : null,
+            fallbackIcon: LucideIcons.building2,
           ),
           SizedBox(width: AppSpacing.md12),
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(label, style: TextStyle(fontSize: 11.sp, color: AppColors.textHint)),
                 Text(
-                  user.companyName?.isNotEmpty == true ? user.companyName! : user.fullName,
-                  style: TextStyle(fontSize: 15.sp, fontWeight: FontWeight.w600),
+                  label,
+                  style: TextStyle(fontSize: 11.sp, color: AppColors.textHint),
+                ),
+                SizedBox(height: 2.h),
+                Row(
+                  children: [
+                    Expanded(
+                      child: Text(
+                        displayName,
+                        style: TextStyle(
+                          fontSize: 15.sp,
+                          fontWeight: FontWeight.w600,
+                        ),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                    ),
+                    if (user.isVerified)
+                      Icon(
+                        LucideIcons.badgeCheck,
+                        size: 16.sp,
+                        color: AppColors.info,
+                      ),
+                  ],
+                ),
+                SizedBox(height: 6.h),
+                Container(
+                  padding: EdgeInsets.symmetric(horizontal: 8.w, vertical: 3.h),
+                  decoration: BoxDecoration(
+                    color: verifiedColor.withValues(alpha: 0.12),
+                    borderRadius: BorderRadius.circular(20.r),
+                  ),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Icon(
+                        user.isVerified
+                            ? LucideIcons.shieldCheck
+                            : LucideIcons.shieldAlert,
+                        size: 12.sp,
+                        color: verifiedColor,
+                      ),
+                      SizedBox(width: 4.w),
+                      Text(
+                        user.isVerified
+                            ? 'partnership.partner_verified'.tr()
+                            : 'partnership.partner_unverified'.tr(),
+                        style: TextStyle(
+                          fontSize: 10.sp,
+                          fontWeight: FontWeight.w600,
+                          color: verifiedColor,
+                        ),
+                      ),
+                    ],
+                  ),
                 ),
               ],
             ),
           ),
+          if (onTap != null)
+            Icon(
+              LucideIcons.chevronRight,
+              size: 18.sp,
+              color: AppColors.textHint,
+            ),
         ],
       ),
+    );
+
+    if (onTap == null) return card;
+
+    return GestureDetector(
+      behavior: HitTestBehavior.opaque,
+      onTap: onTap,
+      child: card,
     );
   }
 }
@@ -513,64 +559,121 @@ class _TermRow extends StatelessWidget {
   }
 }
 
-class _SignRow extends StatelessWidget {
-  final String label;
-  final DateTime? signedAt;
-  final String? signerName;
-  final String? signerTitle;
-  final String? companyName;
+class _CompactSignatureStrip extends StatelessWidget {
+  final PartnershipEntity partnership;
 
-  const _SignRow({
-    required this.label,
-    this.signedAt,
-    this.signerName,
-    this.signerTitle,
-    this.companyName,
-  });
+  const _CompactSignatureStrip({required this.partnership});
+
+  void _showSignerDetail(
+    BuildContext context, {
+    required String label,
+    DateTime? signedAt,
+    String? signerName,
+    String? signerTitle,
+    String? companyName,
+  }) {
+    final signed = signedAt != null;
+    final identityParts = <String>[
+      if (signerName != null && signerName.trim().isNotEmpty) signerName.trim(),
+      if (signerTitle != null && signerTitle.trim().isNotEmpty) signerTitle.trim(),
+      if (companyName != null && companyName.trim().isNotEmpty) companyName.trim(),
+    ];
+
+    showModalBottomSheet<void>(
+      context: context,
+      backgroundColor: AppColors.surface,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(AppRadius.tile)),
+      ),
+      builder: (ctx) => Padding(
+        padding: EdgeInsets.fromLTRB(
+          AppSpacing.md,
+          AppSpacing.md,
+          AppSpacing.md,
+          AppSpacing.md + systemBottomInset(ctx),
+        ),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              label,
+              style: TextStyle(fontSize: 16.sp, fontWeight: FontWeight.w700),
+            ),
+            SizedBox(height: AppSpacing.sm10),
+            Text(
+              signed
+                  ? DateFormat('dd MMM yyyy HH:mm').format(signedAt)
+                  : 'partnership.pdf_not_signed'.tr(),
+              style: TextStyle(
+                fontSize: 13.sp,
+                color: signed ? AppColors.success : AppColors.textHint,
+                fontWeight: FontWeight.w600,
+              ),
+            ),
+            if (identityParts.isNotEmpty) ...[
+              SizedBox(height: AppSpacing.sm),
+              Text(
+                identityParts.join(' · '),
+                style: TextStyle(fontSize: 13.sp, color: AppColors.textSecondary),
+              ),
+            ],
+          ],
+        ),
+      ),
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
-    final signed = signedAt != null;
-    final identityParts = <String>[
-      if (signerName != null && signerName!.trim().isNotEmpty) signerName!.trim(),
-      if (signerTitle != null && signerTitle!.trim().isNotEmpty) signerTitle!.trim(),
-      if (companyName != null && companyName!.trim().isNotEmpty) companyName!.trim(),
-    ];
-    final identityLine = identityParts.join(' · ');
-
     return Row(
-      crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Padding(
-          padding: EdgeInsets.only(top: 2.h),
-          child: Icon(
-            signed ? LucideIcons.circleCheck : LucideIcons.circle,
-            size: 18.sp,
-            color: signed ? AppColors.success : AppColors.textHint,
+        Expanded(
+          child: _SignerAvatarChip(
+            label: 'partnership.buyer_sign'.tr(),
+            signedAt: partnership.buyerSignedAt,
+            avatarUrl: partnership.buyer.avatarUrl,
+            fallbackIcon: LucideIcons.user,
+            onTap: () => _showSignerDetail(
+              context,
+              label: 'partnership.buyer_sign'.tr(),
+              signedAt: partnership.buyerSignedAt,
+              signerName: partnership.buyerSignerName ?? partnership.buyer.fullName,
+              signerTitle: partnership.buyerSignerTitle,
+              companyName: partnership.buyerCompanyName ?? partnership.buyer.companyName,
+            ),
           ),
         ),
-        SizedBox(width: AppSpacing.sm),
         Expanded(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                signed
-                    ? '$label · ${DateFormat('dd MMM yyyy HH:mm').format(signedAt!)}'
-                    : label,
-                style: TextStyle(fontSize: 13.sp, fontWeight: FontWeight.w600),
-              ),
-              if (identityLine.isNotEmpty) ...[
-                SizedBox(height: 2.h),
-                Text(
-                  identityLine,
-                  style: TextStyle(
-                    fontSize: 12.sp,
-                    color: AppColors.textSecondary,
-                  ),
-                ),
-              ],
-            ],
+          child: _SignerAvatarChip(
+            label: 'partnership.supplier_sign'.tr(),
+            signedAt: partnership.sellerSignedAt,
+            avatarUrl: partnership.supplier.avatarUrl,
+            fallbackIcon: LucideIcons.store,
+            onTap: () => _showSignerDetail(
+              context,
+              label: 'partnership.supplier_sign'.tr(),
+              signedAt: partnership.sellerSignedAt,
+              signerName: partnership.sellerSignerName ?? partnership.supplier.fullName,
+              signerTitle: partnership.sellerSignerTitle,
+              companyName: partnership.sellerCompanyName ?? partnership.supplier.companyName,
+            ),
+          ),
+        ),
+        Expanded(
+          child: _SignerAvatarChip(
+            label: 'partnership.platform_sign'.tr(),
+            signedAt: partnership.platformSignedAt,
+            avatarUrl: null,
+            fallbackIcon: LucideIcons.shield,
+            onTap: () => _showSignerDetail(
+              context,
+              label: 'partnership.platform_sign'.tr(),
+              signedAt: partnership.platformSignedAt,
+              signerName: partnership.platformSignerName ?? 'BISA Agri',
+              signerTitle: partnership.platformSignerTitle,
+              companyName: 'BISA Agri',
+            ),
           ),
         ),
       ],
@@ -578,22 +681,165 @@ class _SignRow extends StatelessWidget {
   }
 }
 
-class _ActionBar extends StatelessWidget {
+class _SignerAvatarChip extends StatelessWidget {
+  final String label;
+  final DateTime? signedAt;
+  final String? avatarUrl;
+  final IconData fallbackIcon;
+  final VoidCallback onTap;
+
+  const _SignerAvatarChip({
+    required this.label,
+    this.signedAt,
+    this.avatarUrl,
+    required this.fallbackIcon,
+    required this.onTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final signed = signedAt != null;
+    final dateFmt = DateFormat('dd MMM');
+
+    return GestureDetector(
+      onTap: onTap,
+      child: Column(
+        children: [
+          Stack(
+            clipBehavior: Clip.none,
+            children: [
+              BisaAvatar(
+                imageUrl: avatarUrl,
+                radius: 22.r,
+                fallbackIcon: fallbackIcon,
+              ),
+              Positioned(
+                right: -2.w,
+                bottom: -2.h,
+                child: Container(
+                  padding: EdgeInsets.all(2.w),
+                  decoration: BoxDecoration(
+                    color: AppColors.surface,
+                    shape: BoxShape.circle,
+                  ),
+                  child: Icon(
+                    signed ? LucideIcons.circleCheck : LucideIcons.circle,
+                    size: 14.sp,
+                    color: signed ? AppColors.success : AppColors.textHint,
+                  ),
+                ),
+              ),
+            ],
+          ),
+          SizedBox(height: 6.h),
+          Text(
+            label,
+            textAlign: TextAlign.center,
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+            style: TextStyle(fontSize: 10.sp, fontWeight: FontWeight.w600),
+          ),
+          if (signed)
+            Text(
+              dateFmt.format(signedAt!),
+              textAlign: TextAlign.center,
+              style: TextStyle(fontSize: 9.sp, color: AppColors.textHint),
+            ),
+        ],
+      ),
+    );
+  }
+}
+
+class _QuickActionButton extends StatelessWidget {
+  final IconData icon;
+  final String label;
+  final VoidCallback onTap;
+  final Color? color;
+
+  const _QuickActionButton({
+    required this.icon,
+    required this.label,
+    required this.onTap,
+    this.color,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final fg = color ?? AppColors.primary;
+
+    return Expanded(
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(AppRadius.sm),
+        child: Padding(
+          padding: EdgeInsets.symmetric(vertical: 6.h),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Icon(icon, size: 20.sp, color: fg),
+              SizedBox(height: 4.h),
+              Text(
+                label,
+                textAlign: TextAlign.center,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: TextStyle(fontSize: 10.sp, color: fg, fontWeight: FontWeight.w600),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _PartnershipBottomPanel extends StatelessWidget {
   final PartnershipEntity partnership;
   final String userId;
   final bool isBuyer;
   final bool isSupplier;
   final String? userRole;
   final bool isSubmitting;
+  final VoidCallback onSendToChat;
 
-  const _ActionBar({
+  const _PartnershipBottomPanel({
     required this.partnership,
     required this.userId,
     required this.isBuyer,
     required this.isSupplier,
     required this.userRole,
     required this.isSubmitting,
+    required this.onSendToChat,
   });
+
+  static bool hasPrimaryActions({
+    required PartnershipEntity partnership,
+    required String userId,
+    required bool isBuyer,
+    required bool isSupplier,
+    required String? userRole,
+  }) {
+    final panel = _PartnershipBottomPanel(
+      partnership: partnership,
+      userId: userId,
+      isBuyer: isBuyer,
+      isSupplier: isSupplier,
+      userRole: userRole,
+      isSubmitting: false,
+      onSendToChat: () {},
+    );
+    return (partnership.canSign && panel._needsSign()) ||
+        (partnership.status == 'PENDING' && isSupplier) ||
+        (partnership.isRenewalPending &&
+            partnership.renewalRequestedBy != null &&
+            partnership.renewalRequestedBy != userId) ||
+        (partnership.canRenew && !partnership.isRenewalPending) ||
+        (partnership.isActive && (isBuyer || isSupplier));
+  }
+
+  bool _canEditReview() =>
+      !partnership.isFullySigned && (isBuyer || isSupplier);
 
   Future<void> _reject(BuildContext context) async {
     final reasonCtrl = TextEditingController();
@@ -721,10 +967,10 @@ class _ActionBar extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final cubit = context.read<PartnershipCubit>();
-    final actions = <Widget>[];
+    final primaryActions = <Widget>[];
 
     if (partnership.status == 'PENDING' && isSupplier) {
-      actions.addAll([
+      primaryActions.addAll([
         Expanded(
           child: OutlinedButton(
             onPressed: isSubmitting ? null : () => _reject(context),
@@ -748,7 +994,7 @@ class _ActionBar extends StatelessWidget {
         ),
       ]);
     } else if (partnership.canSign && _needsSign()) {
-      actions.add(
+      primaryActions.add(
         Expanded(
           child: CustomButton(
             text: 'partnership.sign_contract'.tr(),
@@ -767,7 +1013,7 @@ class _ActionBar extends StatelessWidget {
     } else if (partnership.isRenewalPending &&
         partnership.renewalRequestedBy != null &&
         partnership.renewalRequestedBy != userId) {
-      actions.addAll([
+      primaryActions.addAll([
         Expanded(
           child: OutlinedButton(
             onPressed: isSubmitting ? null : () => _rejectRenewal(context),
@@ -791,7 +1037,7 @@ class _ActionBar extends StatelessWidget {
         ),
       ]);
     } else if (partnership.canRenew && !partnership.isRenewalPending) {
-      actions.add(
+      primaryActions.add(
         Expanded(
           child: CustomButton(
             text: 'partnership.renew_contract'.tr(),
@@ -801,7 +1047,7 @@ class _ActionBar extends StatelessWidget {
         ),
       );
     } else if (partnership.isActive && (isBuyer || isSupplier)) {
-      actions.add(
+      primaryActions.add(
         Expanded(
           child: OutlinedButton(
             onPressed: isSubmitting ? null : () => _terminate(context),
@@ -812,11 +1058,45 @@ class _ActionBar extends StatelessWidget {
       );
     }
 
-    if (actions.isEmpty) return const SizedBox.shrink();
+    final quickActions = <Widget>[
+      _QuickActionButton(
+        icon: LucideIcons.download,
+        label: 'partnership.quick_pdf'.tr(),
+        onTap: () => PartnershipPdfExportHelper.exportEntity(context, partnership),
+      ),
+      _QuickActionButton(
+        icon: LucideIcons.messageSquare,
+        label: 'partnership.quick_chat'.tr(),
+        color: AppColors.success,
+        onTap: onSendToChat,
+      ),
+      if (partnership.isActive)
+        _QuickActionButton(
+          icon: LucideIcons.store,
+          label: 'partnership.quick_order'.tr(),
+          onTap: () => context.push(
+            '/supplier/${partnership.supplierId}',
+            extra: {'name': partnership.supplier.fullName},
+          ),
+        ),
+      if (_canEditReview())
+        _QuickActionButton(
+          icon: LucideIcons.pencil,
+          label: 'partnership.edit_review'.tr(),
+          color: AppColors.warning,
+          onTap: onSendToChat,
+        ),
+    ];
 
     return SafeArea(
+      top: false,
       child: Container(
-        padding: EdgeInsets.all(AppSpacing.md),
+        padding: EdgeInsets.fromLTRB(
+          AppSpacing.md,
+          AppSpacing.sm10,
+          AppSpacing.md,
+          AppSpacing.sm10,
+        ),
         decoration: BoxDecoration(
           color: AppColors.surface,
           boxShadow: [
@@ -827,7 +1107,18 @@ class _ActionBar extends StatelessWidget {
             ),
           ],
         ),
-        child: Row(children: actions),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Row(children: quickActions),
+            if (primaryActions.isNotEmpty) ...[
+              SizedBox(height: AppSpacing.sm10),
+              Divider(height: 1, color: AppColors.grey200),
+              SizedBox(height: AppSpacing.sm10),
+              Row(children: primaryActions),
+            ],
+          ],
+        ),
       ),
     );
   }

@@ -279,7 +279,7 @@ class _OrdersPageState extends State<OrdersPage> {
                 SizedBox(height: AppSpacing.xl),
                 CustomButton(
                   text: 'orders.filter_apply'.tr(),
-                  height: 44.h,
+                  height: AppSpacing.buttonHeightSm,
                   onPressed: () => Navigator.pop(context),
                 ),
               ],

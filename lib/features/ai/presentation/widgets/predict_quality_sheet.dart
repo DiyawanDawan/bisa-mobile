@@ -7,6 +7,7 @@ import 'package:image_picker/image_picker.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
 
 import '../../../../core/constants/app_colors.dart';
+import '../../../../core/constants/app_layout.dart';
 import '../../../../core/i18n/failure_messages.dart';
 import '../../../../core/i18n/tr_safe.dart';
 import '../../../../core/utils/batch_weight_util.dart';
@@ -399,7 +400,7 @@ class _PredictQualitySheetState extends State<PredictQualitySheet> {
             ],
             SizedBox(height: 12.h),
             SizedBox(
-              height: 44.h,
+              height: AppSpacing.buttonHeightSm,
               child: CustomButton(
                 text: 'ai.predict_submit'.tr(),
                 isLoading: _loading,

@@ -625,7 +625,7 @@ class _ReviewInvoiceBodyState extends State<_ReviewInvoiceBody> {
                     if (buyerNeedsSign) {
                       return CustomButton(
                         text: 'invoice.action_sign_contract'.tr(),
-                        height: 44.h,
+                        height: AppSpacing.buttonHeightSm,
                         useGradient: true,
                         onPressed: () =>
                             _signContract(context, negotiationId, order.id),
@@ -653,7 +653,7 @@ class _ReviewInvoiceBodyState extends State<_ReviewInvoiceBody> {
                   order.sellerSignedAt == null) ...[
                 CustomButton(
                   text: 'invoice.action_sign_contract'.tr(),
-                  height: 44.h,
+                  height: AppSpacing.buttonHeightSm,
                   useGradient: true,
                   onPressed: () =>
                       _signContract(context, negotiationId, order.id),
@@ -663,7 +663,7 @@ class _ReviewInvoiceBodyState extends State<_ReviewInvoiceBody> {
               if (isSupplier && canPay) ...[
                 CustomButton(
                   text: 'invoice.action_edit'.tr(),
-                  height: 44.h,
+                  height: AppSpacing.buttonHeightSm,
                   isOutlined: true,
                   onPressed: () async {
                     final updated = await context.push<bool>(
@@ -678,7 +678,7 @@ class _ReviewInvoiceBodyState extends State<_ReviewInvoiceBody> {
               ],
               CustomButton(
                 text: 'invoice.action_download_pdf'.tr(),
-                height: 44.h,
+                height: AppSpacing.buttonHeightSm,
                 isOutlined: true,
                 onPressed: () =>
                     InvoiceExportHelper.exportOrder(context, order),

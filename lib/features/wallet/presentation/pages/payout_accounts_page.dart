@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
+import 'package:mobile_bisa/core/constants/app_layout.dart';
 import 'package:mobile_bisa/core/constants/app_colors.dart';
 import 'package:mobile_bisa/core/i18n/failure_messages.dart';
 import 'package:mobile_bisa/core/utils/safe_area_utils.dart';
@@ -62,7 +63,7 @@ class PayoutAccountsPage extends StatelessWidget {
                   padding: EdgeInsets.fromLTRB(16.w, 8.h, 16.w, 8.h + bottomInset * 0.25),
                   child: CustomButton(
                     text: 'wallet.add_new_account'.tr(),
-                    height: 50.h,
+                    height: AppSpacing.buttonHeight,
                     onPressed: () => _showAddAccountSheet(context, banks),
                   ),
                 ),
@@ -474,7 +475,7 @@ class PayoutAccountsPage extends StatelessWidget {
                           text: account == null
                               ? 'wallet.save_account'.tr()
                               : 'wallet.save_changes'.tr(),
-                          height: 50.h,
+                          height: AppSpacing.buttonHeight,
                           onPressed: () {
                             if (selectedBankId != null &&
                                 accountNoController.text.isNotEmpty &&

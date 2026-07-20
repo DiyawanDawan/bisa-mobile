@@ -111,10 +111,10 @@ class ProfilePage extends StatelessWidget {
                                 // Fitur Pro (IoT, Analitik Mendalam) ditujukan
                                 // untuk skema bisnis penjual, bukan pembeli.
                                 if (user.role == 'SUPPLIER') ...[
-                                  SizedBox(height: AppSpacing.md12),
+                                  SizedBox(height: AppSpacing.sm10),
                                   _buildProSubscriptionCard(context, user),
                                 ],
-                                SizedBox(height: AppSpacing.md12),
+                                SizedBox(height: AppSpacing.sm10),
                                 _buildMenuSection(
                                   context,
                                   user.role == 'SUPPLIER',
@@ -149,7 +149,7 @@ class ProfilePage extends StatelessWidget {
                       child: Column(
                         children: [
                           _buildGuestHeader(context),
-                          SizedBox(height: AppSpacing.md12),
+                          SizedBox(height: AppSpacing.sm10),
                           _buildMenuSection(context, false, isAuthenticated),
                           SizedBox(height: AppSpacing.md),
                           const Divider(height: 1),
@@ -490,7 +490,7 @@ class ProfilePage extends StatelessWidget {
               ),
             ],
           ),
-          SizedBox(height: AppSpacing.md12),
+          SizedBox(height: AppSpacing.sm10),
           Text(
             user.name,
             style: TextStyle(
@@ -509,9 +509,9 @@ class ProfilePage extends StatelessWidget {
               fontWeight: FontWeight.w500,
             ),
           ),
-          SizedBox(height: AppSpacing.md12),
+          SizedBox(height: AppSpacing.sm10),
           FollowStatsRow(userId: user.id),
-          SizedBox(height: AppSpacing.md12),
+          SizedBox(height: AppSpacing.sm10),
           Container(
             padding: EdgeInsets.symmetric(horizontal: AppSpacing.section, vertical: AppSpacing.xs6),
             decoration: BoxDecoration(
@@ -556,7 +556,7 @@ class ProfilePage extends StatelessWidget {
     UserEntity? user,
   }) {
     return Padding(
-      padding: EdgeInsets.symmetric(horizontal: AppSpacing.lg),
+      padding: EdgeInsets.symmetric(horizontal: AppSpacing.md),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -575,9 +575,8 @@ class ProfilePage extends StatelessWidget {
           ]),
 
           // ── Akun ──────────────────────────────────────────────
-          SizedBox(height: AppSpacing.md12),
+          SizedBox(height: AppSpacing.sm10),
           _sectionTitle('profile.section_account'.tr()),
-          SizedBox(height: AppSpacing.sm),
           _menuCard([
             if (isAuthenticated) ...[
               _menuItem(
@@ -627,13 +626,12 @@ class ProfilePage extends StatelessWidget {
 
           // ── Belanja & Pesanan (buyer) / Transaksi (supplier) ──
           if (isAuthenticated) ...[
-            SizedBox(height: AppSpacing.md12),
+            SizedBox(height: AppSpacing.sm10),
             _sectionTitle(
               isSupplier
                   ? 'profile.section_transactions'.tr()
                   : 'profile.section_shopping'.tr(),
             ),
-            SizedBox(height: AppSpacing.sm),
             _menuCard([
               if (!isSupplier) ...[
                 _menuItem(
@@ -682,9 +680,8 @@ class ProfilePage extends StatelessWidget {
 
           // ── Kontrak & Kemitraan ───────────────────────────────
           if (isAuthenticated) ...[
-            SizedBox(height: AppSpacing.md12),
+            SizedBox(height: AppSpacing.sm10),
             _sectionTitle('profile.section_contracts'.tr()),
-            SizedBox(height: AppSpacing.sm),
             _menuCard([
               _menuItem(
                 LucideIcons.handshake,
@@ -695,9 +692,8 @@ class ProfilePage extends StatelessWidget {
           ],
 
           // ── Katalog & RFQ ─────────────────────────────────────
-          SizedBox(height: AppSpacing.md12),
+          SizedBox(height: AppSpacing.sm10),
           _sectionTitle('profile.section_catalog'.tr()),
-          SizedBox(height: AppSpacing.sm),
           _menuCard([
             _menuItem(
               LucideIcons.building2,
@@ -725,9 +721,8 @@ class ProfilePage extends StatelessWidget {
 
           // ── Manajemen Bisnis (supplier only) ──────────────────
           if (isAuthenticated && isSupplier) ...[
-            SizedBox(height: AppSpacing.md12),
+            SizedBox(height: AppSpacing.sm10),
             _sectionTitle('profile.section_business'.tr()),
-            SizedBox(height: AppSpacing.sm),
             _menuCard([
               _menuItem(
                 LucideIcons.store,
@@ -774,9 +769,8 @@ class ProfilePage extends StatelessWidget {
           ],
 
           // ── Komunitas ─────────────────────────────────────────
-          SizedBox(height: AppSpacing.md12),
+          SizedBox(height: AppSpacing.sm10),
           _sectionTitle('profile.section_community'.tr()),
-          SizedBox(height: AppSpacing.sm),
           _menuCard([
             _menuItem(
               LucideIcons.messagesSquare,
@@ -792,9 +786,8 @@ class ProfilePage extends StatelessWidget {
           ]),
 
           // ── Wawasan Pasar ─────────────────────────────────────
-          SizedBox(height: AppSpacing.md12),
+          SizedBox(height: AppSpacing.sm10),
           _sectionTitle('profile.section_market_insight'.tr()),
-          SizedBox(height: AppSpacing.sm),
           _menuCard([
             _menuItem(
               LucideIcons.trendingUp,
@@ -822,9 +815,8 @@ class ProfilePage extends StatelessWidget {
           ]),
 
           // ── Pertumbuhan ───────────────────────────────────────
-          SizedBox(height: AppSpacing.md12),
+          SizedBox(height: AppSpacing.sm10),
           _sectionTitle('profile.section_growth'.tr()),
-          SizedBox(height: AppSpacing.sm),
           _menuCard([
             if (isAuthenticated)
               _menuItem(
@@ -846,9 +838,8 @@ class ProfilePage extends StatelessWidget {
           ]),
 
           // ── Bantuan & Lainnya ─────────────────────────────────
-          SizedBox(height: AppSpacing.md12),
+          SizedBox(height: AppSpacing.sm10),
           _sectionTitle('profile.section_other'.tr()),
-          SizedBox(height: AppSpacing.sm),
           _menuCard([
             if (isAuthenticated)
               _menuItem(
@@ -890,13 +881,13 @@ class ProfilePage extends StatelessWidget {
 
   Widget _sectionTitle(String title) {
     return Padding(
-      padding: EdgeInsets.only(left: 4.w),
+      padding: EdgeInsets.only(left: 2.w, bottom: 4.h),
       child: Text(
         title,
         style: TextStyle(
-          fontSize: 14.sp,
-          fontWeight: FontWeight.w900,
-          color: AppColors.textPrimary,
+          fontSize: 12.sp,
+          fontWeight: FontWeight.w700,
+          color: AppColors.textSecondary,
         ),
       ),
     );
@@ -906,15 +897,8 @@ class ProfilePage extends StatelessWidget {
     return Container(
       decoration: BoxDecoration(
         color: AppColors.surface,
-        borderRadius: BorderRadius.circular(AppRadius.xl),
-        border: Border.all(color: AppColors.grey100.withOpacity(0.5)),
-        boxShadow: [
-          BoxShadow(
-            color: AppColors.black.withOpacity(0.02),
-            blurRadius: 8,
-            offset: const Offset(0, 2),
-          ),
-        ],
+        borderRadius: BorderRadius.circular(AppRadius.lg),
+        border: Border.all(color: AppColors.grey200),
       ),
       child: Column(
         children: items.asMap().entries.map((entry) {
@@ -924,12 +908,11 @@ class ProfilePage extends StatelessWidget {
             children: [
               item,
               if (idx < items.length - 1)
-                Padding(
-                  padding: EdgeInsets.symmetric(horizontal: AppSpacing.md),
-                  child: Divider(
-                    height: 1,
-                    color: AppColors.grey100.withOpacity(0.5),
-                  ),
+                Divider(
+                  height: 1,
+                  indent: AppSpacing.md12,
+                  endIndent: AppSpacing.md12,
+                  color: AppColors.grey100,
                 ),
             ],
           );
@@ -1002,35 +985,28 @@ class ProfilePage extends StatelessWidget {
     Widget? trailing,
     bool isLocked = false,
   }) {
+    final iconColor = isLocked
+        ? AppColors.grey400
+        : (textColor ?? AppColors.primary);
+
     return ListTile(
-      contentPadding: EdgeInsets.symmetric(horizontal: AppSpacing.md, vertical: 0),
-      visualDensity: VisualDensity.compact,
-      leading: Container(
-        padding: EdgeInsets.all(AppSpacing.sm),
-        decoration: BoxDecoration(
-          color:
-              (isLocked ? AppColors.grey400 : (textColor ?? AppColors.primary))
-                  .withOpacity(0.06),
-          borderRadius: BorderRadius.circular(AppRadius.md),
-        ),
-        child: Icon(
-          icon,
-          color: isLocked
-              ? AppColors.grey400
-              : (textColor ?? AppColors.textPrimary),
-          size: 18.sp,
-        ),
+      contentPadding: EdgeInsets.symmetric(
+        horizontal: AppSpacing.md12,
+        vertical: 2.h,
       ),
+      visualDensity: VisualDensity.compact,
+      minLeadingWidth: 28.w,
+      leading: Icon(icon, color: iconColor, size: 20.sp),
       title: Text(
         title,
         maxLines: 1,
         overflow: TextOverflow.ellipsis,
         style: TextStyle(
-          fontSize: 14.sp,
+          fontSize: 13.sp,
           color: isLocked
               ? AppColors.grey400
               : (textColor ?? AppColors.textPrimary),
-          fontWeight: FontWeight.w600,
+          fontWeight: FontWeight.w500,
         ),
       ),
       trailing:

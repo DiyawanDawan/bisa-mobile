@@ -7,11 +7,10 @@ import 'package:lucide_icons_flutter/lucide_icons.dart';
 import 'package:go_router/go_router.dart';
 import '../../../../core/constants/app_layout.dart';
 import '../../../../core/constants/app_colors.dart';
-import '../../../../core/utils/media_url_utils.dart';
 import '../../../../injection_container.dart';
 import '../../../../shared/widgets/bisa_app_bar.dart';
+import '../../../../shared/widgets/bisa_avatar.dart';
 import '../../../../shared/widgets/bisa_search_field.dart';
-import '../../../../shared/widgets/supplier_3d_widgets.dart';
 import '../../../auth/domain/entities/user_entity.dart';
 import '../../../auth/domain/repositories/auth_repository.dart';
 import '../../../auth/presentation/bloc/auth_cubit.dart';
@@ -23,6 +22,7 @@ import '../widgets/product_card.dart';
 import '../widgets/supplier_trade_history_section.dart';
 import '../../../../shared/widgets/shimmer_loading.dart';
 import '../../../follow/presentation/widgets/follow_button.dart';
+import '../../../../core/utils/product_share_helper.dart';
 
 class SupplierProfilePage extends StatefulWidget {
   final String supplierId;
@@ -217,9 +217,15 @@ class _SupplierProfilePageState extends State<SupplierProfilePage> {
                 child: BlocBuilder<MarketplaceCubit, MarketplaceState>(
                   builder: (context, state) {
                     return state.maybeWhen(
-                loading: () => const ShimmerProductGridPlaceholder(
+                loading: () => ShimmerProductGridPlaceholder(
                   itemCount: 6,
-                  showSellerInfo: false,
+                  imageHeight: 152.h,
+                  padding: EdgeInsets.fromLTRB(
+                    AppSpacing.sm,
+                    AppSpacing.sm10,
+                    AppSpacing.sm,
+                    40.h,
+                  ),
                 ),
                 error: (message) => Center(
                   child: Padding(
@@ -273,7 +279,12 @@ class _SupplierProfilePageState extends State<SupplierProfilePage> {
                       ),
                       SliverToBoxAdapter(child: _buildSearchFilterCard()),
                       SliverPadding(
-                        padding: EdgeInsets.fromLTRB(16.w, 12.h, 16.w, 40.h),
+                        padding: EdgeInsets.fromLTRB(
+                          AppSpacing.sm,
+                          AppSpacing.sm10,
+                          AppSpacing.sm,
+                          40.h,
+                        ),
                         sliver: filtered.isEmpty
                             ? SliverToBoxAdapter(child: _buildEmptyState())
                             : SliverToBoxAdapter(
@@ -281,14 +292,15 @@ class _SupplierProfilePageState extends State<SupplierProfilePage> {
                                   shrinkWrap: true,
                                   physics: const NeverScrollableScrollPhysics(),
                                   crossAxisCount: 2,
-                                  mainAxisSpacing: AppSpacing.md,
-                                  crossAxisSpacing: AppSpacing.md12,
+                                  mainAxisSpacing: AppSpacing.sm,
+                                  crossAxisSpacing: AppSpacing.sm,
                                   itemCount: filtered.length,
                                   itemBuilder: (context, index) {
                                     return ProductCard(
                                       product: _enrichProductForCard(
                                         filtered[index],
                                       ),
+                                      imageHeight: 152.h,
                                     );
                                   },
                                 ),
@@ -311,7 +323,7 @@ class _SupplierProfilePageState extends State<SupplierProfilePage> {
 
   Widget _buildSearchFilterCard() {
     return Padding(
-      padding: EdgeInsets.fromLTRB(AppSpacing.md, 0, AppSpacing.md, AppSpacing.xs),
+      padding: EdgeInsets.fromLTRB(AppSpacing.sm, 0, AppSpacing.sm, AppSpacing.xs),
       child: Container(
         padding: EdgeInsets.fromLTRB(14.w, 14.h, 14.w, 12.h),
         decoration: BoxDecoration(
@@ -389,207 +401,172 @@ class _SupplierProfilePageState extends State<SupplierProfilePage> {
     required int productCount,
     required double avgRating,
   }) {
-    final isVerified = _supplier?.isVerified ?? true;
+    final isVerified = _supplier?.isVerified ?? false;
+    final displayName =
+        _supplier?.companyName ?? widget.supplierName;
 
     return Container(
-      margin: EdgeInsets.symmetric(horizontal: AppSpacing.md),
-      padding: EdgeInsets.fromLTRB(16.w, 14.h, 16.w, 16.h),
+      margin: EdgeInsets.symmetric(horizontal: AppSpacing.sm),
+      padding: EdgeInsets.all(AppSpacing.md12),
       decoration: BoxDecoration(
         color: AppColors.surface,
-        borderRadius: BorderRadius.circular(22.r),
-        border: Border.all(
-          color: AppColors.white.withValues(alpha: 0.9),
-          width: 1.2,
-        ),
-        boxShadow: [
-          BoxShadow(
-            color: AppColors.primary.withValues(alpha: 0.08),
-            blurRadius: 24,
-            offset: const Offset(0, 10),
-          ),
-          BoxShadow(
-            color: AppColors.black.withValues(alpha: 0.04),
-            blurRadius: 8,
-            offset: const Offset(0, 3),
-          ),
-        ],
+        borderRadius: BorderRadius.circular(AppRadius.xl),
+        border: Border.all(color: AppColors.grey200),
       ),
       child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Row(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Container(
-                padding: EdgeInsets.all(3.r),
-                decoration: BoxDecoration(
-                  shape: BoxShape.circle,
-                  gradient: AppColors.primaryGradient,
-                ),
-                child: CircleAvatar(
-                  radius: 34.r,
-                  backgroundColor: AppColors.primaryLight,
-                  backgroundImage: resolveMediaImageProvider(_supplier?.avatar),
-                  child: _supplier?.avatar == null
-                      ? Icon(
-                          LucideIcons.store,
-                          color: AppColors.primary,
-                          size: 30.sp,
-                        )
-                      : null,
-                ),
+              BisaAvatar(
+                imageUrl: _supplier?.avatar,
+                radius: 28.r,
+                fallbackIcon: LucideIcons.store,
               ),
               SizedBox(width: AppSpacing.md12),
               Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Row(
-                      children: [
-                        Expanded(
-                          child: Text(
-                            _supplier?.companyName ??
-                                widget.supplierName,
-                            style: TextStyle(
-                              fontSize: 18.sp,
-                              fontWeight: FontWeight.w900,
-                              color: AppColors.textPrimary,
-                              letterSpacing: -0.3,
-                            ),
-                            maxLines: 2,
-                            overflow: TextOverflow.ellipsis,
-                          ),
-                        ),
-                        if (isVerified)
-                          Icon(
-                            LucideIcons.badgeCheck,
-                            color: AppColors.info,
-                            size: 20.sp,
-                          ),
-                      ],
+                    Text(
+                      displayName,
+                      style: TextStyle(
+                        fontSize: 16.sp,
+                        fontWeight: FontWeight.w700,
+                        color: AppColors.textPrimary,
+                      ),
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
                     ),
-                    SizedBox(height: 6.h),
-                    if (isVerified)
-                      Row(
-                        children: [
-                          Icon(
-                            LucideIcons.shieldCheck,
-                            color: AppColors.info,
-                            size: 13.sp,
+                    SizedBox(height: 4.h),
+                    Wrap(
+                      spacing: 6.w,
+                      runSpacing: 4.h,
+                      crossAxisAlignment: WrapCrossAlignment.center,
+                      children: [
+                        if (isVerified)
+                          Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Icon(
+                                LucideIcons.badgeCheck,
+                                size: 13.sp,
+                                color: AppColors.info,
+                              ),
+                              SizedBox(width: 3.w),
+                              Text(
+                                'marketplace.verified_supplier'.tr(),
+                                style: TextStyle(
+                                  fontSize: 11.sp,
+                                  color: AppColors.info,
+                                  fontWeight: FontWeight.w600,
+                                ),
+                              ),
+                            ],
                           ),
-                          SizedBox(width: 4.w),
-                          Flexible(
-                            child: Text(
-                              'marketplace.verified_supplier'.tr(),
-                              maxLines: 1,
-                              overflow: TextOverflow.ellipsis,
+                        Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Icon(
+                              LucideIcons.mapPin,
+                              size: 12.sp,
+                              color: AppColors.textHint,
+                            ),
+                            SizedBox(width: 3.w),
+                            Text(
+                              _locationLabel(),
                               style: TextStyle(
                                 fontSize: 11.sp,
-                                color: AppColors.info,
-                                fontWeight: FontWeight.w700,
+                                color: AppColors.textSecondary,
                               ),
                             ),
-                          ),
-                        ],
-                      ),
-                    SizedBox(height: 4.h),
-                    Row(
-                      children: [
-                        Icon(
-                          LucideIcons.mapPin,
-                          size: 12.sp,
-                          color: AppColors.textHint,
-                        ),
-                        SizedBox(width: 4.w),
-                        Expanded(
-                          child: Text(
-                            _locationLabel(),
-                            style: TextStyle(
-                              fontSize: 11.sp,
-                              color: AppColors.textSecondary,
-                            ),
-                            maxLines: 1,
-                            overflow: TextOverflow.ellipsis,
-                          ),
+                          ],
                         ),
                       ],
                     ),
                   ],
                 ),
               ),
-              SizedBox(width: AppSpacing.sm),
               FollowButton(userId: widget.supplierId, compact: true),
             ],
           ),
           SizedBox(height: AppSpacing.md12),
           UserFollowStatsRow(userId: widget.supplierId),
           SizedBox(height: AppSpacing.md12),
-          Row(
-            children: [
-              Expanded(
-                child: Supplier3DStatCard(
-                  label: 'marketplace.products_label'.tr(),
-                  value: '$productCount',
-                  color: AppColors.primary,
-                  icon: LucideIcons.package,
+          Container(
+            padding: EdgeInsets.symmetric(
+              vertical: AppSpacing.sm10,
+              horizontal: AppSpacing.sm,
+            ),
+            decoration: BoxDecoration(
+              color: AppColors.grey50,
+              borderRadius: BorderRadius.circular(AppRadius.lg),
+            ),
+            child: Row(
+              children: [
+                Expanded(
+                  child: _SupplierInlineStat(
+                    label: 'marketplace.products_label'.tr(),
+                    value: '$productCount',
+                  ),
                 ),
-              ),
-              SizedBox(width: AppSpacing.sm),
-              Expanded(
-                child: Supplier3DStatCard(
-                  label: 'marketplace.rating_label'.tr(),
-                  value: avgRating > 0
-                      ? avgRating.toStringAsFixed(1)
-                      : '-',
-                  color: AppColors.warning,
-                  icon: LucideIcons.star,
+                _SupplierStatDivider(),
+                Expanded(
+                  child: _SupplierInlineStat(
+                    label: 'marketplace.rating_label'.tr(),
+                    value: avgRating > 0 ? avgRating.toStringAsFixed(1) : '-',
+                  ),
                 ),
-              ),
-              SizedBox(width: AppSpacing.sm),
-              Expanded(
-                child: Supplier3DStatCard(
-                  label: 'marketplace.joined_label'.tr(),
-                  value: _joinLabel(),
-                  color: AppColors.success,
-                  icon: LucideIcons.calendar,
+                _SupplierStatDivider(),
+                Expanded(
+                  child: _SupplierInlineStat(
+                    label: 'marketplace.joined_label'.tr(),
+                    value: _joinLabel(),
+                  ),
                 ),
-              ),
-            ],
+              ],
+            ),
           ),
-          SizedBox(height: AppSpacing.section),
           _buildPartnershipAction(context),
           SizedBox(height: AppSpacing.sm10),
           Row(
             children: [
               Expanded(
-                child: ElevatedButton.icon(
-                  onPressed: () {},
-                  icon: Icon(LucideIcons.messageSquare, size: 18.sp),
-                  label: Text('chat'.tr()),
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: AppColors.primary,
-                    foregroundColor: AppColors.textOnPrimary,
-                    elevation: 0,
-                    padding: EdgeInsets.symmetric(vertical: AppSpacing.md12),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(AppRadius.tile),
+                child: SizedBox(
+                  height: AppSpacing.buttonHeight,
+                  child: OutlinedButton.icon(
+                    onPressed: () {},
+                    icon: Icon(LucideIcons.messageSquare, size: 16.sp),
+                    label: Text('chat'.tr()),
+                    style: OutlinedButton.styleFrom(
+                      foregroundColor: AppColors.primary,
+                      side: const BorderSide(color: AppColors.grey200),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(AppRadius.lg),
+                      ),
                     ),
                   ),
                 ),
               ),
               SizedBox(width: AppSpacing.sm10),
               Expanded(
-                child: OutlinedButton.icon(
-                  onPressed: () {},
-                  icon: Icon(LucideIcons.share2, size: 18.sp),
-                  label: Text('bagikan'.tr()),
-                  style: OutlinedButton.styleFrom(
-                    foregroundColor: AppColors.primary,
-                    padding: EdgeInsets.symmetric(vertical: AppSpacing.md12),
-                    side: BorderSide(
-                      color: AppColors.primary.withValues(alpha: 0.35),
+                child: SizedBox(
+                  height: AppSpacing.buttonHeight,
+                  child: OutlinedButton.icon(
+                    onPressed: () => ProductShareHelper.shareSupplier(
+                      supplierId: widget.supplierId,
+                      supplierName: widget.supplierName,
+                      companyName: _supplier?.companyName,
                     ),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(AppRadius.tile),
+                    icon: Icon(LucideIcons.share2, size: 16.sp),
+                    label: Text('bagikan'.tr()),
+                    style: OutlinedButton.styleFrom(
+                      foregroundColor: AppColors.textSecondary,
+                      side: const BorderSide(color: AppColors.grey200),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(AppRadius.lg),
+                      ),
                     ),
                   ),
                 ),
@@ -612,23 +589,26 @@ class _SupplierProfilePageState extends State<SupplierProfilePage> {
       return const SizedBox.shrink();
     }
 
-    return SizedBox(
-      width: double.infinity,
-      child: OutlinedButton.icon(
-        onPressed: () {
-          context.push(
-            '/partnerships/create/${widget.supplierId}',
-            extra: {'name': widget.supplierName},
-          );
-        },
-        icon: Icon(LucideIcons.handshake, size: 18.sp),
-        label: Text('buat_kontrak_kerjasama'.tr()),
-        style: OutlinedButton.styleFrom(
-          foregroundColor: AppColors.success,
-          padding: EdgeInsets.symmetric(vertical: AppSpacing.md12),
-          side: BorderSide(color: AppColors.success.withValues(alpha: 0.45)),
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(AppRadius.tile),
+    return Padding(
+      padding: EdgeInsets.only(top: AppSpacing.sm10),
+      child: SizedBox(
+        width: double.infinity,
+        height: AppSpacing.buttonHeight,
+        child: OutlinedButton.icon(
+          onPressed: () {
+            context.push(
+              '/partnerships/create/${widget.supplierId}',
+              extra: {'name': widget.supplierName},
+            );
+          },
+          icon: Icon(LucideIcons.handshake, size: 16.sp),
+          label: Text('buat_kontrak_kerjasama'.tr()),
+          style: OutlinedButton.styleFrom(
+            foregroundColor: AppColors.primary,
+            side: const BorderSide(color: AppColors.grey200),
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(AppRadius.lg),
+            ),
           ),
         ),
       ),
@@ -652,6 +632,54 @@ class _SupplierProfilePageState extends State<SupplierProfilePage> {
           ],
         ),
       ),
+    );
+  }
+}
+
+class _SupplierInlineStat extends StatelessWidget {
+  const _SupplierInlineStat({
+    required this.label,
+    required this.value,
+  });
+
+  final String label;
+  final String value;
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      children: [
+        Text(
+          value,
+          style: TextStyle(
+            fontSize: 15.sp,
+            fontWeight: FontWeight.w700,
+            color: AppColors.textPrimary,
+          ),
+        ),
+        SizedBox(height: 2.h),
+        Text(
+          label,
+          textAlign: TextAlign.center,
+          maxLines: 1,
+          overflow: TextOverflow.ellipsis,
+          style: TextStyle(
+            fontSize: 10.sp,
+            color: AppColors.textSecondary,
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+class _SupplierStatDivider extends StatelessWidget {
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: 1,
+      height: 28.h,
+      color: AppColors.grey200,
     );
   }
 }

@@ -7,9 +7,17 @@ class ReviewCubit extends Cubit<ReviewState> {
 
   ReviewCubit(this._repository) : super(const ReviewState.initial());
 
-  Future<void> getProductReviews(String productId) async {
+  Future<void> getProductReviews(
+    String productId, {
+    int? rating,
+    bool? hasMedia,
+  }) async {
     emit(const ReviewState.loading());
-    final result = await _repository.getProductReviews(productId);
+    final result = await _repository.getProductReviews(
+      productId,
+      rating: rating,
+      hasMedia: hasMedia,
+    );
     result.fold(
       (failure) => emit(ReviewState.error(failure.message)),
       (reviews) => emit(ReviewState.loaded(reviews)),

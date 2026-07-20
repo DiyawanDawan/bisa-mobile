@@ -214,7 +214,7 @@ void initState() {
                   padding: EdgeInsets.fromLTRB(AppSpacing.lg, AppSpacing.md12, AppSpacing.lg, AppSpacing.md12),
                   child: SizedBox(
                     width: double.infinity,
-                    height: 50.h,
+                    height: AppSpacing.buttonHeight,
                     child: ElevatedButton(
                       onPressed: _selectedCode == null
                           ? null

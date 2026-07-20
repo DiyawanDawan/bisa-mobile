@@ -11,9 +11,17 @@ class ReviewRepositoryImpl implements ReviewRepository {
   ReviewRepositoryImpl({required this.remoteDataSource});
 
   @override
-  Future<Either<Failure, List<ReviewModel>>> getProductReviews(String productId) async {
+  Future<Either<Failure, List<ReviewModel>>> getProductReviews(
+    String productId, {
+    int? rating,
+    bool? hasMedia,
+  }) async {
     try {
-      final reviews = await remoteDataSource.getProductReviews(productId);
+      final reviews = await remoteDataSource.getProductReviews(
+        productId,
+        rating: rating,
+        hasMedia: hasMedia,
+      );
       return Right(reviews.map((r) => r.withResolvedMedia()).toList());
     } on DioException catch (e) {
       return Left(_mapDioExceptionToFailure(e));

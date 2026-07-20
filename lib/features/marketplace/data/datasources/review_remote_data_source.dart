@@ -2,7 +2,11 @@ import 'package:dio/dio.dart';
 import '../models/review_model.dart';
 
 abstract class ReviewRemoteDataSource {
-  Future<List<ReviewModel>> getProductReviews(String productId);
+  Future<List<ReviewModel>> getProductReviews(
+    String productId, {
+    int? rating,
+    bool? hasMedia,
+  });
   Future<List<ReviewModel>> getMyReviews();
   Future<void> postReview({
     required String productId,
@@ -24,8 +28,19 @@ class ReviewRemoteDataSourceImpl implements ReviewRemoteDataSource {
   ReviewRemoteDataSourceImpl({required this.dio});
 
   @override
-  Future<List<ReviewModel>> getProductReviews(String productId) async {
-    final response = await dio.get('/reviews/products/$productId');
+  Future<List<ReviewModel>> getProductReviews(
+    String productId, {
+    int? rating,
+    bool? hasMedia,
+  }) async {
+    final response = await dio.get(
+      '/reviews/products/$productId',
+      queryParameters: {
+        if (rating != null) 'rating': rating,
+        if (hasMedia == true) 'hasMedia': true,
+        'limit': 50,
+      },
+    );
     final List data = response.data['data'];
     return data.map((e) => ReviewModel.fromJson(e)).toList();
   }

@@ -4,6 +4,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
 import 'package:mobile_bisa/core/constants/app_colors.dart';
+import 'package:mobile_bisa/core/constants/app_layout.dart';
 import 'package:mobile_bisa/core/i18n/failure_messages.dart';
 import 'package:mobile_bisa/core/utils/safe_area_utils.dart';
 import 'package:mobile_bisa/features/wallet/domain/entities/payout_account_entity.dart';
@@ -551,7 +552,7 @@ class _WalletPageState extends State<WalletPage> {
                         child: mainAccount == null
                             ? CustomButton(
                                 text: 'wallet.setup_primary_account'.tr(),
-                                height: 50.h,
+                                height: AppSpacing.buttonHeight,
                                 onPressed: () {
                                   Navigator.pop(bContext);
                                   Navigator.push(
@@ -564,7 +565,7 @@ class _WalletPageState extends State<WalletPage> {
                               )
                             : CustomButton(
                                 text: 'wallet.confirm_withdrawal'.tr(),
-                                height: 50.h,
+                                height: AppSpacing.buttonHeight,
                                 onPressed: () {
                                   final amount =
                                       double.tryParse(amountController.text) ?? 0;

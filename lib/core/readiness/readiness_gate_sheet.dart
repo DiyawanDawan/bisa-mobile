@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:go_router/go_router.dart';
 import 'package:mobile_bisa/core/constants/app_colors.dart';
+import 'package:mobile_bisa/core/constants/app_layout.dart';
 import 'package:mobile_bisa/shared/widgets/custom_button.dart';
 import 'readiness_models.dart';
 
@@ -124,7 +125,7 @@ class ReadinessGateSheet extends StatelessWidget {
           if (readiness.missing.isNotEmpty) ...[
             CustomButton(
               text: 'readiness.action_complete'.tr(),
-              height: 46.h,
+              height: AppSpacing.buttonHeight,
               useGradient: true,
               onPressed: () {
                 final route = routeForKey(readiness.missing.first);
@@ -136,7 +137,7 @@ class ReadinessGateSheet extends StatelessWidget {
           ],
           CustomButton(
             text: 'readiness.close'.tr(),
-            height: 44.h,
+            height: AppSpacing.buttonHeightSm,
             isOutlined: true,
             onPressed: () => Navigator.of(context).pop(),
           ),

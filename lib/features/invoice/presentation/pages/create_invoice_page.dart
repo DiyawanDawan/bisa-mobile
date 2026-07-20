@@ -4,6 +4,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:go_router/go_router.dart';
 import 'package:mobile_bisa/core/constants/app_colors.dart';
+import 'package:mobile_bisa/core/constants/app_layout.dart';
 import 'package:mobile_bisa/core/i18n/failure_messages.dart';
 import 'package:mobile_bisa/core/utils/app_feedback.dart';
 import 'package:mobile_bisa/core/utils/media_url_utils.dart';
@@ -419,7 +420,7 @@ class _CreateInvoicePageState extends State<CreateInvoicePage> {
                   Expanded(
                     child: CustomButton(
                       text: 'invoice.action_export_pdf'.tr(),
-                      height: 44.h,
+                      height: AppSpacing.buttonHeightSm,
                       isOutlined: true,
                       onPressed: isSubmitting
                           ? null
@@ -439,7 +440,7 @@ class _CreateInvoicePageState extends State<CreateInvoicePage> {
                   Expanded(
                     child: CustomButton(
                       text: 'invoice.action_send_to_chat'.tr(),
-                      height: 44.h,
+                      height: AppSpacing.buttonHeightSm,
                       isOutlined: true,
                       onPressed: isSubmitting
                           ? null

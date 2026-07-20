@@ -1531,7 +1531,7 @@ void _showManagementEditDialog(
                   SizedBox(height: AppSpacing.md),
                   CustomButton(
                     text: 'marketplace.save'.tr(),
-                    height: 46.h,
+                    height: AppSpacing.buttonHeight,
                     onPressed: () async {
                       if (await onSave() && ctx.mounted) Navigator.pop(ctx);
                     },
@@ -1539,7 +1539,7 @@ void _showManagementEditDialog(
                   SizedBox(height: AppSpacing.sm),
                   CustomButton(
                     text: 'batal'.tr(),
-                    height: 46.h,
+                    height: AppSpacing.buttonHeight,
                     isOutlined: true,
                     onPressed: () => Navigator.pop(ctx),
                   ),

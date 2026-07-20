@@ -11,6 +11,7 @@ import '../../domain/entities/forum_entity.dart';
 import '../widgets/forum_media_widgets.dart';
 import '../widgets/forum_content_text.dart';
 import 'package:mobile_bisa/core/i18n/locale_formatters.dart';
+import '../../../../core/utils/forum_share_helper.dart';
 
 class PostCard extends StatelessWidget {
   final ForumPostEntity post;
@@ -223,7 +224,8 @@ class PostCard extends StatelessWidget {
                       icon: LucideIcons.share2,
                       label: '',
                       color: AppColors.textSecondary,
-                      onTap: onShare,
+                      onTap: onShare ??
+                          () => ForumShareHelper.sharePost(post),
                     ),
                     const Spacer(),
                     Container(
@@ -303,8 +305,10 @@ class PostCard extends StatelessWidget {
       onTap: onTap,
       child: AnimatedContainer(
         duration: const Duration(milliseconds: 300),
-        height: 36.h,
-        constraints: BoxConstraints(minWidth: label.isEmpty ? 36.h : 0),
+        height: AppSpacing.buttonHeightSm,
+        constraints: BoxConstraints(
+          minWidth: label.isEmpty ? AppSpacing.buttonHeightSm : 0,
+        ),
         padding: EdgeInsets.symmetric(horizontal: label.isEmpty ? 0 : AppSpacing.md12),
         decoration: BoxDecoration(
           color: gradient == null

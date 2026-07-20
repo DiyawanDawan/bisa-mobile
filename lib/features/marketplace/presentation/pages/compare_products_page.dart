@@ -259,23 +259,29 @@ class _CompareProductsPageState extends State<CompareProductsPage> {
                   child: Row(
                     children: [
                       Expanded(
-                        child: OutlinedButton(
-                          onPressed: () {
-                            // TODO: Implement Simpan Draft
-                          },
-                          child: Text('product.compare_save_draft'.tr()),
+                        child: SizedBox(
+                          height: AppSpacing.buttonHeight,
+                          child: OutlinedButton(
+                            onPressed: () {
+                              // TODO: Implement Simpan Draft
+                            },
+                            child: Text('product.compare_save_draft'.tr()),
+                          ),
                         ),
                       ),
                       SizedBox(width: AppSpacing.md),
                       Expanded(
-                        child: FilledButton.icon(
-                          onPressed: selectedCount >= 2
-                              ? () {
-                                  // TODO: Implement Buat Surat Negosiasi
-                                }
-                              : null,
-                          icon: Icon(LucideIcons.mail),
-                          label: Text('product.compare_create_letter'.tr()),
+                        child: SizedBox(
+                          height: AppSpacing.buttonHeight,
+                          child: FilledButton.icon(
+                            onPressed: selectedCount >= 2
+                                ? () {
+                                    // TODO: Implement Buat Surat Negosiasi
+                                  }
+                                : null,
+                            icon: Icon(LucideIcons.mail),
+                            label: Text('product.compare_create_letter'.tr()),
+                          ),
                         ),
                       ),
                     ],

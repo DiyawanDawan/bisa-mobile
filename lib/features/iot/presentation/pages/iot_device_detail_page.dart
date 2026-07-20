@@ -440,7 +440,7 @@ class _IotDeviceDetailPageState extends State<IotDeviceDetailPage>
 
   Widget _buildActionButtons(BuildContext context) {
     return SizedBox(
-      height: 42.h,
+      height: AppSpacing.buttonHeightSm,
       child: CustomButton(
         text: 'hapus_perangkat'.tr(),
         backgroundColor: AppColors.error,

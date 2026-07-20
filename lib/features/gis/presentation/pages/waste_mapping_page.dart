@@ -14,6 +14,7 @@ import 'package:mobile_bisa/core/i18n/failure_messages.dart';
 import 'package:mobile_bisa/core/utils/app_feedback.dart';
 import 'package:mobile_bisa/core/utils/safe_area_utils.dart';
 import 'package:mobile_bisa/features/gis/domain/entities/waste_point_entity.dart';
+import 'package:mobile_bisa/features/gis/data/province_centroids.dart';
 import 'package:mobile_bisa/features/gis/presentation/bloc/gis_cubit.dart';
 import 'package:mobile_bisa/shared/widgets/bisa_app_bar.dart';
 import 'package:mobile_bisa/core/network/api_client.dart';
@@ -34,6 +35,7 @@ class _WasteMappingPageState extends State<WasteMappingPage> {
 
   // State
   String _selectedType = 'Semua';
+  bool _showMapBackground = false;
   bool _isSatellite = true;
   bool _showChoropleth = true;
   bool _showBottomPanel = false;
@@ -132,9 +134,7 @@ class _WasteMappingPageState extends State<WasteMappingPage> {
           final propName = (properties['Propinsi'] as String? ?? '')
               .toUpperCase();
           final volume = _provinceStats[propName] ?? 0.0;
-          final color = _getChoroplethColor(
-            volume.toDouble(),
-          ).withValues(alpha: 0.65);
+          final borderColor = _provinceBorderColor(propName, volume.toDouble());
 
           final geometry = feature['geometry'];
           if (geometry == null) continue;
@@ -148,9 +148,9 @@ class _WasteMappingPageState extends State<WasteMappingPage> {
               newPolygons.add(
                 Polygon<String>(
                   points: points,
-                  color: color,
-                  borderColor: AppColors.white,
-                  borderStrokeWidth: 1.5,
+                  color: AppColors.transparent,
+                  borderColor: borderColor,
+                  borderStrokeWidth: _selectedProvince == propName ? 2.5 : 1.8,
                   hitValue: propName,
                 ),
               );
@@ -162,9 +162,9 @@ class _WasteMappingPageState extends State<WasteMappingPage> {
                 newPolygons.add(
                   Polygon<String>(
                     points: points,
-                    color: color,
-                    borderColor: AppColors.white,
-                    borderStrokeWidth: 1.5,
+                    color: AppColors.transparent,
+                    borderColor: borderColor,
+                    borderStrokeWidth: _selectedProvince == propName ? 2.5 : 1.8,
                     hitValue: propName,
                   ),
                 );
@@ -202,6 +202,66 @@ class _WasteMappingPageState extends State<WasteMappingPage> {
     if (volume >= 100000) return AppColors.mapVolumeMid; // light green
     if (volume > 0) return AppColors.mapVolumeLow; // very light
     return AppColors.grey300; // grey (no data)
+  }
+
+  Color _provinceBorderColor(String provinceName, double volume) {
+    if (_selectedProvince == provinceName) return AppColors.primary;
+    return _getChoroplethColor(volume);
+  }
+
+  void _zoomToPoint(WastePointEntity point) {
+    _mapController.move(LatLng(point.lat, point.lng), 10.5);
+  }
+
+  void _zoomToProvince(String province) {
+    final bounds = _boundsForProvince(province);
+    if (bounds != null) {
+      _mapController.fitCamera(
+        CameraFit.bounds(
+          bounds: bounds,
+          padding: EdgeInsets.all(56.w),
+        ),
+      );
+      return;
+    }
+
+    final centroid = resolveProvinceCentroid(province);
+    _mapController.move(LatLng(centroid.lat, centroid.lng), 7.5);
+  }
+
+  LatLngBounds? _boundsForProvince(String province) {
+    final matching = _choroplethPolygons
+        .where((polygon) => polygon.hitValue == province)
+        .toList();
+    if (matching.isEmpty) return null;
+
+    var minLat = 90.0;
+    var maxLat = -90.0;
+    var minLng = 180.0;
+    var maxLng = -180.0;
+
+    for (final polygon in matching) {
+      for (final point in polygon.points) {
+        if (point.latitude < minLat) minLat = point.latitude;
+        if (point.latitude > maxLat) maxLat = point.latitude;
+        if (point.longitude < minLng) minLng = point.longitude;
+        if (point.longitude > maxLng) maxLng = point.longitude;
+      }
+    }
+
+    if (minLat >= maxLat || minLng >= maxLng) return null;
+    return LatLngBounds(LatLng(minLat, minLng), LatLng(maxLat, maxLng));
+  }
+
+  Future<void> _refreshChoroplethBorders() async {
+    if (!_geoJsonLoaded) return;
+    try {
+      final geoJsonString = await rootBundle.loadString(
+        'assets/indonesia_provinces.json',
+      );
+      if (!mounted) return;
+      setState(() => _rebuildChoropleth(geoJsonString));
+    } catch (_) {}
   }
 
   List<WastePointEntity> _applyFilter(List<WastePointEntity> points) {
@@ -260,16 +320,29 @@ class _WasteMappingPageState extends State<WasteMappingPage> {
               tooltip: 'gis.toggle_region_tooltip'.tr(),
             ),
             IconButton(
-              onPressed: () => setState(() => _isSatellite = !_isSatellite),
+              onPressed: () =>
+                  setState(() => _showMapBackground = !_showMapBackground),
               icon: Icon(
-                _isSatellite ? LucideIcons.map : LucideIcons.globe,
-                color: AppColors.primary,
+                LucideIcons.map,
+                color: _showMapBackground ? AppColors.primary : AppColors.grey400,
                 size: 20.sp,
               ),
-              tooltip: _isSatellite
-                  ? 'gis.map_standard_tooltip'.tr()
-                  : 'gis.map_satellite_tooltip'.tr(),
+              tooltip: _showMapBackground
+                  ? 'gis.map_satellite_tooltip'.tr()
+                  : 'gis.map_standard_tooltip'.tr(),
             ),
+            if (_showMapBackground)
+              IconButton(
+                onPressed: () => setState(() => _isSatellite = !_isSatellite),
+                icon: Icon(
+                  _isSatellite ? LucideIcons.globe : LucideIcons.map,
+                  color: AppColors.primary,
+                  size: 20.sp,
+                ),
+                tooltip: _isSatellite
+                    ? 'gis.map_standard_tooltip'.tr()
+                    : 'gis.map_satellite_tooltip'.tr(),
+              ),
           ],
         ),
         body: BlocBuilder<GisCubit, GisState>(
@@ -365,18 +438,21 @@ class _WasteMappingPageState extends State<WasteMappingPage> {
     return Stack(
       children: [
         // ── MAP ──
-        FlutterMap(
+        ColoredBox(
+          color: AppColors.grey900,
+          child: FlutterMap(
           mapController: _mapController,
           options: const MapOptions(
             initialCenter: LatLng(-2.5, 118.0),
             initialZoom: 5.0,
           ),
           children: [
-            TileLayer(
-              urlTemplate: _tileUrl,
-              userAgentPackageName: 'com.bisa.app',
-              subdomains: const ['a', 'b', 'c'],
-            ),
+            if (_showMapBackground)
+              TileLayer(
+                urlTemplate: _tileUrl,
+                userAgentPackageName: 'com.bisa.app',
+                subdomains: const ['a', 'b', 'c'],
+              ),
 
             // ── CHOROPLETH (Province boundaries) ──
             if (_showChoropleth && _choroplethPolygons.isNotEmpty)
@@ -384,11 +460,14 @@ class _WasteMappingPageState extends State<WasteMappingPage> {
                 onTap: () {
                   final hit = _hitNotifier.value;
                   if (hit != null && hit.hitValues.isNotEmpty) {
+                    final province = hit.hitValues.first;
                     setState(() {
-                      _selectedProvince = hit.hitValues.first;
+                      _selectedProvince = province;
                       _selectedPoint = null;
                       _showBottomPanel = true;
                     });
+                    _zoomToProvince(province);
+                    _refreshChoroplethBorders();
                   }
                 },
                 child: PolygonLayer(
@@ -406,16 +485,22 @@ class _WasteMappingPageState extends State<WasteMappingPage> {
                   width: isSelected ? 48.w : 38.w,
                   height: isSelected ? 48.w : 38.w,
                   child: GestureDetector(
-                    onTap: () => setState(() {
-                      _selectedPoint = point;
-                      _showBottomPanel = true;
-                    }),
+                    onTap: () {
+                      setState(() {
+                        _selectedPoint = point;
+                        _selectedProvince = null;
+                        _showBottomPanel = true;
+                      });
+                      _zoomToPoint(point);
+                      _refreshChoroplethBorders();
+                    },
                     child: _buildMarker(point.biomassaType, isSelected),
                   ),
                 );
               }).toList(),
             ),
           ],
+        ),
         ),
 
         // ── TYPE FILTER CHIPS ──
@@ -596,6 +681,7 @@ class _WasteMappingPageState extends State<WasteMappingPage> {
                 _selectedPoint = null;
                 _selectedProvince = null;
               });
+              _refreshChoroplethBorders();
             },
             child: Icon(
               LucideIcons.locateFixed,
@@ -793,6 +879,7 @@ class _WasteMappingPageState extends State<WasteMappingPage> {
                 onTap: () => setState(() {
                   _showBottomPanel = false;
                   _selectedPoint = null;
+                  _selectedProvince = null;
                 }),
                 child: Icon(LucideIcons.x, size: 20.sp, color: AppColors.grey400),
               ),
@@ -929,10 +1016,13 @@ class _WasteMappingPageState extends State<WasteMappingPage> {
                 ),
               ),
               GestureDetector(
-                onTap: () => setState(() {
-                  _showBottomPanel = false;
-                  _selectedProvince = null;
-                }),
+                onTap: () {
+                  setState(() {
+                    _showBottomPanel = false;
+                    _selectedProvince = null;
+                  });
+                  _refreshChoroplethBorders();
+                },
                 child: Icon(LucideIcons.x, size: 20.sp, color: AppColors.grey400),
               ),
             ],

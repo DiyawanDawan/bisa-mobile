@@ -114,7 +114,7 @@ class ForumGroupDetailPage extends StatelessWidget {
                           child: CustomButton(
                             text: group.isMember ? 'Leave Group' : 'Join Group',
                             isOutlined: group.isMember,
-                            height: 42.h,
+                            height: AppSpacing.buttonHeightSm,
                             onPressed: () async {
                               final isAuth = context.read<AuthCubit>().state.maybeWhen(
                                 authenticated: (_) => true,
@@ -139,7 +139,7 @@ class ForumGroupDetailPage extends StatelessWidget {
                         Expanded(
                           child: CustomButton(
                             text: 'Post in Group',
-                            height: 42.h,
+                            height: AppSpacing.buttonHeightSm,
                             onPressed: group.isMember
                                 ? () async {
                                     final created = await Navigator.push(

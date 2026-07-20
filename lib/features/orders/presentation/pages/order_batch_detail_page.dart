@@ -460,7 +460,7 @@ class _SupplierDetailCard extends StatelessWidget {
           SizedBox(height: AppSpacing.md12),
           CustomButton(
             text: 'orders.manage_store_order'.tr(),
-            height: 42.h,
+            height: AppSpacing.buttonHeightSm,
             isOutlined: true,
             onPressed: onOpenDetail,
           ),

@@ -4,6 +4,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:go_router/go_router.dart';
 import 'package:mobile_bisa/core/constants/app_colors.dart';
+import 'package:mobile_bisa/core/constants/app_layout.dart';
 import 'package:mobile_bisa/core/i18n/failure_messages.dart';
 import 'package:mobile_bisa/core/utils/app_feedback.dart';
 import 'package:mobile_bisa/features/invoice/domain/entities/invoice_draft.dart';
@@ -380,7 +381,7 @@ class _EditInvoicePageState extends State<EditInvoicePage> {
               ],
               CustomButton(
                 text: 'invoice.action_download_pdf'.tr(),
-                height: 44.h,
+                height: AppSpacing.buttonHeightSm,
                 isOutlined: true,
                 onPressed: isSubmitting
                     ? null

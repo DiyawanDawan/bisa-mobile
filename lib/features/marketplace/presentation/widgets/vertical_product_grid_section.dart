@@ -70,7 +70,7 @@ class _VerticalProductGridSectionState
       sortBy = 'pricePerUnit';
       sortOrder = 'desc';
     } else if (_sortBy == 'sold') {
-      sortBy = 'averageRating';
+      sortBy = 'totalSold';
       sortOrder = 'desc';
     } else {
       sortBy = _sortBy;

@@ -210,7 +210,7 @@ class _SupplierProductFilterSheetState extends State<SupplierProductFilterSheet>
           ),
           SizedBox(
             width: double.infinity,
-            height: 52.h,
+            height: AppSpacing.buttonHeight,
             child: ElevatedButton(
               style: ElevatedButton.styleFrom(
                 backgroundColor: AppColors.primary,
@@ -290,7 +290,7 @@ class _SupplierProductFilterSheetState extends State<SupplierProductFilterSheet>
     case 'priceDesc':
       return (sortBy: 'pricePerUnit', sortOrder: 'desc');
     case 'sold':
-      return (sortBy: 'averageRating', sortOrder: 'desc');
+      return (sortBy: 'totalSold', sortOrder: 'desc');
     case 'newest':
     default:
       return (sortBy: 'createdAt', sortOrder: 'desc');

@@ -2170,7 +2170,7 @@ class _NegotiationRoomPageState extends State<NegotiationRoomPage> {
           SizedBox(height: AppSpacing.sm10),
           CustomButton(
             text: 'negotiation.action_view_order'.tr(),
-            height: 44.h,
+            height: AppSpacing.buttonHeightSm,
             isOutlined: true,
             onPressed: () => context.push(_orderDetailRoute(n)),
           ),
@@ -2181,7 +2181,7 @@ class _NegotiationRoomPageState extends State<NegotiationRoomPage> {
             Expanded(
               child: CustomButton(
                 text: 'negotiation.action_view_invoice'.tr(),
-                height: 44.h,
+                height: AppSpacing.buttonHeightSm,
                 isOutlined: true,
                 onPressed: () => _navigateToReviewInvoice(context, n),
               ),
@@ -2190,7 +2190,7 @@ class _NegotiationRoomPageState extends State<NegotiationRoomPage> {
             Expanded(
               child: CustomButton(
                 text: 'invoice.action_edit'.tr(),
-                height: 44.h,
+                height: AppSpacing.buttonHeightSm,
                 isOutlined: true,
                 onPressed: () => _openEditInvoicePage(context, n),
               ),
@@ -2200,14 +2200,14 @@ class _NegotiationRoomPageState extends State<NegotiationRoomPage> {
         SizedBox(height: AppSpacing.sm),
         CustomButton(
           text: 'invoice.action_download_pdf'.tr(),
-          height: 44.h,
+          height: AppSpacing.buttonHeightSm,
           isOutlined: true,
           onPressed: () => _downloadInvoice(context, n.order?.id ?? n.orderId),
         ),
         SizedBox(height: AppSpacing.sm),
         CustomButton(
           text: 'negotiation.send_pdf_to_chat'.tr(),
-          height: 44.h,
+          height: AppSpacing.buttonHeightSm,
           isOutlined: true,
           onPressed: () => _sendInvoicePdfToChat(context, n),
         ),
@@ -2391,7 +2391,7 @@ class _NegotiationRoomPageState extends State<NegotiationRoomPage> {
                         Expanded(
                           child: CustomButton(
                             text: 'negotiation.action_view_invoice'.tr(),
-                            height: 44.h,
+                            height: AppSpacing.buttonHeightSm,
                             isOutlined: true,
                             onPressed: () =>
                                 _navigateToReviewInvoice(context, n),
@@ -2401,7 +2401,7 @@ class _NegotiationRoomPageState extends State<NegotiationRoomPage> {
                         Expanded(
                           child: CustomButton(
                             text: 'invoice.action_download_pdf'.tr(),
-                            height: 44.h,
+                            height: AppSpacing.buttonHeightSm,
                             isOutlined: true,
                             onPressed: () =>
                                 _downloadInvoice(context, n.order?.id ?? n.orderId),
@@ -2417,7 +2417,7 @@ class _NegotiationRoomPageState extends State<NegotiationRoomPage> {
                       child: CustomButton(
                         text: 'negotiation.action_review_pay'.tr(),
                         useGradient: true,
-                        height: 44.h,
+                        height: AppSpacing.buttonHeightSm,
                         onPressed: () => _navigateToReviewInvoice(context, n),
                       ),
                     )
@@ -2645,7 +2645,7 @@ class _NegotiationRoomPageState extends State<NegotiationRoomPage> {
               SizedBox(height: AppSpacing.md),
               CustomButton(
                 text: 'negotiation.understood'.tr(),
-                height: 44.h,
+                height: AppSpacing.buttonHeightSm,
                 onPressed: () => Navigator.pop(ctx),
               ),
             ],
