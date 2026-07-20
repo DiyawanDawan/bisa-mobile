@@ -408,14 +408,22 @@ class OrderCubit extends Cubit<OrderState> {
   Future<List<Map<String, dynamic>>> calculateDomesticShipping({
     required int originId,
     required int destinationId,
-    required int weightGrams,
+    int? weightGrams,
+    num? weight,
+    String weightUnit = 'KG',
     String? courier,
+    String? sellerId,
+    String? buyerId,
   }) async {
     final result = await _repository.calculateDomesticShipping(
       originId: originId,
       destinationId: destinationId,
       weightGrams: weightGrams,
+      weight: weight,
+      weightUnit: weightUnit,
       courier: courier,
+      sellerId: sellerId,
+      buyerId: buyerId,
     );
     return result.fold((_) => const [], (data) => data);
   }
@@ -426,6 +434,10 @@ class OrderCubit extends Cubit<OrderState> {
     required String courier,
     String? lastPhoneNumber,
   }) async {
+    if (courier.toLowerCase() == 'bisa_express') {
+      final result = await _repository.trackBisaExpressAwb(awb);
+      return result.fold((_) => null, (data) => data);
+    }
     final result = await _repository.trackShipment(
       awb: awb,
       courier: courier,

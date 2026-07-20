@@ -40,6 +40,24 @@ abstract class AppConfig {
         '94564351976-o1k5d6sd9pna74e7angarlr8qrvln2pv.apps.googleusercontent.com',
   );
 
+  /// Meta App ID (opsional). Isi lewat `--dart-define=FACEBOOK_APP_ID=...`
+  /// dan mirror ke `android/local.properties` (`facebook.app.id`).
+  static const String facebookAppId = String.fromEnvironment(
+    'FACEBOOK_APP_ID',
+    defaultValue: '',
+  );
+
+  static const String facebookClientToken = String.fromEnvironment(
+    'FACEBOOK_CLIENT_TOKEN',
+    defaultValue: '',
+  );
+
+  static bool get hasFacebookNativeConfig =>
+      facebookAppId.isNotEmpty &&
+      facebookAppId != 'FACEBOOK_APP_ID' &&
+      facebookClientToken.isNotEmpty &&
+      facebookClientToken != 'FACEBOOK_CLIENT_TOKEN';
+
   static String? _runtimeApiUrl;
   static String? _runtimeMediaBaseUrl;
 

@@ -72,11 +72,18 @@ class GisRepositoryImpl implements GisRepository {
       final models = await remoteDataSource.getWastePoints();
       return Right(models.map((e) => e.toEntity()).toList());
     } on DioException catch (e) {
+      final apiMsg = e.response?.data is Map
+          ? (e.response!.data['message'] as String?)
+          : null;
       return Left(
-        ServerFailure(message: e.message ?? 'errors.gis_waste_map_load'),
+        ServerFailure(
+          message: apiMsg?.isNotEmpty == true
+              ? apiMsg!
+              : (e.message ?? 'errors.gis_waste_map_load'),
+        ),
       );
     } catch (e) {
-      return const Left(UnexpectedFailure());
+      return const Left(UnexpectedFailure('errors.gis_waste_map_load'));
     }
   }
 

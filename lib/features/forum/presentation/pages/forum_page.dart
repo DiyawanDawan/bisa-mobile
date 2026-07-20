@@ -224,7 +224,12 @@ class _ForumPageState extends State<ForumPage> {
                       ForumPublicGroupsSection(key: ValueKey(_groupsRefreshToken)),
                       // Create Post Header
                       Container(
-                        margin: EdgeInsets.all(AppSpacing.lg),
+                        margin: EdgeInsets.fromLTRB(
+                          AppSpacing.lg,
+                          AppSpacing.sm,
+                          AppSpacing.lg,
+                          AppSpacing.md,
+                        ),
                         padding: EdgeInsets.all(AppSpacing.md),
                         decoration: BoxDecoration(
                           color: AppColors.surface,

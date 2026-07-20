@@ -634,7 +634,8 @@ class InvoicePdfExporter {
     );
     final dir = await getTemporaryDirectory();
     final safeName = data.invoiceNumber.replaceAll(RegExp(r'[#/\\:*?"<>|]'), '-');
-    final file = File('${dir.path}/tagihan-$safeName.pdf');
+    final stamp = DateTime.now().millisecondsSinceEpoch;
+    final file = File('${dir.path}/tagihan-$safeName-$stamp.pdf');
     await file.writeAsBytes(bytes, flush: true);
     return file;
   }

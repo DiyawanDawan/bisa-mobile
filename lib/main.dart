@@ -196,8 +196,6 @@ class MyApp extends StatelessWidget {
           localizationsDelegates: context.localizationDelegates,
           supportedLocales: context.supportedLocales,
           locale: locale,
-          
-          
         );
       },
       ),

@@ -12,6 +12,8 @@ import 'package:mobile_bisa/features/orders/domain/entities/order_entity.dart';
 import 'package:mobile_bisa/features/invoice/presentation/bloc/edit_invoice_cubit.dart';
 import 'package:mobile_bisa/features/invoice/presentation/utils/invoice_export_helper.dart';
 import 'package:mobile_bisa/features/invoice/presentation/widgets/invoice_breakdown_card.dart';
+import 'package:mobile_bisa/features/invoice/presentation/widgets/invoice_deal_economics_card.dart';
+import 'package:mobile_bisa/features/invoice/presentation/widgets/invoice_product_summary_card.dart';
 import 'package:mobile_bisa/features/invoice/presentation/widgets/invoice_shipping_edit_card.dart';
 import 'package:mobile_bisa/features/invoice/presentation/widgets/invoice_status_banner.dart';
 import 'package:mobile_bisa/features/invoice/presentation/widgets/invoice_issue_checklist_card.dart';
@@ -32,11 +34,44 @@ class EditInvoicePage extends StatefulWidget {
 
 class _EditInvoicePageState extends State<EditInvoicePage> {
   final _specsController = TextEditingController();
+  final _qtyController = TextEditingController();
+  final _priceController = TextEditingController();
+  bool _controllersSeeded = false;
 
   @override
   void dispose() {
     _specsController.dispose();
+    _qtyController.dispose();
+    _priceController.dispose();
     super.dispose();
+  }
+
+  void _seedControllers(InvoiceDraft draft) {
+    if (_controllersSeeded) return;
+    _specsController.text = draft.specifications;
+    _qtyController.text = draft.quantity.toStringAsFixed(
+      draft.quantity % 1 == 0 ? 0 : 1,
+    );
+    _priceController.text = draft.pricePerUnit.toStringAsFixed(0);
+    _controllersSeeded = true;
+  }
+
+  ({double subtotal, double platformFee, double vatAmount, double total})
+      _recalcTotals(OrderEntity order, InvoiceDraft draft) {
+    final subtotal = draft.quantity * draft.pricePerUnit;
+    final base = order.subtotal;
+    double platformFee = order.platformFee;
+    double vat = order.vatAmount;
+    if (base > 0 && subtotal != base) {
+      platformFee = subtotal * (order.platformFee / base);
+      vat = subtotal * (order.vatAmount / base);
+    }
+    return (
+      subtotal: subtotal,
+      platformFee: platformFee,
+      vatAmount: vat,
+      total: subtotal + platformFee + vat + order.logisticsFee,
+    );
   }
 
   @override
@@ -75,9 +110,8 @@ class _EditInvoicePageState extends State<EditInvoicePage> {
         body: BlocConsumer<EditInvoiceCubit, EditInvoiceState>(
           listener: (context, state) {
             if (state.status == EditInvoiceStatus.loaded &&
-                state.draft != null &&
-                _specsController.text.isEmpty) {
-              _specsController.text = state.draft!.specifications;
+                state.draft != null) {
+              _seedControllers(state.draft!);
             }
             if (state.status == EditInvoiceStatus.success) {
               showSuccessSnackBar(context, 'invoice.update_success'.tr());
@@ -112,10 +146,17 @@ class _EditInvoicePageState extends State<EditInvoicePage> {
             }
 
             final product = order.items.isNotEmpty ? order.items.first : null;
+            final negotiation = state.negotiation;
             final isSubmitting = state.status == EditInvoiceStatus.submitting;
             final canEdit = state.canEdit;
             final saveReadiness = state.saveReadiness;
             final canSave = saveReadiness.canIssue && !isSubmitting;
+            final totals = _recalcTotals(order, draft);
+            final unit = negotiation?.product.unit ??
+                product?.productUnit ??
+                'unit';
+            final catalogPrice =
+                negotiation?.product.pricePerUnit ?? product?.pricePerUnit;
 
             return Column(
               children: [
@@ -136,30 +177,79 @@ class _EditInvoicePageState extends State<EditInvoicePage> {
                           color: canEdit ? AppColors.primary : AppColors.textHint,
                         ),
                         SizedBox(height: 14.h),
-                        _infoCard([
-                          _infoRow(
-                            'invoice.label_invoice_number'.tr(),
-                            order.orderNumber,
+                        InvoiceProductSummaryCard(
+                          invoiceNumber: order.orderNumber,
+                          productName: product?.productName ??
+                              negotiation?.product.name ??
+                              'Produk',
+                          quantity: draft.quantity,
+                          pricePerUnit: draft.pricePerUnit,
+                          unit: unit,
+                          thumbnailUrl: product?.thumbnailUrl ??
+                              negotiation?.product.thumbnailUrl,
+                          catalogPricePerUnit: catalogPrice,
+                        ),
+                        if (canEdit) ...[
+                          SizedBox(height: 14.h),
+                          Container(
+                            width: double.infinity,
+                            padding: EdgeInsets.all(14.w),
+                            decoration: BoxDecoration(
+                              color: AppColors.surface,
+                              borderRadius: BorderRadius.circular(14.r),
+                              border: Border.all(color: AppColors.grey200),
+                            ),
+                            child: Column(
+                              children: [
+                                CustomTextField(
+                                  label: 'invoice.qty_adjust_label'.tr(
+                                    namedArgs: {'unit': unit},
+                                  ),
+                                  hint: 'invoice.qty_adjust_hint'.tr(),
+                                  controller: _qtyController,
+                                  keyboardType: TextInputType.number,
+                                  isRequired: true,
+                                  onChanged: (v) {
+                                    final qty = double.tryParse(v);
+                                    if (qty == null) return;
+                                    context.read<EditInvoiceCubit>().updateDraft(
+                                          draft.copyWith(quantity: qty),
+                                        );
+                                  },
+                                ),
+                                SizedBox(height: 12.h),
+                                CustomTextField(
+                                  label: 'invoice.price_adjust_label'.tr(
+                                    namedArgs: {'unit': unit},
+                                  ),
+                                  hint: 'invoice.price_adjust_hint'.tr(),
+                                  controller: _priceController,
+                                  keyboardType: TextInputType.number,
+                                  isRequired: true,
+                                  onChanged: (v) {
+                                    final price = double.tryParse(v);
+                                    if (price == null) return;
+                                    context.read<EditInvoiceCubit>().updateDraft(
+                                          draft.copyWith(pricePerUnit: price),
+                                        );
+                                  },
+                                ),
+                              ],
+                            ),
                           ),
-                          if (product != null) ...[
-                            _infoRow(
-                              'invoice.label_product'.tr(),
-                              product.productName,
-                            ),
-                            _infoRow(
-                              'invoice.label_qty'.tr(),
-                              '${product.quantity.toStringAsFixed(0)} unit',
-                            ),
-                          ],
-                        ]),
+                        ],
+                        if (state.economics != null) ...[
+                          SizedBox(height: 14.h),
+                          InvoiceDealEconomicsCard(economics: state.economics!),
+                        ],
                         SizedBox(height: 14.h),
                         InvoiceBreakdownCard(
                           title: 'invoice.breakdown_title'.tr(),
-                          subtotal: order.subtotal,
-                          platformFee: order.platformFee,
+                          subtotal: totals.subtotal,
+                          platformFee: totals.platformFee,
                           logisticsFee: order.logisticsFee,
-                          vatAmount: order.vatAmount,
-                          totalAmount: order.totalAmount,
+                          vatAmount: totals.vatAmount,
+                          totalAmount: totals.total,
                         ),
                         SizedBox(height: 14.h),
                         InvoiceShippingEditCard(

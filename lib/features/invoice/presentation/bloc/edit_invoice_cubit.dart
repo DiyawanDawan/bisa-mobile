@@ -1,7 +1,9 @@
 import 'package:flutter_bloc/flutter_bloc.dart';
+import '../../../negotiation/domain/entities/negotiation_entity.dart';
 import '../../../negotiation/domain/repositories/negotiation_repository.dart';
 import '../../../orders/domain/entities/order_entity.dart';
 import '../../../orders/domain/repositories/order_repository.dart';
+import '../../domain/entities/invoice_deal_economics.dart';
 import '../../domain/entities/invoice_draft.dart';
 import '../../domain/repositories/invoice_repository.dart';
 import '../utils/invoice_issue_readiness.dart';
@@ -12,12 +14,14 @@ class EditInvoiceState {
   final EditInvoiceStatus status;
   final OrderEntity? order;
   final InvoiceDraft? draft;
+  final NegotiationEntity? negotiation;
   final String? errorMessage;
 
   const EditInvoiceState({
     this.status = EditInvoiceStatus.initial,
     this.order,
     this.draft,
+    this.negotiation,
     this.errorMessage,
   });
 
@@ -25,25 +29,42 @@ class EditInvoiceState {
     EditInvoiceStatus? status,
     OrderEntity? order,
     InvoiceDraft? draft,
+    NegotiationEntity? negotiation,
     String? errorMessage,
   }) {
     return EditInvoiceState(
       status: status ?? this.status,
       order: order ?? this.order,
       draft: draft ?? this.draft,
+      negotiation: negotiation ?? this.negotiation,
       errorMessage: errorMessage,
     );
   }
 
   bool get canEdit => order?.status == 'PENDING';
+
+  InvoiceDealEconomics? get economics {
+    final n = negotiation;
+    final d = draft;
+    final o = order;
+    if (n == null || d == null || o == null) return n?.economics;
+    return InvoiceDealEconomics.compute(
+      catalogPricePerUnit: n.product.pricePerUnit,
+      negotiatedPricePerUnit: d.pricePerUnit,
+      quantity: d.quantity,
+      platformFee: o.platformFee,
+      productStock: n.product.stock,
+      unit: n.product.unit,
+    );
+  }
 }
 
 extension EditInvoiceStateReadiness on EditInvoiceState {
   InvoiceIssueReadiness get saveReadiness =>
       InvoiceIssueReadinessEvaluator.evaluateEditShipping(
         canEdit: canEdit,
-        shippingBlockers:
-            draft?.shippingFieldBlockers() ?? ['invoice.error_data_not_loaded'],
+        shippingBlockers: draft?.validationBlockers() ??
+            ['invoice.error_data_not_loaded'],
       );
 }
 
@@ -90,6 +111,7 @@ class EditInvoiceCubit extends Cubit<EditInvoiceState> {
           (order) => emit(state.copyWith(
             status: EditInvoiceStatus.loaded,
             order: order,
+            negotiation: negotiation,
             draft: InvoiceDraft.fromOrder(order),
           )),
         );
@@ -98,7 +120,7 @@ class EditInvoiceCubit extends Cubit<EditInvoiceState> {
   }
 
   void updateDraft(InvoiceDraft draft) {
-    emit(state.copyWith(draft: draft));
+    emit(state.copyWith(draft: draft, status: EditInvoiceStatus.loaded));
   }
 
   Future<bool> saveChanges() async {
@@ -123,6 +145,11 @@ class EditInvoiceCubit extends Cubit<EditInvoiceState> {
       return false;
     }
 
+    final product = order.items.isNotEmpty ? order.items.first : null;
+    final priceChanged = product == null ||
+        draft.pricePerUnit != product.pricePerUnit ||
+        draft.quantity != product.quantity;
+
     emit(state.copyWith(status: EditInvoiceStatus.submitting, errorMessage: null));
     final result = await _invoiceRepository.updatePendingInvoice(
       order.id,
@@ -130,6 +157,8 @@ class EditInvoiceCubit extends Cubit<EditInvoiceState> {
       specifications: draft.specifications.trim().isEmpty
           ? ''
           : draft.specifications.trim(),
+      quantity: priceChanged ? draft.quantity : null,
+      pricePerUnit: priceChanged ? draft.pricePerUnit : null,
     );
 
     return result.fold(

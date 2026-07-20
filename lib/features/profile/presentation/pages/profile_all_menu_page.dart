@@ -67,13 +67,6 @@ class ProfileAllMenuPage extends StatelessWidget {
                   color: AppColors.info,
                   onTap: () => context.push('/addresses'),
                 ),
-                if (!isSupplier)
-                  _MenuGridItem(
-                    icon: LucideIcons.creditCard,
-                    label: 'profile.menu_short_payment'.tr(),
-                    color: AppColors.warning,
-                    onTap: () => context.push('/payment-methods'),
-                  ),
                 _MenuGridItem(
                   icon: LucideIcons.lock,
                   label: 'profile.menu_short_password'.tr(),

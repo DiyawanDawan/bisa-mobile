@@ -19,6 +19,7 @@ import '../../../../core/utils/safe_area_utils.dart' show clearBisaSnackBars;
 import '../../../../core/utils/safe_navigator.dart';
 import '../../../../injection_container.dart';
 import '../../../auth/domain/repositories/auth_repository.dart';
+import '../../../auth/presentation/bloc/auth_cubit.dart';
 import '../../../profile/domain/entities/address_entity.dart';
 import '../../../../shared/widgets/bisa_avatar.dart';
 import '../../../../shared/widgets/bisa_app_bar.dart';
@@ -803,6 +804,9 @@ class _CartPageState extends State<CartPage> {
           return {
             ...sel,
             'sellerId': entry.key,
+            'weight': (_estimateWeightGrams(entry.value) / 1000),
+            'weightUnit': 'KG',
+            // Bridge lama — diabaikan backend bila weight ada
             'weightGrams': _estimateWeightGrams(entry.value),
           };
         })
@@ -919,11 +923,18 @@ class _CartPageState extends State<CartPage> {
       }
 
       try {
+        final buyerId = context.read<AuthCubit>().state.maybeWhen(
+              authenticated: (user) => user.id,
+              orElse: () => null,
+            );
         final options = await orderCubit.calculateDomesticShipping(
           originId: originId,
           destinationId: destinationId,
-          weightGrams: newWeight,
+          weight: newWeight / 1000,
+          weightUnit: 'KG',
           courier: courierCode,
+          sellerId: sellerId,
+          buyerId: buyerId,
         );
         if (!mounted) return;
 
@@ -1125,12 +1136,20 @@ class _CartPageState extends State<CartPage> {
       }
 
       final weightGrams = _estimateWeightGrams(group.items);
+      final weightKg = weightGrams / 1000;
       final courierCode = _courierBySeller[group.seller.id];
+      final buyerId = context.read<AuthCubit>().state.maybeWhen(
+            authenticated: (user) => user.id,
+            orElse: () => null,
+          );
       final options = await orderCubit.calculateDomesticShipping(
         originId: originId,
         destinationId: destinationId,
-        weightGrams: weightGrams,
+        weight: weightKg,
+        weightUnit: 'KG',
         courier: courierCode,
+        sellerId: group.seller.id,
+        buyerId: buyerId,
       );
 
       if (!mounted) return;
@@ -1165,6 +1184,8 @@ class _CartPageState extends State<CartPage> {
               ? buyerDestinationLabel
               : destination?['label']?.toString(),
           'weightGrams': weightGrams,
+          'weight': weightKg,
+          'weightUnit': 'KG',
           'courierCode': chosen['code']?.toString() ?? '',
           'serviceCode': chosen['service']?.toString(),
           'serviceName': chosen['description']?.toString() ??
@@ -1561,6 +1582,8 @@ class _CartPageState extends State<CartPage> {
                     final service = option['service']?.toString() ?? '-';
                     final description = option['description']?.toString() ?? service;
                     final etd = option['etd']?.toString() ?? '-';
+                    final isBisaExpress =
+                        option['code']?.toString().toLowerCase() == 'bisa_express';
 
                     return InkWell(
                       onTap: () => safeNavigatorPop(ctx, option),
@@ -1568,18 +1591,47 @@ class _CartPageState extends State<CartPage> {
                       child: Container(
                         padding: EdgeInsets.all(AppSpacing.md12),
                         decoration: BoxDecoration(
-                          border: Border.all(color: AppColors.grey200),
+                          border: Border.all(
+                            color: isBisaExpress
+                                ? AppColors.primary.withValues(alpha: 0.45)
+                                : AppColors.grey200,
+                          ),
                           borderRadius: BorderRadius.circular(AppRadius.lg),
                         ),
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            Text(
-                              '$code - $service',
-                              style: TextStyle(
-                                fontSize: 13.sp,
-                                fontWeight: FontWeight.w800,
-                              ),
+                            Row(
+                              children: [
+                                Expanded(
+                                  child: Text(
+                                    '$code - $service',
+                                    style: TextStyle(
+                                      fontSize: 13.sp,
+                                      fontWeight: FontWeight.w800,
+                                    ),
+                                  ),
+                                ),
+                                if (isBisaExpress)
+                                  Container(
+                                    padding: EdgeInsets.symmetric(
+                                      horizontal: 8.w,
+                                      vertical: 2.h,
+                                    ),
+                                    decoration: BoxDecoration(
+                                      color: AppColors.primary.withValues(alpha: 0.12),
+                                      borderRadius: BorderRadius.circular(999),
+                                    ),
+                                    child: Text(
+                                      'cart.bisa_express_internal'.tr(),
+                                      style: TextStyle(
+                                        fontSize: 10.sp,
+                                        fontWeight: FontWeight.w700,
+                                        color: AppColors.primary,
+                                      ),
+                                    ),
+                                  ),
+                              ],
                             ),
                             SizedBox(height: 2.h),
                             Text(

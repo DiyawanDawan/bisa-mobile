@@ -3,7 +3,9 @@ import 'dart:async';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/foundation.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:flutter_facebook_auth/flutter_facebook_auth.dart';
 import 'package:freezed_annotation/freezed_annotation.dart';
 import 'package:google_sign_in/google_sign_in.dart';
 import 'package:mobile_bisa/firebase_options.dart';
@@ -33,10 +35,53 @@ class AuthCubit extends Cubit<AuthState> {
       ).signOut();
     } catch (_) {}
     try {
+      await FacebookAuth.instance.logOut();
+    } catch (_) {}
+    try {
       if (Firebase.apps.isNotEmpty) {
         await FirebaseAuth.instance.signOut();
       }
     } catch (_) {}
+  }
+
+  /// Hindari menampilkan pesan teknis pigeon/channel ke user.
+  String _friendlyAuthError(Object error, {required String fallbackKey}) {
+    if (error is FirebaseAuthException) {
+      final code = error.code.toLowerCase();
+      if (code == 'canceled' ||
+          code == 'web-context-canceled' ||
+          code == 'user-cancelled' ||
+          code == 'ERROR_CANCELLED') {
+        return '';
+      }
+      final msg = (error.message ?? '').trim();
+      if (_isTechnicalAuthMessage(msg) || _isTechnicalAuthMessage(code)) {
+        return fallbackKey;
+      }
+      if (msg.isNotEmpty) return msg;
+      return fallbackKey;
+    }
+    if (error is PlatformException) {
+      final msg = (error.message ?? error.code).trim();
+      if (_isTechnicalAuthMessage(msg) || _isTechnicalAuthMessage(error.code)) {
+        return fallbackKey;
+      }
+      return msg.isNotEmpty ? msg : fallbackKey;
+    }
+    final raw = error.toString();
+    if (_isTechnicalAuthMessage(raw)) return fallbackKey;
+    return fallbackKey;
+  }
+
+  bool _isTechnicalAuthMessage(String value) {
+    final v = value.toLowerCase();
+    return v.contains('pigeon') ||
+        v.contains('firebaseauthhostapi') ||
+        v.contains('signinwithprovider') ||
+        v.contains('signinwithcredential') ||
+        v.contains('dev.flutter') ||
+        v.contains('platformexception') ||
+        v.contains('channel-error');
   }
 
   Future<void> login(String email, String password) async {
@@ -107,39 +152,74 @@ class AuthCubit extends Cubit<AuthState> {
         debugPrint('[Auth] Google FirebaseAuthException: ${e.code} ${e.message}');
       }
       await _signOutSocialProviders();
-      emit(AuthState.error(e.message ?? 'errors.google_sign_in'));
+      final msg = _friendlyAuthError(e, fallbackKey: 'errors.google_sign_in');
+      if (msg.isEmpty) {
+        emit(const AuthState.initial());
+      } else {
+        emit(AuthState.error(msg));
+      }
     } catch (e, st) {
       if (kDebugMode) {
         debugPrint('[Auth] Google sign-in failed: $e\n$st');
       }
       await _signOutSocialProviders();
-      emit(const AuthState.error('errors.google_sign_in'));
+      emit(AuthState.error(
+        _friendlyAuthError(e, fallbackKey: 'errors.google_sign_in'),
+      ));
     }
   }
 
-  /// Facebook → Firebase Auth (`signInWithProvider`) → kirim ID token ke `/auth/facebook`.
-  /// OAuth redirect memakai https://bisa-51853.firebaseapp.com/__/auth/handler
+  /// Facebook Login:
+  /// 1) Native SDK (`flutter_facebook_auth`) bila App ID dikonfigurasi
+  /// 2) Fallback Firebase `signInWithProvider` (butuh taskAffinity tidak kosong)
+  /// Lalu kirim Firebase ID token ATAU Facebook access token ke `/auth/facebook`.
   Future<void> loginWithFacebook() async {
     try {
       emit(const AuthState.loading());
       await _ensureFirebaseReady();
 
-      final facebookProvider = FacebookAuthProvider()
-        ..addScope('email')
-        ..addScope('public_profile')
-        ..setCustomParameters({'display': 'popup'});
+      String? backendToken;
 
-      final userCredential =
-          await FirebaseAuth.instance.signInWithProvider(facebookProvider);
-      final firebaseIdToken = await userCredential.user?.getIdToken(true);
+      // Path A — Facebook native SDK → Firebase credential (atau kirim access token)
+      final native = await _loginFacebookNativeAccessToken();
+      if (native.cancelled) {
+        emit(const AuthState.initial());
+        return;
+      }
+      final accessToken = native.token;
+      if (accessToken != null && accessToken.isNotEmpty) {
+        try {
+          final credential = FacebookAuthProvider.credential(accessToken);
+          final userCredential =
+              await FirebaseAuth.instance.signInWithCredential(credential);
+          backendToken = await userCredential.user?.getIdToken(true);
+        } catch (e) {
+          if (kDebugMode) {
+            debugPrint(
+              '[Auth] Firebase Facebook credential gagal, kirim access token: $e',
+            );
+          }
+          backendToken = accessToken;
+        }
+      }
 
-      if (firebaseIdToken == null || firebaseIdToken.isEmpty) {
+      // Path B — Firebase OAuth browser (tanpa native Facebook SDK)
+      if (backendToken == null || backendToken.isEmpty) {
+        final facebookProvider = FacebookAuthProvider()
+          ..addScope('email')
+          ..addScope('public_profile');
+        final userCredential =
+            await FirebaseAuth.instance.signInWithProvider(facebookProvider);
+        backendToken = await userCredential.user?.getIdToken(true);
+      }
+
+      if (backendToken == null || backendToken.isEmpty) {
         await _signOutSocialProviders();
         emit(const AuthState.error('auth.facebook_token_failed'));
         return;
       }
 
-      final result = await _repository.loginWithFacebook(firebaseIdToken);
+      final result = await _repository.loginWithFacebook(backendToken);
       await result.fold(
         (failure) async {
           await _signOutSocialProviders();
@@ -152,17 +232,52 @@ class AuthCubit extends Cubit<AuthState> {
         debugPrint('[Auth] Facebook FirebaseAuthException: ${e.code} ${e.message}');
       }
       await _signOutSocialProviders();
-      if (e.code == 'canceled' || e.code == 'web-context-canceled') {
+      final msg = _friendlyAuthError(e, fallbackKey: 'errors.facebook_sign_in');
+      if (msg.isEmpty) {
         emit(const AuthState.initial());
-        return;
+      } else {
+        emit(AuthState.error(msg));
       }
-      emit(AuthState.error(e.message ?? 'errors.facebook_sign_in'));
     } catch (e, st) {
       if (kDebugMode) {
         debugPrint('[Auth] Facebook sign-in failed: $e\n$st');
       }
       await _signOutSocialProviders();
-      emit(const AuthState.error('errors.facebook_sign_in'));
+      final msg = _friendlyAuthError(e, fallbackKey: 'errors.facebook_sign_in');
+      if (msg.isEmpty) {
+        emit(const AuthState.initial());
+      } else {
+        emit(AuthState.error(msg));
+      }
+    }
+  }
+
+  /// Hasil login Facebook native SDK.
+  Future<({bool cancelled, String? token})> _loginFacebookNativeAccessToken() async {
+    try {
+      final result = await FacebookAuth.instance.login(
+        permissions: const ['email', 'public_profile'],
+        loginTracking: LoginTracking.enabled,
+      );
+      if (result.status == LoginStatus.cancelled) {
+        return (cancelled: true, token: null);
+      }
+      if (result.status != LoginStatus.success) {
+        if (kDebugMode) {
+          debugPrint(
+            '[Auth] Facebook SDK status=${result.status} msg=${result.message}',
+          );
+        }
+        return (cancelled: false, token: null);
+      }
+      final token = result.accessToken;
+      if (token == null) return (cancelled: false, token: null);
+      return (cancelled: false, token: token.tokenString);
+    } catch (e) {
+      if (kDebugMode) {
+        debugPrint('[Auth] Facebook native SDK unavailable: $e');
+      }
+      return (cancelled: false, token: null);
     }
   }
 

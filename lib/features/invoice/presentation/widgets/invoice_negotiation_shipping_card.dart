@@ -4,6 +4,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:mobile_bisa/core/constants/app_colors.dart';
 import 'package:mobile_bisa/core/utils/money_format.dart';
+import 'package:mobile_bisa/features/auth/presentation/bloc/auth_cubit.dart';
 import 'package:mobile_bisa/features/invoice/presentation/bloc/create_invoice_cubit.dart';
 import 'package:mobile_bisa/features/orders/presentation/bloc/order_cubit.dart';
 import 'package:mobile_bisa/shared/widgets/custom_button.dart';
@@ -119,12 +120,20 @@ class _InvoiceNegotiationShippingCardState
       }
 
       final qty = draft.quantity;
-      final weightGrams = (qty * 1000).ceil().clamp(1000, 500000);
+      final authState = context.read<AuthCubit>().state;
+      final sellerId = authState.maybeWhen(
+        authenticated: (user) => user.id,
+        orElse: () => null,
+      );
+      final buyerId = cubit.state.preview?.buyerId;
       final options = await orderCubit.calculateDomesticShipping(
         originId: originId,
         destinationId: destinationId,
-        weightGrams: weightGrams,
+        weight: qty,
+        weightUnit: 'KG',
         courier: _courierCode,
+        sellerId: sellerId,
+        buyerId: buyerId,
       );
       if (!mounted) return;
       if (options.isEmpty) {
@@ -209,7 +218,8 @@ class _InvoiceNegotiationShippingCardState
         'originId': originId,
         'destinationId': destinationId,
         'destinationLabel': destination['label']?.toString(),
-        'weightGrams': weightGrams,
+        'weight': qty,
+        'weightUnit': 'KG',
         'courierCode': selected['code']?.toString() ?? '',
         'serviceCode': selected['service']?.toString(),
         'serviceName': selected['description']?.toString() ??

@@ -22,6 +22,7 @@ import 'features/marketplace/data/repositories/marketplace_repository_impl.dart'
 import 'features/orders/data/datasources/order_remote_data_source.dart';
 import 'features/orders/domain/repositories/order_repository.dart';
 import 'features/orders/data/repositories/order_repository_impl.dart';
+import 'features/bisa_express/data/datasources/bisa_express_remote_data_source.dart';
 import 'features/forum/data/datasources/forum_remote_data_source.dart';
 import 'features/forum/data/datasources/forum_group_remote_data_source.dart';
 import 'features/forum/domain/repositories/forum_repository.dart';
@@ -230,6 +231,11 @@ Future<void> init() async {
   );
   sl.registerLazySingleton<OrderRepository>(
     () => OrderRepositoryImpl(remoteDataSource: sl()),
+  );
+
+  //! Features - BISA Express
+  sl.registerLazySingleton(
+    () => BisaExpressRemoteDataSource(sl<ApiClient>().dio),
   );
 
   //! Features - Forum

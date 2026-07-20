@@ -23,9 +23,9 @@ class ForumPublicGroupsSection extends StatelessWidget {
         builder: (context, state) {
           if (state is ForumGroupLoading || state is ForumGroupInitial) {
             return Padding(
-              padding: EdgeInsets.only(bottom: AppSpacing.lg),
+              padding: EdgeInsets.only(bottom: AppSpacing.sm),
               child: SizedBox(
-                height: 132.h,
+                height: 112.h,
                 child: const Center(
                   child: SizedBox(
                     width: 24,
@@ -39,7 +39,12 @@ class ForumPublicGroupsSection extends StatelessWidget {
 
           if (state is ForumGroupError) {
             return Padding(
-              padding: EdgeInsets.fromLTRB(AppSpacing.lg, 0, AppSpacing.lg, AppSpacing.lg),
+              padding: EdgeInsets.fromLTRB(
+                AppSpacing.lg,
+                0,
+                AppSpacing.lg,
+                AppSpacing.sm,
+              ),
               child: Row(
                 children: [
                   Expanded(
@@ -67,7 +72,7 @@ class ForumPublicGroupsSection extends StatelessWidget {
 
           final groups = state.groups.take(8).toList();
           return Padding(
-            padding: EdgeInsets.only(bottom: AppSpacing.lg),
+            padding: EdgeInsets.only(bottom: AppSpacing.xs),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
@@ -104,9 +109,9 @@ class ForumPublicGroupsSection extends StatelessWidget {
                     ],
                   ),
                 ),
-                SizedBox(height: AppSpacing.sm),
+                SizedBox(height: AppSpacing.xs),
                 SizedBox(
-                  height: 148.h,
+                  height: 118.h,
                   child: ListView.separated(
                     scrollDirection: Axis.horizontal,
                     padding: EdgeInsets.symmetric(horizontal: AppSpacing.lg),

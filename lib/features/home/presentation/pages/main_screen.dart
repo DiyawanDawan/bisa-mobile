@@ -88,14 +88,14 @@ class _MainScreenState extends State<MainScreen> {
   }
 
   List<Widget> _getPages(bool isSupplier) => [
-    isSupplier
-        ? const StoreManagementPage()
-        : MarketplacePage(onProductModeChanged: _onProductModeChanged),
-    NegotiationListPage(activeProductMode: _activeProductMode),
-    const ForumPage(),
-    OrdersPage(activeProductMode: _activeProductMode),
-    ProfilePage(activeProductMode: _activeProductMode),
-  ];
+        isSupplier
+            ? const StoreManagementPage()
+            : MarketplacePage(onProductModeChanged: _onProductModeChanged),
+        NegotiationListPage(activeProductMode: _activeProductMode),
+        const ForumPage(),
+        OrdersPage(activeProductMode: _activeProductMode),
+        ProfilePage(activeProductMode: _activeProductMode),
+      ];
 
   void _selectTab(int index) {
     final tab = index.clamp(0, 4);
@@ -196,5 +196,4 @@ class _MainScreenState extends State<MainScreen> {
       },
     );
   }
-
 }

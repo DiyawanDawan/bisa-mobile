@@ -10,6 +10,7 @@ import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
 import 'package:mobile_bisa/core/constants/app_layout.dart';
 import 'package:mobile_bisa/core/constants/app_colors.dart';
+import 'package:mobile_bisa/core/i18n/failure_messages.dart';
 import 'package:mobile_bisa/core/utils/app_feedback.dart';
 import 'package:mobile_bisa/core/utils/safe_area_utils.dart';
 import 'package:mobile_bisa/features/gis/domain/entities/waste_point_entity.dart';
@@ -286,20 +287,34 @@ class _WasteMappingPageState extends State<WasteMappingPage> {
                 ],
               ),
               error: (msg) => Center(
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Icon(
-                      LucideIcons.mapPinOff,
-                      size: 40.sp,
-                      color: AppColors.grey400,
-                    ),
-                    SizedBox(height: AppSpacing.md12),
-                    Text(
-                      msg,
-                      style: TextStyle(color: AppColors.grey400, fontSize: 13.sp),
-                    ),
-                  ],
+                child: Padding(
+                  padding: EdgeInsets.symmetric(horizontal: AppSpacing.xl),
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Icon(
+                        LucideIcons.mapPinOff,
+                        size: 40.sp,
+                        color: AppColors.grey400,
+                      ),
+                      SizedBox(height: AppSpacing.md12),
+                      Text(
+                        msg.localizedFailure,
+                        textAlign: TextAlign.center,
+                        style: TextStyle(
+                          color: AppColors.grey400,
+                          fontSize: 13.sp,
+                        ),
+                      ),
+                      SizedBox(height: AppSpacing.md),
+                      TextButton.icon(
+                        onPressed: () =>
+                            context.read<GisCubit>().getWastePoints(),
+                        icon: Icon(LucideIcons.refreshCw, size: 16.sp),
+                        label: Text('marketplace.retry'.tr()),
+                      ),
+                    ],
+                  ),
                 ),
               ),
               wasteMapLoaded: (points) {

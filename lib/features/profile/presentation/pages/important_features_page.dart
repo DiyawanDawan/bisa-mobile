@@ -62,13 +62,6 @@ class ImportantFeaturesPage extends StatelessWidget {
                   }
                 : () => context.push('/login'),
           ),
-          if (loggedIn)
-            _tile(
-              icon: LucideIcons.wallet,
-              title: 'profile.features_payment_methods_title'.tr(),
-              subtitle: 'profile.features_payment_methods_subtitle'.tr(),
-              onTap: () => context.push('/payment-methods'),
-            ),
           SizedBox(height: AppSpacing.section),
           _sectionTitle('profile.features_section_tracking'.tr()),
           _tile(

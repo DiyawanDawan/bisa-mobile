@@ -91,8 +91,12 @@ abstract class OrderRepository {
   Future<Either<Failure, List<Map<String, dynamic>>>> calculateDomesticShipping({
     required int originId,
     required int destinationId,
-    required int weightGrams,
+    int? weightGrams,
+    num? weight,
+    String weightUnit = 'KG',
     String? courier,
+    String? sellerId,
+    String? buyerId,
   });
   Future<Either<Failure, Map<String, dynamic>>> trackShipment({
     required String awb,
@@ -100,6 +104,7 @@ abstract class OrderRepository {
     String? lastPhoneNumber,
     String? orderId,
   });
+  Future<Either<Failure, Map<String, dynamic>>> trackBisaExpressAwb(String awb);
   Future<Either<Failure, List<Map<String, dynamic>>>> getPickupVehicles();
   Future<Either<Failure, List<String>>> getActiveCouriers();
   Future<Either<Failure, List<Map<String, dynamic>>>> requestPickup({

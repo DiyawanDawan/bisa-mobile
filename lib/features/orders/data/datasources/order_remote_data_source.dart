@@ -93,8 +93,12 @@ abstract class OrderRemoteDataSource {
   Future<List<Map<String, dynamic>>> calculateDomesticShipping({
     required int originId,
     required int destinationId,
-    required int weightGrams,
+    int? weightGrams,
+    num? weight,
+    String weightUnit = 'KG',
     String? courier,
+    String? sellerId,
+    String? buyerId,
   });
   Future<Map<String, dynamic>> trackShipment({
     required String awb,
@@ -102,6 +106,7 @@ abstract class OrderRemoteDataSource {
     String? lastPhoneNumber,
     String? orderId,
   });
+  Future<Map<String, dynamic>> trackBisaExpressAwb(String awb);
   Future<List<Map<String, dynamic>>> getPickupVehicles();
   Future<List<String>> getActiveCouriers();
   Future<List<Map<String, dynamic>>> requestPickup({
@@ -239,7 +244,11 @@ class OrderRemoteDataSourceImpl implements OrderRemoteDataSource {
     final response = await dio.get('/orders/$id');
     // SEC-MOB-006: jangan log full response order (berisi PII buyer/seller + harga).
     if (kDebugMode) debugPrint('ORDER DETAIL status=${response.statusCode}');
-    return OrderModel.fromJson(response.data['data']);
+    final raw = response.data['data'];
+    if (raw is! Map) {
+      throw StateError('Response detail pesanan tidak berisi data.');
+    }
+    return OrderModel.fromJson(Map<String, dynamic>.from(raw));
   }
 
   @override
@@ -472,16 +481,28 @@ class OrderRemoteDataSourceImpl implements OrderRemoteDataSource {
   Future<List<Map<String, dynamic>>> calculateDomesticShipping({
     required int originId,
     required int destinationId,
-    required int weightGrams,
+    int? weightGrams,
+    num? weight,
+    String weightUnit = 'KG',
     String? courier,
+    String? sellerId,
+    String? buyerId,
   }) async {
+    final qty = weight ??
+        (weightGrams != null ? (weightGrams / 1000) : null);
+    if (qty == null || qty <= 0) {
+      throw ArgumentError('weight atau weightGrams wajib diisi');
+    }
     final response = await dio.post(
       '/shipping/calculate-domestic',
       data: {
         'originId': originId,
         'destinationId': destinationId,
-        'weightGrams': weightGrams,
+        'weight': qty,
+        'weightUnit': weightUnit,
         if (courier != null && courier.isNotEmpty) 'courier': courier,
+        if (sellerId != null && sellerId.isNotEmpty) 'sellerId': sellerId,
+        if (buyerId != null && buyerId.isNotEmpty) 'buyerId': buyerId,
       },
     );
     final raw = response.data['data'] as List? ?? const [];
@@ -508,6 +529,12 @@ class OrderRemoteDataSourceImpl implements OrderRemoteDataSource {
       },
     );
     return Map<String, dynamic>.from(response.data['data'] as Map);
+  }
+
+  @override
+  Future<Map<String, dynamic>> trackBisaExpressAwb(String awb) async {
+    final response = await dio.get('/bisa-express/track/${Uri.encodeComponent(awb)}');
+    return Map<String, dynamic>.from(response.data['data'] as Map? ?? {});
   }
 
   @override

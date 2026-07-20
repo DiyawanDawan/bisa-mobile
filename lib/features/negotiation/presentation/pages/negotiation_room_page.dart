@@ -32,6 +32,7 @@ import 'package:mobile_bisa/features/negotiation/presentation/widgets/negotiatio
 import 'package:mobile_bisa/shared/widgets/handwriting_input_sheet.dart';
 import 'package:mobile_bisa/shared/widgets/linkified_text.dart';
 import 'package:mobile_bisa/features/invoice/domain/repositories/invoice_repository.dart';
+import 'package:mobile_bisa/features/negotiation/domain/repositories/negotiation_repository.dart';
 import 'package:mobile_bisa/features/orders/domain/repositories/order_repository.dart';
 import 'package:url_launcher/url_launcher.dart';
 
@@ -1378,8 +1379,25 @@ class _NegotiationRoomPageState extends State<NegotiationRoomPage> {
     BuildContext context,
     NegotiationEntity n,
   ) async {
-    if (n.orderId == null) return;
-    final result = await sl<OrderRepository>().getOrderDetail(n.orderId!);
+    final orderId = n.order?.id ?? n.orderId;
+    if (orderId == null || orderId.isEmpty) {
+      showErrorSnackBar(context, 'invoice.error_not_issued_negotiation'.tr());
+      return;
+    }
+
+    var result = await sl<OrderRepository>().getOrderDetail(orderId);
+    // Refresh detail sekali jika order stale / belum sinkron setelah terbit tagihan.
+    if (result.isLeft()) {
+      final refreshed = await sl<NegotiationRepository>().getNegotiationDetail(n.id);
+      if (!context.mounted) return;
+      final freshOrderId = refreshed.fold(
+        (_) => null,
+        (nego) => nego.order?.id ?? nego.orderId,
+      );
+      if (freshOrderId != null && freshOrderId.isNotEmpty) {
+        result = await sl<OrderRepository>().getOrderDetail(freshOrderId);
+      }
+    }
     if (!context.mounted) return;
     await result.fold(
       (failure) async {
@@ -1391,6 +1409,22 @@ class _NegotiationRoomPageState extends State<NegotiationRoomPage> {
           context.read<NegotiationCubit>().getDetail(n.id, showLoading: false);
         }
       },
+    );
+  }
+
+  Future<void> _downloadInvoice(BuildContext context, String? orderId) async {
+    final resolved = orderId?.trim();
+    if (resolved == null || resolved.isEmpty) {
+      showErrorSnackBar(context, 'invoice.error_not_issued_negotiation'.tr());
+      return;
+    }
+    final result = await sl<OrderRepository>().getOrderDetail(resolved);
+    if (!context.mounted) return;
+    result.fold(
+      (failure) {
+        showFailureSnackBarFromMessage(context, failure.message);
+      },
+      (order) => InvoiceExportHelper.exportOrder(context, order),
     );
   }
 
@@ -1525,17 +1559,6 @@ class _NegotiationRoomPageState extends State<NegotiationRoomPage> {
           ),
         );
       },
-    );
-  }
-
-  Future<void> _downloadInvoice(BuildContext context, String orderId) async {
-    final result = await sl<OrderRepository>().getOrderDetail(orderId);
-    if (!context.mounted) return;
-    result.fold(
-      (failure) {
-        showFailureSnackBarFromMessage(context, failure.message);
-      },
-      (order) => InvoiceExportHelper.exportOrder(context, order),
     );
   }
 
@@ -2179,7 +2202,7 @@ class _NegotiationRoomPageState extends State<NegotiationRoomPage> {
           text: 'invoice.action_download_pdf'.tr(),
           height: 44.h,
           isOutlined: true,
-          onPressed: () => _downloadInvoice(context, n.orderId!),
+          onPressed: () => _downloadInvoice(context, n.order?.id ?? n.orderId),
         ),
         SizedBox(height: AppSpacing.sm),
         CustomButton(
@@ -2381,7 +2404,7 @@ class _NegotiationRoomPageState extends State<NegotiationRoomPage> {
                             height: 44.h,
                             isOutlined: true,
                             onPressed: () =>
-                                _downloadInvoice(context, n.orderId!),
+                                _downloadInvoice(context, n.order?.id ?? n.orderId),
                           ),
                         ),
                       ],

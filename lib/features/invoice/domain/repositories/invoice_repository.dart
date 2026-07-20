@@ -26,5 +26,7 @@ abstract class InvoiceRepository {
     String orderId, {
     Map<String, dynamic>? shippingSnapshot,
     String? specifications,
+    double? quantity,
+    double? pricePerUnit,
   });
 }

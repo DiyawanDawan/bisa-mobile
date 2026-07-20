@@ -100,6 +100,7 @@ class NegotiationRepositoryImpl implements NegotiationRepository {
         finalAttachmentUrl = await remoteDataSource.uploadFile(
           localFilePath,
           contentType: isPdf ? 'application/pdf' : null,
+          forceFresh: isPdf,
         );
       }
       await remoteDataSource.sendChatMessage(
@@ -340,7 +341,12 @@ class NegotiationRepositoryImpl implements NegotiationRepository {
             return ForbiddenFailure(msg);
           }
         case 404:
-          return const NotFoundFailure();
+          {
+            final msg = message?.toString().trim();
+            return NotFoundFailure(
+              (msg != null && msg.isNotEmpty) ? msg : 'errors.not_found',
+            );
+          }
         case 422:
           {
             final readiness = ReadinessService.failureFromResponseData(data, message);

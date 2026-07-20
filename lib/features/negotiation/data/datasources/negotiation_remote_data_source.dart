@@ -1,6 +1,7 @@
 import 'package:dio/dio.dart';
 import 'package:flutter/foundation.dart';
 import 'package:mobile_bisa/core/media/media_upload_queue.dart';
+import 'package:mobile_bisa/core/utils/media_url_utils.dart';
 import 'package:mobile_bisa/features/marketplace/presentation/bloc/marketplace_cubit.dart';
 import '../models/negotiation_model.dart';
 
@@ -53,7 +54,11 @@ abstract class NegotiationRemoteDataSource {
     String? attachmentUrl,
     String? purpose,
   });
-  Future<String> uploadFile(String filePath, {String? contentType});
+  Future<String> uploadFile(
+    String filePath, {
+    String? contentType,
+    bool forceFresh = false,
+  });
   Future<void> setTypingStatus(String negotiationId, bool isTyping);
   Future<void> editChatMessage(
     String negotiationId,
@@ -269,12 +274,22 @@ class NegotiationRemoteDataSourceImpl implements NegotiationRemoteDataSource {
   }
 
   @override
-  Future<String> uploadFile(String filePath, {String? contentType}) async {
+  Future<String> uploadFile(
+    String filePath, {
+    String? contentType,
+    bool forceFresh = false,
+  }) async {
     final uploaded = await uploadQueue.uploadFile(
       localPath: filePath,
       folder: 'negotiations',
+      forceFresh: forceFresh,
     );
-    return uploaded.url ?? uploaded.path;
+    // Chat schema butuh URL absolut; path R2 dinormalisasi lewat resolveMediaUrl.
+    final resolved = resolveMediaUrl(uploaded.url ?? uploaded.path);
+    if (resolved.isEmpty) {
+      throw StateError('Upload berhasil tapi URL lampiran kosong.');
+    }
+    return resolved;
   }
 
   @override

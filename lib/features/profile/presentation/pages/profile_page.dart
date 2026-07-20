@@ -596,11 +596,12 @@ class ProfilePage extends StatelessWidget {
                 'profile.menu_addresses'.tr(),
                 () => context.push('/addresses'),
               ),
-              _menuItem(
-                LucideIcons.creditCard,
-                'profile.menu_payment_methods'.tr(),
-                () => context.push('/payment-methods'),
-              ),
+              if (isSupplier)
+                _menuItem(
+                  LucideIcons.creditCard,
+                  'profile.menu_payment_methods'.tr(),
+                  () => context.push('/payment-methods'),
+                ),
               _menuItem(
                 LucideIcons.lock,
                 'profile.menu_change_password'.tr(),

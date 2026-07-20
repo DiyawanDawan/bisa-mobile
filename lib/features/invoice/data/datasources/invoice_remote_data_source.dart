@@ -16,6 +16,8 @@ abstract class InvoiceRemoteDataSource {
     String orderId, {
     Map<String, dynamic>? shippingSnapshot,
     String? specifications,
+    double? quantity,
+    double? pricePerUnit,
   });
 }
 
@@ -69,10 +71,14 @@ class InvoiceRemoteDataSourceImpl implements InvoiceRemoteDataSource {
     String orderId, {
     Map<String, dynamic>? shippingSnapshot,
     String? specifications,
+    double? quantity,
+    double? pricePerUnit,
   }) async {
     await dio.put('/orders/$orderId/invoice', data: {
       if (shippingSnapshot != null) 'shippingSnapshot': shippingSnapshot,
       if (specifications != null) 'specifications': specifications,
+      if (quantity != null) 'quantity': quantity,
+      if (pricePerUnit != null) 'pricePerUnit': pricePerUnit,
     });
   }
 }

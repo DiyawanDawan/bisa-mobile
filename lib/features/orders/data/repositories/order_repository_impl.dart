@@ -454,15 +454,23 @@ class OrderRepositoryImpl implements OrderRepository {
   Future<Either<Failure, List<Map<String, dynamic>>>> calculateDomesticShipping({
     required int originId,
     required int destinationId,
-    required int weightGrams,
+    int? weightGrams,
+    num? weight,
+    String weightUnit = 'KG',
     String? courier,
+    String? sellerId,
+    String? buyerId,
   }) async {
     try {
       final data = await remoteDataSource.calculateDomesticShipping(
         originId: originId,
         destinationId: destinationId,
         weightGrams: weightGrams,
+        weight: weight,
+        weightUnit: weightUnit,
         courier: courier,
+        sellerId: sellerId,
+        buyerId: buyerId,
       );
       return Right(data);
     } on DioException catch (e) {
@@ -486,6 +494,18 @@ class OrderRepositoryImpl implements OrderRepository {
         lastPhoneNumber: lastPhoneNumber,
         orderId: orderId,
       );
+      return Right(data);
+    } on DioException catch (e) {
+      return Left(_mapDioExceptionToFailure(e));
+    } catch (e) {
+      return const Left(UnexpectedFailure());
+    }
+  }
+
+  @override
+  Future<Either<Failure, Map<String, dynamic>>> trackBisaExpressAwb(String awb) async {
+    try {
+      final data = await remoteDataSource.trackBisaExpressAwb(awb);
       return Right(data);
     } on DioException catch (e) {
       return Left(_mapDioExceptionToFailure(e));
@@ -557,7 +577,12 @@ class OrderRepositoryImpl implements OrderRepository {
         case 403:
           return ForbiddenFailure(message);
         case 404:
-          return const NotFoundFailure();
+          {
+            final msg = message?.toString().trim();
+            return NotFoundFailure(
+              (msg != null && msg.isNotEmpty) ? msg : 'errors.not_found',
+            );
+          }
         case 422:
           {
             final readiness = ReadinessService.failureFromResponseData(data, message);

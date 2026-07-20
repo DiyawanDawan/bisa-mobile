@@ -25,6 +25,8 @@ import 'package:mobile_bisa/features/orders/presentation/utils/payment_method_re
 import 'package:mobile_bisa/features/orders/presentation/utils/payment_result_utils.dart';
 import 'package:mobile_bisa/features/orders/presentation/widgets/order_dispute_section.dart';
 import 'package:mobile_bisa/features/orders/presentation/widgets/payment_expiry_banner.dart';
+import 'package:mobile_bisa/features/bisa_express/data/datasources/bisa_express_remote_data_source.dart';
+import 'package:mobile_bisa/features/bisa_express/presentation/widgets/bisa_express_timeline_sheet.dart';
 import 'package:mobile_bisa/features/orders/presentation/widgets/order_tracking_map.dart';
 import 'package:mobile_bisa/features/orders/presentation/widgets/payment_method_picker_sheet.dart';
 import 'package:mobile_bisa/features/marketplace/presentation/pages/write_review_page.dart';
@@ -71,6 +73,7 @@ class _OrderDetailPageState extends State<OrderDetailPage> {
   bool _autoPickTriggered = false;
   bool _paymentBusy = false;
   bool _trackingSyncBusy = false;
+  bool _requestPickupBusy = false;
   bool _showFullReview = false;
   final _imagePicker = ImagePicker();
   /// Cubit lokal dari BlocProvider halaman ini — jangan pakai `context.read`
@@ -1121,6 +1124,16 @@ class _OrderDetailPageState extends State<OrderDetailPage> {
             'orders.action_update_shipping'.tr(),
             AppColors.primary,
             () => _showUpdateTrackingDialog(context, o),
+          ),
+        if (isSupplier &&
+            o.status == 'PROCESSING' &&
+            (o.shipment?.courierCode?.toLowerCase() == 'bisa_express' ||
+                o.orderShipping?.courierCode?.toLowerCase() == 'bisa_express'))
+          _actionButton(
+            'orders.bisa_express_request_pickup'.tr(),
+            AppColors.secondary,
+            _requestPickupBusy ? null : () => _requestBisaExpressPickup(context, o),
+            useGradient: true,
           ),
         if (o.status.toUpperCase() == 'DISPUTED') ...[
           _actionButton(
@@ -2219,32 +2232,70 @@ class _OrderDetailPageState extends State<OrderDetailPage> {
           shipment.awbNumber!.isNotEmpty &&
           shipment.courierCode != null &&
           shipment.courierCode!.isNotEmpty) {
+        final isBisaExpress =
+            shipment.courierCode!.toLowerCase() == 'bisa_express';
         rows.add(
           Padding(
             padding: EdgeInsets.only(top: 4.h),
-            child: OutlinedButton.icon(
-              onPressed: _trackingSyncBusy ? null : () => _syncTrackingFromRajaOngkir(o),
-              icon: _trackingSyncBusy
-                  ? SizedBox(
-                      width: AppSpacing.section,
-                      height: AppSpacing.section,
-                      child: const CircularProgressIndicator(strokeWidth: 2),
-                    )
-                  : Icon(LucideIcons.refreshCcw, size: 15.sp),
-              label: Text(
-                _trackingSyncBusy
-                    ? 'orders.tracking_syncing'.tr()
-                    : 'orders.tracking_sync_button'.tr(),
-                style: TextStyle(fontSize: 12.sp, fontWeight: FontWeight.w700),
-              ),
-              style: OutlinedButton.styleFrom(
-                foregroundColor: AppColors.primary,
-                side: BorderSide(color: AppColors.primary.withValues(alpha: 0.5)),
-                minimumSize: Size(double.infinity, 42.h),
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(AppRadius.md),
+            child: Column(
+              children: [
+                if (isBisaExpress) ...[
+                  OutlinedButton.icon(
+                    onPressed: () => BisaExpressTimelineSheet.show(
+                      context,
+                      awb: shipment.awbNumber!,
+                    ),
+                    icon: Icon(LucideIcons.route, size: 15.sp),
+                    label: Text(
+                      'orders.bisa_express_view_timeline'.tr(),
+                      style: TextStyle(
+                        fontSize: 12.sp,
+                        fontWeight: FontWeight.w700,
+                      ),
+                    ),
+                    style: OutlinedButton.styleFrom(
+                      foregroundColor: AppColors.primary,
+                      side: BorderSide(
+                        color: AppColors.primary.withValues(alpha: 0.5),
+                      ),
+                      minimumSize: Size(double.infinity, 42.h),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(AppRadius.md),
+                      ),
+                    ),
+                  ),
+                  SizedBox(height: AppSpacing.sm),
+                ],
+                OutlinedButton.icon(
+                  onPressed:
+                      _trackingSyncBusy ? null : () => _syncTrackingFromRajaOngkir(o),
+                  icon: _trackingSyncBusy
+                      ? SizedBox(
+                          width: AppSpacing.section,
+                          height: AppSpacing.section,
+                          child: const CircularProgressIndicator(strokeWidth: 2),
+                        )
+                      : Icon(LucideIcons.refreshCcw, size: 15.sp),
+                  label: Text(
+                    _trackingSyncBusy
+                        ? 'orders.tracking_syncing'.tr()
+                        : isBisaExpress
+                            ? 'orders.tracking_sync_button_bisa'.tr()
+                            : 'orders.tracking_sync_button'.tr(),
+                    style: TextStyle(fontSize: 12.sp, fontWeight: FontWeight.w700),
+                  ),
+                  style: OutlinedButton.styleFrom(
+                    foregroundColor: AppColors.primary,
+                    side: BorderSide(
+                      color: AppColors.primary.withValues(alpha: 0.5),
+                    ),
+                    minimumSize: Size(double.infinity, 42.h),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(AppRadius.md),
+                    ),
+                  ),
                 ),
-              ),
+              ],
             ),
           ),
         );
@@ -2265,6 +2316,32 @@ class _OrderDetailPageState extends State<OrderDetailPage> {
     }
 
     return _buildSection('orders.section_shipping_address'.tr(), rows);
+  }
+
+  Future<void> _requestBisaExpressPickup(
+    BuildContext context,
+    OrderEntity order,
+  ) async {
+    setState(() => _requestPickupBusy = true);
+    try {
+      await sl<BisaExpressRemoteDataSource>().requestPickup(orderId: order.id);
+      if (!mounted) return;
+      showBisaSnackBar(
+        context,
+        content: Text('orders.bisa_express_request_pickup_success'.tr()),
+        backgroundColor: AppColors.success,
+      );
+      await _reloadOrderDetail(silent: true);
+    } catch (e) {
+      if (!mounted) return;
+      showBisaSnackBar(
+        context,
+        content: Text('orders.bisa_express_request_pickup_failed'.tr()),
+        backgroundColor: AppColors.error,
+      );
+    } finally {
+      if (mounted) setState(() => _requestPickupBusy = false);
+    }
   }
 
   Future<void> _syncTrackingFromRajaOngkir(OrderEntity order) async {
@@ -2303,6 +2380,9 @@ class _OrderDetailPageState extends State<OrderDetailPage> {
         content: Text('orders.tracking_sync_success'.tr()),
         backgroundColor: AppColors.success,
       );
+      if (courier.toLowerCase() == 'bisa_express') {
+        await BisaExpressTimelineSheet.show(context, awb: awb);
+      }
     } finally {
       if (mounted) {
         setState(() => _trackingSyncBusy = false);

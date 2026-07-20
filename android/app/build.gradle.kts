@@ -19,6 +19,22 @@ if (hasReleaseKeystore) {
     keystoreProperties.load(FileInputStream(keystorePropertiesFile))
 }
 
+val localProperties = Properties()
+val localPropertiesFile = rootProject.file("local.properties")
+if (localPropertiesFile.exists()) {
+    localProperties.load(FileInputStream(localPropertiesFile))
+}
+
+fun resolveFacebookProp(key: String, envKey: String): String {
+    val fromLocal = localProperties.getProperty(key)?.trim().orEmpty()
+    if (fromLocal.isNotEmpty()) return fromLocal
+    return System.getenv(envKey)?.trim().orEmpty()
+}
+
+val facebookAppId = resolveFacebookProp("facebook.app.id", "FACEBOOK_APP_ID")
+val facebookClientToken =
+    resolveFacebookProp("facebook.client.token", "FACEBOOK_CLIENT_TOKEN")
+
 android {
     namespace = "com.apps.mobile_bisa"
     compileSdk = flutter.compileSdkVersion
@@ -40,6 +56,15 @@ android {
         versionCode = flutter.versionCode
         versionName = flutter.versionName
         multiDexEnabled = true
+
+        // Override placeholder strings.xml jika local.properties / env diisi.
+        if (facebookAppId.isNotEmpty()) {
+            resValue("string", "facebook_app_id", facebookAppId)
+            resValue("string", "fb_login_protocol_scheme", "fb$facebookAppId")
+        }
+        if (facebookClientToken.isNotEmpty()) {
+            resValue("string", "facebook_client_token", facebookClientToken)
+        }
     }
 
     packaging {

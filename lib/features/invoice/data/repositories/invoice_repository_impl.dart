@@ -84,12 +84,16 @@ class InvoiceRepositoryImpl implements InvoiceRepository {
     String orderId, {
     Map<String, dynamic>? shippingSnapshot,
     String? specifications,
+    double? quantity,
+    double? pricePerUnit,
   }) async {
     try {
       await remoteDataSource.updatePendingInvoice(
         orderId,
         shippingSnapshot: shippingSnapshot,
         specifications: specifications,
+        quantity: quantity,
+        pricePerUnit: pricePerUnit,
       );
       return const Right(null);
     } on DioException catch (e) {

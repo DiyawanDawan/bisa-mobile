@@ -18,8 +18,7 @@ class InvoiceDealEconomicsCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final e = economics;
-    final discountColor =
-        e.hasDiscount ? AppColors.success : AppColors.warning;
+    final discountColor = AppColors.error;
 
     return Container(
       width: double.infinity,
@@ -85,7 +84,7 @@ class InvoiceDealEconomicsCard extends StatelessWidget {
             _metricRow(
               'invoice.deal_buyer_savings'.tr(),
               '${formatMoneyIdr(e.savingsTotal)} (${e.discountPercentTotal.toStringAsFixed(1)}%)',
-              valueColor: AppColors.success,
+              valueColor: AppColors.error,
             ),
           ],
           SizedBox(height: 8.h),
@@ -188,12 +187,13 @@ class InvoiceDealEconomicsCard extends StatelessWidget {
   }
 
   Widget _badge(String text, Color color) {
+    final isDiscount = color == AppColors.error;
     return Padding(
       padding: EdgeInsets.only(top: 4.h, bottom: 4.h),
       child: Container(
         padding: EdgeInsets.symmetric(horizontal: 10.w, vertical: 4.h),
         decoration: BoxDecoration(
-          color: color.withValues(alpha: 0.12),
+          color: isDiscount ? AppColors.error : color.withValues(alpha: 0.12),
           borderRadius: BorderRadius.circular(8.r),
         ),
         child: Text(
@@ -201,7 +201,7 @@ class InvoiceDealEconomicsCard extends StatelessWidget {
           style: TextStyle(
             fontSize: 11.sp,
             fontWeight: FontWeight.w800,
-            color: color,
+            color: isDiscount ? AppColors.white : color,
           ),
         ),
       ),
