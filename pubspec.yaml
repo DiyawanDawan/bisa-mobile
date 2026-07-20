@@ -123,6 +123,9 @@ dev_dependencies:
   json_serializable: ^6.8.0
   build_runner: ^2.14.1
 
+dependency_overrides:
+  flutter_rotation_sensor: ^0.3.0
+
 flutter_launcher_icons:
   android: true
   ios: true
