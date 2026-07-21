@@ -47,7 +47,9 @@ class ImportantFeaturesPage extends StatelessWidget {
             icon: LucideIcons.sparkles,
             title: 'profile.features_bisa_pro_iot_title'.tr(),
             subtitle: 'pro.matrix_upgrade_hint'.tr(),
-            onTap: () => context.push('/iot-subscription'),
+            onTap: () => context.push(
+              loggedIn ? '/iot-subscription' : '/login',
+            ),
           ),
           SizedBox(height: AppSpacing.section),
           _sectionTitle('profile.features_section_payment'.tr()),
@@ -144,12 +146,13 @@ class ImportantFeaturesPage extends StatelessWidget {
               subtitle: 'rfq.menu_inbox_subtitle'.tr(),
               onTap: () => context.push('/rfq/inbox'),
             ),
-          _tile(
-            icon: LucideIcons.building2,
-            title: 'marketplace.supplier_directory'.tr(),
-            subtitle: 'marketplace.supplier_directory_hint'.tr(),
-            onTap: () => context.push('/supplier-directory'),
-          ),
+          if (!isSupplier)
+            _tile(
+              icon: LucideIcons.building2,
+              title: 'marketplace.supplier_directory'.tr(),
+              subtitle: 'marketplace.supplier_directory_hint'.tr(),
+              onTap: () => context.push('/supplier-directory'),
+            ),
           _tile(
             icon: LucideIcons.layoutGrid,
             title: 'profile.features_browse_catalog_title'.tr(),

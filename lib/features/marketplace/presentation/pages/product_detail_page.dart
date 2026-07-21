@@ -2146,137 +2146,117 @@ class _ProductDetailPageState extends State<ProductDetailPage> {
                       ),
                     ),
                   ),
+                // Bar aksi gaya Shopee: chat + nego + keranjang menempel tanpa gap.
                 Padding(
-                  padding: EdgeInsets.fromLTRB(
-                    AppSpacing.xl,
-                    AppSpacing.md,
-                    AppSpacing.xl,
-                    AppSpacing.md,
-                  ),
-                  child: Row(
-                    children: [
-                      // Minimal Floating Chat Button
-                      Container(
-                        height: 56.h,
-                        width: 56.h,
-                        decoration: BoxDecoration(
-                          color: AppColors.surface,
-                          borderRadius: BorderRadius.circular(AppRadius.xl),
-                          border: Border.all(color: AppColors.grey100),
-                          boxShadow: [
-                            BoxShadow(
-                              color: AppColors.black.withValues(alpha: 0.12),
-                              blurRadius: 12,
-                              offset: const Offset(0, 4),
-                            ),
-                          ],
-                        ),
-                        child: IconButton(
-                          icon: Icon(
-                            LucideIcons.messageSquare,
-                            color: AppColors.primary,
-                          ),
-                          onPressed: () {
-                            ProductSellerChat.open(
-                              context: context,
-                              product: p,
-                            );
-                          },
-                        ),
-                      ),
-                      SizedBox(width: AppSpacing.md12),
-                      // Nego Button
-                      Expanded(
-                        child: Container(
-                          height: 56.h,
-                          decoration: BoxDecoration(
-                            color: AppColors.surface,
-                            borderRadius: BorderRadius.circular(AppRadius.xl),
-                            border: Border.all(
-                              color: AppColors.primary,
-                              width: 1.5,
-                            ),
-                          ),
-                          child: TextButton(
-                            onPressed: () {
-                              if (!isAuthenticated) {
-                                AuthSheet.show(context);
-                                return;
-                              }
-                              _showNegotiationSheet();
-                            },
-                            child: Text(
-                              'marketplace.nego_price'.tr(),
-                              style: TextStyle(
-                                fontSize: 15.sp,
-                                fontWeight: FontWeight.w800,
-                                color: AppColors.primary,
-                              ),
-                            ),
-                          ),
-                        ),
-                      ),
-                      SizedBox(width: AppSpacing.md12),
-                      // Floating Buy Button
-                      Expanded(
-                        child: Container(
-                          height: 56.h,
-                          decoration: BoxDecoration(
-                            gradient: AppColors.primaryGradient,
-                            borderRadius: BorderRadius.circular(AppRadius.xl),
-                            boxShadow: [
-                              BoxShadow(
-                                color: AppColors.primary.withValues(alpha: 0.3),
-                                blurRadius: 12,
-                                offset: const Offset(0, 4),
-                              ),
-                            ],
-                          ),
-                          child: ElevatedButton(
-                            onPressed: () async {
-                              if (!isAuthenticated) {
-                                AuthSheet.show(context);
-                                return;
-                              }
-                              final ok = await context
-                                  .read<CommerceCubit>()
-                                  .addToCart(p.id, p.minOrder);
-                              if (context.mounted && ok) {
-                                showCustomSnackBar(
-                                  context,
-                                  content: Text(
-                                    'marketplace.added_to_cart'.tr(namedArgs: {
-                                      'qty': '${p.minOrder.toInt()}',
-                                      'unit': p.unit,
-                                    }),
-                                  ),
-                                  backgroundColor: AppColors.success,
-                                  action: SnackBarAction(
-                                    label: 'marketplace.view_cart'.tr(),
-                                    onPressed: () => context.push('/cart'),
-                                  ),
+                  padding: EdgeInsets.only(top: AppSpacing.md12),
+                  child: SizedBox(
+                    height: AppSpacing.buttonHeightLg,
+                    width: double.infinity,
+                    child: Row(
+                      children: [
+                        // Chat penjual
+                        SizedBox(
+                          width: 64.w,
+                          height: double.infinity,
+                          child: Material(
+                            color: AppColors.primaryLight,
+                            child: InkWell(
+                              onTap: () {
+                                ProductSellerChat.open(
+                                  context: context,
+                                  product: p,
                                 );
-                              }
-                            },
-                            style: ElevatedButton.styleFrom(
-                              backgroundColor: AppColors.transparent,
-                              shadowColor: AppColors.transparent,
-                              shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(AppRadius.xl),
-                              ),
-                            ),
-                            child: Text(
-                              'marketplace.cart_btn'.tr(),
-                              style: TextStyle(
-                                fontSize: 15.sp,
-                                fontWeight: FontWeight.w800,
-                                color: AppColors.surface,
+                              },
+                              child: Icon(
+                                LucideIcons.messageSquare,
+                                color: AppColors.primary,
+                                size: 20.sp,
                               ),
                             ),
                           ),
                         ),
-                      ),
-                    ],
+                        Container(
+                          width: 1,
+                          color: AppColors.primary.withValues(alpha: 0.15),
+                        ),
+                        // Nego harga
+                        Expanded(
+                          child: SizedBox(
+                            height: double.infinity,
+                            child: Material(
+                              color: AppColors.primaryLight,
+                              child: InkWell(
+                                onTap: () {
+                                  if (!isAuthenticated) {
+                                    AuthSheet.show(context);
+                                    return;
+                                  }
+                                  _showNegotiationSheet();
+                                },
+                                child: Center(
+                                  child: Text(
+                                    'marketplace.nego_price'.tr(),
+                                    style: TextStyle(
+                                      fontSize: 13.sp,
+                                      fontWeight: FontWeight.w800,
+                                      color: AppColors.primary,
+                                    ),
+                                  ),
+                                ),
+                              ),
+                            ),
+                          ),
+                        ),
+                        // Tambah keranjang (solid, tanpa gap dari nego)
+                        Expanded(
+                          child: SizedBox(
+                            height: double.infinity,
+                            child: Material(
+                              color: AppColors.primary,
+                              child: InkWell(
+                                onTap: () async {
+                                  if (!isAuthenticated) {
+                                    AuthSheet.show(context);
+                                    return;
+                                  }
+                                  final ok = await context
+                                      .read<CommerceCubit>()
+                                      .addToCart(p.id, p.minOrder);
+                                  if (context.mounted && ok) {
+                                    showCustomSnackBar(
+                                      context,
+                                      content: Text(
+                                        'marketplace.added_to_cart'
+                                            .tr(namedArgs: {
+                                          'qty': '${p.minOrder.toInt()}',
+                                          'unit': p.unit,
+                                        }),
+                                      ),
+                                      backgroundColor: AppColors.success,
+                                      action: SnackBarAction(
+                                        label: 'marketplace.view_cart'.tr(),
+                                        onPressed: () =>
+                                            context.push('/cart'),
+                                      ),
+                                    );
+                                  }
+                                },
+                                child: Center(
+                                  child: Text(
+                                    'marketplace.cart_btn'.tr(),
+                                    style: TextStyle(
+                                      fontSize: 13.sp,
+                                      fontWeight: FontWeight.w800,
+                                      color: AppColors.textOnPrimary,
+                                    ),
+                                  ),
+                                ),
+                              ),
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
                   ),
                 ),
               ],

@@ -170,7 +170,10 @@ final goRouter = GoRouter(
         location.startsWith('/privacy') ||
         location.startsWith('/verify') ||
         location.startsWith('/track') ||
-        location.startsWith('/important-features');
+        location.startsWith('/important-features') ||
+        // Live commerce & settings (bahasa/mata uang) — backend optionalAuth / lokal
+        location.startsWith('/live') ||
+        location == '/settings';
 
     if (!hasToken && !isPublic) {
       return '/login';
@@ -723,6 +726,13 @@ final goRouter = GoRouter(
     GoRoute(
       path: '/rfq/inbox',
       builder: (context, state) => const RfqInboxPage(),
+    ),
+    GoRoute(
+      path: '/rfq/inbox/:id',
+      builder: (context, state) => RfqDetailPage(
+        rfqId: state.pathParameters['id']!,
+        supplierView: true,
+      ),
     ),
     GoRoute(
       path: '/rfq/:id',

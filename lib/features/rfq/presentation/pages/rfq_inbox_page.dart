@@ -5,7 +5,6 @@ import 'package:go_router/go_router.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
 
 import '../../../../core/constants/app_colors.dart';
-import '../../../../core/utils/app_feedback.dart';
 import '../../../../core/constants/app_text_styles.dart';
 import '../../../../shared/widgets/bisa_app_bar.dart';
 import '../../data/datasources/rfq_remote_data_source.dart';
@@ -21,7 +20,6 @@ class _RfqInboxPageState extends State<RfqInboxPage> {
   final _ds = RfqRemoteDataSource();
   List<Map<String, dynamic>> _items = [];
   bool _loading = true;
-  String? _busyId;
 
   @override
   void initState() {
@@ -41,24 +39,6 @@ class _RfqInboxPageState extends State<RfqInboxPage> {
     } catch (_) {
       if (!mounted) return;
       setState(() => _loading = false);
-    }
-  }
-
-  Future<void> _respond(String id) async {
-    setState(() => _busyId = id);
-    try {
-      final result = await _ds.respond(id);
-      if (!mounted) return;
-      final negoId = result['negotiation']?['id']?.toString();
-      if (negoId != null) {
-        context.push('/negotiation/$negoId');
-      }
-      _load();
-    } catch (e) {
-      if (!mounted) return;
-      showFailureSnackBarFromMessage(context, e.toString());
-    } finally {
-      if (mounted) setState(() => _busyId = null);
     }
   }
 
@@ -82,6 +62,10 @@ class _RfqInboxPageState extends State<RfqInboxPage> {
                       final id = r['id']?.toString() ?? '';
                       final responded = ((r['responses'] as List?) ?? []).isNotEmpty;
                       return ListTile(
+                        onTap: () async {
+                          await context.push('/rfq/inbox/$id');
+                          if (mounted) _load();
+                        },
                         tileColor: AppColors.surface,
                         shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(12.r),
@@ -91,18 +75,23 @@ class _RfqInboxPageState extends State<RfqInboxPage> {
                           style: AppTextStyles.body(fontWeight: FontWeight.w700),
                         ),
                         subtitle: Text('${r['quantity']} · ${r['productMode']}'),
-                        trailing: responded
-                            ? Icon(LucideIcons.circleCheck, color: AppColors.success)
-                            : (_busyId == id
-                                ? SizedBox(
-                                    width: 22.w,
-                                    height: 22.w,
-                                    child: const CircularProgressIndicator(strokeWidth: 2),
-                                  )
-                                : TextButton(
-                                    onPressed: () => _respond(id),
-                                    child: Text('rfq.respond'.tr()),
-                                  )),
+                        trailing: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            if (responded)
+                              Icon(
+                                LucideIcons.circleCheck,
+                                color: AppColors.success,
+                                size: 18.sp,
+                              ),
+                            SizedBox(width: 6.w),
+                            Icon(
+                              LucideIcons.chevronRight,
+                              color: AppColors.textHint,
+                              size: 18.sp,
+                            ),
+                          ],
+                        ),
                       );
                     },
                   ),

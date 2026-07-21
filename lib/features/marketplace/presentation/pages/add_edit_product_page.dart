@@ -255,14 +255,20 @@ class _AddEditProductPageState extends State<AddEditProductPage> {
   List<CategoryModel> _categoriesForCurrentSelection(List<CategoryModel> raw) {
     if (_productMode == 'ORGANIC_PRODUCE') {
       return raw
-          .where((c) => c.productMode == 'ORGANIC_PRODUCE')
+          .where(
+            (c) =>
+                c.productMode == 'ORGANIC_PRODUCE' ||
+                c.productMode == null,
+          )
           .toList(growable: false);
     }
     return raw
         .where(
           (c) =>
-              c.productMode == 'BIOMASS_MATERIAL' &&
-              c.biomassaType == _selectedBiomassaType,
+              (c.productMode == 'BIOMASS_MATERIAL' ||
+                  c.productMode == null) &&
+              (c.biomassaType == _selectedBiomassaType ||
+                  c.biomassaType == null),
         )
         .toList(growable: false);
   }
@@ -783,33 +789,60 @@ class _AddEditProductPageState extends State<AddEditProductPage> {
 
         final biomassaLabel = biomassaTypeLabel(_selectedBiomassaType);
 
-        return CategoryPickerField(
-          label: isBiomass
-              ? 'marketplace.category_biomass'.tr()
-              : 'marketplace.category_organic'.tr(),
-          enabled: isBiomass ? true : true,
-          isLoading: state is CategoryLoading,
-          categories: categories,
-          selectedId: _selectedCategoryId,
-          disabledHint: isBiomass
-              ? 'marketplace.loading_biomass_categories'.tr()
-              : 'marketplace.loading_organic_categories'.tr(),
-          emptyHint: isBiomass
-              ? 'marketplace.no_category_for_type'.tr(
-                  namedArgs: {'type': biomassaLabel},
-                )
-              : 'marketplace.no_organic_categories'.tr(),
-          pickerTitle: isBiomass
-              ? 'marketplace.category_picker_biomass'.tr(
-                  namedArgs: {'type': biomassaLabel},
-                )
-              : 'marketplace.category_picker_organic'.tr(),
-          searchHint: isBiomass
-              ? 'marketplace.search_category_biomass'.tr(
-                  namedArgs: {'type': biomassaLabel},
-                )
-              : 'marketplace.search_category_organic'.tr(),
-          onSelected: (cat) => setState(() => _selectedCategoryId = cat?.id),
+        return Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            CategoryPickerField(
+              label: isBiomass
+                  ? 'marketplace.category_biomass'.tr()
+                  : 'marketplace.category_organic'.tr(),
+              enabled: state is! CategoryError,
+              isLoading: state is CategoryLoading,
+              categories: categories,
+              selectedId: _selectedCategoryId,
+              disabledHint: isBiomass
+                  ? 'marketplace.loading_biomass_categories'.tr()
+                  : 'marketplace.loading_organic_categories'.tr(),
+              emptyHint: isBiomass
+                  ? 'marketplace.no_category_for_type'.tr(
+                      namedArgs: {'type': biomassaLabel},
+                    )
+                  : 'marketplace.no_organic_categories'.tr(),
+              pickerTitle: isBiomass
+                  ? 'marketplace.category_picker_biomass'.tr(
+                      namedArgs: {'type': biomassaLabel},
+                    )
+                  : 'marketplace.category_picker_organic'.tr(),
+              searchHint: isBiomass
+                  ? 'marketplace.search_category_biomass'.tr(
+                      namedArgs: {'type': biomassaLabel},
+                    )
+                  : 'marketplace.search_category_organic'.tr(),
+              onSelected: (cat) =>
+                  setState(() => _selectedCategoryId = cat?.id),
+            ),
+            if (state is CategoryError)
+              Padding(
+                padding: EdgeInsets.only(top: AppSpacing.xs),
+                child: Row(
+                  children: [
+                    Expanded(
+                      child: Text(
+                        state.message,
+                        style: TextStyle(
+                          color: AppColors.error,
+                          fontSize: 11.sp,
+                        ),
+                      ),
+                    ),
+                    TextButton(
+                      onPressed: () => _reloadCategories(context),
+                      child: Text('marketplace.try_again'.tr()),
+                    ),
+                  ],
+                ),
+              ),
+          ],
         );
       },
     );

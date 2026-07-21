@@ -178,6 +178,11 @@ class ProfileAllMenuPage extends StatelessWidget {
                   label: 'profile.menu_short_payment'.tr(),
                   onTap: () => context.push('/payment-methods'),
                 ),
+                _MenuGridItem(
+                  icon: LucideIcons.truck,
+                  label: 'marketplace.action_shipping_origin'.tr(),
+                  onTap: () => context.push('/supplier-shipping-origin'),
+                ),
               ],
             ),
           _MenuSection(

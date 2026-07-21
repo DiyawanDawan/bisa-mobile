@@ -9,6 +9,7 @@ import '../../../../core/constants/app_colors.dart';
 import '../../../../core/constants/app_layout.dart';
 import '../../../../core/constants/app_text_styles.dart';
 import '../../../../core/i18n/failure_messages.dart';
+import '../../../../core/utils/app_feedback.dart';
 import '../../../../core/utils/helpers.dart';
 import '../../../../shared/widgets/bisa_app_bar.dart';
 import '../../../../shared/widgets/bisa_network_image.dart';
@@ -16,8 +17,13 @@ import '../../data/datasources/rfq_remote_data_source.dart';
 
 class RfqDetailPage extends StatefulWidget {
   final String rfqId;
+  final bool supplierView;
 
-  const RfqDetailPage({super.key, required this.rfqId});
+  const RfqDetailPage({
+    super.key,
+    required this.rfqId,
+    this.supplierView = false,
+  });
 
   @override
   State<RfqDetailPage> createState() => _RfqDetailPageState();
@@ -27,6 +33,7 @@ class _RfqDetailPageState extends State<RfqDetailPage> {
   final _ds = RfqRemoteDataSource();
   Map<String, dynamic>? _data;
   bool _loading = true;
+  bool _responding = false;
   String? _error;
 
   @override
@@ -41,7 +48,9 @@ class _RfqDetailPageState extends State<RfqDetailPage> {
       _error = null;
     });
     try {
-      final data = await _ds.getRfqDetail(widget.rfqId);
+      final data = widget.supplierView
+          ? await _ds.getInboxDetail(widget.rfqId)
+          : await _ds.getRfqDetail(widget.rfqId);
       if (!mounted) return;
       setState(() {
         _data = data;
@@ -83,9 +92,19 @@ class _RfqDetailPageState extends State<RfqDetailPage> {
 
   @override
   Widget build(BuildContext context) {
+    final responses = _data?['responses'] as List?;
+    final ownResponse =
+        responses != null && responses.isNotEmpty ? responses.first : null;
+    final negotiationId = ownResponse is Map
+        ? ownResponse['negotiationId']?.toString()
+        : null;
+
     return Scaffold(
       backgroundColor: AppColors.background,
       appBar: BisaAppBar(title: 'rfq.detail_title'.tr()),
+      bottomNavigationBar: widget.supplierView && _data != null
+          ? _supplierActionBar(negotiationId)
+          : null,
       body: _loading
           ? const Center(child: CircularProgressIndicator())
           : _error != null
@@ -110,8 +129,12 @@ class _RfqDetailPageState extends State<RfqDetailPage> {
                       _infoCard(),
                       SizedBox(height: AppSpacing.md12),
                       _howItWorks(),
-                      SizedBox(height: AppSpacing.md12),
-                      _recipientsSection(),
+                      if (!widget.supplierView) ...[
+                        SizedBox(height: AppSpacing.md12),
+                        _recipientsSection(),
+                      ],
+                      if (widget.supplierView)
+                        SizedBox(height: AppSpacing.xl),
                     ],
                   ),
                 ),
@@ -143,6 +166,11 @@ class _RfqDetailPageState extends State<RfqDetailPage> {
           _metaRow('rfq.detail_status'.tr(), '${d['status']}'),
           _metaRow('rfq.detail_qty'.tr(), '$qty'),
           _metaRow('rfq.detail_mode'.tr(), '${d['productMode']}'),
+          if (widget.supplierView && d['buyer'] is Map)
+            _metaRow(
+              'rfq.buyer'.tr(),
+              (d['buyer'] as Map)['fullName']?.toString() ?? '-',
+            ),
           if (d['specifications'] != null &&
               d['specifications'].toString().trim().isNotEmpty)
             _metaRow('rfq.detail_spec'.tr(), '${d['specifications']}'),
@@ -158,6 +186,109 @@ class _RfqDetailPageState extends State<RfqDetailPage> {
         ],
       ),
     );
+  }
+
+  Widget _supplierActionBar(String? negotiationId) {
+    final hasResponded = negotiationId != null && negotiationId.isNotEmpty;
+    return Material(
+      color: AppColors.surface,
+      elevation: 8,
+      child: SafeArea(
+        top: false,
+        child: Padding(
+          padding: EdgeInsets.fromLTRB(
+            AppSpacing.md,
+            AppSpacing.sm10,
+            AppSpacing.md,
+            AppSpacing.sm10,
+          ),
+          child: SizedBox(
+            height: AppSpacing.buttonHeight,
+            child: ElevatedButton.icon(
+              onPressed: _responding
+                  ? null
+                  : hasResponded
+                      ? () => context.push('/negotiation/$negotiationId')
+                      : _showRespondDialog,
+              icon: _responding
+                  ? SizedBox(
+                      width: 18.r,
+                      height: 18.r,
+                      child: const CircularProgressIndicator(strokeWidth: 2),
+                    )
+                  : Icon(
+                      hasResponded
+                          ? LucideIcons.messageSquare
+                          : LucideIcons.send,
+                      size: 18.sp,
+                    ),
+              label: Text(
+                hasResponded
+                    ? 'rfq.open_chat'.tr()
+                    : 'rfq.respond_after_review'.tr(),
+              ),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: AppColors.primary,
+                foregroundColor: AppColors.textOnPrimary,
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(AppRadius.xl),
+                ),
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  Future<void> _showRespondDialog() async {
+    final controller = TextEditingController();
+    final message = await showDialog<String>(
+      context: context,
+      builder: (dialogContext) => AlertDialog(
+        title: Text('rfq.respond'.tr()),
+        content: TextField(
+          controller: controller,
+          minLines: 3,
+          maxLines: 5,
+          decoration: InputDecoration(
+            hintText: 'rfq.response_message_hint'.tr(),
+          ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(dialogContext),
+            child: Text('batal'.tr()),
+          ),
+          ElevatedButton(
+            onPressed: () => Navigator.pop(
+              dialogContext,
+              controller.text.trim(),
+            ),
+            child: Text('rfq.respond'.tr()),
+          ),
+        ],
+      ),
+    );
+    controller.dispose();
+    if (message == null || !mounted) return;
+
+    setState(() => _responding = true);
+    try {
+      final result = await _ds.respond(widget.rfqId, message: message);
+      if (!mounted) return;
+      final negotiationId = result['negotiation']?['id']?.toString();
+      if (negotiationId != null && negotiationId.isNotEmpty) {
+        await context.push('/negotiation/$negotiationId');
+      }
+      if (mounted) await _load();
+    } catch (error) {
+      if (mounted) {
+        showFailureSnackBarFromMessage(context, error.toString());
+      }
+    } finally {
+      if (mounted) setState(() => _responding = false);
+    }
   }
 
   Widget _metaRow(String label, String value) {
@@ -198,7 +329,10 @@ class _RfqDetailPageState extends State<RfqDetailPage> {
           SizedBox(width: AppSpacing.sm),
           Expanded(
             child: Text(
-              'rfq.detail_how_it_works'.tr(),
+              (widget.supplierView
+                      ? 'rfq.supplier_detail_hint'
+                      : 'rfq.detail_how_it_works')
+                  .tr(),
               style: AppTextStyles.caption(height: 1.45),
             ),
           ),

@@ -69,6 +69,14 @@ class _SettingsPageState extends State<SettingsPage> {
                       onChanged: _notifBusy
                           ? null
                           : (val) async {
+                              final loggedIn = authState.maybeWhen(
+                                authenticated: (_) => true,
+                                orElse: () => false,
+                              );
+                              if (!loggedIn) {
+                                context.push('/login');
+                                return;
+                              }
                               setState(() => _notifBusy = true);
                               await context
                                   .read<AuthCubit>()
@@ -86,7 +94,13 @@ class _SettingsPageState extends State<SettingsPage> {
                     LucideIcons.lock,
                     'profile.menu_change_password'.tr(),
                     'profile.settings_change_password_subtitle'.tr(),
-                    () => context.push('/change-password'),
+                    () {
+                      final loggedIn = authState.maybeWhen(
+                        authenticated: (_) => true,
+                        orElse: () => false,
+                      );
+                      context.push(loggedIn ? '/change-password' : '/login');
+                    },
                   ),
                   _settingsItem(
                     LucideIcons.shieldCheck,

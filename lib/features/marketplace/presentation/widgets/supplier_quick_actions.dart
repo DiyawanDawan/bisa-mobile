@@ -1,92 +1,85 @@
 import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:go_router/go_router.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
 import '../../../../core/constants/app_layout.dart';
 import '../../../../core/constants/app_colors.dart';
 import '../../../../core/readiness/readiness_gate.dart';
-import '../../../auth/presentation/bloc/auth_cubit.dart';
-import '../../../auth/domain/entities/user_entity.dart';
-import '../../../home/presentation/pages/main_screen.dart';
 
+/// Empat aksi utama supplier + tautan Semua Menu (sisanya di profile/all-menu).
 class SupplierQuickActions extends StatelessWidget {
   const SupplierQuickActions({super.key});
 
-  static const int _columns = 4;
-  static const int _rows = 3;
+  static const int _columns = 2;
 
   @override
   Widget build(BuildContext context) {
-    final user = context.watch<AuthCubit>().state.maybeWhen(
-          authenticated: (u) => u,
-          orElse: () => null,
-        );
-
-    final actions = _buildActions(context, user);
+    final actions = _primaryActions(context);
 
     return Padding(
-      padding: EdgeInsets.fromLTRB(16.w, 10.h, 16.w, 12.h),
+      padding: EdgeInsets.fromLTRB(
+        AppSpacing.md,
+        AppSpacing.sm,
+        AppSpacing.md,
+        AppSpacing.sm,
+      ),
       child: Container(
         width: double.infinity,
-        padding: EdgeInsets.fromLTRB(16.w, 16.h, 16.w, 14.h),
+        padding: EdgeInsets.fromLTRB(
+          AppSpacing.md,
+          AppSpacing.md,
+          AppSpacing.md,
+          AppSpacing.sm10,
+        ),
         decoration: BoxDecoration(
           color: AppColors.surface,
-          borderRadius: BorderRadius.circular(22.r),
-          border: Border.all(
-            color: AppColors.white.withValues(alpha: 0.9),
-            width: 1.2,
-          ),
-          boxShadow: [
-            BoxShadow(
-              color: AppColors.primary.withValues(alpha: 0.08),
-              blurRadius: 24,
-              offset: const Offset(0, 10),
-            ),
-            BoxShadow(
-              color: AppColors.black.withValues(alpha: 0.04),
-              blurRadius: 8,
-              offset: const Offset(0, 3),
-            ),
-          ],
+          borderRadius: BorderRadius.circular(AppRadius.tile),
+          border: Border.all(color: AppColors.grey200),
         ),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Row(
               children: [
-                Container(
-                  width: 4.w,
-                  height: 18.h,
-                  decoration: BoxDecoration(
-                    gradient: AppColors.primaryGradient,
-                    borderRadius: BorderRadius.circular(4.r),
+                Expanded(
+                  child: Text(
+                    'marketplace.quick_actions_title'.tr(),
+                    style: TextStyle(
+                      fontSize: 14.sp,
+                      fontWeight: FontWeight.w800,
+                      color: AppColors.textPrimary,
+                    ),
                   ),
                 ),
-                SizedBox(width: AppSpacing.sm),
-                Text(
-                  'marketplace.quick_actions_title'.tr(),
-                  style: TextStyle(
-                    fontSize: 15.sp,
-                    fontWeight: FontWeight.w800,
-                    color: AppColors.textPrimary,
-                    letterSpacing: -0.2,
+                TextButton(
+                  onPressed: () => context.push('/profile/all-menu'),
+                  style: TextButton.styleFrom(
+                    foregroundColor: AppColors.primary,
+                    padding: EdgeInsets.symmetric(horizontal: 8.w),
+                    minimumSize: Size.zero,
+                    tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                  ),
+                  child: Text(
+                    'profile.menu_all_menu'.tr(),
+                    style: TextStyle(
+                      fontSize: 12.sp,
+                      fontWeight: FontWeight.w700,
+                    ),
                   ),
                 ),
               ],
             ),
-            SizedBox(height: AppSpacing.section),
+            SizedBox(height: AppSpacing.sm10),
             LayoutBuilder(
               builder: (context, constraints) {
-                const spacing = 10.0;
-                const cellAspectRatio = 0.84;
+                const spacing = 8.0;
+                const cellAspectRatio = 1.35;
                 final cellWidth =
                     (constraints.maxWidth - spacing * (_columns - 1)) /
                         _columns;
                 final cellHeight = cellWidth / cellAspectRatio;
-                final gridHeight =
-                    cellHeight * _rows + spacing * (_rows - 1);
+                final gridHeight = cellHeight * 2 + spacing;
 
                 return SizedBox(
                   height: gridHeight,
@@ -100,7 +93,7 @@ class SupplierQuickActions extends StatelessWidget {
                     ),
                     itemCount: actions.length,
                     itemBuilder: (context, index) =>
-                        _QuickActionCard(data: actions[index]),
+                        _QuickActionItem(data: actions[index]),
                   ),
                 );
               },
@@ -111,79 +104,27 @@ class SupplierQuickActions extends StatelessWidget {
     );
   }
 
-  List<_QuickActionData> _buildActions(BuildContext context, UserEntity? user) {
+  List<_QuickActionData> _primaryActions(BuildContext context) {
     return [
       _QuickActionData(
         icon: LucideIcons.plus,
         label: 'marketplace.action_add_product'.tr(),
-        color: AppColors.success,
         onTap: () => ReadinessGate.pushAddProduct(context),
       ),
       _QuickActionData(
         icon: LucideIcons.package,
         label: 'marketplace.action_manage_products'.tr(),
-        color: AppColors.primary,
         onTap: () => context.push('/product-management'),
       ),
       _QuickActionData(
         icon: LucideIcons.store,
         label: 'marketplace.action_store_management'.tr(),
-        color: AppColors.primaryDark,
         onTap: () => context.push('/store-management'),
       ),
       _QuickActionData(
         icon: LucideIcons.chartBar,
         label: 'marketplace.action_analytics'.tr(),
-        color: AppColors.info,
         onTap: () => context.push('/sales-analytics'),
-      ),
-      _QuickActionData(
-        icon: LucideIcons.heart,
-        label: 'marketplace.action_product_engagement'.tr(),
-        color: AppColors.error,
-        onTap: () => context.push('/product-engagement'),
-      ),
-      _QuickActionData(
-        icon: LucideIcons.shoppingBag,
-        label: 'marketplace.action_orders'.tr(),
-        color: AppColors.secondary,
-        onTap: () => MainShellScope.maybeOf(context)?.selectTab(3),
-      ),
-      _QuickActionData(
-        icon: LucideIcons.messageSquare,
-        label: 'marketplace.action_negotiation'.tr(),
-        color: AppColors.ocean,
-        onTap: () => MainShellScope.maybeOf(context)?.selectTab(1),
-      ),
-      _QuickActionData(
-        icon: LucideIcons.wallet,
-        label: 'marketplace.action_wallet'.tr(),
-        color: AppColors.warning,
-        onTap: () => context.push('/wallet'),
-      ),
-      _QuickActionData(
-        icon: LucideIcons.cpu,
-        label: 'marketplace.action_iot_monitoring'.tr(),
-        color: AppColors.info,
-        onTap: () => context.push('/iot-dashboard'),
-      ),
-      _QuickActionData(
-        icon: LucideIcons.truck,
-        label: 'marketplace.action_shipping_origin'.tr(),
-        color: AppColors.ocean,
-        onTap: () => context.push('/supplier-shipping-origin'),
-      ),
-      _QuickActionData(
-        icon: LucideIcons.shieldCheck,
-        label: 'marketplace.action_verification'.tr(),
-        color: AppColors.success,
-        onTap: () => context.push('/verification'),
-      ),
-      _QuickActionData(
-        icon: LucideIcons.bell,
-        label: 'marketplace.action_notifications'.tr(),
-        color: AppColors.error,
-        onTap: () => context.push('/notifications'),
       ),
     ];
   }
@@ -193,153 +134,64 @@ class _QuickActionData {
   const _QuickActionData({
     required this.icon,
     required this.label,
-    required this.color,
     required this.onTap,
   });
 
   final IconData icon;
   final String label;
-  final Color color;
   final VoidCallback onTap;
 }
 
-class _QuickActionCard extends StatefulWidget {
-  const _QuickActionCard({required this.data});
+class _QuickActionItem extends StatelessWidget {
+  const _QuickActionItem({required this.data});
 
   final _QuickActionData data;
 
   @override
-  State<_QuickActionCard> createState() => _QuickActionCardState();
-}
-
-class _QuickActionCardState extends State<_QuickActionCard> {
-  bool _pressed = false;
-
-  _QuickActionData get data => widget.data;
-
-  @override
   Widget build(BuildContext context) {
-    return GestureDetector(
-      onTapDown: (_) => setState(() => _pressed = true),
-      onTapUp: (_) => setState(() => _pressed = false),
-      onTapCancel: () => setState(() => _pressed = false),
-      onTap: data.onTap,
-      child: AnimatedScale(
-        scale: _pressed ? 0.94 : 1,
-        duration: const Duration(milliseconds: 120),
-        curve: Curves.easeOut,
-        child: AnimatedContainer(
-          duration: const Duration(milliseconds: 120),
-          padding: EdgeInsets.symmetric(horizontal: 3.w, vertical: 6.h),
-          decoration: BoxDecoration(
-            color: AppColors.surface,
-            borderRadius: BorderRadius.circular(AppRadius.tile),
-            border: Border.all(
-              color: AppColors.grey100.withValues(alpha: 0.85),
-            ),
-            boxShadow: _pressed
-                ? AppColors.softShadow
-                : [
-                    BoxShadow(
-                      color: data.color.withValues(alpha: 0.18),
-                      blurRadius: 10,
-                      offset: const Offset(0, 5),
-                    ),
-                    BoxShadow(
-                      color: AppColors.black.withValues(alpha: 0.05),
-                      blurRadius: 6,
-                      offset: const Offset(0, 2),
-                    ),
-                  ],
-          ),
+    return Material(
+      color: AppColors.surface,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(AppRadius.tile),
+        side: const BorderSide(color: AppColors.grey200),
+      ),
+      child: InkWell(
+        onTap: data.onTap,
+        borderRadius: BorderRadius.circular(AppRadius.tile),
+        child: Padding(
+          padding: EdgeInsets.symmetric(horizontal: AppSpacing.sm10, vertical: 10.h),
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
-            mainAxisSize: MainAxisSize.min,
             children: [
-              _QuickActionIcon3D(icon: data.icon, color: data.color),
-              SizedBox(height: 4.h),
-              Flexible(
-                child: Text(
-                  data.label,
-                  textAlign: TextAlign.center,
-                  style: TextStyle(
-                    fontSize: 8.5.sp,
-                    fontWeight: FontWeight.w700,
-                    color: AppColors.textPrimary,
-                    height: 1.1,
-                  ),
-                  maxLines: 2,
-                  overflow: TextOverflow.ellipsis,
+              Container(
+                width: 36.r,
+                height: 36.r,
+                decoration: BoxDecoration(
+                  color: AppColors.primaryLight,
+                  borderRadius: BorderRadius.circular(AppRadius.lg),
                 ),
+                child: Icon(
+                  data.icon,
+                  color: AppColors.primary,
+                  size: 18.sp,
+                ),
+              ),
+              SizedBox(height: 6.h),
+              Text(
+                data.label,
+                textAlign: TextAlign.center,
+                style: TextStyle(
+                  fontSize: 10.sp,
+                  fontWeight: FontWeight.w600,
+                  color: AppColors.textPrimary,
+                  height: 1.2,
+                ),
+                maxLines: 2,
+                overflow: TextOverflow.ellipsis,
               ),
             ],
           ),
         ),
-      ),
-    );
-  }
-}
-
-class _QuickActionIcon3D extends StatelessWidget {
-  const _QuickActionIcon3D({
-    required this.icon,
-    required this.color,
-  });
-
-  final IconData icon;
-  final Color color;
-
-  @override
-  Widget build(BuildContext context) {
-    final top = Color.lerp(color, AppColors.white, 0.45)!;
-    final mid = color;
-    final bottom = Color.lerp(color, AppColors.black, 0.12)!;
-
-    return Container(
-      width: 32.r,
-      height: 32.r,
-      decoration: BoxDecoration(
-        gradient: LinearGradient(
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-          colors: [top, mid, bottom],
-          stops: const [0.0, 0.55, 1.0],
-        ),
-        borderRadius: BorderRadius.circular(AppRadius.lg),
-        boxShadow: [
-          BoxShadow(
-            color: color.withValues(alpha: 0.42),
-            blurRadius: 8,
-            offset: const Offset(0, 4),
-          ),
-          BoxShadow(
-            color: AppColors.white.withValues(alpha: 0.65),
-            blurRadius: 0,
-            offset: const Offset(-1.5, -1.5),
-          ),
-        ],
-      ),
-      child: Stack(
-        alignment: Alignment.center,
-        children: [
-          Positioned(
-            top: 4.h,
-            left: 6.w,
-            child: Container(
-              width: 10.r,
-              height: 5.r,
-              decoration: BoxDecoration(
-                color: AppColors.white.withValues(alpha: 0.35),
-                borderRadius: BorderRadius.circular(6.r),
-              ),
-            ),
-          ),
-          Icon(
-            icon,
-            color: AppColors.surface,
-            size: 16.sp,
-          ),
-        ],
       ),
     );
   }

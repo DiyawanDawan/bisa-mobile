@@ -276,6 +276,38 @@ class _MarketplacePageState extends State<MarketplacePage> {
                       SliverToBoxAdapter(
                         child: HorizontalProductSection(
                           key: ValueKey(
+                            'bestseller-$_activeProductMode-$_selectedBiomassaType',
+                          ),
+                          title: _activeProductMode == 'ORGANIC_PRODUCE'
+                              ? 'marketplace.bestseller_organic'.tr()
+                              : 'marketplace.bestseller_biochar'.tr(),
+                          sortBy: 'totalSold',
+                          sortOrder: 'desc',
+                          limit: 10,
+                          productMode: _activeProductMode,
+                          biomassaType: _activeProductMode == 'BIOMASS_MATERIAL'
+                              ? _selectedBiomassaType
+                              : null,
+                          onShowAll: () {
+                            context.push(
+                              '/collection-products',
+                              extra: {
+                                'title': _activeProductMode == 'ORGANIC_PRODUCE'
+                                    ? 'marketplace.bestseller_organic'.tr()
+                                    : 'marketplace.bestseller_biochar'.tr(),
+                                'sortBy': 'totalSold',
+                                'sortOrder': 'desc',
+                                'productMode': _activeProductMode,
+                                if (_activeProductMode == 'BIOMASS_MATERIAL')
+                                  'biomassaType': _selectedBiomassaType,
+                              },
+                            );
+                          },
+                        ),
+                      ),
+                      SliverToBoxAdapter(
+                        child: HorizontalProductSection(
+                          key: ValueKey(
                             'cheap-$_activeProductMode-$_selectedBiomassaType',
                           ),
                           title: _activeProductMode == 'ORGANIC_PRODUCE'
@@ -796,12 +828,13 @@ class _MarketplacePageState extends State<MarketplacePage> {
     final isSupplier = user?.role == 'SUPPLIER';
 
     final features = <_FeatureItem>[
-      _FeatureItem(
-        icon: LucideIcons.building2,
-        label: 'marketplace.supplier_directory'.tr(),
-        color: AppColors.primary,
-        onTap: () => context.push('/supplier-directory'),
-      ),
+      if (!isSupplier)
+        _FeatureItem(
+          icon: LucideIcons.building2,
+          label: 'marketplace.supplier_directory'.tr(),
+          color: AppColors.primary,
+          onTap: () => context.push('/supplier-directory'),
+        ),
       if (isLoggedIn)
         _FeatureItem(
           icon: LucideIcons.columns3,

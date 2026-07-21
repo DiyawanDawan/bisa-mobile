@@ -26,6 +26,11 @@ class RfqRemoteDataSource {
     return data.map((e) => Map<String, dynamic>.from(e as Map)).toList();
   }
 
+  Future<Map<String, dynamic>> getInboxDetail(String id) async {
+    final res = await _dio.get('/rfqs/inbox/$id');
+    return Map<String, dynamic>.from(res.data['data'] as Map);
+  }
+
   Future<Map<String, dynamic>> respond(String rfqId, {String? message}) async {
     final res = await _dio.post('/rfqs/$rfqId/respond', data: {
       if (message != null && message.isNotEmpty) 'message': message,

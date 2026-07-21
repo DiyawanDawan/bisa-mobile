@@ -695,11 +695,12 @@ class ProfilePage extends StatelessWidget {
           SizedBox(height: AppSpacing.sm10),
           _sectionTitle('profile.section_catalog'.tr()),
           _menuCard([
-            _menuItem(
-              LucideIcons.building2,
-              'marketplace.supplier_directory'.tr(),
-              () => context.push('/supplier-directory'),
-            ),
+            if (!isSupplier)
+              _menuItem(
+                LucideIcons.building2,
+                'marketplace.supplier_directory'.tr(),
+                () => context.push('/supplier-directory'),
+              ),
             _menuItem(
               LucideIcons.layoutGrid,
               'profile.features_browse_catalog_title'.tr(),
