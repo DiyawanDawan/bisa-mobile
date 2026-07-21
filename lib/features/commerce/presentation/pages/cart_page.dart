@@ -78,8 +78,10 @@ class _CartPageState extends State<CartPage> {
   final Map<String, String> _shippingErrorBySeller = {};
   final Map<String, String> _destinationQueryBySeller = {};
   final Map<String, String> _courierBySeller = {};
+
   /// Query untuk pencarian destinasi RajaOngkir (biasanya kota + provinsi).
   String? _shippingAddressQuery;
+
   /// Alamat lengkap untuk API checkout/preview (min. 10 karakter).
   String? _shippingFullAddress;
   String? _shippingAddressLabel;
@@ -165,10 +167,10 @@ class _CartPageState extends State<CartPage> {
       _voucherError = null;
     });
     final result = await context.read<OrderCubit>().validateVoucher(
-          code: code,
-          subtotal: subtotal,
-          sellerIds: sellerIds,
-        );
+      code: code,
+      subtotal: subtotal,
+      sellerIds: sellerIds,
+    );
     if (!mounted) return;
     if (result == null) {
       setState(() {
@@ -243,7 +245,10 @@ class _CartPageState extends State<CartPage> {
     ];
     if (tokens.any(lower.contains)) return true;
     if (s.contains(',')) {
-      final parts = s.split(',').map((p) => p.trim()).where((p) => p.isNotEmpty);
+      final parts = s
+          .split(',')
+          .map((p) => p.trim())
+          .where((p) => p.isNotEmpty);
       return parts.length >= 2 && parts.every((p) => p.length >= 3);
     }
     if (RegExp(r'\d').hasMatch(s)) return true;
@@ -252,7 +257,9 @@ class _CartPageState extends State<CartPage> {
 
   String? _geographicQueryFromEntity(AddressEntity a) {
     if (a.city.trim().isNotEmpty && a.province.trim().isNotEmpty) {
-      return _normalizeRajaOngkirSearch('${a.city.trim()}, ${a.province.trim()}');
+      return _normalizeRajaOngkirSearch(
+        '${a.city.trim()}, ${a.province.trim()}',
+      );
     }
     final parts = <String>[
       if (a.district.trim().isNotEmpty) a.district.trim(),
@@ -296,15 +303,15 @@ class _CartPageState extends State<CartPage> {
   }
 
   ({String? shippingAddress, Map<String, dynamic>? shippingSnapshot})
-      _checkoutShippingPayload() {
+  _checkoutShippingPayload() {
     final full = (_shippingFullAddress?.trim().isNotEmpty ?? false)
         ? _shippingFullAddress!.trim()
         : (_shippingAddressQuery?.trim().isNotEmpty ?? false) &&
-                (_shippingAddressQuery!.trim().length >= 10)
-            ? _shippingAddressQuery!.trim()
-            : (_shippingFix?.address?.trim().isNotEmpty ?? false)
-                ? _shippingFix!.address!.trim()
-                : null;
+              (_shippingAddressQuery!.trim().length >= 10)
+        ? _shippingAddressQuery!.trim()
+        : (_shippingFix?.address?.trim().isNotEmpty ?? false)
+        ? _shippingFix!.address!.trim()
+        : null;
     final snapshot = _selectedProfileAddress != null
         ? _shippingSnapshotFromEntity(_selectedProfileAddress!)
         : null;
@@ -469,8 +476,9 @@ class _CartPageState extends State<CartPage> {
     final selectable = cart.items
         .where((it) => it.product.toEntity().stock > 0)
         .toList();
-    final selectedCount =
-        selectable.where((it) => _selectedItemIds.contains(it.id)).length;
+    final selectedCount = selectable
+        .where((it) => _selectedItemIds.contains(it.id))
+        .length;
     final allSelected =
         selectable.isNotEmpty && selectedCount == selectable.length;
     final partiallySelected = selectedCount > 0 && !allSelected;
@@ -493,9 +501,7 @@ class _CartPageState extends State<CartPage> {
             width: 22.w,
             height: 22.w,
             child: Checkbox(
-              value: allSelected
-                  ? true
-                  : (partiallySelected ? null : false),
+              value: allSelected ? true : (partiallySelected ? null : false),
               tristate: true,
               onChanged: selectable.isEmpty
                   ? null
@@ -533,16 +539,16 @@ class _CartPageState extends State<CartPage> {
                         'selected': '$selectedCount',
                       },
                     ),
-                    style: AppTextStyles.caption(color: AppColors.textSecondary),
+                    style: AppTextStyles.caption(
+                      color: AppColors.textSecondary,
+                    ),
                   ),
                 ],
               ),
             ),
           ),
           Text(
-            'cart.items_count_badge'.tr(
-              namedArgs: {'count': '$totalCount'},
-            ),
+            'cart.items_count_badge'.tr(namedArgs: {'count': '$totalCount'}),
             style: TextStyle(
               fontSize: 11.sp,
               fontWeight: FontWeight.w700,
@@ -579,15 +585,19 @@ class _CartPageState extends State<CartPage> {
     setState(() => _isCheckingOut = true);
 
     final items = selectedItems
-        .map((it) => {
-              'productId': it.product.toEntity().id,
-              'quantity': it.quantity,
-            })
+        .map(
+          (it) => {
+            'productId': it.product.toEntity().id,
+            'quantity': it.quantity,
+          },
+        )
         .toList();
 
     final orderCubit = context.read<OrderCubit>();
     final commerceCubit = context.read<CommerceCubit>();
-    final shippingSelections = _buildShippingSelectionsForCheckout(selectedItems);
+    final shippingSelections = _buildShippingSelectionsForCheckout(
+      selectedItems,
+    );
     if (shippingSelections.length !=
         selectedItems
             .map((it) => it.product.toEntity().seller.id)
@@ -611,18 +621,14 @@ class _CartPageState extends State<CartPage> {
       final previewTotal = _checkoutPreview?['totalAmount'];
       final fallbackTotal = selectedItems.fold<double>(
         0,
-        (sum, it) =>
-            sum + (it.product.toEntity().pricePerUnit * it.quantity),
+        (sum, it) => sum + (it.product.toEntity().pricePerUnit * it.quantity),
       );
       final amount = previewTotal is num
           ? previewTotal
           : (previewTotal != null
-              ? num.tryParse(previewTotal.toString()) ?? fallbackTotal
-              : fallbackTotal);
-      payment = await PaymentMethodPickerSheet.show(
-        context,
-        amount: amount,
-      );
+                ? num.tryParse(previewTotal.toString()) ?? fallbackTotal
+                : fallbackTotal);
+      payment = await PaymentMethodPickerSheet.show(context, amount: amount);
       if (!context.mounted) return;
       if (payment == null) {
         setState(() => _isCheckingOut = false);
@@ -635,7 +641,9 @@ class _CartPageState extends State<CartPage> {
       items: items,
       shippingAddress: shippingPayload.shippingAddress,
       shippingSnapshot: shippingPayload.shippingSnapshot,
-      shippingSelections: shippingSelections.isEmpty ? null : shippingSelections,
+      shippingSelections: shippingSelections.isEmpty
+          ? null
+          : shippingSelections,
       voucherCode: _appliedVoucherCode,
     );
 
@@ -690,9 +698,9 @@ class _CartPageState extends State<CartPage> {
         showErrorSnackBar(
           context,
           context.read<OrderCubit>().state.maybeWhen(
-                error: (msg) => msg,
-                orElse: () => 'cart.payment_init_failed'.tr(),
-              ),
+            error: (msg) => msg,
+            orElse: () => 'cart.payment_init_failed'.tr(),
+          ),
           duration: const Duration(seconds: 5),
         );
         final failureRoute = paymentInitFailureRoute(
@@ -706,25 +714,25 @@ class _CartPageState extends State<CartPage> {
         return;
       }
 
-      final leadOrderId =
-          payData['leadOrderId']?.toString() ?? orderIds.first;
+      final leadOrderId = payData['leadOrderId']?.toString() ?? orderIds.first;
       final batchTotal = payData['batchTotalAmount'] ?? payData['amount'];
       final orderNumbersRaw = payData['orderNumbers'];
-      final checkoutBatchNumber =
-          payData['checkoutBatchNumber']?.toString().trim();
+      final checkoutBatchNumber = payData['checkoutBatchNumber']
+          ?.toString()
+          .trim();
       final orderNumbers = orderNumbersRaw is List
           ? orderNumbersRaw.map((e) => e.toString()).toList()
           : <String>[];
       final orderLabel = checkoutBatchNumber?.isNotEmpty == true
           ? checkoutBatchNumber!
           : (orderNumbers.length > 1
-              ? 'cart.batch_checkout_label'.tr(
-                  namedArgs: {'count': '${orderNumbers.length}'},
-                )
-              : (orderNumbers.isNotEmpty
-                  ? orderNumbers.first
-                  : (orders.first['orderNumber']?.toString() ??
-                      'cart.checkout_label'.tr())));
+                ? 'cart.batch_checkout_label'.tr(
+                    namedArgs: {'count': '${orderNumbers.length}'},
+                  )
+                : (orderNumbers.isNotEmpty
+                      ? orderNumbers.first
+                      : (orders.first['orderNumber']?.toString() ??
+                            'cart.checkout_label'.tr())));
 
       if (!context.mounted) return;
       context.pushReplacement(
@@ -847,10 +855,9 @@ class _CartPageState extends State<CartPage> {
   }
 
   String _buildCheckoutPreviewInputKey(CartSummary cart) {
-    final selected = cart.items
-        .where((it) => _selectedItemIds.contains(it.id))
-        .toList()
-      ..sort((a, b) => a.id.compareTo(b.id));
+    final selected =
+        cart.items.where((it) => _selectedItemIds.contains(it.id)).toList()
+          ..sort((a, b) => a.id.compareTo(b.id));
     final parts = selected.map((it) => '${it.id}:${it.quantity}').toList();
     final shipKeys = _shippingSelectionBySeller.keys.toList()..sort();
     for (final sellerId in shipKeys) {
@@ -924,9 +931,9 @@ class _CartPageState extends State<CartPage> {
 
       try {
         final buyerId = context.read<AuthCubit>().state.maybeWhen(
-              authenticated: (user) => user.id,
-              orElse: () => null,
-            );
+          authenticated: (user) => user.id,
+          orElse: () => null,
+        );
         final options = await orderCubit.calculateDomesticShipping(
           originId: originId,
           destinationId: destinationId,
@@ -943,7 +950,8 @@ class _CartPageState extends State<CartPage> {
         Map<String, dynamic>? match;
         for (final opt in options) {
           final sameCourier =
-              opt['code']?.toString().toLowerCase() == courierCode.toLowerCase();
+              opt['code']?.toString().toLowerCase() ==
+              courierCode.toLowerCase();
           if (!sameCourier) continue;
           final svc = opt['service']?.toString();
           final desc = opt['description']?.toString();
@@ -959,17 +967,16 @@ class _CartPageState extends State<CartPage> {
           }
         }
         match ??= options.cast<Map<String, dynamic>?>().firstWhere(
-              (o) =>
-                  o?['code']?.toString().toLowerCase() ==
-                  courierCode.toLowerCase(),
-              orElse: () => null,
-            );
+          (o) =>
+              o?['code']?.toString().toLowerCase() == courierCode.toLowerCase(),
+          orElse: () => null,
+        );
 
         if (match == null) {
           setState(() {
             _shippingSelectionBySeller.remove(sellerId);
-            _shippingErrorBySeller[sellerId] =
-                'cart.weight_changed_reselect'.tr();
+            _shippingErrorBySeller[sellerId] = 'cart.weight_changed_reselect'
+                .tr();
             _checkoutPreview = null;
             _lastCheckoutPreviewKey = null;
           });
@@ -980,11 +987,13 @@ class _CartPageState extends State<CartPage> {
           _shippingSelectionBySeller[sellerId] = {
             ...sel,
             'weightGrams': newWeight,
-            'cost': (match!['cost'] as num?)?.toDouble() ??
+            'cost':
+                (match!['cost'] as num?)?.toDouble() ??
                 double.tryParse(match['cost']?.toString() ?? '0') ??
                 0,
             'serviceCode': match['service']?.toString() ?? sel['serviceCode'],
-            'serviceName': match['description']?.toString() ??
+            'serviceName':
+                match['description']?.toString() ??
                 match['service']?.toString() ??
                 sel['serviceName'],
             'etd': match['etd']?.toString() ?? sel['etd'],
@@ -995,8 +1004,7 @@ class _CartPageState extends State<CartPage> {
       } catch (_) {
         if (!mounted) return;
         setState(() {
-          _shippingErrorBySeller[sellerId] =
-              'cart.recalc_shipping_failed'.tr();
+          _shippingErrorBySeller[sellerId] = 'cart.recalc_shipping_failed'.tr();
           _checkoutPreview = null;
           _lastCheckoutPreviewKey = null;
         });
@@ -1021,7 +1029,9 @@ class _CartPageState extends State<CartPage> {
       return;
     }
 
-    final shippingSelections = _buildShippingSelectionsForCheckout(selectedItems);
+    final shippingSelections = _buildShippingSelectionsForCheckout(
+      selectedItems,
+    );
     final requiredSellerCount = selectedItems
         .map((it) => it.product.toEntity().seller.id)
         .toSet()
@@ -1037,10 +1047,12 @@ class _CartPageState extends State<CartPage> {
     }
 
     final items = selectedItems
-        .map((it) => {
-              'productId': it.product.toEntity().id,
-              'quantity': it.quantity,
-            })
+        .map(
+          (it) => {
+            'productId': it.product.toEntity().id,
+            'quantity': it.quantity,
+          },
+        )
         .toList();
     final shippingPayload = _checkoutShippingPayload();
     if (shippingPayload.shippingAddress == null ||
@@ -1068,12 +1080,12 @@ class _CartPageState extends State<CartPage> {
       _checkoutPreviewError = null;
     });
     final preview = await context.read<OrderCubit>().previewDirectOrder(
-          items: items,
-          shippingAddress: shippingPayload.shippingAddress,
-          shippingSnapshot: shippingPayload.shippingSnapshot,
-          shippingSelections: shippingSelections,
-          voucherCode: _appliedVoucherCode,
-        );
+      items: items,
+      shippingAddress: shippingPayload.shippingAddress,
+      shippingSnapshot: shippingPayload.shippingSnapshot,
+      shippingSelections: shippingSelections,
+      voucherCode: _appliedVoucherCode,
+    );
     if (!mounted || requestId != _checkoutPreviewRequestId) return;
     setState(() {
       _checkoutPreviewLoading = false;
@@ -1103,7 +1115,8 @@ class _CartPageState extends State<CartPage> {
 
     try {
       final orderCubit = context.read<OrderCubit>();
-      final defaultDestinationQuery = (_shippingAddressQuery?.isNotEmpty ?? false)
+      final defaultDestinationQuery =
+          (_shippingAddressQuery?.isNotEmpty ?? false)
           ? _shippingAddressQuery!
           : ((_shippingFix?.address?.isNotEmpty ?? false)
                 ? _shippingFix!.address!
@@ -1114,11 +1127,12 @@ class _CartPageState extends State<CartPage> {
         orderCubit,
         destinationQuery,
       );
-      final buyerDestinationLabel = (_shippingFullAddress?.trim().isNotEmpty ?? false)
+      final buyerDestinationLabel =
+          (_shippingFullAddress?.trim().isNotEmpty ?? false)
           ? _shippingFullAddress!.trim()
           : (_selectedProfileAddress != null
-              ? _displayLineFromEntity(_selectedProfileAddress!)
-              : destinationQuery.trim());
+                ? _displayLineFromEntity(_selectedProfileAddress!)
+                : destinationQuery.trim());
       final origin = await _resolveSellerOrigin(orderCubit, group);
       final originId = int.tryParse(origin?['id']?.toString() ?? '');
       final originLabel = origin?['label']?.toString();
@@ -1139,9 +1153,9 @@ class _CartPageState extends State<CartPage> {
       final weightKg = weightGrams / 1000;
       final courierCode = _courierBySeller[group.seller.id];
       final buyerId = context.read<AuthCubit>().state.maybeWhen(
-            authenticated: (user) => user.id,
-            orElse: () => null,
-          );
+        authenticated: (user) => user.id,
+        orElse: () => null,
+      );
       final options = await orderCubit.calculateDomesticShipping(
         originId: originId,
         destinationId: destinationId,
@@ -1157,7 +1171,9 @@ class _CartPageState extends State<CartPage> {
         throw Exception('cart.courier_unavailable'.tr());
       }
 
-      final hadSelection = _shippingSelectionBySeller.containsKey(group.seller.id);
+      final hadSelection = _shippingSelectionBySeller.containsKey(
+        group.seller.id,
+      );
       // Setup pertama: auto-pilih tarif termurah. "Ganti": buka sheet.
       final Map<String, dynamic>? selected;
       if (hadSelection) {
@@ -1188,9 +1204,11 @@ class _CartPageState extends State<CartPage> {
           'weightUnit': 'KG',
           'courierCode': chosen['code']?.toString() ?? '',
           'serviceCode': chosen['service']?.toString(),
-          'serviceName': chosen['description']?.toString() ??
+          'serviceName':
+              chosen['description']?.toString() ??
               chosen['service']?.toString(),
-          'cost': (chosen['cost'] as num?)?.toDouble() ??
+          'cost':
+              (chosen['cost'] as num?)?.toDouble() ??
               double.tryParse(chosen['cost']?.toString() ?? '0') ??
               0,
           'etd': chosen['etd']?.toString(),
@@ -1201,9 +1219,9 @@ class _CartPageState extends State<CartPage> {
       if (!mounted) return;
       setState(() {
         _shippingErrorBySeller[group.seller.id] = e.toString().replaceFirst(
-              'Exception: ',
-              '',
-            );
+          'Exception: ',
+          '',
+        );
       });
     } finally {
       if (mounted) {
@@ -1221,7 +1239,9 @@ class _CartPageState extends State<CartPage> {
     if (fix != null &&
         (fix.city?.isNotEmpty ?? false) &&
         (fix.province?.isNotEmpty ?? false)) {
-      final gpsQuery = _normalizeRajaOngkirSearch('${fix.city}, ${fix.province}');
+      final gpsQuery = _normalizeRajaOngkirSearch(
+        '${fix.city}, ${fix.province}',
+      );
       if (gpsQuery.toLowerCase() != normalized.toLowerCase() &&
           _looksLikeLocationQuery(gpsQuery)) {
         return [normalized, gpsQuery];
@@ -1315,10 +1335,7 @@ class _CartPageState extends State<CartPage> {
     String query,
   ) async {
     if (_shippingQuotaExceeded) {
-      throw Exception(
-        _shippingQuotaMessage ??
-            'cart.api_quota_exhausted'.tr(),
-      );
+      throw Exception(_shippingQuotaMessage ?? 'cart.api_quota_exhausted'.tr());
     }
 
     final normalized = _normalizeRajaOngkirSearch(query);
@@ -1358,7 +1375,10 @@ class _CartPageState extends State<CartPage> {
     if (group.seller.rajaongkirOriginId != null) {
       return {
         'id': group.seller.rajaongkirOriginId,
-        'label': group.seller.rajaongkirOriginLabel ?? group.seller.companyName ?? group.seller.name,
+        'label':
+            group.seller.rajaongkirOriginLabel ??
+            group.seller.companyName ??
+            group.seller.name,
       };
     }
 
@@ -1406,18 +1426,13 @@ class _CartPageState extends State<CartPage> {
         child: ListView.separated(
           shrinkWrap: true,
           itemCount: addresses.length,
-          separatorBuilder: (_, __) => Divider(
-            height: 1.h,
-            color: AppColors.grey100,
-          ),
+          separatorBuilder: (_, __) =>
+              Divider(height: 1.h, color: AppColors.grey100),
           itemBuilder: (_, i) {
             final a = addresses[i];
-            final label =
-                a.name.isNotEmpty
-                    ? a.name
-                    : (a.city.isNotEmpty
-                        ? a.city
-                        : 'cart.address_fallback'.tr());
+            final label = a.name.isNotEmpty
+                ? a.name
+                : (a.city.isNotEmpty ? a.city : 'cart.address_fallback'.tr());
             return ListTile(
               title: Text(label),
               subtitle: Text(
@@ -1455,8 +1470,7 @@ class _CartPageState extends State<CartPage> {
       _usingPrimaryProfile = false;
       _shippingAddressLabel = query;
       _shippingAddressQuery = query;
-      _shippingFullAddress =
-          query.length >= 10 ? query : null;
+      _shippingFullAddress = query.length >= 10 ? query : null;
       _shippingFix = null;
       _locationError = null;
       _clearShippingSelections();
@@ -1523,11 +1537,13 @@ class _CartPageState extends State<CartPage> {
     List<Map<String, dynamic>> options,
   ) {
     Map<String, dynamic> best = options.first;
-    var bestCost = (best['cost'] as num?)?.toDouble() ??
+    var bestCost =
+        (best['cost'] as num?)?.toDouble() ??
         double.tryParse(best['cost']?.toString() ?? '') ??
         double.infinity;
     for (final opt in options.skip(1)) {
-      final cost = (opt['cost'] as num?)?.toDouble() ??
+      final cost =
+          (opt['cost'] as num?)?.toDouble() ??
           double.tryParse(opt['cost']?.toString() ?? '') ??
           double.infinity;
       if (cost < bestCost) {
@@ -1561,9 +1577,7 @@ class _CartPageState extends State<CartPage> {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Text(
-                'cart.pick_courier_title'.tr(
-                  namedArgs: {'seller': sellerName},
-                ),
+                'cart.pick_courier_title'.tr(namedArgs: {'seller': sellerName}),
                 style: AppTextStyles.sectionTitle(fontWeight: FontWeight.w800),
               ),
               SizedBox(height: AppSpacing.sm10),
@@ -1575,15 +1589,19 @@ class _CartPageState extends State<CartPage> {
                   separatorBuilder: (_, __) => SizedBox(height: AppSpacing.sm),
                   itemBuilder: (_, idx) {
                     final option = options[idx];
-                    final cost = (option['cost'] as num?)?.toDouble() ??
+                    final cost =
+                        (option['cost'] as num?)?.toDouble() ??
                         double.tryParse(option['cost']?.toString() ?? '0') ??
                         0;
-                    final code = option['code']?.toString().toUpperCase() ?? '-';
+                    final code =
+                        option['code']?.toString().toUpperCase() ?? '-';
                     final service = option['service']?.toString() ?? '-';
-                    final description = option['description']?.toString() ?? service;
+                    final description =
+                        option['description']?.toString() ?? service;
                     final etd = option['etd']?.toString() ?? '-';
                     final isBisaExpress =
-                        option['code']?.toString().toLowerCase() == 'bisa_express';
+                        option['code']?.toString().toLowerCase() ==
+                        'bisa_express';
 
                     return InkWell(
                       onTap: () => safeNavigatorPop(ctx, option),
@@ -1619,7 +1637,9 @@ class _CartPageState extends State<CartPage> {
                                       vertical: 2.h,
                                     ),
                                     decoration: BoxDecoration(
-                                      color: AppColors.primary.withValues(alpha: 0.12),
+                                      color: AppColors.primary.withValues(
+                                        alpha: 0.12,
+                                      ),
                                       borderRadius: BorderRadius.circular(999),
                                     ),
                                     child: Text(
@@ -1636,7 +1656,9 @@ class _CartPageState extends State<CartPage> {
                             SizedBox(height: 2.h),
                             Text(
                               description,
-                              style: AppTextStyles.bodySecondary(color: AppColors.textSecondary),
+                              style: AppTextStyles.bodySecondary(
+                                color: AppColors.textSecondary,
+                              ),
                             ),
                             SizedBox(height: 6.h),
                             Row(
@@ -1652,7 +1674,9 @@ class _CartPageState extends State<CartPage> {
                                 ),
                                 Text(
                                   'cart.etd_days'.tr(namedArgs: {'etd': etd}),
-                                  style: AppTextStyles.caption(color: AppColors.textSecondary),
+                                  style: AppTextStyles.caption(
+                                    color: AppColors.textSecondary,
+                                  ),
                                 ),
                               ],
                             ),
@@ -1722,9 +1746,7 @@ class _CartPageState extends State<CartPage> {
       _shippingFullAddress = (fix?.address?.trim().isNotEmpty ?? false)
           ? fix!.address!.trim()
           : _shippingAddressQuery;
-      _locationError = fix == null
-          ? 'cart.gps_failed'.tr()
-          : null;
+      _locationError = fix == null ? 'cart.gps_failed'.tr() : null;
       _clearShippingSelections();
     });
     if (fix == null) {
@@ -1756,10 +1778,7 @@ class _CartPageState extends State<CartPage> {
               isEmpty
                   ? 'cart.stock_empty'.tr(namedArgs: {'name': p.name})
                   : 'cart.stock_max'.tr(
-                      namedArgs: {
-                        'qty': _formatQty(p.stock),
-                        'unit': p.unit,
-                      },
+                      namedArgs: {'qty': _formatQty(p.stock), 'unit': p.unit},
                     ),
               style: TextStyle(
                 color: AppColors.surface,
@@ -1836,184 +1855,201 @@ class _CartPageState extends State<CartPage> {
         final cartTitle = _isCheckoutFlow
             ? 'cart.checkout_title'.tr()
             : (itemCount > 0
-                ? 'cart.title_with_count'.tr(
-                    namedArgs: {'count': '$itemCount'},
-                  )
-                : 'cart.title'.tr());
+                  ? 'cart.title_with_count'.tr(
+                      namedArgs: {'count': '$itemCount'},
+                    )
+                  : 'cart.title'.tr());
 
         return Scaffold(
-      backgroundColor: AppColors.background,
-      appBar: BisaAppBar(
-        title: cartTitle,
-        backgroundColor: AppColors.surface,
-        onBackTap: _isCheckoutFlow
-            ? () {
-                if (context.canPop()) {
-                  context.pop();
-                } else {
-                  context.go('/cart');
-                }
-              }
-            : null,
-      ),
-      body: Stack(
-        fit: StackFit.expand,
-        children: [
-          BlocConsumer<CommerceCubit, CommerceState>(
-        listenWhen: (prev, curr) {
-          if (curr.error != null && curr.error != prev.error) return true;
-          if (!_isCheckoutFlow || _isCheckingOut) return false;
-          if (curr.cart == null) return false;
-          if (prev.cart == null) return true;
-          return _cartContentKey(prev.cart!) != _cartContentKey(curr.cart!);
-        },
-        listener: (context, state) {
-          if (state.error != null && state.error != _lastCommerceErrorSnack) {
-            _lastCommerceErrorSnack = state.error;
-            showFailureSnackBarFromMessage(context, state.error!);
-          } else if (state.error == null) {
-            _lastCommerceErrorSnack = null;
-          }
-          if (state.cart != null && _shouldScheduleCheckoutPreview(state.cart!)) {
-            _scheduleCheckoutPreviewRefresh(state.cart!);
-          }
-        },
-        builder: (context, state) {
-          if (state.isLoading && state.cart == null) {
-            return _buildCartLoadingSkeleton();
-          }
-
-          final cart = state.cart;
-          if (cart == null || cart.items.isEmpty) {
-            if (_isCheckoutFlow && _isCheckingOut) {
-              return const SizedBox.shrink();
-            }
-            return _buildEmpty(context);
-          }
-
-          _syncSelection(cart);
-
-          // Group items by seller id supaya tampilan rapi per pemilik produk.
-          final groups = <String, _SellerGroup>{};
-          for (final item in cart.items) {
-            final p = item.product.toEntity();
-            final sid = p.seller.id;
-            groups.putIfAbsent(
-              sid,
-              () => _SellerGroup(seller: p.seller, items: []),
-            );
-            groups[sid]!.items.add(item);
-          }
-
-          final groupList = groups.values.toList();
-          final hasOutOfStock = cart.items.any(
-            (it) => it.product.toEntity().stock <= 0,
-          );
-
-          final selectedItems = cart.items
-              .where((it) => _selectedItemIds.contains(it.id))
-              .toList();
-          if (_isCheckoutFlow) {
-            final checkoutGroups = groupList
-                .map((g) => _SellerGroup(
-                      seller: g.seller,
-                      items: g.items
-                          .where((it) => _selectedItemIds.contains(it.id))
-                          .toList(),
-                    ))
-                .where((g) => g.items.isNotEmpty)
-                .toList();
-
-            return Column(
-              children: [
-                if (hasOutOfStock && _anySelectedOutOfStock(cart))
-                  _buildOutOfStockBanner(),
-                Expanded(
-                  child: ListView(
-                    padding: EdgeInsets.fromLTRB(
-                      AppSpacing.md,
-                      AppSpacing.md12,
-                      AppSpacing.md,
-                      AppSpacing.md,
-                    ),
-                    physics: const AlwaysScrollableScrollPhysics(
-                      parent: BouncingScrollPhysics(),
-                    ),
-                    children: [
-                      _buildShippingLocationCard(),
-                      SizedBox(height: AppSpacing.md12),
-                      _buildPaymentMethodCard(),
-                      SizedBox(height: AppSpacing.md12),
-                      for (var i = 0; i < checkoutGroups.length; i++) ...[
-                        if (i > 0) SizedBox(height: AppSpacing.section),
-                        _buildSellerCard(context, checkoutGroups[i],
-                            showShipping: true),
-                      ],
-                    ],
-                  ),
-                ),
-                _buildCheckoutBar(context, cart, hasOutOfStock),
-              ],
-            );
-          }
-
-          // Tentukan dominant productMode untuk filter rekomendasi.
-          final modeCount = <String, int>{};
-          for (final it in cart.items) {
-            final mode = it.product.toEntity().productMode;
-            modeCount[mode] = (modeCount[mode] ?? 0) + 1;
-          }
-          final dominantMode = modeCount.entries
-              .toList()
-              .reduce((a, b) => a.value >= b.value ? a : b)
-              .key;
-          final excludeIds =
-              cart.items.map((e) => e.product.toEntity().id).toSet();
-
-          return Column(
+          backgroundColor: AppColors.background,
+          appBar: BisaAppBar(
+            title: cartTitle,
+            backgroundColor: AppColors.surface,
+            onBackTap: _isCheckoutFlow
+                ? () {
+                    if (context.canPop()) {
+                      context.pop();
+                    } else {
+                      context.go('/cart');
+                    }
+                  }
+                : null,
+          ),
+          body: Stack(
+            fit: StackFit.expand,
             children: [
-              if (hasOutOfStock) _buildOutOfStockBanner(),
-              Expanded(
-                child: ListView(
-                  padding: EdgeInsets.fromLTRB(
-                    AppSpacing.md,
-                    AppSpacing.md,
-                    AppSpacing.md,
-                    AppSpacing.md,
-                  ),
-                  physics: const AlwaysScrollableScrollPhysics(
-                    parent: BouncingScrollPhysics(),
-                  ),
-                  children: [
-                    _buildSelectAllBar(cart),
-                    for (var i = 0; i < groupList.length; i++) ...[
-                      if (i > 0) SizedBox(height: AppSpacing.section),
-                      _buildSellerCard(context, groupList[i],
-                          showShipping: false),
+              BlocConsumer<CommerceCubit, CommerceState>(
+                listenWhen: (prev, curr) {
+                  if (curr.error != null && curr.error != prev.error)
+                    return true;
+                  if (!_isCheckoutFlow || _isCheckingOut) return false;
+                  if (curr.cart == null) return false;
+                  if (prev.cart == null) return true;
+                  return _cartContentKey(prev.cart!) !=
+                      _cartContentKey(curr.cart!);
+                },
+                listener: (context, state) {
+                  if (state.error != null &&
+                      state.error != _lastCommerceErrorSnack) {
+                    _lastCommerceErrorSnack = state.error;
+                    showFailureSnackBarFromMessage(context, state.error!);
+                  } else if (state.error == null) {
+                    _lastCommerceErrorSnack = null;
+                  }
+                  if (state.cart != null &&
+                      _shouldScheduleCheckoutPreview(state.cart!)) {
+                    _scheduleCheckoutPreviewRefresh(state.cart!);
+                  }
+                },
+                builder: (context, state) {
+                  if (state.isLoading && state.cart == null) {
+                    return _buildCartLoadingSkeleton();
+                  }
+
+                  final cart = state.cart;
+                  if (cart == null || cart.items.isEmpty) {
+                    if (_isCheckoutFlow && _isCheckingOut) {
+                      return const SizedBox.shrink();
+                    }
+                    return _buildEmpty(context);
+                  }
+
+                  _syncSelection(cart);
+
+                  // Group items by seller id supaya tampilan rapi per pemilik produk.
+                  final groups = <String, _SellerGroup>{};
+                  for (final item in cart.items) {
+                    final p = item.product.toEntity();
+                    final sid = p.seller.id;
+                    groups.putIfAbsent(
+                      sid,
+                      () => _SellerGroup(seller: p.seller, items: []),
+                    );
+                    groups[sid]!.items.add(item);
+                  }
+
+                  final groupList = groups.values.toList();
+                  final hasOutOfStock = cart.items.any(
+                    (it) => it.product.toEntity().stock <= 0,
+                  );
+
+                  final selectedItems = cart.items
+                      .where((it) => _selectedItemIds.contains(it.id))
+                      .toList();
+                  if (_isCheckoutFlow) {
+                    final checkoutGroups = groupList
+                        .map(
+                          (g) => _SellerGroup(
+                            seller: g.seller,
+                            items: g.items
+                                .where((it) => _selectedItemIds.contains(it.id))
+                                .toList(),
+                          ),
+                        )
+                        .where((g) => g.items.isNotEmpty)
+                        .toList();
+
+                    return Column(
+                      children: [
+                        if (hasOutOfStock && _anySelectedOutOfStock(cart))
+                          _buildOutOfStockBanner(),
+                        Expanded(
+                          child: ListView(
+                            padding: EdgeInsets.fromLTRB(
+                              AppSpacing.md,
+                              AppSpacing.md12,
+                              AppSpacing.md,
+                              AppSpacing.md,
+                            ),
+                            physics: const AlwaysScrollableScrollPhysics(
+                              parent: BouncingScrollPhysics(),
+                            ),
+                            children: [
+                              _buildShippingLocationCard(),
+                              SizedBox(height: AppSpacing.md12),
+                              _buildPaymentMethodCard(),
+                              SizedBox(height: AppSpacing.md12),
+                              for (
+                                var i = 0;
+                                i < checkoutGroups.length;
+                                i++
+                              ) ...[
+                                if (i > 0) SizedBox(height: AppSpacing.section),
+                                _buildSellerCard(
+                                  context,
+                                  checkoutGroups[i],
+                                  showShipping: true,
+                                ),
+                              ],
+                            ],
+                          ),
+                        ),
+                        _buildCheckoutBar(context, cart, hasOutOfStock),
+                      ],
+                    );
+                  }
+
+                  // Tentukan dominant productMode untuk filter rekomendasi.
+                  final modeCount = <String, int>{};
+                  for (final it in cart.items) {
+                    final mode = it.product.toEntity().productMode;
+                    modeCount[mode] = (modeCount[mode] ?? 0) + 1;
+                  }
+                  final dominantMode = modeCount.entries
+                      .toList()
+                      .reduce((a, b) => a.value >= b.value ? a : b)
+                      .key;
+                  final excludeIds = cart.items
+                      .map((e) => e.product.toEntity().id)
+                      .toSet();
+
+                  return Column(
+                    children: [
+                      if (hasOutOfStock) _buildOutOfStockBanner(),
+                      Expanded(
+                        child: ListView(
+                          padding: EdgeInsets.fromLTRB(
+                            AppSpacing.md,
+                            AppSpacing.md,
+                            AppSpacing.md,
+                            AppSpacing.md,
+                          ),
+                          physics: const AlwaysScrollableScrollPhysics(
+                            parent: BouncingScrollPhysics(),
+                          ),
+                          children: [
+                            _buildSelectAllBar(cart),
+                            for (var i = 0; i < groupList.length; i++) ...[
+                              if (i > 0) SizedBox(height: AppSpacing.section),
+                              _buildSellerCard(
+                                context,
+                                groupList[i],
+                                showShipping: false,
+                              ),
+                            ],
+                            SizedBox(height: AppSpacing.md),
+                            _CartRecommendationSection(
+                              productMode: dominantMode,
+                              excludeIds: excludeIds,
+                            ),
+                            SizedBox(height: AppSpacing.sm),
+                            DualModeProductCatalog(
+                              excludeIds: excludeIds,
+                              limitPerMode: 20,
+                            ),
+                          ],
+                        ),
+                      ),
+                      _buildSimpleCartBar(context, cart, hasOutOfStock),
                     ],
-                    SizedBox(height: AppSpacing.md),
-                    _CartRecommendationSection(
-                      productMode: dominantMode,
-                      excludeIds: excludeIds,
-                    ),
-                    SizedBox(height: AppSpacing.sm),
-                    DualModeProductCatalog(
-                      excludeIds: excludeIds,
-                      limitPerMode: 20,
-                    ),
-                  ],
-                ),
+                  );
+                },
               ),
-              _buildSimpleCartBar(context, cart, hasOutOfStock),
+              if (_isCheckoutFlow && _isCheckingOut)
+                _buildCheckoutProcessingOverlay(),
             ],
-          );
-        },
-      ),
-          if (_isCheckoutFlow && _isCheckingOut)
-            _buildCheckoutProcessingOverlay(),
-        ],
-      ),
-    );
+          ),
+        );
       },
     );
   }
@@ -2070,10 +2106,7 @@ class _CartPageState extends State<CartPage> {
         children: [
           Icon(LucideIcons.shoppingCart, size: 64.sp, color: AppColors.grey300),
           SizedBox(height: AppSpacing.md),
-          Text(
-            'cart.empty_title'.tr(),
-            style: AppTextStyles.sectionTitle(),
-          ),
+          Text('cart.empty_title'.tr(), style: AppTextStyles.sectionTitle()),
           SizedBox(height: AppSpacing.sm),
           TextButton(
             onPressed: () => context.go('/'),
@@ -2197,9 +2230,14 @@ class _CartPageState extends State<CartPage> {
                   ),
                 ),
                 TextButton(
-                  onPressed: isLoading ? null : () => _calculateSellerShipping(group),
+                  onPressed: isLoading
+                      ? null
+                      : () => _calculateSellerShipping(group),
                   style: TextButton.styleFrom(
-                    padding: EdgeInsets.symmetric(horizontal: AppSpacing.sm, vertical: 2.h),
+                    padding: EdgeInsets.symmetric(
+                      horizontal: AppSpacing.sm,
+                      vertical: 2.h,
+                    ),
                     minimumSize: Size.zero,
                     tapTargetSize: MaterialTapTargetSize.shrinkWrap,
                   ),
@@ -2207,8 +2245,8 @@ class _CartPageState extends State<CartPage> {
                     isLoading
                         ? 'cart.calculating'.tr()
                         : (selection == null
-                            ? 'cart.setup_shipping'.tr()
-                            : 'cart.change'.tr()),
+                              ? 'cart.setup_shipping'.tr()
+                              : 'cart.change'.tr()),
                     style: AppTextStyles.caption(fontWeight: FontWeight.w800),
                   ),
                 ),
@@ -2241,7 +2279,9 @@ class _CartPageState extends State<CartPage> {
             Align(
               alignment: Alignment.centerLeft,
               child: TextButton.icon(
-                onPressed: isLoading ? null : () => _pickCourierForSeller(group),
+                onPressed: isLoading
+                    ? null
+                    : () => _pickCourierForSeller(group),
                 style: TextButton.styleFrom(
                   padding: EdgeInsets.symmetric(horizontal: 4.w, vertical: 0.h),
                   minimumSize: Size.zero,
@@ -2256,9 +2296,7 @@ class _CartPageState extends State<CartPage> {
                   selectedCourier == null
                       ? 'cart.courier_all_active'.tr()
                       : 'cart.courier_selected'.tr(
-                          namedArgs: {
-                            'courier': selectedCourier.toUpperCase(),
-                          },
+                          namedArgs: {'courier': selectedCourier.toUpperCase()},
                         ),
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
@@ -2270,7 +2308,9 @@ class _CartPageState extends State<CartPage> {
             Align(
               alignment: Alignment.centerLeft,
               child: TextButton.icon(
-                onPressed: isLoading ? null : () => _editDestinationQuery(group),
+                onPressed: isLoading
+                    ? null
+                    : () => _editDestinationQuery(group),
                 style: TextButton.styleFrom(
                   padding: EdgeInsets.symmetric(horizontal: 4.w, vertical: 0.h),
                   minimumSize: Size.zero,
@@ -2302,8 +2342,9 @@ class _CartPageState extends State<CartPage> {
     ProductSellerEntity seller,
     List<CartItemModel> items,
   ) {
-    final selectableItems =
-        items.where((it) => it.product.toEntity().stock > 0).toList();
+    final selectableItems = items
+        .where((it) => it.product.toEntity().stock > 0)
+        .toList();
     final selectedCount = selectableItems
         .where((it) => _selectedItemIds.contains(it.id))
         .length;
@@ -2325,16 +2366,14 @@ class _CartPageState extends State<CartPage> {
             width: 22.w,
             height: 22.w,
             child: Checkbox(
-              value: allSelected
-                  ? true
-                  : (partiallySelected ? null : false),
+              value: allSelected ? true : (partiallySelected ? null : false),
               tristate: true,
               onChanged: selectableItems.isEmpty
                   ? null
                   : (v) => _toggleGroupSelection(
-                        selectableItems,
-                        v == true || partiallySelected,
-                      ),
+                      selectableItems,
+                      v == true || partiallySelected,
+                    ),
               activeColor: AppColors.primary,
               materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
               shape: RoundedRectangleBorder(
@@ -2417,7 +2456,9 @@ class _CartPageState extends State<CartPage> {
                                 'selected': '$selectedCount',
                               },
                             ),
-                            style: AppTextStyles.caption(color: AppColors.textSecondary),
+                            style: AppTextStyles.caption(
+                              color: AppColors.textSecondary,
+                            ),
                           ),
                         ],
                       ),
@@ -2483,7 +2524,10 @@ class _CartPageState extends State<CartPage> {
                     width: 76.w,
                     height: 76.w,
                     color: AppColors.grey100,
-                    child: const Icon(LucideIcons.image, color: AppColors.grey400),
+                    child: const Icon(
+                      LucideIcons.image,
+                      color: AppColors.grey400,
+                    ),
                   ),
                 ),
               ),
@@ -2539,7 +2583,9 @@ class _CartPageState extends State<CartPage> {
                     ),
                     Text(
                       'cart.unit_per'.tr(namedArgs: {'unit': p.unit}),
-                      style: AppTextStyles.caption(color: AppColors.textSecondary),
+                      style: AppTextStyles.caption(
+                        color: AppColors.textSecondary,
+                      ),
                     ),
                   ],
                 ),
@@ -2599,19 +2645,20 @@ class _CartPageState extends State<CartPage> {
                       children: [
                         _qtyBtn(
                           LucideIcons.minus,
-                          enabled:
-                              !isOutOfStock && item.quantity > p.minOrder,
+                          enabled: !isOutOfStock && item.quantity > p.minOrder,
                           onTap: () {
                             if (item.quantity > p.minOrder) {
                               context.read<CommerceCubit>().updateQuantity(
-                                    item.id,
-                                    item.quantity - 1,
-                                  );
+                                item.id,
+                                item.quantity - 1,
+                              );
                             }
                           },
                         ),
                         Padding(
-                          padding: EdgeInsets.symmetric(horizontal: AppSpacing.sm10),
+                          padding: EdgeInsets.symmetric(
+                            horizontal: AppSpacing.sm10,
+                          ),
                           child: Text(
                             '${_formatQty(item.quantity)} ${p.unit}',
                             style: TextStyle(
@@ -2634,9 +2681,9 @@ class _CartPageState extends State<CartPage> {
                               return;
                             }
                             context.read<CommerceCubit>().updateQuantity(
-                                  item.id,
-                                  next,
-                                );
+                              item.id,
+                              next,
+                            );
                           },
                         ),
                       ],
@@ -2722,19 +2769,25 @@ class _CartPageState extends State<CartPage> {
       ),
     );
     if (p.isCertified) {
-      badges.add(_miniBadge('commerce.badge_certified'.tr(), AppColors.info,
-          icon: LucideIcons.badgeCheck));
+      badges.add(
+        _miniBadge(
+          'commerce.badge_certified'.tr(),
+          AppColors.info,
+          icon: LucideIcons.badgeCheck,
+        ),
+      );
     }
     if (p.isEscrowProtected) {
-      badges.add(_miniBadge('commerce.badge_escrow'.tr(), AppColors.primary,
-          icon: LucideIcons.shieldCheck));
+      badges.add(
+        _miniBadge(
+          'commerce.badge_escrow'.tr(),
+          AppColors.primary,
+          icon: LucideIcons.shieldCheck,
+        ),
+      );
     }
 
-    return Wrap(
-      spacing: 4.w,
-      runSpacing: 4.h,
-      children: badges,
-    );
+    return Wrap(spacing: 4.w, runSpacing: 4.h, children: badges);
   }
 
   Widget _miniBadge(String label, Color color, {IconData? icon}) {
@@ -2801,10 +2854,7 @@ class _CartPageState extends State<CartPage> {
           SizedBox(width: 4.w),
           Text(
             'cart.stock_max_reached'.tr(
-              namedArgs: {
-                'qty': _formatQty(stock),
-                'unit': unit,
-              },
+              namedArgs: {'qty': _formatQty(stock), 'unit': unit},
             ),
             style: TextStyle(
               color: AppColors.warning,
@@ -2823,10 +2873,7 @@ class _CartPageState extends State<CartPage> {
         SizedBox(width: 4.w),
         Text(
           'cart.stock_available'.tr(
-            namedArgs: {
-              'qty': _formatQty(stock),
-              'unit': unit,
-            },
+            namedArgs: {'qty': _formatQty(stock), 'unit': unit},
           ),
           style: TextStyle(
             color: AppColors.textSecondary,
@@ -2934,20 +2981,20 @@ class _CartPageState extends State<CartPage> {
 
   Widget _buildShippingLocationCard() {
     final fix = _shippingFix;
-    final hasAddress = (_shippingAddressQuery?.isNotEmpty ?? false) ||
+    final hasAddress =
+        (_shippingAddressQuery?.isNotEmpty ?? false) ||
         (_shippingFullAddress?.isNotEmpty ?? false) ||
         fix != null;
-    final displayAddress = _shippingAddressLabel ??
-        (fix != null
-            ? fix.shortLabel
-            : 'cart.primary_auto_hint'.tr());
+    final displayAddress =
+        _shippingAddressLabel ??
+        (fix != null ? fix.shortLabel : 'cart.primary_auto_hint'.tr());
     final detailLine = _selectedProfileAddress != null
         ? _displayLineFromEntity(_selectedProfileAddress!)
         : (fix?.address?.trim().isNotEmpty ?? false)
-            ? fix!.address!
-            : (_shippingFullAddress?.trim().isNotEmpty ?? false)
-                ? _shippingFullAddress!
-                : null;
+        ? fix!.address!
+        : (_shippingFullAddress?.trim().isNotEmpty ?? false)
+        ? _shippingFullAddress!
+        : null;
     return Container(
       padding: EdgeInsets.fromLTRB(
         AppSpacing.section,
@@ -3069,7 +3116,8 @@ class _CartPageState extends State<CartPage> {
                 child: _buildShippingAddressAction(
                   icon: LucideIcons.mapPinned,
                   label: 'cart.source_map'.tr(),
-                  highlighted: _shippingFix == null &&
+                  highlighted:
+                      _shippingFix == null &&
                       _selectedProfileAddress == null &&
                       (_shippingFullAddress?.isNotEmpty ?? false),
                   onTap: _pickShippingAddressFromMap,
@@ -3082,8 +3130,8 @@ class _CartPageState extends State<CartPage> {
                   label: _detectingLocation
                       ? '...'
                       : (_shippingFix != null
-                          ? 'cart.source_gps'.tr()
-                          : 'cart.source_detect'.tr()),
+                            ? 'cart.source_gps'.tr()
+                            : 'cart.source_detect'.tr()),
                   highlighted: _shippingFix != null,
                   loading: _detectingLocation,
                   onTap: _detectingLocation ? null : _detectShippingLocation,
@@ -3185,7 +3233,8 @@ class _CartPageState extends State<CartPage> {
             style: TextStyle(
               fontSize: emphasized ? 15.sp : 12.sp,
               fontWeight: emphasized ? FontWeight.w900 : FontWeight.w700,
-              color: valueColor ??
+              color:
+                  valueColor ??
                   (emphasized ? AppColors.primary : AppColors.textPrimary),
             ),
           ),
@@ -3208,9 +3257,8 @@ class _CartPageState extends State<CartPage> {
       (sum, it) => sum + (it.product.toEntity().pricePerUnit * it.quantity),
     );
     final selectedCount = selectedItems.length;
-    final canContinue = selectedCount > 0 &&
-        !_anySelectedOutOfStock(cart) &&
-        !hasOutOfStock;
+    final canContinue =
+        selectedCount > 0 && !_anySelectedOutOfStock(cart) && !hasOutOfStock;
 
     return Container(
       decoration: BoxDecoration(
@@ -3225,7 +3273,6 @@ class _CartPageState extends State<CartPage> {
       ),
       child: SafeArea(
         top: false,
-        minimum: EdgeInsets.only(bottom: AppSpacing.sm),
         child: Padding(
           padding: EdgeInsets.fromLTRB(
             AppSpacing.md,
@@ -3283,10 +3330,12 @@ class _CartPageState extends State<CartPage> {
                 height: 48.h,
                 useGradient: canContinue,
                 backgroundColor: canContinue ? null : AppColors.grey200,
-                textColor:
-                    canContinue ? AppColors.textOnPrimary : AppColors.textSecondary,
-                onPressed:
-                    canContinue ? () => _goToCheckoutPage(context, cart) : null,
+                textColor: canContinue
+                    ? AppColors.textOnPrimary
+                    : AppColors.textSecondary,
+                onPressed: canContinue
+                    ? () => _goToCheckoutPage(context, cart)
+                    : null,
               ),
             ],
           ),
@@ -3306,8 +3355,7 @@ class _CartPageState extends State<CartPage> {
         .toList();
     final selectedTotal = selectedItems.fold<double>(
       0,
-      (sum, it) =>
-          sum + (it.product.toEntity().pricePerUnit * it.quantity),
+      (sum, it) => sum + (it.product.toEntity().pricePerUnit * it.quantity),
     );
     final selectedCount = selectedItems.length;
     final sellerIds = selectedItems
@@ -3322,15 +3370,17 @@ class _CartPageState extends State<CartPage> {
       return sum + value;
     });
     final hasCompleteShipping =
-        selectedCount == 0 || sellerIds.every(_shippingSelectionBySeller.containsKey);
+        selectedCount == 0 ||
+        sellerIds.every(_shippingSelectionBySeller.containsKey);
     double toDoubleValue(dynamic value) {
       if (value is num) return value.toDouble();
       return double.tryParse(value?.toString() ?? '') ?? 0;
     }
 
     final previewSubtotal = toDoubleValue(_checkoutPreview?['subtotal']);
-    final previewVoucherDiscount =
-        toDoubleValue(_checkoutPreview?['voucherDiscount']);
+    final previewVoucherDiscount = toDoubleValue(
+      _checkoutPreview?['voucherDiscount'],
+    );
     final previewPlatformFee = toDoubleValue(_checkoutPreview?['platformFee']);
     final previewVat = toDoubleValue(_checkoutPreview?['vatAmount']);
     final previewLogistics = toDoubleValue(_checkoutPreview?['logisticsFee']);
@@ -3338,8 +3388,7 @@ class _CartPageState extends State<CartPage> {
     final hasPreview = _checkoutPreview != null;
     final isPreviewRefreshing =
         _checkoutPreviewLoading && _checkoutPreview != null;
-    final subtotalShown =
-        hasPreview ? previewSubtotal : selectedTotal;
+    final subtotalShown = hasPreview ? previewSubtotal : selectedTotal;
     final logisticsShown = hasPreview ? previewLogistics : shippingTotal;
     final grandTotal = hasPreview
         ? previewTotal
@@ -3369,22 +3418,25 @@ class _CartPageState extends State<CartPage> {
     final checkoutButtonText = _isCheckingOut
         ? 'cart.processing'.tr()
         : (selectedCount == 0
-            ? 'cart.select'.tr()
-            : (hasOutOfStock && _anySelectedOutOfStock(cart)
-                ? 'cart.remove_first'.tr()
-                : (!hasValidShippingAddress
-                      ? 'cart.complete_address'.tr()
-                      : (_checkoutPreviewLoading
-                            ? 'cart.calculating_short'.tr()
-                            : (_checkoutPreviewError != null
-                                  ? 'cart.retry'.tr()
-                                  : (!hasCompleteShipping
-                                        ? 'cart.setup_shipping_btn'.tr()
-                                        : (!hasPreview
-                                              ? 'cart.calculating_short'.tr()
-                                              : (_selectedPayment == null
-                                                    ? 'cart.pick_payment'.tr()
-                                                    : 'cart.place_order'.tr()))))))));
+              ? 'cart.select'.tr()
+              : (hasOutOfStock && _anySelectedOutOfStock(cart)
+                    ? 'cart.remove_first'.tr()
+                    : (!hasValidShippingAddress
+                          ? 'cart.complete_address'.tr()
+                          : (_checkoutPreviewLoading
+                                ? 'cart.calculating_short'.tr()
+                                : (_checkoutPreviewError != null
+                                      ? 'cart.retry'.tr()
+                                      : (!hasCompleteShipping
+                                            ? 'cart.setup_shipping_btn'.tr()
+                                            : (!hasPreview
+                                                  ? 'cart.calculating_short'
+                                                        .tr()
+                                                  : (_selectedPayment == null
+                                                        ? 'cart.pick_payment'
+                                                              .tr()
+                                                        : 'cart.place_order'
+                                                              .tr()))))))));
 
     return Container(
       decoration: BoxDecoration(
@@ -3399,7 +3451,6 @@ class _CartPageState extends State<CartPage> {
       ),
       child: SafeArea(
         top: false,
-        minimum: EdgeInsets.only(bottom: AppSpacing.sm),
         child: Padding(
           padding: EdgeInsets.fromLTRB(
             AppSpacing.md,
@@ -3454,7 +3505,9 @@ class _CartPageState extends State<CartPage> {
                     ),
                     SizedBox(width: AppSpacing.sm),
                     TextButton(
-                      onPressed: _voucherApplying ? null : () => _applyVoucher(cart),
+                      onPressed: _voucherApplying
+                          ? null
+                          : () => _applyVoucher(cart),
                       child: Text(
                         _appliedVoucherCode != null
                             ? 'cart.voucher_change'.tr()
@@ -3475,9 +3528,9 @@ class _CartPageState extends State<CartPage> {
                   Align(
                     alignment: Alignment.centerLeft,
                     child: Text(
-                      'cart.voucher_applied'.tr(namedArgs: {
-                        'code': _appliedVoucherCode!,
-                      }),
+                      'cart.voucher_applied'.tr(
+                        namedArgs: {'code': _appliedVoucherCode!},
+                      ),
                       style: TextStyle(
                         fontSize: 11.sp,
                         color: AppColors.success,
@@ -3490,9 +3543,9 @@ class _CartPageState extends State<CartPage> {
                   Align(
                     alignment: Alignment.centerLeft,
                     child: Text(
-                      'cart.saved_payment_hint'.tr(namedArgs: {
-                        'name': _savedPaymentPref!.name,
-                      }),
+                      'cart.saved_payment_hint'.tr(
+                        namedArgs: {'name': _savedPaymentPref!.name},
+                      ),
                       style: TextStyle(
                         fontSize: 11.sp,
                         color: AppColors.primary,
@@ -3528,7 +3581,7 @@ class _CartPageState extends State<CartPage> {
                       ),
                     if (hasPreview)
                       _buildCheckoutPriceRow(
-                      'cart.fee_admin'.tr(),
+                        'cart.fee_admin'.tr(),
                         formatMoneyIdr(previewPlatformFee),
                       ),
                     if (hasPreview)
@@ -3557,7 +3610,9 @@ class _CartPageState extends State<CartPage> {
                   ),
                 ),
               ],
-              if (!hasCompleteShipping && selectedCount > 0 && hasValidShippingAddress) ...[
+              if (!hasCompleteShipping &&
+                  selectedCount > 0 &&
+                  hasValidShippingAddress) ...[
                 SizedBox(height: 6.h),
                 Align(
                   alignment: Alignment.centerLeft,
@@ -3621,7 +3676,9 @@ class _CartPageState extends State<CartPage> {
                   ),
                 ),
               ],
-              if (_checkoutPreviewError != null && selectedCount > 0 && hasCompleteShipping) ...[
+              if (_checkoutPreviewError != null &&
+                  selectedCount > 0 &&
+                  hasCompleteShipping) ...[
                 SizedBox(height: 6.h),
                 Align(
                   alignment: Alignment.centerLeft,
@@ -3695,11 +3752,11 @@ class _CartPageState extends State<CartPage> {
                     onPressed: isReadyToPlaceOrder
                         ? () => _onCheckout(context, cart)
                         : canRetryPreview
-                            ? () {
-                                _lastCheckoutPreviewKey = null;
-                                _refreshCheckoutPreview(cart, force: true);
-                              }
-                            : null,
+                        ? () {
+                            _lastCheckoutPreviewKey = null;
+                            _refreshCheckoutPreview(cart, force: true);
+                          }
+                        : null,
                   ),
                 ],
               ),
@@ -3714,8 +3771,7 @@ class _CartPageState extends State<CartPage> {
   bool _anySelectedOutOfStock(CartSummary cart) {
     return cart.items.any(
       (it) =>
-          _selectedItemIds.contains(it.id) &&
-          it.product.toEntity().stock <= 0,
+          _selectedItemIds.contains(it.id) && it.product.toEntity().stock <= 0,
     );
   }
 
@@ -3803,11 +3859,7 @@ class _CartRecommendationSectionState
 
   void _fetchFallback() {
     _triedFallback = true;
-    _cubit.getProducts(
-      sortBy: 'totalSold',
-      sortOrder: 'desc',
-      limit: 12,
-    );
+    _cubit.getProducts(sortBy: 'totalSold', sortOrder: 'desc', limit: 12);
   }
 
   @override
@@ -3818,8 +3870,8 @@ class _CartRecommendationSectionState
 
   String _modeLabel(BuildContext context) =>
       widget.productMode == 'ORGANIC_PRODUCE'
-          ? 'commerce.mode_organic'.tr()
-          : 'commerce.mode_biomass'.tr();
+      ? 'commerce.mode_organic'.tr()
+      : 'commerce.mode_biomass'.tr();
 
   IconData get _modeIcon => widget.productMode == 'ORGANIC_PRODUCE'
       ? LucideIcons.sprout
@@ -3900,7 +3952,8 @@ class _CartRecommendationSectionState
                       scrollDirection: Axis.horizontal,
                       padding: EdgeInsets.symmetric(horizontal: AppSpacing.md),
                       itemCount: 3,
-                      separatorBuilder: (_, __) => SizedBox(width: AppSpacing.sm),
+                      separatorBuilder: (_, __) =>
+                          SizedBox(width: AppSpacing.sm),
                       itemBuilder: (_, __) => SizedBox(
                         width: ProductCard.horizontalWidth,
                         height: ProductCard.horizontalViewportHeight,
@@ -3938,7 +3991,9 @@ class _CartRecommendationSectionState
                         Expanded(
                           child: Text(
                             msg,
-                            style: AppTextStyles.bodySecondary(color: AppColors.textSecondary),
+                            style: AppTextStyles.bodySecondary(
+                              color: AppColors.textSecondary,
+                            ),
                           ),
                         ),
                         TextButton(
@@ -3976,9 +4031,12 @@ class _CartRecommendationSectionState
                         height: 120.h,
                         child: ListView.separated(
                           scrollDirection: Axis.horizontal,
-                          padding: EdgeInsets.symmetric(horizontal: AppSpacing.md),
+                          padding: EdgeInsets.symmetric(
+                            horizontal: AppSpacing.md,
+                          ),
                           itemCount: 2,
-                          separatorBuilder: (_, __) => SizedBox(width: AppSpacing.md12),
+                          separatorBuilder: (_, __) =>
+                              SizedBox(width: AppSpacing.md12),
                           itemBuilder: (_, __) => SizedBox(
                             width: 140.w,
                             child: ProductCardSkeleton(

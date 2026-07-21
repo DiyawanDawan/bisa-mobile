@@ -80,6 +80,10 @@ class _WalletPageState extends State<WalletPage> {
                         context.read<WalletCubit>().getWalletData(),
                     child: SingleChildScrollView(
                       physics: const AlwaysScrollableScrollPhysics(),
+                      padding: fullScreenScrollPadding(
+                        context,
+                        baseBottom: AppSpacing.spaciousPx,
+                      ),
                       child: Column(
                         children: [
                           _buildBalanceCard(wallet),
@@ -90,9 +94,6 @@ class _WalletPageState extends State<WalletPage> {
                             payoutAccounts,
                           ),
                           _buildTransactionHistory(context, transactions),
-                          SizedBox(
-                            height: 40.h + systemBottomInset(context),
-                          ),
                         ],
                       ),
                     ),
@@ -123,7 +124,12 @@ class _WalletPageState extends State<WalletPage> {
   Widget _buildBalanceCard(WalletEntity wallet) {
     return Container(
       width: double.infinity,
-      margin: EdgeInsets.all(24.w),
+      margin: EdgeInsets.fromLTRB(
+        AppSpacing.pageGutter,
+        AppSpacing.sectionGap,
+        AppSpacing.pageGutter,
+        AppSpacing.sectionGap,
+      ),
       padding: EdgeInsets.all(24.r),
       decoration: BoxDecoration(
         gradient: AppColors.primaryGradient,
@@ -200,7 +206,11 @@ class _WalletPageState extends State<WalletPage> {
         children: [
           Row(
             children: [
-              Icon(icon, size: 12.sp, color: AppColors.white.withValues(alpha: 0.7)),
+              Icon(
+                icon,
+                size: 12.sp,
+                color: AppColors.white.withValues(alpha: 0.7),
+              ),
               SizedBox(width: 4.w),
               Text(
                 label,
@@ -233,15 +243,14 @@ class _WalletPageState extends State<WalletPage> {
     List<PayoutAccountEntity> accounts,
   ) {
     return Padding(
-      padding: EdgeInsets.symmetric(horizontal: 24.w),
+      padding: EdgeInsets.symmetric(horizontal: AppSpacing.pageGutter),
       child: Row(
         children: [
           _buildQuickAction(
             LucideIcons.arrowUpRight,
             'wallet.action_withdraw'.tr(),
             AppColors.primary,
-            onTap: () =>
-                _showWithdrawDialog(context, wallet.balance, accounts),
+            onTap: () => _showWithdrawDialog(context, wallet.balance, accounts),
           ),
           SizedBox(width: 16.w),
           _buildQuickAction(
@@ -387,10 +396,8 @@ class _WalletPageState extends State<WalletPage> {
               shrinkWrap: true,
               physics: const NeverScrollableScrollPhysics(),
               itemCount: preview.length,
-              separatorBuilder: (_, __) => Divider(
-                height: 1,
-                color: AppColors.grey100,
-              ),
+              separatorBuilder: (_, __) =>
+                  Divider(height: 1, color: AppColors.grey100),
               itemBuilder: (context, index) {
                 return WalletTransactionTile(tx: preview[index]);
               },
@@ -424,7 +431,9 @@ class _WalletPageState extends State<WalletPage> {
                 constraints: BoxConstraints(maxHeight: 0.92.sh),
                 decoration: BoxDecoration(
                   color: AppColors.surface,
-                  borderRadius: BorderRadius.vertical(top: Radius.circular(24.r)),
+                  borderRadius: BorderRadius.vertical(
+                    top: Radius.circular(24.r),
+                  ),
                 ),
                 child: Column(
                   mainAxisSize: MainAxisSize.min,
@@ -440,7 +449,12 @@ class _WalletPageState extends State<WalletPage> {
                     ),
                     Flexible(
                       child: SingleChildScrollView(
-                        padding: EdgeInsets.fromLTRB(20.w, 16.h, 20.w, 8.h),
+                        padding: EdgeInsets.fromLTRB(
+                          AppSpacing.pageGutter,
+                          AppSpacing.comfortable,
+                          AppSpacing.pageGutter,
+                          AppSpacing.compact,
+                        ),
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
@@ -470,10 +484,14 @@ class _WalletPageState extends State<WalletPage> {
                                 width: double.infinity,
                                 padding: EdgeInsets.all(14.w),
                                 decoration: BoxDecoration(
-                                  color: AppColors.warning.withValues(alpha: 0.08),
+                                  color: AppColors.warning.withValues(
+                                    alpha: 0.08,
+                                  ),
                                   borderRadius: BorderRadius.circular(12.r),
                                   border: Border.all(
-                                    color: AppColors.warning.withValues(alpha: 0.25),
+                                    color: AppColors.warning.withValues(
+                                      alpha: 0.25,
+                                    ),
                                   ),
                                 ),
                                 child: Text(
@@ -507,7 +525,9 @@ class _WalletPageState extends State<WalletPage> {
                                   crossAxisAlignment: CrossAxisAlignment.start,
                                   children: [
                                     Text(
-                                      localizeFailureMessage(mainAccount.bankName),
+                                      localizeFailureMessage(
+                                        mainAccount.bankName,
+                                      ),
                                       style: TextStyle(
                                         fontSize: 14.sp,
                                         fontWeight: FontWeight.w800,
@@ -545,51 +565,53 @@ class _WalletPageState extends State<WalletPage> {
                         ),
                       ),
                     ),
-                    SafeArea(
-                      top: false,
-                      child: Padding(
-                        padding: EdgeInsets.fromLTRB(20.w, 8.h, 20.w, 12.h),
-                        child: mainAccount == null
-                            ? CustomButton(
-                                text: 'wallet.setup_primary_account'.tr(),
-                                height: AppSpacing.buttonHeight,
-                                onPressed: () {
-                                  Navigator.pop(bContext);
-                                  Navigator.push(
-                                    context,
-                                    MaterialPageRoute(
-                                      builder: (_) => const PayoutAccountsPage(),
-                                    ),
-                                  );
-                                },
-                              )
-                            : CustomButton(
-                                text: 'wallet.confirm_withdrawal'.tr(),
-                                height: AppSpacing.buttonHeight,
-                                onPressed: () {
-                                  final amount =
-                                      double.tryParse(amountController.text) ?? 0;
-                                  if (amount <= 0) {
-                                    showBisaSnackBarMessage(
-                                      context,
-                                      'jumlah_penarikan_tidak_valid'.tr(),
-                                      isError: true,
-                                    );
-                                    return;
-                                  }
-                                  if (amount > currentBalance) {
-                                    showBisaSnackBarMessage(
-                                      context,
-                                      'saldo_tidak_mencukupi'.tr(),
-                                      isError: true,
-                                    );
-                                    return;
-                                  }
-                                  Navigator.pop(bContext);
-                                  walletCubit.requestWithdrawal(amount: amount);
-                                },
-                              ),
+                    Padding(
+                      padding: EdgeInsets.fromLTRB(
+                        AppSpacing.pageGutter,
+                        AppSpacing.compact,
+                        AppSpacing.pageGutter,
+                        AppSpacing.md12,
                       ),
+                      child: mainAccount == null
+                          ? CustomButton(
+                              text: 'wallet.setup_primary_account'.tr(),
+                              height: AppSpacing.buttonHeight,
+                              onPressed: () {
+                                Navigator.pop(bContext);
+                                Navigator.push(
+                                  context,
+                                  MaterialPageRoute(
+                                    builder: (_) => const PayoutAccountsPage(),
+                                  ),
+                                );
+                              },
+                            )
+                          : CustomButton(
+                              text: 'wallet.confirm_withdrawal'.tr(),
+                              height: AppSpacing.buttonHeight,
+                              onPressed: () {
+                                final amount =
+                                    double.tryParse(amountController.text) ?? 0;
+                                if (amount <= 0) {
+                                  showBisaSnackBarMessage(
+                                    context,
+                                    'jumlah_penarikan_tidak_valid'.tr(),
+                                    isError: true,
+                                  );
+                                  return;
+                                }
+                                if (amount > currentBalance) {
+                                  showBisaSnackBarMessage(
+                                    context,
+                                    'saldo_tidak_mencukupi'.tr(),
+                                    isError: true,
+                                  );
+                                  return;
+                                }
+                                Navigator.pop(bContext);
+                                walletCubit.requestWithdrawal(amount: amount);
+                              },
+                            ),
                     ),
                   ],
                 ),

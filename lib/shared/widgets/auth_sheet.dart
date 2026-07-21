@@ -8,6 +8,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 
 import '../../core/constants/app_layout.dart';
 import '../../core/constants/app_colors.dart';
+import '../../core/utils/safe_area_utils.dart';
 import '../../core/constants/app_text_styles.dart';
 import '../../core/utils/app_feedback.dart';
 import '../../core/utils/router.dart';
@@ -24,9 +25,12 @@ class AuthSheet extends StatefulWidget {
       context: context,
       isScrollControlled: true,
       backgroundColor: AppColors.transparent,
-      builder: (context) => Padding(
-        padding: EdgeInsets.only(
-          bottom: MediaQuery.of(context).viewInsets.bottom,
+      builder: (sheetContext) => Padding(
+        padding: bisaSheetPadding(
+          sheetContext,
+          horizontal: AppSpacing.xl,
+          top: AppSpacing.md,
+          bottom: AppSpacing.xl,
         ),
         child: const AuthSheet(),
       ),
@@ -113,15 +117,8 @@ class _AuthSheetState extends State<AuthSheet> {
           orElse: () {},
         );
       },
-      child: SafeArea(
-        top: false,
-        child: Container(
-        padding: EdgeInsets.fromLTRB(
-          AppSpacing.xl,
-          AppSpacing.md,
-          AppSpacing.xl,
-          AppSpacing.xl,
-        ),
+      child: Container(
+        padding: EdgeInsets.zero,
         decoration: BoxDecoration(
           color: AppColors.surface,
           borderRadius: BorderRadius.vertical(
@@ -421,7 +418,6 @@ class _AuthSheetState extends State<AuthSheet> {
             ),
           ),
         ),
-      ),
       ),
     );
   }

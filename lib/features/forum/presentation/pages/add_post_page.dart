@@ -60,8 +60,9 @@ class _AddPostPageState extends State<AddPostPage> {
     final post = widget.editPost;
     _titleController = TextEditingController(text: post?.title ?? '');
     _contentController = TextEditingController(text: post?.content ?? '');
-    _selectedCategoryId =
-        (post?.categoryId.isEmpty ?? true) ? null : post!.categoryId;
+    _selectedCategoryId = (post?.categoryId.isEmpty ?? true)
+        ? null
+        : post!.categoryId;
     _existingMedia = [...?post?.mediaUrls];
     _status = post?.status ?? 'PUBLISHED';
     // Listener untuk live-preview chip tag & mention saat user ngetik.
@@ -256,8 +257,9 @@ class _AddPostPageState extends State<AddPostPage> {
                 if (mounted) {
                   showErrorSnackBar(
                     context,
-                    'forum.banned_word_detected'
-                        .tr(namedArgs: {'word': phrase}),
+                    'forum.banned_word_detected'.tr(
+                      namedArgs: {'word': phrase},
+                    ),
                   );
                 }
                 setState(() {
@@ -407,17 +409,20 @@ class _AddPostPageState extends State<AddPostPage> {
     final label = isArchived
         ? 'forum.status_archived'.tr()
         : isDraft
-            ? 'forum.status_draft'.tr()
-            : 'forum.status_published'.tr();
+        ? 'forum.status_draft'.tr()
+        : 'forum.status_published'.tr();
     final color = isArchived
         ? AppColors.grey400
         : isDraft
-            ? AppColors.warning
-            : AppColors.success;
+        ? AppColors.warning
+        : AppColors.success;
     return Padding(
       padding: EdgeInsets.only(bottom: AppSpacing.md),
       child: Container(
-        padding: EdgeInsets.symmetric(horizontal: AppSpacing.section, vertical: AppSpacing.sm10),
+        padding: EdgeInsets.symmetric(
+          horizontal: AppSpacing.section,
+          vertical: AppSpacing.sm10,
+        ),
         decoration: BoxDecoration(
           color: color.withValues(alpha: 0.1),
           borderRadius: BorderRadius.circular(AppRadius.md),
@@ -455,16 +460,18 @@ class _AddPostPageState extends State<AddPostPage> {
       decoration: BoxDecoration(
         color: AppColors.primary.withValues(alpha: 0.05),
         borderRadius: BorderRadius.circular(AppRadius.lg),
-        border: Border.all(
-          color: AppColors.primary.withValues(alpha: 0.2),
-        ),
+        border: Border.all(color: AppColors.primary.withValues(alpha: 0.2)),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Row(
             children: [
-              Icon(LucideIcons.lightbulb, size: 14.sp, color: AppColors.primary),
+              Icon(
+                LucideIcons.lightbulb,
+                size: 14.sp,
+                color: AppColors.primary,
+              ),
               SizedBox(width: 6.w),
               Expanded(
                 child: Text(
@@ -525,7 +532,10 @@ class _AddPostPageState extends State<AddPostPage> {
     required Color color,
   }) {
     return Container(
-      padding: EdgeInsets.symmetric(horizontal: AppSpacing.sm, vertical: AppSpacing.xs),
+      padding: EdgeInsets.symmetric(
+        horizontal: AppSpacing.sm,
+        vertical: AppSpacing.xs,
+      ),
       decoration: BoxDecoration(
         color: color.withValues(alpha: 0.12),
         borderRadius: BorderRadius.circular(AppRadius.xl),
@@ -596,8 +606,7 @@ class _AddPostPageState extends State<AddPostPage> {
                   right: -4,
                   top: -4,
                   child: GestureDetector(
-                    onTap: () =>
-                        setState(() => _existingMedia.removeAt(index)),
+                    onTap: () => setState(() => _existingMedia.removeAt(index)),
                     child: Container(
                       padding: const EdgeInsets.all(2),
                       decoration: const BoxDecoration(
@@ -623,15 +632,18 @@ class _AddPostPageState extends State<AddPostPage> {
   Widget _buildBottomActionBar(BuildContext context, bool isLoading) {
     final isDraft = _status == 'DRAFT';
     final publishLabel = widget.isEditMode
-        ? (isDraft
-            ? 'forum.publish_now'.tr()
-            : 'forum.publish_changes'.tr())
+        ? (isDraft ? 'forum.publish_now'.tr() : 'forum.publish_changes'.tr())
         : 'forum.publish'.tr();
     final isBusy = isLoading || _isModerating;
     return SafeArea(
       top: false,
       child: Padding(
-        padding: EdgeInsets.fromLTRB(20.w, 8.h, 20.w, 12.h),
+        padding: EdgeInsets.fromLTRB(
+          AppSpacing.pageGutter,
+          AppSpacing.compact,
+          AppSpacing.pageGutter,
+          AppSpacing.md12,
+        ),
         child: Row(
           children: [
             Expanded(
@@ -753,7 +765,9 @@ class _AddPostPageState extends State<AddPostPage> {
           name,
           style: TextStyle(
             fontSize: 13.sp,
-            color: isSelected ? AppColors.textOnPrimary : AppColors.textSecondary,
+            color: isSelected
+                ? AppColors.textOnPrimary
+                : AppColors.textSecondary,
             fontWeight: isSelected ? FontWeight.w700 : FontWeight.w600,
           ),
         ),

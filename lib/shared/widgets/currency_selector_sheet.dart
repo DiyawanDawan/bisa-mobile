@@ -4,6 +4,7 @@ import 'package:flutter_screenutil/flutter_screenutil.dart';
 import '../../core/constants/app_layout.dart';
 import '../../core/constants/app_colors.dart';
 import '../../core/utils/app_feedback.dart';
+import '../../core/utils/safe_area_utils.dart';
 import '../../core/currency/display_currency_service.dart';
 
 Future<void> showCurrencySelectorSheet(BuildContext context) async {
@@ -19,11 +20,11 @@ Future<void> showCurrencySelectorSheet(BuildContext context) async {
     ),
     builder: (ctx) {
       return Padding(
-        padding: EdgeInsets.fromLTRB(
-          AppSpacing.lg,
-          AppSpacing.md,
-          AppSpacing.lg,
-          AppSpacing.xl28,
+        padding: bisaSheetPadding(
+          ctx,
+          horizontal: AppSpacing.lg,
+          top: AppSpacing.md,
+          bottom: AppSpacing.xl28,
         ),
         child: Column(
           mainAxisSize: MainAxisSize.min,
@@ -40,15 +41,29 @@ Future<void> showCurrencySelectorSheet(BuildContext context) async {
             SizedBox(height: AppSpacing.xs6),
             Text(
               'commerce.display_currency_hint'.tr(),
-              style: TextStyle(fontSize: 11.sp, color: AppColors.textSecondary, height: 1.4),
+              style: TextStyle(
+                fontSize: 11.sp,
+                color: AppColors.textSecondary,
+                height: 1.4,
+              ),
             ),
             SizedBox(height: AppSpacing.md),
             for (final code in DisplayCurrencyService.instance.supported)
               ListTile(
                 contentPadding: EdgeInsets.zero,
-                title: Text(code, style: TextStyle(fontWeight: FontWeight.w700, fontSize: 14.sp)),
+                title: Text(
+                  code,
+                  style: TextStyle(
+                    fontWeight: FontWeight.w700,
+                    fontSize: 14.sp,
+                  ),
+                ),
                 trailing: current == code
-                    ? Icon(Icons.check_circle, color: AppColors.primary, size: 20.sp)
+                    ? Icon(
+                        Icons.check_circle,
+                        color: AppColors.primary,
+                        size: 20.sp,
+                      )
                     : null,
                 onTap: () async {
                   await DisplayCurrencyService.instance.setCurrency(code);

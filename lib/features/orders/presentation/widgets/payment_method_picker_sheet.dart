@@ -208,11 +208,14 @@ void initState() {
               ),
               Divider(height: 1, color: AppColors.grey100),
               Expanded(child: _buildBody(controller)),
-              SafeArea(
-                top: false,
-                child: Padding(
-                  padding: EdgeInsets.fromLTRB(AppSpacing.lg, AppSpacing.md12, AppSpacing.lg, AppSpacing.md12),
-                  child: SizedBox(
+              Padding(
+                padding: EdgeInsets.fromLTRB(
+                  AppSpacing.lg,
+                  AppSpacing.md12,
+                  AppSpacing.lg,
+                  AppSpacing.md12,
+                ),
+                child: SizedBox(
                     width: double.infinity,
                     height: AppSpacing.buttonHeight,
                     child: ElevatedButton(
@@ -254,7 +257,6 @@ void initState() {
                     ),
                   ),
                 ),
-              ),
             ],
           );
         },
@@ -314,7 +316,7 @@ void initState() {
         AppSpacing.lg,
         AppSpacing.md12,
         AppSpacing.lg,
-        AppSpacing.md12 + systemBottomInset(context),
+        AppSpacing.md12,
       ),
       children: [
         for (final g in groupKeys) ...[

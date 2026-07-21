@@ -184,7 +184,9 @@ class OrderBatchCard extends StatelessWidget {
             child: Container(
               decoration: BoxDecoration(
                 color: AppColors.surface,
-                borderRadius: BorderRadius.vertical(top: Radius.circular(AppSpacing.xlPx.r)),
+                borderRadius: BorderRadius.vertical(
+                  top: Radius.circular(AppSpacing.xlPx.r),
+                ),
               ),
               child: Column(
                 mainAxisSize: MainAxisSize.min,
@@ -200,7 +202,12 @@ class OrderBatchCard extends StatelessWidget {
                   ),
                   Flexible(
                     child: SingleChildScrollView(
-                      padding: EdgeInsets.fromLTRB(20.w, 16.h, 20.w, 24.h),
+                      padding: EdgeInsets.fromLTRB(
+                        AppSpacing.pageGutter,
+                        AppSpacing.comfortable,
+                        AppSpacing.pageGutter,
+                        AppSpacing.spacious,
+                      ),
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.stretch,
                         children: [
@@ -282,11 +289,7 @@ class _BatchCardHeader extends StatelessWidget {
             color: AppColors.primary.withValues(alpha: 0.1),
             borderRadius: BorderRadius.circular(AppRadius.lg),
           ),
-          child: Icon(
-            LucideIcons.store,
-            size: 22.sp,
-            color: AppColors.primary,
-          ),
+          child: Icon(LucideIcons.store, size: 22.sp, color: AppColors.primary),
         ),
         SizedBox(width: AppSpacing.md12),
         Expanded(
@@ -305,10 +308,12 @@ class _BatchCardHeader extends StatelessWidget {
               ),
               SizedBox(height: 2.h),
               Text(
-                'orders.batch_meta'.tr(namedArgs: {
-                  'count': '$itemCount',
-                  'time': context.formatTimeAgo(createdAt),
-                }),
+                'orders.batch_meta'.tr(
+                  namedArgs: {
+                    'count': '$itemCount',
+                    'time': context.formatTimeAgo(createdAt),
+                  },
+                ),
                 style: TextStyle(
                   fontSize: 11.sp,
                   color: AppColors.textSecondary,
@@ -319,7 +324,10 @@ class _BatchCardHeader extends StatelessWidget {
         ),
         if (statusesDiffer)
           Container(
-            padding: EdgeInsets.symmetric(horizontal: AppSpacing.sm10, vertical: 5.h),
+            padding: EdgeInsets.symmetric(
+              horizontal: AppSpacing.sm10,
+              vertical: 5.h,
+            ),
             decoration: BoxDecoration(
               color: AppColors.surfaceVariant,
               borderRadius: BorderRadius.circular(AppRadius.pill),
@@ -348,7 +356,10 @@ class _InfoBanner extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding: EdgeInsets.symmetric(horizontal: AppSpacing.sm10, vertical: AppSpacing.sm),
+      padding: EdgeInsets.symmetric(
+        horizontal: AppSpacing.sm10,
+        vertical: AppSpacing.sm,
+      ),
       decoration: BoxDecoration(
         color: AppColors.info.withValues(alpha: 0.06),
         borderRadius: BorderRadius.circular(AppRadius.md),
@@ -379,10 +390,7 @@ class _InfoBanner extends StatelessWidget {
 }
 
 class _OrderNumberRow extends StatelessWidget {
-  const _OrderNumberRow({
-    required this.batchNumber,
-    required this.onCopy,
-  });
+  const _OrderNumberRow({required this.batchNumber, required this.onCopy});
 
   final String batchNumber;
   final VoidCallback onCopy;
@@ -390,7 +398,10 @@ class _OrderNumberRow extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding: EdgeInsets.symmetric(horizontal: AppSpacing.sm10, vertical: AppSpacing.sm),
+      padding: EdgeInsets.symmetric(
+        horizontal: AppSpacing.sm10,
+        vertical: AppSpacing.sm,
+      ),
       decoration: BoxDecoration(
         color: AppColors.grey50,
         borderRadius: BorderRadius.circular(AppRadius.md),
@@ -428,10 +439,7 @@ class _OrderNumberRow extends StatelessWidget {
             icon: Icon(LucideIcons.copy, size: 14.sp),
             label: Text(
               'orders.copy'.tr(),
-              style: TextStyle(
-                fontSize: 11.sp,
-                fontWeight: FontWeight.w800,
-              ),
+              style: TextStyle(fontSize: 11.sp, fontWeight: FontWeight.w800),
             ),
             style: TextButton.styleFrom(
               foregroundColor: AppColors.primary,
@@ -453,20 +461,16 @@ class _OrderNumberRow extends StatelessWidget {
 
 /// Satu blok per toko — lebih mudah dipahami daripada list produk datar.
 class _SupplierSection extends StatelessWidget {
-  const _SupplierSection({
-    required this.order,
-    required this.hasTracking,
-  });
+  const _SupplierSection({required this.order, required this.hasTracking});
 
   final OrderEntity order;
   final bool hasTracking;
 
   @override
   Widget build(BuildContext context) {
-    final sellerName =
-        order.seller.name.isNotEmpty
-            ? order.seller.name
-            : 'orders.fallback_store'.tr();
+    final sellerName = order.seller.name.isNotEmpty
+        ? order.seller.name
+        : 'orders.fallback_store'.tr();
     final items = order.items;
     const maxPreview = 2;
     final preview = items.take(maxPreview).toList();
@@ -485,7 +489,10 @@ class _SupplierSection extends StatelessWidget {
         children: [
           Row(
             children: [
-              _SellerAvatar(name: sellerName, avatarUrl: order.seller.avatarUrl),
+              _SellerAvatar(
+                name: sellerName,
+                avatarUrl: order.seller.avatarUrl,
+              ),
               SizedBox(width: AppSpacing.sm),
               Expanded(
                 child: Text(
@@ -603,11 +610,7 @@ class _SupplierSection extends StatelessWidget {
             SizedBox(height: 6.h),
             Row(
               children: [
-                Icon(
-                  LucideIcons.truck,
-                  size: 12.sp,
-                  color: AppColors.info,
-                ),
+                Icon(LucideIcons.truck, size: 12.sp, color: AppColors.info),
                 SizedBox(width: 4.w),
                 Text(
                   'orders.tracking_available'.tr(),
@@ -642,8 +645,7 @@ class _SellerAvatar extends StatelessWidget {
       );
     }
 
-    final initial =
-        name.trim().isNotEmpty ? name.trim()[0].toUpperCase() : 'T';
+    final initial = name.trim().isNotEmpty ? name.trim()[0].toUpperCase() : 'T';
     return CircleAvatar(
       radius: AppRadius.tile,
       backgroundColor: AppColors.primary.withValues(alpha: 0.15),
@@ -674,10 +676,9 @@ class _TrackingStoreCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final sellerName =
-        order.seller.name.isNotEmpty
-            ? order.seller.name
-            : 'orders.fallback_store'.tr();
+    final sellerName = order.seller.name.isNotEmpty
+        ? order.seller.name
+        : 'orders.fallback_store'.tr();
     final trk = tracking;
 
     return Container(
@@ -693,7 +694,10 @@ class _TrackingStoreCard extends StatelessWidget {
         children: [
           Row(
             children: [
-              _SellerAvatar(name: sellerName, avatarUrl: order.seller.avatarUrl),
+              _SellerAvatar(
+                name: sellerName,
+                avatarUrl: order.seller.avatarUrl,
+              ),
               SizedBox(width: AppSpacing.sm),
               Expanded(
                 child: Text(
@@ -736,7 +740,9 @@ class _TrackingStoreCard extends StatelessWidget {
                     label: Text('orders.copy_tracking'.tr()),
                     style: OutlinedButton.styleFrom(
                       foregroundColor: AppColors.primary,
-                      side: BorderSide(color: AppColors.primary.withValues(alpha: 0.4)),
+                      side: BorderSide(
+                        color: AppColors.primary.withValues(alpha: 0.4),
+                      ),
                     ),
                   ),
                 ),

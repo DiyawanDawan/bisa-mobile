@@ -1,6 +1,9 @@
+import 'dart:math' as math;
+
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import '../constants/app_colors.dart';
+import '../constants/app_spacing.dart';
 import '../i18n/failure_messages.dart';
 
 /// Inset bawah sistem (home indicator / 3-button nav).
@@ -8,25 +11,20 @@ double systemBottomInset(BuildContext context) =>
     MediaQuery.paddingOf(context).bottom;
 
 /// Jenis clearance scroll di tab main shell (FAB AI + bottom nav).
-enum MainShellScrollKind {
-  standard,
-  forum,
-  orders,
-  grid,
-}
+enum MainShellScrollKind { standard, forum, orders, grid }
 
 /// Padding scroll bawah di tab main shell.
 double mainShellBottomPadding(
   BuildContext context, {
   MainShellScrollKind kind = MainShellScrollKind.standard,
 }) {
-  final base = switch (kind) {
-    MainShellScrollKind.standard => 96.h,
-    MainShellScrollKind.forum => 80.h,
-    MainShellScrollKind.orders => 100.h,
-    MainShellScrollKind.grid => 160.h,
-  };
-  return base + systemBottomInset(context);
+  // Bottom nav owns the system SafeArea. Scroll content only needs clearance
+  // for the taller of nav/FAB plus one compact breathing gap.
+  final navClearance = AppSpacing.bottomNavHeight + AppSpacing.sectionGap;
+  final fabClearance = AppSpacing.fabSize + AppSpacing.compact;
+  final shellClearance =
+      math.max(navClearance, fabClearance) + AppSpacing.compact;
+  return shellClearance;
 }
 
 /// Alias lama — tab standar (profil, toko supplier).
@@ -35,9 +33,33 @@ double mainShellScrollBottomPadding(BuildContext context) =>
 
 /// Padding bawah sheet: keyboard + system nav.
 EdgeInsets sheetBottomPadding(BuildContext context) => EdgeInsets.only(
-      bottom: MediaQuery.viewInsetsOf(context).bottom +
-          MediaQuery.paddingOf(context).bottom,
-    );
+  bottom: math.max(
+    MediaQuery.viewInsetsOf(context).bottom,
+    MediaQuery.paddingOf(context).bottom,
+  ),
+);
+
+/// Canonical modal/bottom-sheet padding.
+///
+/// Keyboard and system navigation are mutually exclusive in layout space, so
+/// only the larger inset is applied. Do not wrap consumers in another SafeArea.
+EdgeInsets bisaSheetPadding(
+  BuildContext context, {
+  double? top,
+  double? horizontal,
+  double? bottom,
+}) {
+  final safeBottom = math.max(
+    MediaQuery.viewInsetsOf(context).bottom,
+    MediaQuery.paddingOf(context).bottom,
+  );
+  return EdgeInsets.fromLTRB(
+    horizontal ?? AppSpacing.pageGutter,
+    top ?? AppSpacing.sectionGap,
+    horizontal ?? AppSpacing.pageGutter,
+    safeBottom + (bottom ?? AppSpacing.compact),
+  );
+}
 
 /// Padding scroll halaman full-screen (tanpa bottom nav shell).
 EdgeInsets fullScreenScrollPadding(
@@ -64,10 +86,7 @@ double gisMapFloatingBottomOffset(
 }
 
 /// Margin SnackBar aman dari system nav (+ opsional sticky footer).
-EdgeInsets bisaSnackBarMargin(
-  BuildContext context, {
-  double extraBottom = 0,
-}) =>
+EdgeInsets bisaSnackBarMargin(BuildContext context, {double extraBottom = 0}) =>
     EdgeInsets.fromLTRB(
       16.w,
       16.h,

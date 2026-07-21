@@ -5,6 +5,7 @@ import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:go_router/go_router.dart';
 import 'package:pinput/pinput.dart';
 import '../../../../core/constants/app_colors.dart';
+import '../../../../core/constants/app_layout.dart';
 import '../../../../core/utils/app_feedback.dart';
 import '../../../../shared/widgets/custom_button.dart';
 import '../../../../shared/widgets/bisa_app_bar.dart';
@@ -81,11 +82,11 @@ class _OtpVerificationPageState extends State<OtpVerificationPage> {
         },
         child: SafeArea(
           child: SingleChildScrollView(
-            padding: EdgeInsets.symmetric(horizontal: 24.w),
+            padding: EdgeInsets.symmetric(horizontal: AppSpacing.pageGutter),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                SizedBox(height: 32.h),
+                SizedBox(height: AppSpacing.sectionGapLarge),
                 Container(
                   padding: EdgeInsets.all(16.r),
                   decoration: BoxDecoration(
@@ -128,7 +129,7 @@ class _OtpVerificationPageState extends State<OtpVerificationPage> {
                     ],
                   ),
                 ),
-                SizedBox(height: 48.h),
+                SizedBox(height: AppSpacing.spacious),
                 Center(
                   child: Pinput(
                     length: 6,
@@ -156,7 +157,7 @@ class _OtpVerificationPageState extends State<OtpVerificationPage> {
                     },
                   ),
                 ),
-                SizedBox(height: 48.h),
+                SizedBox(height: AppSpacing.spacious),
                 BlocBuilder<AuthCubit, AuthState>(
                   builder: (context, state) {
                     return CustomButton(
@@ -184,7 +185,7 @@ class _OtpVerificationPageState extends State<OtpVerificationPage> {
                     );
                   },
                 ),
-                SizedBox(height: 32.h),
+                SizedBox(height: AppSpacing.sectionGapLarge),
                 Center(
                   child: Column(
                     children: [

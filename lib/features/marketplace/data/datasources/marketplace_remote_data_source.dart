@@ -7,6 +7,7 @@ import '../models/product_collection_model.dart';
 import '../models/product_model.dart';
 import '../models/supplier_model.dart';
 import '../models/category_model.dart';
+import '../models/product_certificate_model.dart';
 
 abstract class MarketplaceRemoteDataSource {
   Future<List<ProductModel>> getMyProducts({
@@ -83,6 +84,20 @@ abstract class MarketplaceRemoteDataSource {
   Future<void> recordPromoClick(String productId);
   Future<ProductModel> uploadProductVideo(String productId, String filePath);
   Future<ProductModel> deleteProductVideo(String productId);
+  Future<List<ProductCertificateModel>> getMyProductCertificates(
+    String productId,
+  );
+  Future<ProductCertificateModel> submitProductCertificate({
+    required String productId,
+    required String localPath,
+    required Map<String, dynamic> metadata,
+  });
+  Future<void> deleteProductCertificate(String productId, String certificateId);
+  Future<List<ProductCertificateModel>> getSupplierCertificates(
+    String supplierId, {
+    int page = 1,
+    int limit = 20,
+  });
 }
 
 class MarketplaceRemoteDataSourceImpl implements MarketplaceRemoteDataSource {
@@ -109,7 +124,8 @@ class MarketplaceRemoteDataSourceImpl implements MarketplaceRemoteDataSource {
       queryParameters: {
         if (search != null && search.isNotEmpty) 'search': search,
         if (status != null && status.isNotEmpty) 'status': status,
-        if (categoryId != null && categoryId.isNotEmpty) 'categoryId': categoryId,
+        if (categoryId != null && categoryId.isNotEmpty)
+          'categoryId': categoryId,
         if (sortBy != null && sortBy.isNotEmpty) 'sortBy': sortBy,
         if (sortOrder != null && sortOrder.isNotEmpty) 'sortOrder': sortOrder,
         'page': page,
@@ -142,8 +158,9 @@ class MarketplaceRemoteDataSourceImpl implements MarketplaceRemoteDataSource {
     int page = 1,
     int limit = 10,
   }) async {
-    final String path = productMode == 'ORGANIC_PRODUCE' ?
-     '/organic/products' : '/products';
+    final String path = productMode == 'ORGANIC_PRODUCE'
+        ? '/organic/products'
+        : '/products';
     final response = await dio.get(
       path,
       queryParameters: {
@@ -163,7 +180,8 @@ class MarketplaceRemoteDataSourceImpl implements MarketplaceRemoteDataSource {
         if (productMode != null) 'productMode': productMode,
         if (cropType != null) 'cropType': cropType,
         if (availableNow != null) 'availableNow': availableNow,
-        if (preHarvestBookable != null) 'preHarvestBookable': preHarvestBookable,
+        if (preHarvestBookable != null)
+          'preHarvestBookable': preHarvestBookable,
         if (canBook != null) 'canBook': canBook,
         'page': page,
         'limit': limit,
@@ -195,18 +213,16 @@ class MarketplaceRemoteDataSourceImpl implements MarketplaceRemoteDataSource {
     Map<String, dynamic> data,
     List<String> imagePaths,
   ) async {
-    final uploadedPaths =
-        imagePaths.isNotEmpty ? await _uploadProductImages(imagePaths) : <String>[];
+    final uploadedPaths = imagePaths.isNotEmpty
+        ? await _uploadProductImages(imagePaths)
+        : <String>[];
 
     final formData = FormData.fromMap({
       ...data,
       if (uploadedPaths.isNotEmpty) 'imageUrls': jsonEncode(uploadedPaths),
     });
 
-    final response = await dio.post(
-      '/products',
-      data: formData,
-    );
+    final response = await dio.post('/products', data: formData);
     try {
       return ProductModel.fromJson(response.data['data']);
     } catch (e) {
@@ -224,18 +240,16 @@ class MarketplaceRemoteDataSourceImpl implements MarketplaceRemoteDataSource {
     Map<String, dynamic> data,
     List<String> imagePaths,
   ) async {
-    final uploadedPaths =
-        imagePaths.isNotEmpty ? await _uploadProductImages(imagePaths) : <String>[];
+    final uploadedPaths = imagePaths.isNotEmpty
+        ? await _uploadProductImages(imagePaths)
+        : <String>[];
 
     final formData = FormData.fromMap({
       ...data,
       if (uploadedPaths.isNotEmpty) 'imageUrls': jsonEncode(uploadedPaths),
     });
 
-    final response = await dio.patch(
-      '/products/$id',
-      data: formData,
-    );
+    final response = await dio.patch('/products/$id', data: formData);
     try {
       return ProductModel.fromJson(response.data['data']);
     } catch (e) {
@@ -296,8 +310,8 @@ class MarketplaceRemoteDataSourceImpl implements MarketplaceRemoteDataSource {
     final List data = raw is List
         ? raw
         : (raw is Map && raw['suppliers'] is List)
-            ? raw['suppliers'] as List
-            : const [];
+        ? raw['suppliers'] as List
+        : const [];
     return data
         .whereType<Map>()
         .map((e) => SupplierModel.fromJson(Map<String, dynamic>.from(e)))
@@ -345,12 +359,15 @@ class MarketplaceRemoteDataSourceImpl implements MarketplaceRemoteDataSource {
     String? search,
   }) async {
     // Single categories endpoint — backend filters by productMode / biomassaType.
-    final response = await dio.get('/categories', queryParameters: {
-      'categoryType': 'PRODUK',
-      if (productMode != null) 'productMode': productMode,
-      if (biomassaType != null) 'biomassaType': biomassaType,
-      if (search != null && search.trim().isNotEmpty) 'search': search.trim(),
-    });
+    final response = await dio.get(
+      '/categories',
+      queryParameters: {
+        'categoryType': 'PRODUK',
+        if (productMode != null) 'productMode': productMode,
+        if (biomassaType != null) 'biomassaType': biomassaType,
+        if (search != null && search.trim().isNotEmpty) 'search': search.trim(),
+      },
+    );
     final List data = response.data['data'];
     return data.map((e) => CategoryModel.fromJson(e)).toList();
   }
@@ -383,7 +400,10 @@ class MarketplaceRemoteDataSourceImpl implements MarketplaceRemoteDataSource {
   }
 
   @override
-  Future<Map<String, dynamic>> promoteProduct(String productId, {int days = 7}) async {
+  Future<Map<String, dynamic>> promoteProduct(
+    String productId, {
+    int days = 7,
+  }) async {
     final response = await dio.post(
       '/products/$productId/promote',
       data: {'days': days},
@@ -406,14 +426,20 @@ class MarketplaceRemoteDataSourceImpl implements MarketplaceRemoteDataSource {
   }
 
   @override
-  Future<ProductModel> uploadProductVideo(String productId, String filePath) async {
+  Future<ProductModel> uploadProductVideo(
+    String productId,
+    String filePath,
+  ) async {
     final formData = FormData.fromMap({
       'video': await MultipartFile.fromFile(
         filePath,
         filename: filePath.split(RegExp(r'[/\\]')).last,
       ),
     });
-    final response = await dio.post('/products/$productId/video', data: formData);
+    final response = await dio.post(
+      '/products/$productId/video',
+      data: formData,
+    );
     return ProductModel.fromJson(response.data['data']);
   }
 
@@ -421,5 +447,67 @@ class MarketplaceRemoteDataSourceImpl implements MarketplaceRemoteDataSource {
   Future<ProductModel> deleteProductVideo(String productId) async {
     final response = await dio.delete('/products/$productId/video');
     return ProductModel.fromJson(response.data['data']);
+  }
+
+  @override
+  Future<List<ProductCertificateModel>> getMyProductCertificates(
+    String productId,
+  ) async {
+    final response = await dio.get('/products/$productId/certificates/me');
+    final data = response.data['data'] as List<dynamic>? ?? const [];
+    return data
+        .whereType<Map>()
+        .map(
+          (item) =>
+              ProductCertificateModel.fromJson(Map<String, dynamic>.from(item)),
+        )
+        .toList();
+  }
+
+  @override
+  Future<ProductCertificateModel> submitProductCertificate({
+    required String productId,
+    required String localPath,
+    required Map<String, dynamic> metadata,
+  }) async {
+    final uploaded = await uploadQueue.uploadFile(
+      localPath: localPath,
+      folder: 'product-certificates',
+    );
+    final response = await dio.post(
+      '/products/$productId/certificates',
+      data: {...metadata, 'storageKey': uploaded.path},
+    );
+    return ProductCertificateModel.fromJson(
+      Map<String, dynamic>.from(response.data['data'] as Map),
+    );
+  }
+
+  @override
+  Future<void> deleteProductCertificate(
+    String productId,
+    String certificateId,
+  ) async {
+    await dio.delete('/products/$productId/certificates/$certificateId');
+  }
+
+  @override
+  Future<List<ProductCertificateModel>> getSupplierCertificates(
+    String supplierId, {
+    int page = 1,
+    int limit = 20,
+  }) async {
+    final response = await dio.get(
+      '/suppliers/$supplierId/certificates',
+      queryParameters: {'page': page, 'limit': limit},
+    );
+    final data = response.data['data'] as List<dynamic>? ?? const [];
+    return data
+        .whereType<Map>()
+        .map(
+          (item) =>
+              ProductCertificateModel.fromJson(Map<String, dynamic>.from(item)),
+        )
+        .toList();
   }
 }

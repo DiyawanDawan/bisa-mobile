@@ -1,9 +1,11 @@
 {
   "API_URL": "https://backend-dev-v1.bisaagri.com/api/v1",
   "MEDIA_BASE_URL": "https://cdn.bisaagri.com",
-  "PUSHER_KEY": "your-pusher-key",
+  "PUSHER_KEY": "a0153eed73380d7929af",
   "PUSHER_CLUSTER": "ap1",
   "PUBLIC_WEB_URL": "https://www.bisaagri.com",
   "APP_ENV": "development",
-  "_comment": "Salin ke dart_define.development.json (remote QA), dart_define.dev.json (localhost), dart_define.emulator.json (10.0.2.2), atau dart_define.device.json (IP LAN)"
+  "FACEBOOK_APP_ID": "2022510065291974",
+  "FACEBOOK_CLIENT_TOKEN": "YOUR_CLIENT_TOKEN",
+  "_comment": "Salin ke dart_define.development.json. Client Token dari Meta Settings→Basic (bukan App Secret). Mirror facebook.* ke android/local.properties."
 }

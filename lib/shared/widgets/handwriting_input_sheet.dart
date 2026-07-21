@@ -6,6 +6,7 @@ import 'package:google_mlkit_digital_ink_recognition/google_mlkit_digital_ink_re
 import 'package:mobile_bisa/core/constants/app_colors.dart';
 import 'package:mobile_bisa/core/constants/app_layout.dart';
 import 'package:mobile_bisa/core/utils/digital_ink_util.dart';
+import 'package:mobile_bisa/core/utils/safe_area_utils.dart';
 
 /// Bottom-sheet canvas untuk input tulisan tangan.
 ///
@@ -95,7 +96,12 @@ class _HandwritingInputSheetState extends State<HandwritingInputSheet> {
         color: AppColors.surface,
         borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
       ),
-      padding: EdgeInsets.fromLTRB(16.w, 12.h, 16.w, 24.h),
+      padding: bisaSheetPadding(
+        context,
+        horizontal: AppSpacing.pageGutter,
+        top: AppSpacing.md12,
+        bottom: AppSpacing.comfortable,
+      ),
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
@@ -136,7 +142,9 @@ class _HandwritingInputSheetState extends State<HandwritingInputSheet> {
                   Text(
                     'negotiation.handwriting_downloading_model'.tr(),
                     style: TextStyle(
-                        fontSize: 12.sp, color: AppColors.textSecondary),
+                      fontSize: 12.sp,
+                      color: AppColors.textSecondary,
+                    ),
                   ),
                 ],
               ),
@@ -183,8 +191,9 @@ class _HandwritingInputSheetState extends State<HandwritingInputSheet> {
               Expanded(
                 flex: 2,
                 child: ElevatedButton(
-                  onPressed:
-                      (_isRecognizing || _allStrokes.isEmpty) ? null : _recognize,
+                  onPressed: (_isRecognizing || _allStrokes.isEmpty)
+                      ? null
+                      : _recognize,
                   style: ElevatedButton.styleFrom(
                     backgroundColor: AppColors.primary,
                     foregroundColor: AppColors.textOnPrimary,
@@ -233,16 +242,26 @@ class _HandwritingInputSheetState extends State<HandwritingInputSheet> {
             final t = DateTime.now().millisecondsSinceEpoch;
             setState(() {
               _currentStroke.clear();
-              _currentStroke.add(mlkit.StrokePoint(
-                  x: d.localPosition.dx, y: d.localPosition.dy, t: t));
+              _currentStroke.add(
+                mlkit.StrokePoint(
+                  x: d.localPosition.dx,
+                  y: d.localPosition.dy,
+                  t: t,
+                ),
+              );
               _errorMessage = null;
             });
           },
           onPanUpdate: (d) {
             final t = DateTime.now().millisecondsSinceEpoch;
             setState(() {
-              _currentStroke.add(mlkit.StrokePoint(
-                  x: d.localPosition.dx, y: d.localPosition.dy, t: t));
+              _currentStroke.add(
+                mlkit.StrokePoint(
+                  x: d.localPosition.dx,
+                  y: d.localPosition.dy,
+                  t: t,
+                ),
+              );
             });
           },
           onPanEnd: (_) {

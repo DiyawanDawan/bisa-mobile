@@ -110,15 +110,15 @@ class _VerificationPageState extends State<VerificationPage> {
   }
 
   KycDraft _currentDraft() => KycDraft(
-        step: _step,
-        ktpPath: _ktpPath,
-        selfiePath: _selfiePath,
-        nibPath: _nibPath,
-        siupPath: _siupPath,
-        businessName: _businessNameCtrl.text.trim(),
-        taxId: _taxIdCtrl.text.trim(),
-        businessAddress: _businessAddressCtrl.text.trim(),
-      );
+    step: _step,
+    ktpPath: _ktpPath,
+    selfiePath: _selfiePath,
+    nibPath: _nibPath,
+    siupPath: _siupPath,
+    businessName: _businessNameCtrl.text.trim(),
+    taxId: _taxIdCtrl.text.trim(),
+    businessAddress: _businessAddressCtrl.text.trim(),
+  );
 
   void _scheduleAutosave() {
     _autosaveDebounce?.cancel();
@@ -237,37 +237,42 @@ class _VerificationPageState extends State<VerificationPage> {
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(16.r)),
       ),
-      builder: (ctx) => SafeArea(
-        child: Padding(
-          padding: EdgeInsets.fromLTRB(16.w, 12.h, 16.w, 8.h),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Text(
-                'verification.pick_photo_source'.tr(),
+      builder: (ctx) => Padding(
+        padding: bisaSheetPadding(
+          ctx,
+          top: AppSpacing.md12,
+          bottom: AppSpacing.compact,
+        ),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Text(
+              'verification.pick_photo_source'.tr(),
+              style: TextStyle(
+                fontSize: 15.sp,
+                fontWeight: FontWeight.w700,
+                color: AppColors.textPrimary,
+              ),
+            ),
+            SizedBox(height: 12.h),
+            ListTile(
+              leading: Icon(LucideIcons.camera, color: AppColors.primary),
+              title: Text('verification.take_photo_camera'.tr()),
+              subtitle: Text(
+                'verification.take_photo_camera_hint'.tr(),
                 style: TextStyle(
-                  fontSize: 15.sp,
-                  fontWeight: FontWeight.w700,
-                  color: AppColors.textPrimary,
+                  fontSize: 11.sp,
+                  color: AppColors.textSecondary,
                 ),
               ),
-              SizedBox(height: 12.h),
-              ListTile(
-                leading: Icon(LucideIcons.camera, color: AppColors.primary),
-                title: Text('verification.take_photo_camera'.tr()),
-                subtitle: Text(
-                  'verification.take_photo_camera_hint'.tr(),
-                  style: TextStyle(fontSize: 11.sp, color: AppColors.textSecondary),
-                ),
-                onTap: () => Navigator.pop(ctx, ImageSource.camera),
-              ),
-              ListTile(
-                leading: Icon(LucideIcons.image, color: AppColors.primary),
-                title: Text('verification.pick_from_gallery'.tr()),
-                onTap: () => Navigator.pop(ctx, ImageSource.gallery),
-              ),
-            ],
-          ),
+              onTap: () => Navigator.pop(ctx, ImageSource.camera),
+            ),
+            ListTile(
+              leading: Icon(LucideIcons.image, color: AppColors.primary),
+              title: Text('verification.pick_from_gallery'.tr()),
+              onTap: () => Navigator.pop(ctx, ImageSource.gallery),
+            ),
+          ],
         ),
       ),
     );
@@ -309,38 +314,48 @@ class _VerificationPageState extends State<VerificationPage> {
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(16.r)),
       ),
-      builder: (ctx) => SafeArea(
+      builder: (ctx) => Padding(
+        padding: bisaSheetPadding(
+          ctx,
+          top: AppSpacing.md12,
+          bottom: AppSpacing.compact,
+        ),
         child: ConstrainedBox(
-          constraints: BoxConstraints(maxHeight: MediaQuery.of(ctx).size.height * 0.6),
-          child: Padding(
-            padding: EdgeInsets.fromLTRB(16.w, 12.h, 16.w, 8.h),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  'verification.scan_pick_line_title'.tr(),
-                  style: TextStyle(fontSize: 15.sp, fontWeight: FontWeight.w700),
+          constraints: BoxConstraints(
+            maxHeight: MediaQuery.of(ctx).size.height * 0.6,
+          ),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                'verification.scan_pick_line_title'.tr(),
+                style: TextStyle(fontSize: 15.sp, fontWeight: FontWeight.w700),
+              ),
+              SizedBox(height: 4.h),
+              Text(
+                'verification.scan_pick_line_hint'.tr(),
+                style: TextStyle(
+                  fontSize: 11.sp,
+                  color: AppColors.textSecondary,
                 ),
-                SizedBox(height: 4.h),
-                Text(
-                  'verification.scan_pick_line_hint'.tr(),
-                  style: TextStyle(fontSize: 11.sp, color: AppColors.textSecondary),
-                ),
-                SizedBox(height: 8.h),
-                Flexible(
-                  child: ListView.builder(
-                    shrinkWrap: true,
-                    itemCount: lines.length,
-                    itemBuilder: (context, index) => ListTile(
-                      dense: true,
-                      title: Text(lines[index], style: TextStyle(fontSize: 13.sp)),
-                      onTap: () => Navigator.pop(ctx, lines[index]),
+              ),
+              SizedBox(height: 8.h),
+              Flexible(
+                child: ListView.builder(
+                  shrinkWrap: true,
+                  itemCount: lines.length,
+                  itemBuilder: (context, index) => ListTile(
+                    dense: true,
+                    title: Text(
+                      lines[index],
+                      style: TextStyle(fontSize: 13.sp),
                     ),
+                    onTap: () => Navigator.pop(ctx, lines[index]),
                   ),
                 ),
-              ],
-            ),
+              ),
+            ],
           ),
         ),
       ),
@@ -355,17 +370,17 @@ class _VerificationPageState extends State<VerificationPage> {
   String _mapUploadStatus(String status) {
     return switch (status) {
       'ktp' => 'verification.uploading_doc'.tr(
-          namedArgs: {'doc': 'verification.doc_ktp'.tr()},
-        ),
+        namedArgs: {'doc': 'verification.doc_ktp'.tr()},
+      ),
       'nib' => 'verification.uploading_doc'.tr(
-          namedArgs: {'doc': 'verification.doc_nib'.tr()},
-        ),
+        namedArgs: {'doc': 'verification.doc_nib'.tr()},
+      ),
       'selfie' => 'verification.uploading_doc'.tr(
-          namedArgs: {'doc': 'verification.doc_selfie'.tr()},
-        ),
+        namedArgs: {'doc': 'verification.doc_selfie'.tr()},
+      ),
       'siup' => 'verification.uploading_doc'.tr(
-          namedArgs: {'doc': 'verification.doc_siup'.tr()},
-        ),
+        namedArgs: {'doc': 'verification.doc_siup'.tr()},
+      ),
       'submit' => 'verification.upload_submitting'.tr(),
       _ => status,
     };
@@ -376,10 +391,7 @@ class _VerificationPageState extends State<VerificationPage> {
 
     final businessName = _businessNameCtrl.text.trim();
     if (businessName.isNotEmpty && businessName.length < 2) {
-      showErrorSnackBar(
-        context,
-        'verification.business_name_min_length'.tr(),
-      );
+      showErrorSnackBar(context, 'verification.business_name_min_length'.tr());
       return;
     }
 
@@ -439,7 +451,10 @@ class _VerificationPageState extends State<VerificationPage> {
         final isApproved = user?.isKycApproved ?? false;
         final isRejected = user?.isKycRejected ?? false;
         final canSubmit =
-            canUpload && _ktpPath != null && _selfiePath != null && !_isSubmitting;
+            canUpload &&
+            _ktpPath != null &&
+            _selfiePath != null &&
+            !_isSubmitting;
 
         return Scaffold(
           backgroundColor: AppColors.background,
@@ -466,11 +481,16 @@ class _VerificationPageState extends State<VerificationPage> {
                             SizedBox(height: 16.h),
                           ],
                           if (isPending)
-                            _buildLockedNotice('verification.kyc_locked_pending'.tr())
+                            _buildLockedNotice(
+                              'verification.kyc_locked_pending'.tr(),
+                            )
                           else if (isApproved)
-                            _buildLockedNotice('verification.kyc_locked_verified'.tr())
+                            _buildLockedNotice(
+                              'verification.kyc_locked_verified'.tr(),
+                            )
                           else ...[
-                            if (isRejected && user?.kycRejectionReason != null) ...[
+                            if (isRejected &&
+                                user?.kycRejectionReason != null) ...[
                               _buildRejectionCard(user!.kycRejectionReason!),
                               SizedBox(height: 16.h),
                             ],
@@ -490,7 +510,9 @@ class _VerificationPageState extends State<VerificationPage> {
                             if (!_draftLoaded)
                               const Padding(
                                 padding: EdgeInsets.symmetric(vertical: 24),
-                                child: Center(child: CircularProgressIndicator()),
+                                child: Center(
+                                  child: CircularProgressIndicator(),
+                                ),
                               )
                             else ...[
                               Text(
@@ -543,8 +565,7 @@ class _VerificationPageState extends State<VerificationPage> {
                                   enabled: canUpload,
                                 ),
                                 _buildBusinessDetailsSection(canUpload),
-                              ]
-                              else
+                              ] else
                                 _buildReviewStep(),
                             ],
                           ],
@@ -571,18 +592,18 @@ class _VerificationPageState extends State<VerificationPage> {
   }
 
   String _stepTitle() => switch (_step) {
-        0 => 'verification.step_ktp_title'.tr(),
-        1 => 'verification.step_selfie_title'.tr(),
-        2 => 'verification.step_business_title'.tr(),
-        _ => 'verification.step_review_title'.tr(),
-      };
+    0 => 'verification.step_ktp_title'.tr(),
+    1 => 'verification.step_selfie_title'.tr(),
+    2 => 'verification.step_business_title'.tr(),
+    _ => 'verification.step_review_title'.tr(),
+  };
 
   String _stepSubtitle() => switch (_step) {
-        0 => 'verification.step_ktp_body'.tr(),
-        1 => 'verification.step_selfie_body'.tr(),
-        2 => 'verification.step_business_body'.tr(),
-        _ => 'verification.step_review_body'.tr(),
-      };
+    0 => 'verification.step_ktp_body'.tr(),
+    1 => 'verification.step_selfie_body'.tr(),
+    2 => 'verification.step_business_body'.tr(),
+    _ => 'verification.step_review_body'.tr(),
+  };
 
   Widget _buildWizardProgress() {
     final labels = [
@@ -601,7 +622,9 @@ class _VerificationPageState extends State<VerificationPage> {
             child: InkWell(
               onTap: () {
                 // Boleh loncat ke langkah sebelumnya atau yang sudah lengkap.
-                if (i <= _step || (i == 1 && _ktpPath != null) || (i >= 2 && _ktpPath != null && _selfiePath != null)) {
+                if (i <= _step ||
+                    (i == 1 && _ktpPath != null) ||
+                    (i >= 2 && _ktpPath != null && _selfiePath != null)) {
                   _goToStep(i);
                 }
               },
@@ -612,15 +635,15 @@ class _VerificationPageState extends State<VerificationPage> {
                   color: active
                       ? AppColors.primary.withValues(alpha: 0.12)
                       : done
-                          ? AppColors.success.withValues(alpha: 0.1)
-                          : AppColors.grey50,
+                      ? AppColors.success.withValues(alpha: 0.1)
+                      : AppColors.grey50,
                   borderRadius: BorderRadius.circular(10.r),
                   border: Border.all(
                     color: active
                         ? AppColors.primary
                         : done
-                            ? AppColors.success
-                            : AppColors.grey200,
+                        ? AppColors.success
+                        : AppColors.grey200,
                   ),
                 ),
                 child: Column(
@@ -633,8 +656,8 @@ class _VerificationPageState extends State<VerificationPage> {
                         color: active
                             ? AppColors.primary
                             : done
-                                ? AppColors.success
-                                : AppColors.textSecondary,
+                            ? AppColors.success
+                            : AppColors.textSecondary,
                       ),
                     ),
                     SizedBox(height: 2.h),
@@ -649,8 +672,8 @@ class _VerificationPageState extends State<VerificationPage> {
                         color: active
                             ? AppColors.primary
                             : done
-                                ? AppColors.success
-                                : AppColors.textSecondary,
+                            ? AppColors.success
+                            : AppColors.textSecondary,
                       ),
                     ),
                   ],
@@ -845,11 +868,18 @@ class _VerificationPageState extends State<VerificationPage> {
                   child: SizedBox(
                     width: 16.w,
                     height: 16.w,
-                    child: const CircularProgressIndicator(strokeWidth: 2, color: AppColors.primary),
+                    child: const CircularProgressIndicator(
+                      strokeWidth: 2,
+                      color: AppColors.primary,
+                    ),
                   ),
                 )
               : IconButton(
-                  icon: Icon(LucideIcons.camera, color: AppColors.primary, size: 20.sp),
+                  icon: Icon(
+                    LucideIcons.camera,
+                    color: AppColors.primary,
+                    size: 20.sp,
+                  ),
                   tooltip: 'verification.scan_document_tooltip'.tr(),
                   onPressed: () => _scanDocumentText(_businessNameCtrl),
                 ),
@@ -867,11 +897,18 @@ class _VerificationPageState extends State<VerificationPage> {
                   child: SizedBox(
                     width: 16.w,
                     height: 16.w,
-                    child: const CircularProgressIndicator(strokeWidth: 2, color: AppColors.primary),
+                    child: const CircularProgressIndicator(
+                      strokeWidth: 2,
+                      color: AppColors.primary,
+                    ),
                   ),
                 )
               : IconButton(
-                  icon: Icon(LucideIcons.camera, color: AppColors.primary, size: 20.sp),
+                  icon: Icon(
+                    LucideIcons.camera,
+                    color: AppColors.primary,
+                    size: 20.sp,
+                  ),
                   tooltip: 'verification.scan_document_tooltip'.tr(),
                   onPressed: () => _scanDocumentText(_taxIdCtrl),
                 ),
@@ -890,11 +927,18 @@ class _VerificationPageState extends State<VerificationPage> {
                   child: SizedBox(
                     width: 16.w,
                     height: 16.w,
-                    child: const CircularProgressIndicator(strokeWidth: 2, color: AppColors.primary),
+                    child: const CircularProgressIndicator(
+                      strokeWidth: 2,
+                      color: AppColors.primary,
+                    ),
                   ),
                 )
               : IconButton(
-                  icon: Icon(LucideIcons.camera, color: AppColors.primary, size: 20.sp),
+                  icon: Icon(
+                    LucideIcons.camera,
+                    color: AppColors.primary,
+                    size: 20.sp,
+                  ),
                   tooltip: 'verification.scan_document_tooltip'.tr(),
                   onPressed: () => _scanDocumentText(_businessAddressCtrl),
                 ),
@@ -1041,8 +1085,8 @@ class _VerificationPageState extends State<VerificationPage> {
         color: AppColors.black.withValues(alpha: 0.45),
         child: Center(
           child: Container(
-            margin: EdgeInsets.symmetric(horizontal: 32.w),
-            padding: EdgeInsets.all(24.w),
+            margin: EdgeInsets.symmetric(horizontal: AppSpacing.spacious),
+            padding: EdgeInsets.all(AppSpacing.comfortable),
             decoration: BoxDecoration(
               color: AppColors.surface,
               borderRadius: BorderRadius.circular(16.r),
@@ -1094,7 +1138,11 @@ class _VerificationPageState extends State<VerificationPage> {
           Expanded(
             child: Text(
               'verification.info_card'.tr(),
-              style: TextStyle(fontSize: 12.sp, color: AppColors.textPrimary, height: 1.35),
+              style: TextStyle(
+                fontSize: 12.sp,
+                color: AppColors.textPrimary,
+                height: 1.35,
+              ),
             ),
           ),
         ],
@@ -1145,16 +1193,16 @@ class _VerificationPageState extends State<VerificationPage> {
                       children: [
                         ClipRRect(
                           borderRadius: BorderRadius.circular(12.r),
-                          child: Image.file(
-                            File(path),
-                            fit: BoxFit.cover,
-                          ),
+                          child: Image.file(File(path), fit: BoxFit.cover),
                         ),
                         Positioned(
                           left: 8.w,
                           top: 8.h,
                           child: Container(
-                            padding: EdgeInsets.symmetric(horizontal: 8.w, vertical: 4.h),
+                            padding: EdgeInsets.symmetric(
+                              horizontal: 8.w,
+                              vertical: 4.h,
+                            ),
                             decoration: BoxDecoration(
                               color: AppColors.success,
                               borderRadius: BorderRadius.circular(6.r),
@@ -1162,7 +1210,11 @@ class _VerificationPageState extends State<VerificationPage> {
                             child: Row(
                               mainAxisSize: MainAxisSize.min,
                               children: [
-                                Icon(LucideIcons.circleCheck, size: 12.sp, color: AppColors.white),
+                                Icon(
+                                  LucideIcons.circleCheck,
+                                  size: 12.sp,
+                                  color: AppColors.white,
+                                ),
                                 SizedBox(width: 4.w),
                                 Text(
                                   'verification.photo_uploaded'.tr(),
@@ -1181,7 +1233,9 @@ class _VerificationPageState extends State<VerificationPage> {
                           top: 8.h,
                           child: CircleAvatar(
                             radius: 14.r,
-                            backgroundColor: AppColors.black.withValues(alpha: 0.5),
+                            backgroundColor: AppColors.black.withValues(
+                              alpha: 0.5,
+                            ),
                             child: Icon(
                               LucideIcons.pencil,
                               size: 14.sp,

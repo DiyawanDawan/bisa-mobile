@@ -9,6 +9,7 @@ import 'package:lucide_icons_flutter/lucide_icons.dart';
 import '../../../../core/utils/forum_share_helper.dart';
 import '../../../../core/constants/app_layout.dart';
 import '../../../../core/constants/app_colors.dart';
+import '../../../../core/utils/safe_area_utils.dart';
 import '../../../../core/utils/app_feedback.dart';
 import '../../../../core/utils/media_url_utils.dart';
 import '../../../../injection_container.dart';
@@ -82,7 +83,9 @@ class _ForumDetailPageState extends State<ForumDetailPage> {
                               width: double.infinity,
                               decoration: BoxDecoration(
                                 color: AppColors.surface,
-                                borderRadius: BorderRadius.circular(AppSpacing.xxlPx.r),
+                                borderRadius: BorderRadius.circular(
+                                  AppSpacing.xxlPx.r,
+                                ),
                                 boxShadow: [
                                   BoxShadow(
                                     color: AppColors.black.withOpacity(0.04),
@@ -160,7 +163,10 @@ class _ForumDetailPageState extends State<ForumDetailPage> {
 
                                   // Comments Header inside the same card
                                   Padding(
-                                    padding: EdgeInsets.only(top: 8.h, bottom: 16.h),
+                                    padding: EdgeInsets.only(
+                                      top: 8.h,
+                                      bottom: 16.h,
+                                    ),
                                     child: Divider(
                                       height: 1,
                                       thickness: 1,
@@ -191,9 +197,12 @@ class _ForumDetailPageState extends State<ForumDetailPage> {
                                               ),
                                               SizedBox(width: 6.w),
                                               Text(
-                                                'forum.comments_count'.tr(namedArgs: {
-                                                  'count': '${post.commentCount}',
-                                                }),
+                                                'forum.comments_count'.tr(
+                                                  namedArgs: {
+                                                    'count':
+                                                        '${post.commentCount}',
+                                                  },
+                                                ),
                                                 style: TextStyle(
                                                   color: AppColors.surface,
                                                   fontWeight: FontWeight.w800,
@@ -243,7 +252,7 @@ class _ForumDetailPageState extends State<ForumDetailPage> {
                                 ],
                               ),
                             ),
-                            SizedBox(height: 40.h),
+                            SizedBox(height: AppSpacing.sectionGap),
                           ],
                         ),
                       ),
@@ -325,11 +334,7 @@ class _ForumDetailPageState extends State<ForumDetailPage> {
         SizedBox(height: 2.h),
         Row(
           children: [
-            Icon(
-              LucideIcons.calendar,
-              size: 10.sp,
-              color: AppColors.textHint,
-            ),
+            Icon(LucideIcons.calendar, size: 10.sp, color: AppColors.textHint),
             SizedBox(width: 4.w),
             Text(
               _formatForumDateTime(context, comment.createdAt),
@@ -443,9 +448,7 @@ class _ForumDetailPageState extends State<ForumDetailPage> {
             AppColors.primary,
             'forum.vote_up'.tr(),
             isActive: post.userVote == 'UP',
-            gradient: post.userVote == 'UP'
-                ? AppColors.voteUpGradient
-                : null,
+            gradient: post.userVote == 'UP' ? AppColors.voteUpGradient : null,
             onTap: () {
               final isAuthenticated = context.read<AuthCubit>().state.maybeWhen(
                 authenticated: (_) => true,
@@ -506,12 +509,14 @@ class _ForumDetailPageState extends State<ForumDetailPage> {
             '',
             AppColors.textSecondary,
             'forum.share'.tr(),
-            onTap: () =>
-                ForumShareHelper.sharePost(post, fromDetail: true),
+            onTap: () => ForumShareHelper.sharePost(post, fromDetail: true),
           ),
           SizedBox(width: AppSpacing.md12),
           Container(
-            padding: EdgeInsets.symmetric(horizontal: AppSpacing.sm10, vertical: AppSpacing.sm),
+            padding: EdgeInsets.symmetric(
+              horizontal: AppSpacing.sm10,
+              vertical: AppSpacing.sm,
+            ),
             decoration: BoxDecoration(
               color: AppColors.grey50,
               borderRadius: BorderRadius.circular(AppRadius.md),
@@ -572,12 +577,18 @@ class _ForumDetailPageState extends State<ForumDetailPage> {
           constraints: BoxConstraints(
             minWidth: label.isEmpty ? AppSpacing.buttonHeightSm : 0,
           ),
-          padding: EdgeInsets.symmetric(horizontal: label.isEmpty ? 0 : AppSpacing.md12),
+          padding: EdgeInsets.symmetric(
+            horizontal: label.isEmpty ? 0 : AppSpacing.md12,
+          ),
           child: Row(
             mainAxisSize: MainAxisSize.min,
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              Icon(icon, size: 18.sp, color: isActive ? AppColors.white : color),
+              Icon(
+                icon,
+                size: 18.sp,
+                color: isActive ? AppColors.white : color,
+              ),
               if (label.isNotEmpty) ...[
                 SizedBox(width: 6.w),
                 Text(
@@ -625,11 +636,18 @@ class _ForumDetailPageState extends State<ForumDetailPage> {
         onTap: onTap,
         borderRadius: BorderRadius.circular(AppRadius.button),
         child: Padding(
-          padding: EdgeInsets.symmetric(horizontal: AppSpacing.sm, vertical: AppSpacing.xs),
+          padding: EdgeInsets.symmetric(
+            horizontal: AppSpacing.sm,
+            vertical: AppSpacing.xs,
+          ),
           child: Row(
             mainAxisSize: MainAxisSize.min,
             children: [
-              Icon(icon, size: 16.sp, color: isActive ? AppColors.white : color),
+              Icon(
+                icon,
+                size: 16.sp,
+                color: isActive ? AppColors.white : color,
+              ),
               SizedBox(width: 4.w),
               if (count > 0)
                 Text(
@@ -659,12 +677,10 @@ class _ForumDetailPageState extends State<ForumDetailPage> {
       authenticated: (user) => user.id,
       orElse: () => null,
     );
-    final isMine =
-        currentUserId != null && comment.user.id == currentUserId;
+    final isMine = currentUserId != null && comment.user.id == currentUserId;
     final hasContent = comment.content.trim().isNotEmpty;
     final hasMedia = comment.mediaUrls.isNotEmpty;
-    final hasReplies =
-        comment.replies != null && comment.replies!.isNotEmpty;
+    final hasReplies = comment.replies != null && comment.replies!.isNotEmpty;
     final isExpanded = _expandedComments.contains(comment.id);
 
     return Padding(
@@ -684,8 +700,9 @@ class _ForumDetailPageState extends State<ForumDetailPage> {
             child: CircleAvatar(
               radius: isReply ? AppRadius.tile : 18.r,
               backgroundColor: AppColors.grey100,
-              backgroundImage:
-                  resolveMediaImageProvider(comment.user.avatarUrl),
+              backgroundImage: resolveMediaImageProvider(
+                comment.user.avatarUrl,
+              ),
               child: comment.user.avatarUrl == null
                   ? Icon(
                       LucideIcons.user,
@@ -709,7 +726,12 @@ class _ForumDetailPageState extends State<ForumDetailPage> {
                 SizedBox(height: 6.h),
                 Container(
                   width: double.infinity,
-                  padding: EdgeInsets.fromLTRB(AppSpacing.sm10, AppSpacing.sm, AppSpacing.sm10, AppSpacing.sm),
+                  padding: EdgeInsets.fromLTRB(
+                    AppSpacing.sm10,
+                    AppSpacing.sm,
+                    AppSpacing.sm10,
+                    AppSpacing.sm,
+                  ),
                   decoration: isMine
                       ? BoxDecoration(
                           color: AppColors.primary.withValues(alpha: 0.06),
@@ -866,9 +888,11 @@ class _ForumDetailPageState extends State<ForumDetailPage> {
                         Text(
                           isExpanded
                               ? 'forum.hide_replies'.tr()
-                              : 'forum.show_replies'.tr(namedArgs: {
-                                  'count': '${comment.replies!.length}',
-                                }),
+                              : 'forum.show_replies'.tr(
+                                  namedArgs: {
+                                    'count': '${comment.replies!.length}',
+                                  },
+                                ),
                           style: TextStyle(
                             fontSize: 11.sp,
                             color: AppColors.primary,
@@ -913,7 +937,12 @@ class _ForumDetailPageState extends State<ForumDetailPage> {
         if (_commentAttachments.isNotEmpty)
           Container(
             width: double.infinity,
-            padding: EdgeInsets.fromLTRB(AppSpacing.lg, AppSpacing.sm, AppSpacing.lg, 0),
+            padding: EdgeInsets.fromLTRB(
+              AppSpacing.lg,
+              AppSpacing.sm,
+              AppSpacing.lg,
+              0,
+            ),
             color: AppColors.surface,
             child: ForumMediaPickerRow(
               attachments: _commentAttachments,
@@ -925,7 +954,10 @@ class _ForumDetailPageState extends State<ForumDetailPage> {
           ),
         if (_replyToId != null)
           Container(
-            padding: EdgeInsets.symmetric(horizontal: AppSpacing.lg, vertical: AppSpacing.sm),
+            padding: EdgeInsets.symmetric(
+              horizontal: AppSpacing.lg,
+              vertical: AppSpacing.sm,
+            ),
             color: AppColors.primary.withOpacity(0.05),
             child: Row(
               children: [
@@ -933,7 +965,9 @@ class _ForumDetailPageState extends State<ForumDetailPage> {
                 SizedBox(width: AppSpacing.sm),
                 Expanded(
                   child: Text(
-                    'forum.replying_to'.tr(namedArgs: {'user': _replyToUser ?? ''}),
+                    'forum.replying_to'.tr(
+                      namedArgs: {'user': _replyToUser ?? ''},
+                    ),
                     style: TextStyle(
                       fontSize: 12.sp,
                       color: AppColors.primary,
@@ -956,11 +990,11 @@ class _ForumDetailPageState extends State<ForumDetailPage> {
             ),
           ),
         Container(
-          padding: EdgeInsets.fromLTRB(
-            AppSpacing.lg,
-            AppSpacing.md12,
-            AppSpacing.lg,
-            AppSpacing.lg + MediaQuery.of(context).viewInsets.bottom,
+          padding: bisaSheetPadding(
+            context,
+            horizontal: AppSpacing.lg,
+            top: AppSpacing.md12,
+            bottom: AppSpacing.lg,
           ),
           decoration: BoxDecoration(
             color: AppColors.surface,
@@ -976,76 +1010,75 @@ class _ForumDetailPageState extends State<ForumDetailPage> {
               ),
             ],
           ),
-          child: SafeArea(
-            top: false,
-            child: Row(
-              children: [
-                IconButton(
-                  icon: Icon(
-                    LucideIcons.image,
-                    size: 20.sp,
-                    color: AppColors.primary,
-                  ),
-                  onPressed: _isSendingComment ? null : _pickCommentImages,
+          child: Row(
+            children: [
+              IconButton(
+                icon: Icon(
+                  LucideIcons.image,
+                  size: 20.sp,
+                  color: AppColors.primary,
                 ),
-                Expanded(
-                  child: Container(
-                    padding: EdgeInsets.symmetric(horizontal: AppSpacing.md),
-                    decoration: BoxDecoration(
-                      color: AppColors.grey50,
-                      borderRadius: BorderRadius.circular(AppRadius.pill),
-                      border: Border.all(color: AppColors.grey100),
+                onPressed: _isSendingComment ? null : _pickCommentImages,
+              ),
+              Expanded(
+                child: Container(
+                  padding: EdgeInsets.symmetric(horizontal: AppSpacing.md),
+                  decoration: BoxDecoration(
+                    color: AppColors.grey50,
+                    borderRadius: BorderRadius.circular(AppRadius.pill),
+                    border: Border.all(color: AppColors.grey100),
+                  ),
+                  child: TextField(
+                    controller: _commentController,
+                    focusNode: _commentFocusNode,
+                    style: TextStyle(
+                      fontSize: 14.sp,
+                      fontWeight: FontWeight.w500,
+                      color: AppColors.textPrimary,
                     ),
-                    child: TextField(
-                      controller: _commentController,
-                      focusNode: _commentFocusNode,
-                      style: TextStyle(
+                    decoration: InputDecoration(
+                      hintText: _replyToId != null
+                          ? 'forum.hint_reply'.tr()
+                          : 'forum.hint_comment'.tr(),
+                      hintStyle: TextStyle(
+                        color: AppColors.textHint,
                         fontSize: 14.sp,
-                        fontWeight: FontWeight.w500,
-                        color: AppColors.textPrimary,
+                        fontWeight: FontWeight.w400,
                       ),
-                      decoration: InputDecoration(
-                        hintText: _replyToId != null
-                            ? 'forum.hint_reply'.tr()
-                            : 'forum.hint_comment'.tr(),
-                        hintStyle: TextStyle(
-                          color: AppColors.textHint,
-                          fontSize: 14.sp,
-                          fontWeight: FontWeight.w400,
-                        ),
-                        border: InputBorder.none,
-                        contentPadding: EdgeInsets.symmetric(vertical: AppSpacing.section),
+                      border: InputBorder.none,
+                      contentPadding: EdgeInsets.symmetric(
+                        vertical: AppSpacing.section,
                       ),
                     ),
                   ),
                 ),
-                SizedBox(width: AppSpacing.md12),
-                GestureDetector(
-                  onTap: _isSendingComment ? null : () => _submitComment(context),
-                  child: AnimatedContainer(
-                    duration: const Duration(milliseconds: 200),
-                    height: 48.h,
-                    width: 48.h,
-                    decoration: BoxDecoration(
-                      gradient: AppColors.primaryGradient,
-                      shape: BoxShape.circle,
-                      boxShadow: [
-                        BoxShadow(
-                          color: AppColors.primary.withOpacity(0.3),
-                          blurRadius: 10,
-                          offset: const Offset(0, 4),
-                        ),
-                      ],
-                    ),
-                    child: const Icon(
-                      LucideIcons.send,
-                      color: AppColors.surface,
-                      size: 20,
-                    ),
+              ),
+              SizedBox(width: AppSpacing.md12),
+              GestureDetector(
+                onTap: _isSendingComment ? null : () => _submitComment(context),
+                child: AnimatedContainer(
+                  duration: const Duration(milliseconds: 200),
+                  height: 48.h,
+                  width: 48.h,
+                  decoration: BoxDecoration(
+                    gradient: AppColors.primaryGradient,
+                    shape: BoxShape.circle,
+                    boxShadow: [
+                      BoxShadow(
+                        color: AppColors.primary.withOpacity(0.3),
+                        blurRadius: 10,
+                        offset: const Offset(0, 4),
+                      ),
+                    ],
+                  ),
+                  child: const Icon(
+                    LucideIcons.send,
+                    color: AppColors.surface,
+                    size: 20,
                   ),
                 ),
-              ],
-            ),
+              ),
+            ],
           ),
         ),
       ],
@@ -1112,9 +1145,9 @@ class _ForumDetailPageState extends State<ForumDetailPage> {
 
   Future<void> _submitComment(BuildContext context) async {
     final isAuthenticated = context.read<AuthCubit>().state.maybeWhen(
-          authenticated: (_) => true,
-          orElse: () => false,
-        );
+      authenticated: (_) => true,
+      orElse: () => false,
+    );
     if (!isAuthenticated) {
       AuthSheet.show(context);
       return;
@@ -1142,11 +1175,11 @@ class _ForumDetailPageState extends State<ForumDetailPage> {
     FocusScope.of(context).unfocus();
 
     final error = await context.read<ForumCubit>().addComment(
-          widget.postId,
-          savedText,
-          parentId: parent,
-          attachments: savedAttachments,
-        );
+      widget.postId,
+      savedText,
+      parentId: parent,
+      attachments: savedAttachments,
+    );
 
     if (!context.mounted) return;
     setState(() => _isSendingComment = false);

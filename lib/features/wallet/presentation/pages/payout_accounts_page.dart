@@ -19,8 +19,6 @@ class PayoutAccountsPage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final bottomInset = MediaQuery.paddingOf(context).bottom;
-
     return Scaffold(
       backgroundColor: AppColors.background,
       appBar: BisaAppBar(
@@ -34,14 +32,19 @@ class PayoutAccountsPage extends StatelessWidget {
               itemCount: 4,
               itemHeight: 88.h,
               scrollable: true,
-              padding: EdgeInsets.all(16.w),
+              padding: EdgeInsets.all(AppSpacing.pageGutter),
             ),
             loaded: (wallet, transactions, banks, accounts) {
               if (accounts.isEmpty) {
                 return _buildEmptyState(context, banks);
               }
               return ListView.separated(
-                padding: EdgeInsets.fromLTRB(16.w, 12.h, 16.w, 12.h),
+                padding: EdgeInsets.fromLTRB(
+                  AppSpacing.pageGutter,
+                  AppSpacing.md12,
+                  AppSpacing.pageGutter,
+                  AppSpacing.md12,
+                ),
                 itemCount: accounts.length,
                 separatorBuilder: (_, __) => SizedBox(height: 10.h),
                 itemBuilder: (context, index) {
@@ -60,7 +63,12 @@ class PayoutAccountsPage extends StatelessWidget {
               return SafeArea(
                 top: false,
                 child: Padding(
-                  padding: EdgeInsets.fromLTRB(16.w, 8.h, 16.w, 8.h + bottomInset * 0.25),
+                  padding: EdgeInsets.fromLTRB(
+                    AppSpacing.pageGutter,
+                    AppSpacing.compact,
+                    AppSpacing.pageGutter,
+                    AppSpacing.compact,
+                  ),
                   child: CustomButton(
                     text: 'wallet.add_new_account'.tr(),
                     height: AppSpacing.buttonHeight,
@@ -159,10 +167,7 @@ class PayoutAccountsPage extends StatelessWidget {
                 ),
                 Text(
                   account.accountName,
-                  style: TextStyle(
-                    color: AppColors.textHint,
-                    fontSize: 11.sp,
-                  ),
+                  style: TextStyle(color: AppColors.textHint, fontSize: 11.sp),
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
                 ),
@@ -297,13 +302,11 @@ class PayoutAccountsPage extends StatelessWidget {
     List<Map<String, dynamic>> banks,
     PayoutAccountEntity account,
   ) async {
-    final detail = await context.read<WalletCubit>().getPayoutAccountDetail(account.id);
-    if (!context.mounted) return;
-    _showAddAccountSheet(
-      context,
-      banks,
-      account: detail ?? account,
+    final detail = await context.read<WalletCubit>().getPayoutAccountDetail(
+      account.id,
     );
+    if (!context.mounted) return;
+    _showAddAccountSheet(context, banks, account: detail ?? account);
   }
 
   void _showAddAccountSheet(
@@ -336,7 +339,9 @@ class PayoutAccountsPage extends StatelessWidget {
                 constraints: BoxConstraints(maxHeight: 0.88.sh),
                 decoration: BoxDecoration(
                   color: AppColors.surface,
-                  borderRadius: BorderRadius.vertical(top: Radius.circular(24.r)),
+                  borderRadius: BorderRadius.vertical(
+                    top: Radius.circular(24.r),
+                  ),
                 ),
                 child: Column(
                   mainAxisSize: MainAxisSize.min,
@@ -351,7 +356,12 @@ class PayoutAccountsPage extends StatelessWidget {
                       ),
                     ),
                     Padding(
-                      padding: EdgeInsets.fromLTRB(20.w, 16.h, 12.w, 0),
+                      padding: EdgeInsets.fromLTRB(
+                        AppSpacing.pageGutter,
+                        AppSpacing.comfortable,
+                        AppSpacing.md12,
+                        0,
+                      ),
                       child: Row(
                         children: [
                           Expanded(
@@ -375,7 +385,12 @@ class PayoutAccountsPage extends StatelessWidget {
                     ),
                     Flexible(
                       child: SingleChildScrollView(
-                        padding: EdgeInsets.fromLTRB(20.w, 12.h, 20.w, 12.h),
+                        padding: EdgeInsets.fromLTRB(
+                          AppSpacing.pageGutter,
+                          AppSpacing.md12,
+                          AppSpacing.pageGutter,
+                          AppSpacing.md12,
+                        ),
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
@@ -395,11 +410,15 @@ class PayoutAccountsPage extends StatelessWidget {
                                 fillColor: AppColors.grey50,
                                 border: OutlineInputBorder(
                                   borderRadius: BorderRadius.circular(12.r),
-                                  borderSide: BorderSide(color: AppColors.grey200),
+                                  borderSide: BorderSide(
+                                    color: AppColors.grey200,
+                                  ),
                                 ),
                                 enabledBorder: OutlineInputBorder(
                                   borderRadius: BorderRadius.circular(12.r),
-                                  borderSide: BorderSide(color: AppColors.grey200),
+                                  borderSide: BorderSide(
+                                    color: AppColors.grey200,
+                                  ),
                                 ),
                               ),
                               value: selectedBankId,
@@ -415,7 +434,8 @@ class PayoutAccountsPage extends StatelessWidget {
                                     ),
                                   )
                                   .toList(),
-                              onChanged: (val) => setState(() => selectedBankId = val),
+                              onChanged: (val) =>
+                                  setState(() => selectedBankId = val),
                             ),
                             SizedBox(height: 12.h),
                             CustomTextField(
@@ -451,7 +471,8 @@ class PayoutAccountsPage extends StatelessWidget {
                                 SizedBox(width: 10.w),
                                 Expanded(
                                   child: GestureDetector(
-                                    onTap: () => setState(() => isMain = !isMain),
+                                    onTap: () =>
+                                        setState(() => isMain = !isMain),
                                     child: Text(
                                       'wallet.set_primary_checkbox'.tr(),
                                       style: TextStyle(
@@ -467,39 +488,41 @@ class PayoutAccountsPage extends StatelessWidget {
                         ),
                       ),
                     ),
-                    SafeArea(
-                      top: false,
-                      child: Padding(
-                        padding: EdgeInsets.fromLTRB(20.w, 8.h, 20.w, 12.h),
-                        child: CustomButton(
-                          text: account == null
-                              ? 'wallet.save_account'.tr()
-                              : 'wallet.save_changes'.tr(),
-                          height: AppSpacing.buttonHeight,
-                          onPressed: () {
-                            if (selectedBankId != null &&
-                                accountNoController.text.isNotEmpty &&
-                                accountNameController.text.isNotEmpty) {
-                              if (account == null) {
-                                walletCubit.createPayoutAccount(
-                                  bankId: selectedBankId!,
-                                  accountNumber: accountNoController.text,
-                                  accountName: accountNameController.text,
-                                  isMain: isMain,
-                                );
-                              } else {
-                                walletCubit.updatePayoutAccount(
-                                  id: account.id,
-                                  bankId: selectedBankId,
-                                  accountNumber: accountNoController.text,
-                                  accountName: accountNameController.text,
-                                  isMain: isMain,
-                                );
-                              }
-                              Navigator.pop(sheetContext);
+                    Padding(
+                      padding: EdgeInsets.fromLTRB(
+                        AppSpacing.pageGutter,
+                        AppSpacing.compact,
+                        AppSpacing.pageGutter,
+                        AppSpacing.md12,
+                      ),
+                      child: CustomButton(
+                        text: account == null
+                            ? 'wallet.save_account'.tr()
+                            : 'wallet.save_changes'.tr(),
+                        height: AppSpacing.buttonHeight,
+                        onPressed: () {
+                          if (selectedBankId != null &&
+                              accountNoController.text.isNotEmpty &&
+                              accountNameController.text.isNotEmpty) {
+                            if (account == null) {
+                              walletCubit.createPayoutAccount(
+                                bankId: selectedBankId!,
+                                accountNumber: accountNoController.text,
+                                accountName: accountNameController.text,
+                                isMain: isMain,
+                              );
+                            } else {
+                              walletCubit.updatePayoutAccount(
+                                id: account.id,
+                                bankId: selectedBankId,
+                                accountNumber: accountNoController.text,
+                                accountName: accountNameController.text,
+                                isMain: isMain,
+                              );
                             }
-                          },
-                        ),
+                            Navigator.pop(sheetContext);
+                          }
+                        },
                       ),
                     ),
                   ],

@@ -6,6 +6,7 @@ import '../entities/product_entity.dart';
 import '../entities/product_stats_entity.dart';
 import '../../data/models/supplier_model.dart';
 import '../../data/models/category_model.dart';
+import '../entities/product_certificate_entity.dart';
 
 abstract class MarketplaceRepository {
   Future<Either<Failure, List<CategoryModel>>> getCategories({
@@ -45,9 +46,14 @@ abstract class MarketplaceRepository {
   });
   Future<Either<Failure, ProductEntity>> getProductById(String id);
   Future<Either<Failure, ProductEntity>> createProduct(
-      Map<String, dynamic> data, List<String> imagePaths);
+    Map<String, dynamic> data,
+    List<String> imagePaths,
+  );
   Future<Either<Failure, ProductEntity>> updateProduct(
-      String id, Map<String, dynamic> data, List<String> imagePaths);
+    String id,
+    Map<String, dynamic> data,
+    List<String> imagePaths,
+  );
   Future<Either<Failure, void>> deleteProduct(String id);
   Future<Either<Failure, ProductStatsEntity>> getProductStats(String id);
   Future<Either<Failure, ProductEntity>> duplicateProduct(String id);
@@ -65,7 +71,10 @@ abstract class MarketplaceRepository {
   Future<Either<Failure, List<ProductEntity>>> getFeaturedProducts();
   Future<Either<Failure, List<ProductCollectionEntity>>> getCollections();
   Future<Either<Failure, List<ProductEntity>>> getProductsByCollection(
-      String slug, {int page = 1, int limit = 10});
+    String slug, {
+    int page = 1,
+    int limit = 10,
+  });
   Future<Either<Failure, ProductEngagementData>> getSupplierProductEngagement();
   Future<Either<Failure, Map<String, dynamic>>> promoteProduct(
     String productId, {
@@ -78,4 +87,17 @@ abstract class MarketplaceRepository {
     String filePath,
   );
   Future<Either<Failure, ProductEntity>> deleteProductVideo(String productId);
+  Future<Either<Failure, List<ProductCertificateEntity>>>
+  getMyProductCertificates(String productId);
+  Future<Either<Failure, ProductCertificateEntity>> submitProductCertificate({
+    required String productId,
+    required String localPath,
+    required Map<String, dynamic> metadata,
+  });
+  Future<Either<Failure, void>> deleteProductCertificate(
+    String productId,
+    String certificateId,
+  );
+  Future<Either<Failure, List<ProductCertificateEntity>>>
+  getSupplierCertificates(String supplierId, {int page = 1, int limit = 20});
 }

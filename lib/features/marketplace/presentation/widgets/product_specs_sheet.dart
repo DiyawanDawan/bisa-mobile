@@ -4,12 +4,14 @@ import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
 import '../../../../core/constants/app_layout.dart';
 import '../../../../core/constants/app_colors.dart';
+import '../../../../core/utils/safe_area_utils.dart';
 import '../../domain/entities/product_entity.dart';
 import '../utils/product_specs_mapper.dart';
 import '../../../../shared/widgets/custom_button.dart';
 import '../../../../shared/widgets/custom_text_field.dart';
 
-export '../utils/product_specs_mapper.dart' show ProductSpecEntry, ProductSpecsMapper;
+export '../utils/product_specs_mapper.dart'
+    show ProductSpecEntry, ProductSpecsMapper;
 
 class ProductSpecsData {
   const ProductSpecsData({this.entries = const []});
@@ -58,7 +60,8 @@ class _ProductSpecsExpandableSectionState
       ? 'marketplace.specs_organic'.tr()
       : 'marketplace.specs_technical'.tr();
 
-  List<String> get _presets => ProductSpecsMapper.presetLabels(widget.productMode);
+  List<String> get _presets =>
+      ProductSpecsMapper.presetLabels(widget.productMode);
 
   List<ProductSpecEntry> get _validEntries =>
       widget.specs.entries.where((e) => e.isValid).toList();
@@ -117,7 +120,10 @@ class _ProductSpecsExpandableSectionState
           InkWell(
             onTap: () => setState(() => _sectionExpanded = !_sectionExpanded),
             child: Container(
-              padding: EdgeInsets.symmetric(horizontal: AppSpacing.md12, vertical: AppSpacing.md12),
+              padding: EdgeInsets.symmetric(
+                horizontal: AppSpacing.md12,
+                vertical: AppSpacing.md12,
+              ),
               decoration: BoxDecoration(
                 borderRadius: BorderRadius.vertical(
                   top: Radius.circular(AppRadius.lg),
@@ -160,7 +166,10 @@ class _ProductSpecsExpandableSectionState
                   if (filledCount > 0)
                     Container(
                       margin: EdgeInsets.only(right: 6.w),
-                      padding: EdgeInsets.symmetric(horizontal: AppSpacing.sm, vertical: 2.h),
+                      padding: EdgeInsets.symmetric(
+                        horizontal: AppSpacing.sm,
+                        vertical: 2.h,
+                      ),
                       decoration: BoxDecoration(
                         color: AppColors.primaryLight,
                         borderRadius: BorderRadius.circular(AppRadius.button),
@@ -188,7 +197,12 @@ class _ProductSpecsExpandableSectionState
           if (_sectionExpanded) ...[
             Divider(height: 1, color: AppColors.grey100),
             Padding(
-              padding: EdgeInsets.fromLTRB(AppSpacing.md12, AppSpacing.sm10, AppSpacing.md12, 0),
+              padding: EdgeInsets.fromLTRB(
+                AppSpacing.md12,
+                AppSpacing.sm10,
+                AppSpacing.md12,
+                0,
+              ),
               child: _PresetsCollapsibleHeader(
                 expanded: _presetsExpanded,
                 onToggle: () =>
@@ -197,7 +211,12 @@ class _ProductSpecsExpandableSectionState
             ),
             if (_presetsExpanded)
               Padding(
-                padding: EdgeInsets.fromLTRB(AppSpacing.md12, AppSpacing.sm, AppSpacing.md12, AppSpacing.xs),
+                padding: EdgeInsets.fromLTRB(
+                  AppSpacing.md12,
+                  AppSpacing.sm,
+                  AppSpacing.md12,
+                  AppSpacing.xs,
+                ),
                 child: ProductSpecsPresetChips(
                   presets: _presets,
                   isSelected: _hasPreset,
@@ -206,7 +225,12 @@ class _ProductSpecsExpandableSectionState
               ),
             if (draftRows.isNotEmpty) ...[
               Padding(
-                padding: EdgeInsets.fromLTRB(AppSpacing.md12, AppSpacing.sm, AppSpacing.md12, 0),
+                padding: EdgeInsets.fromLTRB(
+                  AppSpacing.md12,
+                  AppSpacing.sm,
+                  AppSpacing.md12,
+                  0,
+                ),
                 child: Text(
                   'marketplace.specs_fill_values'.tr(),
                   style: TextStyle(
@@ -217,14 +241,25 @@ class _ProductSpecsExpandableSectionState
                 ),
               ),
               Padding(
-                padding: EdgeInsets.fromLTRB(AppSpacing.md12, AppSpacing.xs6, AppSpacing.md12, AppSpacing.sm),
+                padding: EdgeInsets.fromLTRB(
+                  AppSpacing.md12,
+                  AppSpacing.xs6,
+                  AppSpacing.md12,
+                  AppSpacing.sm,
+                ),
                 child: Column(
                   children: [
-                    for (int i = 0, shown = 0; i < widget.specs.entries.length; i++)
+                    for (
+                      int i = 0, shown = 0;
+                      i < widget.specs.entries.length;
+                      i++
+                    )
                       if (widget.specs.entries[i].label.trim().isNotEmpty) ...[
                         if (shown++ > 0) SizedBox(height: AppSpacing.sm),
                         _InlineSpecValueRow(
-                          key: ValueKey('spec-$i-${widget.specs.entries[i].label}'),
+                          key: ValueKey(
+                            'spec-$i-${widget.specs.entries[i].label}',
+                          ),
                           label: widget.specs.entries[i].label,
                           value: widget.specs.entries[i].value,
                           onChanged: (v) => _setEntryValue(i, v),
@@ -236,7 +271,12 @@ class _ProductSpecsExpandableSectionState
               ),
             ],
             Padding(
-              padding: EdgeInsets.fromLTRB(AppSpacing.md12, 0, AppSpacing.md12, AppSpacing.md12),
+              padding: EdgeInsets.fromLTRB(
+                AppSpacing.md12,
+                0,
+                AppSpacing.md12,
+                AppSpacing.md12,
+              ),
               child: TextButton.icon(
                 onPressed: widget.onOpenFullEditor,
                 icon: Icon(LucideIcons.slidersHorizontal, size: 16.sp),
@@ -278,11 +318,7 @@ class _PresetsCollapsibleHeader extends StatelessWidget {
         padding: EdgeInsets.symmetric(vertical: 4.h),
         child: Row(
           children: [
-            Icon(
-              LucideIcons.zap,
-              size: 14.sp,
-              color: AppColors.secondary,
-            ),
+            Icon(LucideIcons.zap, size: 14.sp, color: AppColors.secondary),
             SizedBox(width: 6.w),
             Expanded(
               child: Text(
@@ -334,36 +370,32 @@ class ProductSpecsPresetChips extends StatelessWidget {
     return Wrap(
       spacing: AppSpacing.sm,
       runSpacing: AppSpacing.sm,
-      children: presets
-          .map(
-            (label) {
-              final selected = isSelected(label);
-              return FilterChip(
-                label: Text(
-                  ProductSpecsMapper.displayLabel(label),
-                  style: TextStyle(
-                    fontSize: 11.sp,
-                    fontWeight: FontWeight.w600,
-                    color: selected ? AppColors.primary : AppColors.textPrimary,
-                  ),
-                ),
-                selected: selected,
-                showCheckmark: true,
-                checkmarkColor: AppColors.primary,
-                selectedColor: AppColors.primaryLight.withValues(alpha: 0.5),
-                backgroundColor: AppColors.grey50,
-                side: BorderSide(
-                  color: selected
-                      ? AppColors.primary.withValues(alpha: 0.4)
-                      : AppColors.grey200,
-                ),
-                padding: EdgeInsets.symmetric(horizontal: 4.w, vertical: 0),
-                materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
-                onSelected: (_) => onToggle(label),
-              );
-            },
-          )
-          .toList(),
+      children: presets.map((label) {
+        final selected = isSelected(label);
+        return FilterChip(
+          label: Text(
+            ProductSpecsMapper.displayLabel(label),
+            style: TextStyle(
+              fontSize: 11.sp,
+              fontWeight: FontWeight.w600,
+              color: selected ? AppColors.primary : AppColors.textPrimary,
+            ),
+          ),
+          selected: selected,
+          showCheckmark: true,
+          checkmarkColor: AppColors.primary,
+          selectedColor: AppColors.primaryLight.withValues(alpha: 0.5),
+          backgroundColor: AppColors.grey50,
+          side: BorderSide(
+            color: selected
+                ? AppColors.primary.withValues(alpha: 0.4)
+                : AppColors.grey200,
+          ),
+          padding: EdgeInsets.symmetric(horizontal: 4.w, vertical: 0),
+          materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
+          onSelected: (_) => onToggle(label),
+        );
+      }).toList(),
     );
   }
 }
@@ -489,8 +521,8 @@ class ProductSpecsSummaryCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final entries = specs.entriesForMode(productMode);
     final title = productMode == 'ORGANIC_PRODUCE'
-      ? 'marketplace.specs_organic'.tr()
-      : 'marketplace.specs_technical'.tr();
+        ? 'marketplace.specs_organic'.tr()
+        : 'marketplace.specs_technical'.tr();
 
     return Material(
       color: AppColors.surface,
@@ -536,10 +568,7 @@ class ProductSpecsSummaryCard extends StatelessWidget {
                 SizedBox(height: 6.h),
                 Text(
                   'marketplace.specs_tap_add'.tr(),
-                  style: TextStyle(
-                    fontSize: 11.sp,
-                    color: AppColors.textHint,
-                  ),
+                  style: TextStyle(fontSize: 11.sp, color: AppColors.textHint),
                 ),
               ] else ...[
                 SizedBox(height: AppSpacing.sm),
@@ -574,10 +603,7 @@ class ProductSpecsSummaryCard extends StatelessWidget {
             flex: 2,
             child: Text(
               e.key,
-              style: TextStyle(
-                fontSize: 11.sp,
-                color: AppColors.textHint,
-              ),
+              style: TextStyle(fontSize: 11.sp, color: AppColors.textHint),
             ),
           ),
           Expanded(
@@ -610,17 +636,15 @@ Future<ProductSpecsData?> showProductSpecsSheet(
     isScrollControlled: true,
     useSafeArea: true,
     backgroundColor: AppColors.transparent,
-    builder: (ctx) => _ProductSpecsSheet(
-      productMode: productMode,
-      initial: initial,
-    ),
+    builder: (ctx) =>
+        _ProductSpecsSheet(productMode: productMode, initial: initial),
   );
 }
 
 class _EditableSpecRow {
   _EditableSpecRow({required this.id, String label = '', String value = ''})
-      : labelCtrl = TextEditingController(text: label),
-        valueCtrl = TextEditingController(text: value);
+    : labelCtrl = TextEditingController(text: label),
+      valueCtrl = TextEditingController(text: value);
 
   final String id;
   final TextEditingController labelCtrl;
@@ -633,10 +657,7 @@ class _EditableSpecRow {
 }
 
 class _ProductSpecsSheet extends StatefulWidget {
-  const _ProductSpecsSheet({
-    required this.productMode,
-    required this.initial,
-  });
+  const _ProductSpecsSheet({required this.productMode, required this.initial});
 
   final String productMode;
   final ProductSpecsData initial;
@@ -657,11 +678,13 @@ class _ProductSpecsSheetState extends State<_ProductSpecsSheet> {
       _addRow();
     } else {
       for (final entry in widget.initial.entries) {
-        _rows.add(_EditableSpecRow(
-          id: '${_idSeq++}',
-          label: entry.label,
-          value: entry.value,
-        ));
+        _rows.add(
+          _EditableSpecRow(
+            id: '${_idSeq++}',
+            label: entry.label,
+            value: entry.value,
+          ),
+        );
       }
     }
   }
@@ -676,7 +699,9 @@ class _ProductSpecsSheetState extends State<_ProductSpecsSheet> {
 
   void _addRow({String label = '', String value = ''}) {
     setState(() {
-      _rows.add(_EditableSpecRow(id: '${_idSeq++}', label: label, value: value));
+      _rows.add(
+        _EditableSpecRow(id: '${_idSeq++}', label: label, value: value),
+      );
     });
   }
 
@@ -690,7 +715,8 @@ class _ProductSpecsSheetState extends State<_ProductSpecsSheet> {
 
   void _togglePreset(String label) {
     final idx = _rows.indexWhere(
-      (r) => r.labelCtrl.text.trim().toLowerCase() == label.trim().toLowerCase(),
+      (r) =>
+          r.labelCtrl.text.trim().toLowerCase() == label.trim().toLowerCase(),
     );
     if (idx >= 0) {
       _removeRow(idx);
@@ -701,7 +727,8 @@ class _ProductSpecsSheetState extends State<_ProductSpecsSheet> {
 
   bool _hasPreset(String label) {
     return _rows.any(
-      (r) => r.labelCtrl.text.trim().toLowerCase() == label.trim().toLowerCase(),
+      (r) =>
+          r.labelCtrl.text.trim().toLowerCase() == label.trim().toLowerCase(),
     );
   }
 
@@ -720,7 +747,6 @@ class _ProductSpecsSheetState extends State<_ProductSpecsSheet> {
 
   @override
   Widget build(BuildContext context) {
-    final keyboardBottom = MediaQuery.viewInsetsOf(context).bottom;
     final maxH = MediaQuery.sizeOf(context).height * 0.88;
     final isOrganic = widget.productMode == 'ORGANIC_PRODUCE';
     final title = isOrganic
@@ -729,124 +755,154 @@ class _ProductSpecsSheetState extends State<_ProductSpecsSheet> {
     final presets = ProductSpecsMapper.presetLabels(widget.productMode);
 
     return Padding(
-      padding: EdgeInsets.only(bottom: keyboardBottom),
+      padding: sheetBottomPadding(context),
       child: Container(
         constraints: BoxConstraints(maxHeight: maxH),
         decoration: BoxDecoration(
           color: AppColors.surface,
-          borderRadius: BorderRadius.vertical(top: Radius.circular(AppRadius.pill)),
-        ),
-        child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              SizedBox(height: AppSpacing.sm10),
-              Container(
-                width: 36.w,
-                height: 4.h,
-                decoration: BoxDecoration(
-                  color: AppColors.grey200,
-                  borderRadius: BorderRadius.circular(2.r),
-                ),
-              ),
-              Padding(
-                padding: EdgeInsets.fromLTRB(AppSpacing.md, AppSpacing.md12, AppSpacing.md, 0),
-                child: Row(
-                  children: [
-                    Expanded(
-                      child: Text(
-                        title,
-                        style: TextStyle(
-                          fontSize: 16.sp,
-                          fontWeight: FontWeight.w700,
-                          color: AppColors.textPrimary,
-                        ),
-                      ),
-                    ),
-                    IconButton(
-                      onPressed: () => Navigator.pop(context),
-                      icon: Icon(LucideIcons.x, size: 20.sp),
-                      padding: EdgeInsets.zero,
-                      constraints: const BoxConstraints(),
-                    ),
-                  ],
-                ),
-              ),
-              Padding(
-                padding: EdgeInsets.fromLTRB(AppSpacing.md, AppSpacing.xs6, AppSpacing.md, 0),
-                child: Text(
-                  'marketplace.specs_add_rows_hint'.tr(),
-                  style: TextStyle(
-                    fontSize: 11.sp,
-                    color: AppColors.textSecondary,
-                  ),
-                ),
-              ),
-              Padding(
-                padding: EdgeInsets.fromLTRB(AppSpacing.md, AppSpacing.sm10, AppSpacing.md, 0),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.stretch,
-                  children: [
-                    _PresetsCollapsibleHeader(
-                      expanded: _presetsExpanded,
-                      onToggle: () =>
-                          setState(() => _presetsExpanded = !_presetsExpanded),
-                    ),
-                    if (_presetsExpanded) ...[
-                      SizedBox(height: AppSpacing.sm),
-                      ProductSpecsPresetChips(
-                        presets: presets,
-                        isSelected: _hasPreset,
-                        onToggle: _togglePreset,
-                      ),
-                    ],
-                  ],
-                ),
-              ),
-              Flexible(
-                child: SingleChildScrollView(
-                  padding: EdgeInsets.fromLTRB(AppSpacing.md, AppSpacing.md12, AppSpacing.md, AppSpacing.sm),
-                  keyboardDismissBehavior:
-                      ScrollViewKeyboardDismissBehavior.onDrag,
-                  child: Column(
-                    children: [
-                      for (int i = 0; i < _rows.length; i++) ...[
-                        if (i > 0) SizedBox(height: AppSpacing.sm10),
-                        _buildEditableRow(i),
-                      ],
-                      SizedBox(height: AppSpacing.md12),
-                      OutlinedButton.icon(
-                        onPressed: () => _addRow(),
-                        icon: Icon(LucideIcons.plus, size: 18.sp),
-                        label: Text(
-                          'marketplace.specs_add_row'.tr(),
-                          style: TextStyle(
-                            fontSize: 13.sp,
-                            fontWeight: FontWeight.w600,
-                          ),
-                        ),
-                        style: OutlinedButton.styleFrom(
-                          foregroundColor: AppColors.primary,
-                          side: BorderSide(color: AppColors.primary),
-                          minimumSize: Size(double.infinity, AppSpacing.buttonHeight),
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              ),
-              SafeArea(
-                top: false,
-                child: Padding(
-                  padding: EdgeInsets.fromLTRB(AppSpacing.md, AppSpacing.sm, AppSpacing.md, AppSpacing.md12),
-                  child: CustomButton(
-                    text: 'marketplace.specs_save'.tr(),
-                    onPressed: () => Navigator.pop(context, _buildResult()),
-                  ),
-                ),
-              ),
-            ],
+          borderRadius: BorderRadius.vertical(
+            top: Radius.circular(AppRadius.pill),
           ),
         ),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            SizedBox(height: AppSpacing.sm10),
+            Container(
+              width: 36.w,
+              height: 4.h,
+              decoration: BoxDecoration(
+                color: AppColors.grey200,
+                borderRadius: BorderRadius.circular(2.r),
+              ),
+            ),
+            Padding(
+              padding: EdgeInsets.fromLTRB(
+                AppSpacing.md,
+                AppSpacing.md12,
+                AppSpacing.md,
+                0,
+              ),
+              child: Row(
+                children: [
+                  Expanded(
+                    child: Text(
+                      title,
+                      style: TextStyle(
+                        fontSize: 16.sp,
+                        fontWeight: FontWeight.w700,
+                        color: AppColors.textPrimary,
+                      ),
+                    ),
+                  ),
+                  IconButton(
+                    onPressed: () => Navigator.pop(context),
+                    icon: Icon(LucideIcons.x, size: 20.sp),
+                    padding: EdgeInsets.zero,
+                    constraints: const BoxConstraints(),
+                  ),
+                ],
+              ),
+            ),
+            Padding(
+              padding: EdgeInsets.fromLTRB(
+                AppSpacing.md,
+                AppSpacing.xs6,
+                AppSpacing.md,
+                0,
+              ),
+              child: Text(
+                'marketplace.specs_add_rows_hint'.tr(),
+                style: TextStyle(
+                  fontSize: 11.sp,
+                  color: AppColors.textSecondary,
+                ),
+              ),
+            ),
+            Padding(
+              padding: EdgeInsets.fromLTRB(
+                AppSpacing.md,
+                AppSpacing.sm10,
+                AppSpacing.md,
+                0,
+              ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  _PresetsCollapsibleHeader(
+                    expanded: _presetsExpanded,
+                    onToggle: () =>
+                        setState(() => _presetsExpanded = !_presetsExpanded),
+                  ),
+                  if (_presetsExpanded) ...[
+                    SizedBox(height: AppSpacing.sm),
+                    ProductSpecsPresetChips(
+                      presets: presets,
+                      isSelected: _hasPreset,
+                      onToggle: _togglePreset,
+                    ),
+                  ],
+                ],
+              ),
+            ),
+            Flexible(
+              child: SingleChildScrollView(
+                padding: EdgeInsets.fromLTRB(
+                  AppSpacing.md,
+                  AppSpacing.md12,
+                  AppSpacing.md,
+                  AppSpacing.sm,
+                ),
+                keyboardDismissBehavior:
+                    ScrollViewKeyboardDismissBehavior.onDrag,
+                child: Column(
+                  children: [
+                    for (int i = 0; i < _rows.length; i++) ...[
+                      if (i > 0) SizedBox(height: AppSpacing.sm10),
+                      _buildEditableRow(i),
+                    ],
+                    SizedBox(height: AppSpacing.md12),
+                    OutlinedButton.icon(
+                      onPressed: () => _addRow(),
+                      icon: Icon(LucideIcons.plus, size: 18.sp),
+                      label: Text(
+                        'marketplace.specs_add_row'.tr(),
+                        style: TextStyle(
+                          fontSize: 13.sp,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                      style: OutlinedButton.styleFrom(
+                        foregroundColor: AppColors.primary,
+                        side: BorderSide(color: AppColors.primary),
+                        minimumSize: Size(
+                          double.infinity,
+                          AppSpacing.buttonHeight,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+            SafeArea(
+              top: false,
+              child: Padding(
+                padding: EdgeInsets.fromLTRB(
+                  AppSpacing.md,
+                  AppSpacing.sm,
+                  AppSpacing.md,
+                  AppSpacing.md12,
+                ),
+                child: CustomButton(
+                  text: 'marketplace.specs_save'.tr(),
+                  onPressed: () => Navigator.pop(context, _buildResult()),
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
     );
   }
 
@@ -866,9 +922,9 @@ class _ProductSpecsSheetState extends State<_ProductSpecsSheet> {
             children: [
               Expanded(
                 child: Text(
-                  'marketplace.specs_row_label'.tr(namedArgs: {
-                    'index': '${index + 1}',
-                  }),
+                  'marketplace.specs_row_label'.tr(
+                    namedArgs: {'index': '${index + 1}'},
+                  ),
                   style: TextStyle(
                     fontSize: 10.sp,
                     fontWeight: FontWeight.w700,
@@ -879,7 +935,11 @@ class _ProductSpecsSheetState extends State<_ProductSpecsSheet> {
               if (_rows.length > 1)
                 IconButton(
                   onPressed: () => _removeRow(index),
-                  icon: Icon(LucideIcons.trash2, size: 16.sp, color: AppColors.error),
+                  icon: Icon(
+                    LucideIcons.trash2,
+                    size: 16.sp,
+                    color: AppColors.error,
+                  ),
                   padding: EdgeInsets.zero,
                   constraints: const BoxConstraints(),
                 ),

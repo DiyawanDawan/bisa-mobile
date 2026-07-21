@@ -15,6 +15,7 @@ import '../../../../core/constants/app_assets.dart';
 import '../../../../core/constants/app_layout.dart';
 import '../../../../core/constants/app_colors.dart';
 import '../../../../core/utils/app_feedback.dart';
+import '../../../../core/utils/safe_area_utils.dart';
 import '../../../../shared/widgets/custom_button.dart';
 import '../../../../shared/widgets/custom_text_field.dart';
 import '../../../../shared/widgets/bisa_logo.dart';
@@ -77,8 +78,9 @@ class _RegisterPageState extends State<RegisterPage> {
     setState(() => _checkingEmail = true);
     _emailCheckTimer = Timer(const Duration(milliseconds: 500), () async {
       try {
-        final available =
-            await sl<AuthRemoteDataSource>().checkEmailAvailable(trimmed);
+        final available = await sl<AuthRemoteDataSource>().checkEmailAvailable(
+          trimmed,
+        );
         if (!mounted || _emailController.text.trim() != trimmed) return;
         setState(() {
           _emailAvailable = available;
@@ -118,7 +120,8 @@ class _RegisterPageState extends State<RegisterPage> {
           }
         }
         setState(() {
-          _indonesiaCountry = indonesia ?? (countries.isNotEmpty ? countries.first : null);
+          _indonesiaCountry =
+              indonesia ?? (countries.isNotEmpty ? countries.first : null);
           _loadingCountry = false;
         });
       },
@@ -203,8 +206,11 @@ class _RegisterPageState extends State<RegisterPage> {
     return Scaffold(
       backgroundColor: AppColors.background,
       body: BlocListener<AuthCubit, AuthState>(
-        listenWhen: (prev, curr) =>
-            curr.maybeWhen(success: (_) => true, error: (_) => true, orElse: () => false),
+        listenWhen: (prev, curr) => curr.maybeWhen(
+          success: (_) => true,
+          error: (_) => true,
+          orElse: () => false,
+        ),
         listener: _onAuthState,
         child: Stack(
           fit: StackFit.expand,
@@ -222,12 +228,9 @@ class _RegisterPageState extends State<RegisterPage> {
                       SizedBox(height: AppSpacing.xl),
                       Row(
                         mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                        children: [
-                          _buildBackButton(),
-                          _buildBrandLogo(),
-                        ],
+                        children: [_buildBackButton(), _buildBrandLogo()],
                       ),
-                      SizedBox(height: 40.h),
+                      SizedBox(height: AppSpacing.spacious),
                       Text(
                         'auth.register_title'.tr(),
                         style: TextStyle(
@@ -283,37 +286,39 @@ class _RegisterPageState extends State<RegisterPage> {
                           Expanded(
                             child: _roleCard(
                               title: 'auth.role_buyer'.tr(),
-                            icon: LucideIcons.shoppingBag,
-                            isSelected: !_isSupplier,
-                            onTap: () => setState(() {
-                              _isSupplier = false;
-                              _selectedProvince = null;
-                              _selectedRegency = null;
-                            }),
+                              icon: LucideIcons.shoppingBag,
+                              isSelected: !_isSupplier,
+                              onTap: () => setState(() {
+                                _isSupplier = false;
+                                _selectedProvince = null;
+                                _selectedRegency = null;
+                              }),
+                            ),
                           ),
-                        ),
-                        SizedBox(width: AppSpacing.md12),
-                        Expanded(
-                          child: _roleCard(
-                            title: 'auth.role_supplier'.tr(),
-                            icon: LucideIcons.store,
-                            isSelected: _isSupplier,
-                            onTap: () {
-                              setState(() => _isSupplier = true);
-                              if (_indonesiaCountry == null) {
-                                _resolveIndonesiaCountry();
-                              }
-                            },
+                          SizedBox(width: AppSpacing.md12),
+                          Expanded(
+                            child: _roleCard(
+                              title: 'auth.role_supplier'.tr(),
+                              icon: LucideIcons.store,
+                              isSelected: _isSupplier,
+                              onTap: () {
+                                setState(() => _isSupplier = true);
+                                if (_indonesiaCountry == null) {
+                                  _resolveIndonesiaCountry();
+                                }
+                              },
+                            ),
                           ),
-                        ),
-                      ],
-                    ),
-                    SizedBox(height: AppSpacing.xl),
-                    Container(
+                        ],
+                      ),
+                      SizedBox(height: AppSpacing.xl),
+                      Container(
                         padding: EdgeInsets.all(AppSpacing.xl),
                         decoration: BoxDecoration(
                           color: AppColors.surface,
-                          borderRadius: BorderRadius.circular(AppSpacing.xlPx.r),
+                          borderRadius: BorderRadius.circular(
+                            AppSpacing.xlPx.r,
+                          ),
                           boxShadow: [
                             BoxShadow(
                               color: AppColors.black.withValues(alpha: 0.04),
@@ -330,8 +335,9 @@ class _RegisterPageState extends State<RegisterPage> {
                               controller: _fullNameController,
                               prefixIcon: Icons.person_outline_rounded,
                               isRequired: true,
-                              validator: (v) =>
-                                  v == null || v.isEmpty ? 'auth.name_required'.tr() : null,
+                              validator: (v) => v == null || v.isEmpty
+                                  ? 'auth.name_required'.tr()
+                                  : null,
                             ),
                             SizedBox(height: 18.h),
                             CustomTextField(
@@ -342,7 +348,8 @@ class _RegisterPageState extends State<RegisterPage> {
                               prefixIcon: Icons.alternate_email_rounded,
                               isRequired: true,
                               validator: (v) {
-                                if (v == null || v.isEmpty) return 'email_required'.tr();
+                                if (v == null || v.isEmpty)
+                                  return 'email_required'.tr();
                                 if (!_emailFormat.hasMatch(v)) {
                                   return 'email_invalid'.tr();
                                 }
@@ -365,7 +372,8 @@ class _RegisterPageState extends State<RegisterPage> {
                                 ),
                               )
                             else if (_emailAvailable == true &&
-                                _emailController.text.trim() == _lastCheckedEmail)
+                                _emailController.text.trim() ==
+                                    _lastCheckedEmail)
                               Padding(
                                 padding: EdgeInsets.only(top: 6.h),
                                 child: Text(
@@ -394,8 +402,10 @@ class _RegisterPageState extends State<RegisterPage> {
                               prefixIcon: Icons.lock_outline_rounded,
                               isRequired: true,
                               validator: (v) {
-                                if (v == null || v.isEmpty) return 'password_required'.tr();
-                                if (v.length < 8) return 'auth.password_min_8'.tr();
+                                if (v == null || v.isEmpty)
+                                  return 'password_required'.tr();
+                                if (v.length < 8)
+                                  return 'auth.password_min_8'.tr();
                                 return null;
                               },
                             ),
@@ -608,9 +618,7 @@ class _RegisterPageState extends State<RegisterPage> {
       decoration: BoxDecoration(
         color: AppColors.primaryLight.withValues(alpha: 0.35),
         borderRadius: BorderRadius.circular(18.r),
-        border: Border.all(
-          color: AppColors.primary.withValues(alpha: 0.15),
-        ),
+        border: Border.all(color: AppColors.primary.withValues(alpha: 0.15)),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -688,11 +696,8 @@ class _RegisterPageState extends State<RegisterPage> {
               width: AppSpacing.xxl,
               height: 22.h,
               fit: BoxFit.cover,
-              errorBuilder: (_, __, ___) => Icon(
-                LucideIcons.flag,
-                size: 22.sp,
-                color: AppColors.error,
-              ),
+              errorBuilder: (_, __, ___) =>
+                  Icon(LucideIcons.flag, size: 22.sp, color: AppColors.error),
             ),
           ),
           SizedBox(width: AppSpacing.md12),
@@ -712,12 +717,9 @@ class _RegisterPageState extends State<RegisterPage> {
                   _loadingCountry
                       ? 'auth.loading_regions'.tr()
                       : (_indonesiaCountry == null
-                          ? 'auth.region_load_failed'.tr()
-                          : 'auth.region_indonesia'.tr()),
-                  style: TextStyle(
-                    fontSize: 11.sp,
-                    color: AppColors.textHint,
-                  ),
+                            ? 'auth.region_load_failed'.tr()
+                            : 'auth.region_indonesia'.tr()),
+                  style: TextStyle(fontSize: 11.sp, color: AppColors.textHint),
                 ),
               ],
             ),
@@ -736,10 +738,7 @@ class _RegisterPageState extends State<RegisterPage> {
               onPressed: _resolveIndonesiaCountry,
               child: Text(
                 'auth.reload'.tr(),
-                style: TextStyle(
-                  fontSize: 12.sp,
-                  fontWeight: FontWeight.w700,
-                ),
+                style: TextStyle(fontSize: 12.sp, fontWeight: FontWeight.w700),
               ),
             ),
         ],
@@ -767,7 +766,9 @@ class _RegisterPageState extends State<RegisterPage> {
         ),
         SizedBox(height: AppSpacing.sm),
         GestureDetector(
-          onTap: enabled ? () => _openRegionPicker(label, level, onChanged) : null,
+          onTap: enabled
+              ? () => _openRegionPicker(label, level, onChanged)
+              : null,
           child: Container(
             width: double.infinity,
             padding: EdgeInsets.symmetric(
@@ -783,7 +784,8 @@ class _RegisterPageState extends State<RegisterPage> {
               children: [
                 Expanded(
                   child: Text(
-                    value?.name ?? 'auth.select_label'.tr(namedArgs: {'label': label}),
+                    value?.name ??
+                        'auth.select_label'.tr(namedArgs: {'label': label}),
                     style: TextStyle(
                       fontSize: 15.sp,
                       color: value != null
@@ -793,7 +795,10 @@ class _RegisterPageState extends State<RegisterPage> {
                     overflow: TextOverflow.ellipsis,
                   ),
                 ),
-                const Icon(Icons.keyboard_arrow_down_rounded, color: AppColors.grey400),
+                const Icon(
+                  Icons.keyboard_arrow_down_rounded,
+                  color: AppColors.grey400,
+                ),
               ],
             ),
           ),
@@ -833,16 +838,15 @@ class _RegisterPageState extends State<RegisterPage> {
     showModalBottomSheet<RegionEntity>(
       context: context,
       isScrollControlled: true,
-      useSafeArea: true,
+      useSafeArea: false,
       shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(AppRadius.pill)),
+        borderRadius: BorderRadius.vertical(
+          top: Radius.circular(AppRadius.pill),
+        ),
       ),
       builder: (sheetContext) => BlocProvider.value(
         value: gisCubit,
-        child: _RegionPickerSheet(
-          title: title,
-          onRetry: () => loadRegions(),
-        ),
+        child: _RegionPickerSheet(title: title, onRetry: () => loadRegions()),
       ),
     ).then((result) {
       if (result != null) onChanged(result);
@@ -851,10 +855,7 @@ class _RegisterPageState extends State<RegisterPage> {
 }
 
 class _RegionPickerSheet extends StatelessWidget {
-  const _RegionPickerSheet({
-    required this.title,
-    this.onRetry,
-  });
+  const _RegionPickerSheet({required this.title, this.onRetry});
 
   final String title;
   final VoidCallback? onRetry;
@@ -864,11 +865,11 @@ class _RegionPickerSheet extends StatelessWidget {
     return SizedBox(
       height: MediaQuery.sizeOf(context).height * 0.65,
       child: Padding(
-        padding: EdgeInsets.fromLTRB(
-          AppSpacing.lg,
-          AppSpacing.md,
-          AppSpacing.lg,
-          AppSpacing.lg,
+        padding: bisaSheetPadding(
+          context,
+          horizontal: AppSpacing.lg,
+          top: AppSpacing.md,
+          bottom: AppSpacing.lg,
         ),
         child: Column(
           children: [
@@ -908,15 +909,12 @@ class _RegionPickerSheet extends StatelessWidget {
                       itemHeight: 48.h,
                       scrollable: true,
                     ),
-                    error: (msg) => _RegionEmptyState(
-                      message: msg,
-                      onRetry: onRetry,
-                    ),
+                    error: (msg) =>
+                        _RegionEmptyState(message: msg, onRetry: onRetry),
                     loaded: (regions) {
                       if (regions.isEmpty) {
                         return _RegionEmptyState(
-                          message:
-                              'auth.no_regions_list'.tr(),
+                          message: 'auth.no_regions_list'.tr(),
                           onRetry: onRetry,
                         );
                       }
@@ -980,10 +978,7 @@ class _RegionEmptyState extends StatelessWidget {
             ),
             if (onRetry != null) ...[
               SizedBox(height: AppSpacing.md),
-              TextButton(
-                onPressed: onRetry,
-                child: Text('auth.reload'.tr()),
-              ),
+              TextButton(onPressed: onRetry, child: Text('auth.reload'.tr())),
             ],
           ],
         ),

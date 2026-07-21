@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import '../../../../core/constants/app_colors.dart';
+import '../../../../core/constants/app_layout.dart';
 import '../../../../core/utils/app_feedback.dart';
 import '../../../../shared/widgets/custom_button.dart';
 import '../../../../shared/widgets/custom_text_field.dart';
@@ -44,13 +45,13 @@ class _ForgotPasswordPageState extends State<ForgotPasswordPage> {
         },
         child: SafeArea(
           child: SingleChildScrollView(
-            padding: EdgeInsets.symmetric(horizontal: 24.w),
+            padding: EdgeInsets.symmetric(horizontal: AppSpacing.pageGutter),
             child: Form(
               key: _formKey,
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  SizedBox(height: 32.h),
+                  SizedBox(height: AppSpacing.sectionGapLarge),
                   Container(
                     padding: EdgeInsets.all(16.r),
                     decoration: BoxDecoration(
@@ -82,7 +83,7 @@ class _ForgotPasswordPageState extends State<ForgotPasswordPage> {
                       height: 1.5,
                     ),
                   ),
-                  SizedBox(height: 40.h),
+                  SizedBox(height: AppSpacing.spacious),
                   CustomTextField(
                     label: 'email'.tr(),
                     hint: 'email_hint'.tr(),
@@ -91,21 +92,27 @@ class _ForgotPasswordPageState extends State<ForgotPasswordPage> {
                     prefixIcon: Icons.alternate_email_rounded,
                     isRequired: true,
                     validator: (value) {
-                      if (value == null || value.isEmpty) return 'email_required'.tr();
+                      if (value == null || value.isEmpty)
+                        return 'email_required'.tr();
                       if (!value.contains('@')) return 'email_invalid'.tr();
                       return null;
                     },
                   ),
-                  SizedBox(height: 32.h),
+                  SizedBox(height: AppSpacing.sectionGapLarge),
                   BlocBuilder<AuthCubit, AuthState>(
                     builder: (context, state) {
                       return CustomButton(
                         text: 'kirim_instruksi'.tr(),
                         useGradient: true,
-                        isLoading: state.maybeWhen(loading: () => true, orElse: () => false),
+                        isLoading: state.maybeWhen(
+                          loading: () => true,
+                          orElse: () => false,
+                        ),
                         onPressed: () {
                           if (_formKey.currentState!.validate()) {
-                            context.read<AuthCubit>().forgotPassword(_emailController.text.trim());
+                            context.read<AuthCubit>().forgotPassword(
+                              _emailController.text.trim(),
+                            );
                           }
                         },
                       );

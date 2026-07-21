@@ -78,13 +78,13 @@ class _RfqListPageState extends State<RfqListPage> {
           : RefreshIndicator(
               onRefresh: _load,
               child: ListView(
-                padding: EdgeInsets.all(16.w),
+                padding: EdgeInsets.all(AppSpacing.pageGutter),
                 children: [
                   _introCard(),
                   SizedBox(height: AppSpacing.md12),
                   if (_items.isEmpty)
                     Padding(
-                      padding: EdgeInsets.only(top: 48.h),
+                      padding: EdgeInsets.only(top: AppSpacing.spacious),
                       child: Column(
                         children: [
                           Icon(
@@ -95,7 +95,9 @@ class _RfqListPageState extends State<RfqListPage> {
                           SizedBox(height: AppSpacing.sm),
                           Text(
                             'rfq.empty'.tr(),
-                            style: AppTextStyles.body(fontWeight: FontWeight.w700),
+                            style: AppTextStyles.body(
+                              fontWeight: FontWeight.w700,
+                            ),
                           ),
                           SizedBox(height: 4.h),
                           Text(
@@ -106,7 +108,9 @@ class _RfqListPageState extends State<RfqListPage> {
                           SizedBox(height: AppSpacing.md),
                           FilledButton.icon(
                             onPressed: () async {
-                              final ok = await context.push<bool>('/rfq/create');
+                              final ok = await context.push<bool>(
+                                '/rfq/create',
+                              );
                               if (ok == true) _load();
                             },
                             icon: const Icon(LucideIcons.plus),
@@ -131,13 +135,17 @@ class _RfqListPageState extends State<RfqListPage> {
                           ),
                           title: Text(
                             '${r['title']}',
-                            style: AppTextStyles.body(fontWeight: FontWeight.w700),
+                            style: AppTextStyles.body(
+                              fontWeight: FontWeight.w700,
+                            ),
                           ),
                           subtitle: Text(
-                            'rfq.list_meta'.tr(namedArgs: {
-                              'status': _statusLabel(r['status']?.toString()),
-                              'responses': '$responses',
-                            }),
+                            'rfq.list_meta'.tr(
+                              namedArgs: {
+                                'status': _statusLabel(r['status']?.toString()),
+                                'responses': '$responses',
+                              },
+                            ),
                           ),
                           trailing: const Icon(LucideIcons.chevronRight),
                         ),

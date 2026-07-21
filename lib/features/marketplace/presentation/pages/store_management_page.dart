@@ -43,22 +43,21 @@ class _StoreManagementPageState extends State<StoreManagementPage> {
 
   void _reloadProducts(BuildContext blocContext) {
     blocContext.read<MarketplaceCubit>().getMyProducts(
-          limit: StoreManagementPage._previewLimit,
-        );
+      limit: StoreManagementPage._previewLimit,
+    );
   }
 
   @override
   Widget build(BuildContext context) {
     final user = context.watch<AuthCubit>().state.maybeWhen(
-          authenticated: (u) => u,
-          orElse: () => null,
-        );
+      authenticated: (u) => u,
+      orElse: () => null,
+    );
 
     return BlocProvider(
-      create: (context) => sl<MarketplaceCubit>()
-        ..getMyProducts(
-          limit: StoreManagementPage._previewLimit,
-        ),
+      create: (context) =>
+          sl<MarketplaceCubit>()
+            ..getMyProducts(limit: StoreManagementPage._previewLimit),
       child: Builder(
         builder: (blocContext) {
           return Scaffold(
@@ -89,7 +88,12 @@ class _StoreManagementPageState extends State<StoreManagementPage> {
                   children: [
                     const SupplierQuickActions(),
                     Padding(
-                      padding: EdgeInsets.fromLTRB(AppSpacing.md, AppSpacing.sm, AppSpacing.md, 0),
+                      padding: EdgeInsets.fromLTRB(
+                        AppSpacing.pageGutter,
+                        AppSpacing.compact,
+                        AppSpacing.pageGutter,
+                        0,
+                      ),
                       child: SupplierProductCategoryBar(
                         selectedCategoryId: _selectedCategoryId,
                         onCategorySelected: (category) {
@@ -99,7 +103,12 @@ class _StoreManagementPageState extends State<StoreManagementPage> {
                       ),
                     ),
                     Padding(
-                      padding: EdgeInsets.fromLTRB(AppSpacing.md, AppSpacing.sm, AppSpacing.md, 0),
+                      padding: EdgeInsets.fromLTRB(
+                        AppSpacing.pageGutter,
+                        AppSpacing.compact,
+                        AppSpacing.pageGutter,
+                        0,
+                      ),
                       child: Row(
                         children: [
                           Expanded(
@@ -141,14 +150,21 @@ class _StoreManagementPageState extends State<StoreManagementPage> {
                     BlocBuilder<MarketplaceCubit, MarketplaceState>(
                       builder: (context, state) {
                         return state.when(
-                          initial: () => SizedBox(height: 120.h),
+                          initial: () => SizedBox(height: AppSpacing.spacious),
                           loading: () => Padding(
-                            padding: EdgeInsets.fromLTRB(16.w, 8.h, 16.w, 16.h),
+                            padding: EdgeInsets.fromLTRB(
+                              AppSpacing.pageGutter,
+                              AppSpacing.compact,
+                              AppSpacing.pageGutter,
+                              AppSpacing.comfortable,
+                            ),
                             child: Column(
                               children: List.generate(
                                 3,
                                 (i) => Padding(
-                                  padding: EdgeInsets.only(bottom: i < 2 ? 10.h : 0),
+                                  padding: EdgeInsets.only(
+                                    bottom: i < 2 ? AppSpacing.md12 : 0,
+                                  ),
                                   child: const SupplierProductTileSkeleton(),
                                 ),
                               ),
@@ -160,8 +176,7 @@ class _StoreManagementPageState extends State<StoreManagementPage> {
                               children: [
                                 Text(message, textAlign: TextAlign.center),
                                 TextButton(
-                                  onPressed: () =>
-                                      _reloadProducts(blocContext),
+                                  onPressed: () => _reloadProducts(blocContext),
                                   child: Text('marketplace.try_again'.tr()),
                                 ),
                               ],
@@ -169,8 +184,7 @@ class _StoreManagementPageState extends State<StoreManagementPage> {
                           ),
                           suppliersLoaded: (_) => const SizedBox.shrink(),
                           collectionsLoaded: (_) => const SizedBox.shrink(),
-                          loaded: (products, _) =>
-                              _buildProductPreview(
+                          loaded: (products, _) => _buildProductPreview(
                             blocContext,
                             products,
                             user?.id,
@@ -195,7 +209,10 @@ class _StoreManagementPageState extends State<StoreManagementPage> {
   ) {
     if (products.isEmpty) {
       return Padding(
-        padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 32.h),
+        padding: EdgeInsets.symmetric(
+          horizontal: AppSpacing.pageGutter,
+          vertical: AppSpacing.spacious,
+        ),
         child: Column(
           children: [
             Icon(
@@ -215,10 +232,7 @@ class _StoreManagementPageState extends State<StoreManagementPage> {
             SizedBox(height: AppSpacing.sm),
             Text(
               'marketplace.add_first_product_hint'.tr(),
-              style: TextStyle(
-                fontSize: 13.sp,
-                color: AppColors.textHint,
-              ),
+              style: TextStyle(fontSize: 13.sp, color: AppColors.textHint),
               textAlign: TextAlign.center,
             ),
             SizedBox(height: AppSpacing.md),
@@ -235,7 +249,12 @@ class _StoreManagementPageState extends State<StoreManagementPage> {
     final preview = products.take(StoreManagementPage._previewLimit).toList();
 
     return Padding(
-      padding: EdgeInsets.fromLTRB(AppSpacing.md, AppSpacing.sm, AppSpacing.md, 0),
+      padding: EdgeInsets.fromLTRB(
+        AppSpacing.pageGutter,
+        AppSpacing.compact,
+        AppSpacing.pageGutter,
+        0,
+      ),
       child: Column(
         children: [
           for (var i = 0; i < preview.length; i++) ...[
@@ -248,10 +267,8 @@ class _StoreManagementPageState extends State<StoreManagementPage> {
                   _reloadProducts(blocContext);
                 }
               },
-              onEdit: () => blocContext.push(
-                '/edit-product',
-                extra: preview[i],
-              ),
+              onEdit: () =>
+                  blocContext.push('/edit-product', extra: preview[i]),
               onDelete: () => showSupplierDeleteProductDialog(
                 context: blocContext,
                 product: preview[i],

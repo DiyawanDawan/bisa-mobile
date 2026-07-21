@@ -115,7 +115,7 @@ class _LoginPageState extends State<LoginPage> {
                         children: [_buildBrandLogo(), _buildGuestButton()],
                       ),
 
-                      SizedBox(height: 48.h),
+                      SizedBox(height: AppSpacing.spacious),
 
                       // Welcome Text
                       Text(
@@ -138,14 +138,16 @@ class _LoginPageState extends State<LoginPage> {
                         ),
                       ),
 
-                      SizedBox(height: 40.h),
+                      SizedBox(height: AppSpacing.spacious),
 
                       // Input Fields Card
                       Container(
                         padding: EdgeInsets.all(AppSpacing.xl),
                         decoration: BoxDecoration(
                           color: AppColors.surface,
-                          borderRadius: BorderRadius.circular(AppSpacing.xlPx.r),
+                          borderRadius: BorderRadius.circular(
+                            AppSpacing.xlPx.r,
+                          ),
                           boxShadow: [
                             BoxShadow(
                               color: AppColors.black.withOpacity(0.04),
@@ -192,7 +194,9 @@ class _LoginPageState extends State<LoginPage> {
                                         },
                                         activeColor: AppColors.primary,
                                         shape: RoundedRectangleBorder(
-                                          borderRadius: BorderRadius.circular(4.r),
+                                          borderRadius: BorderRadius.circular(
+                                            4.r,
+                                          ),
                                         ),
                                       ),
                                     ),
@@ -223,12 +227,12 @@ class _LoginPageState extends State<LoginPage> {
                       // Social Login Section
                       _buildSocialSection(),
 
-                      SizedBox(height: 40.h),
+                      SizedBox(height: AppSpacing.spacious),
 
                       // Register Footer
                       _buildRegisterFooter(),
 
-                      SizedBox(height: 40.h),
+                      SizedBox(height: AppSpacing.spacious),
                     ],
                   ),
                 ),
@@ -303,9 +307,9 @@ class _LoginPageState extends State<LoginPage> {
       style: TextButton.styleFrom(
         backgroundColor: AppColors.primaryLight,
         padding: EdgeInsets.symmetric(
-        horizontal: AppSpacing.md,
-        vertical: AppSpacing.sm,
-      ),
+          horizontal: AppSpacing.md,
+          vertical: AppSpacing.sm,
+        ),
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(50.r),
         ),
@@ -387,9 +391,9 @@ class _LoginPageState extends State<LoginPage> {
         borderRadius: BorderRadius.circular(AppRadius.md),
         child: Padding(
           padding: EdgeInsets.symmetric(
-          horizontal: AppSpacing.sm,
-          vertical: AppSpacing.sm,
-        ),
+            horizontal: AppSpacing.sm,
+            vertical: AppSpacing.sm,
+          ),
           child: Row(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
@@ -437,7 +441,10 @@ class _LoginPageState extends State<LoginPage> {
         SizedBox(height: AppSpacing.xl),
         BlocBuilder<AuthCubit, AuthState>(
           builder: (context, state) {
-            final isLoading = state.maybeWhen(loading: () => true, orElse: () => false);
+            final isLoading = state.maybeWhen(
+              loading: () => true,
+              orElse: () => false,
+            );
             return Row(
               children: [
                 _socialIcon(

@@ -1,4 +1,5 @@
 import 'package:freezed_annotation/freezed_annotation.dart';
+import 'product_certificate_entity.dart';
 
 part 'product_entity.freezed.dart';
 
@@ -49,6 +50,7 @@ abstract class ProductEntity with _$ProductEntity {
     DateTime? promotedUntil,
     @Default(0) int promoImpressions,
     @Default(0) int promoClicks,
+    @Default([]) List<ProductCertificateEntity> certificates,
   }) = _ProductEntity;
 
   const ProductEntity._();

@@ -27,9 +27,16 @@ Future<bool?> showBisaConfirmDialog(
     builder: (ctx) {
       return Dialog(
         insetPadding: EdgeInsets.symmetric(horizontal: 28.w),
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16.r)),
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(16.r),
+        ),
         child: Padding(
-          padding: EdgeInsets.fromLTRB(20.w, 20.h, 20.w, 16.h),
+          padding: EdgeInsets.fromLTRB(
+            AppSpacing.comfortable,
+            AppSpacing.comfortable,
+            AppSpacing.comfortable,
+            AppSpacing.sectionGap,
+          ),
           child: Column(
             mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -51,7 +58,7 @@ Future<bool?> showBisaConfirmDialog(
                     ),
                   ),
                 ),
-                SizedBox(height: 14.h),
+                SizedBox(height: AppSpacing.sectionGap),
               ],
               Text(
                 title,
@@ -60,7 +67,7 @@ Future<bool?> showBisaConfirmDialog(
                   fontWeight: FontWeight.w800,
                 ).copyWith(fontSize: 17.sp),
               ),
-              SizedBox(height: 8.h),
+              SizedBox(height: AppSpacing.compact),
               Text(
                 message,
                 textAlign: TextAlign.center,
@@ -69,7 +76,7 @@ Future<bool?> showBisaConfirmDialog(
                   height: 1.45,
                 ),
               ),
-              SizedBox(height: 18.h),
+              SizedBox(height: AppSpacing.sectionGapLarge),
               Row(
                 children: [
                   Expanded(
@@ -80,13 +87,14 @@ Future<bool?> showBisaConfirmDialog(
                       onPressed: () => Navigator.pop(ctx, false),
                     ),
                   ),
-                  SizedBox(width: 10.w),
+                  SizedBox(width: AppSpacing.md12),
                   Expanded(
                     child: CustomButton(
                       text: resolvedConfirm,
                       height: AppSpacing.buttonHeight,
-                      backgroundColor:
-                          destructive ? AppColors.error : AppColors.primary,
+                      backgroundColor: destructive
+                          ? AppColors.error
+                          : AppColors.primary,
                       onPressed: () => Navigator.pop(ctx, true),
                     ),
                   ),
@@ -126,7 +134,9 @@ void showBisaFormDialog(
             horizontal: AppSpacing.lg,
             vertical: AppSpacing.xl,
           ),
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(AppRadius.xl)),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(AppRadius.xl),
+          ),
           child: ConstrainedBox(
             constraints: BoxConstraints(maxHeight: maxDialogH),
             child: Padding(
@@ -142,13 +152,16 @@ void showBisaFormDialog(
                 children: [
                   Text(
                     title,
-                    style: AppTextStyles.sectionTitle(fontWeight: FontWeight.w800),
+                    style: AppTextStyles.sectionTitle(
+                      fontWeight: FontWeight.w800,
+                    ),
                   ),
                   SizedBox(height: AppSpacing.section),
                   Flexible(
                     child: SingleChildScrollView(
                       physics: const BouncingScrollPhysics(),
-                      keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.onDrag,
+                      keyboardDismissBehavior:
+                          ScrollViewKeyboardDismissBehavior.onDrag,
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.stretch,
                         children: fields,

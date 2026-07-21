@@ -104,8 +104,10 @@ class MarketplaceCubit extends Cubit<MarketplaceState> {
           orElse: () => <ProductEntity>[],
         );
 
-        final allProducts = refresh ? newProducts : [...currentProducts, ...newProducts];
-        
+        final allProducts = refresh
+            ? newProducts
+            : [...currentProducts, ...newProducts];
+
         final currentLimit = limit ?? _limit;
         if (newProducts.length < currentLimit) {
           _hasReachedMax = true;
@@ -113,7 +115,9 @@ class MarketplaceCubit extends Cubit<MarketplaceState> {
           _currentPage++;
         }
 
-        _emitSafe(MarketplaceState.loaded(allProducts, hasReachedMax: _hasReachedMax));
+        _emitSafe(
+          MarketplaceState.loaded(allProducts, hasReachedMax: _hasReachedMax),
+        );
       },
     );
   }
@@ -156,8 +160,9 @@ class MarketplaceCubit extends Cubit<MarketplaceState> {
           loaded: (products, _) => products,
           orElse: () => <ProductEntity>[],
         );
-        final allProducts =
-            refresh ? newProducts : [...currentProducts, ...newProducts];
+        final allProducts = refresh
+            ? newProducts
+            : [...currentProducts, ...newProducts];
         final currentLimit = limit ?? _limit;
         if (newProducts.length < currentLimit) {
           _hasReachedMax = true;
@@ -177,19 +182,26 @@ class MarketplaceCubit extends Cubit<MarketplaceState> {
     if (isClosed) return;
     result.fold(
       (failure) => _emitSafe(MarketplaceState.error(failure.message)),
-      (product) => _emitSafe(MarketplaceState.loaded([product], hasReachedMax: true)),
+      (product) =>
+          _emitSafe(MarketplaceState.loaded([product], hasReachedMax: true)),
     );
   }
 
-  Future<void> createProduct(
+  Future<ProductEntity?> createProduct(
     Map<String, dynamic> data,
     List<String> imagePaths,
   ) async {
     emit(const MarketplaceState.loading());
     final result = await _repository.createProduct(data, imagePaths);
-    result.fold(
-      (failure) => emit(MarketplaceState.error(failure.message)),
-      (_) => _refreshProductList(),
+    return result.fold(
+      (failure) {
+        emit(MarketplaceState.error(failure.message));
+        return null;
+      },
+      (product) async {
+        await _refreshProductList();
+        return product;
+      },
     );
   }
 
@@ -216,13 +228,13 @@ class MarketplaceCubit extends Cubit<MarketplaceState> {
   }
 
   Future<void> _refreshProductList() => getProducts(
-        userId: _currentUserId,
-        search: _cachedSearch,
-        status: _cachedStatus,
-        categoryId: _cachedCategoryId,
-        limit: _cachedLimit,
-        refresh: true,
-      );
+    userId: _currentUserId,
+    search: _cachedSearch,
+    status: _cachedStatus,
+    categoryId: _cachedCategoryId,
+    limit: _cachedLimit,
+    refresh: true,
+  );
 
   Future<void> getSuppliers({
     String? search,
@@ -258,7 +270,9 @@ class MarketplaceCubit extends Cubit<MarketplaceState> {
     if (isClosed) return;
     result.fold(
       (failure) => _emitSafe(MarketplaceState.error(failure.message)),
-      (supplier) => _emitSafe(MarketplaceState.suppliersLoaded(<SupplierModel>[supplier])),
+      (supplier) => _emitSafe(
+        MarketplaceState.suppliersLoaded(<SupplierModel>[supplier]),
+      ),
     );
   }
 
@@ -268,7 +282,8 @@ class MarketplaceCubit extends Cubit<MarketplaceState> {
     if (isClosed) return;
     result.fold(
       (failure) => _emitSafe(MarketplaceState.error(failure.message)),
-      (products) => _emitSafe(MarketplaceState.loaded(products, hasReachedMax: true)),
+      (products) =>
+          _emitSafe(MarketplaceState.loaded(products, hasReachedMax: true)),
     );
   }
 
@@ -278,7 +293,8 @@ class MarketplaceCubit extends Cubit<MarketplaceState> {
     if (isClosed) return;
     result.fold(
       (failure) => _emitSafe(MarketplaceState.error(failure.message)),
-      (collections) => _emitSafe(MarketplaceState.collectionsLoaded(collections)),
+      (collections) =>
+          _emitSafe(MarketplaceState.collectionsLoaded(collections)),
     );
   }
 
@@ -315,8 +331,10 @@ class MarketplaceCubit extends Cubit<MarketplaceState> {
           orElse: () => <ProductEntity>[],
         );
 
-        final allProducts = refresh ? newProducts : [...currentProducts, ...newProducts];
-        
+        final allProducts = refresh
+            ? newProducts
+            : [...currentProducts, ...newProducts];
+
         final currentLimit = limit ?? _limit;
         if (newProducts.length < currentLimit) {
           _hasReachedMax = true;
@@ -324,7 +342,9 @@ class MarketplaceCubit extends Cubit<MarketplaceState> {
           _currentPage++;
         }
 
-        _emitSafe(MarketplaceState.loaded(allProducts, hasReachedMax: _hasReachedMax));
+        _emitSafe(
+          MarketplaceState.loaded(allProducts, hasReachedMax: _hasReachedMax),
+        );
       },
     );
   }

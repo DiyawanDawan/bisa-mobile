@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
 import '../../../../core/constants/app_colors.dart';
+import '../../../../core/constants/app_layout.dart';
 import '../../../../core/network/api_client.dart';
 import '../../../../shared/widgets/bisa_app_bar.dart';
 import '../../../../shared/widgets/custom_button.dart';
@@ -46,8 +47,9 @@ class _LegalPageState extends State<LegalPage> {
     });
 
     try {
-      final response =
-          await sl<ApiClient>().dio.get('/policies/${widget.policyKey}');
+      final response = await sl<ApiClient>().dio.get(
+        '/policies/${widget.policyKey}',
+      );
       final data = response.data['data'] as Map<String, dynamic>?;
 
       if (!mounted) return;
@@ -83,7 +85,7 @@ class _LegalPageState extends State<LegalPage> {
   Widget _buildBody(String displayTitle) {
     if (_isLoading) {
       return SingleChildScrollView(
-        padding: EdgeInsets.all(20.w),
+        padding: EdgeInsets.all(AppSpacing.pageGutter),
         child: ShimmerLoading(
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
@@ -100,11 +102,15 @@ class _LegalPageState extends State<LegalPage> {
     if (_error != null) {
       return Center(
         child: Padding(
-          padding: EdgeInsets.all(32.w),
+          padding: EdgeInsets.all(AppSpacing.spacious),
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              Icon(LucideIcons.circleAlert, size: 48.sp, color: AppColors.error),
+              Icon(
+                LucideIcons.circleAlert,
+                size: 48.sp,
+                color: AppColors.error,
+              ),
               SizedBox(height: 12.h),
               Text(
                 _error!,
@@ -127,10 +133,10 @@ class _LegalPageState extends State<LegalPage> {
     }
 
     return SingleChildScrollView(
-      padding: EdgeInsets.all(24.w),
+      padding: EdgeInsets.all(AppSpacing.pageGutter),
       child: Container(
         width: double.infinity,
-        padding: EdgeInsets.all(20.w),
+        padding: EdgeInsets.all(AppSpacing.comfortable),
         decoration: BoxDecoration(
           color: AppColors.surface,
           borderRadius: BorderRadius.circular(20.r),

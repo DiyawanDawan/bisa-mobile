@@ -83,9 +83,9 @@ class _IotSubscriptionPageState extends State<IotSubscriptionPage> {
       await context.read<AuthCubit>().checkAuth();
       if (!mounted) return false;
       final user = context.read<AuthCubit>().state.maybeWhen(
-            authenticated: (u) => u,
-            orElse: () => null,
-          );
+        authenticated: (u) => u,
+        orElse: () => null,
+      );
       if (user != null && isProActive(user)) return true;
       if (i < 9) {
         await Future.delayed(const Duration(seconds: 3));
@@ -129,9 +129,9 @@ class _IotSubscriptionPageState extends State<IotSubscriptionPage> {
   @override
   Widget build(BuildContext context) {
     final user = context.watch<AuthCubit>().state.maybeWhen(
-          authenticated: (u) => u,
-          orElse: () => null,
-        );
+      authenticated: (u) => u,
+      orElse: () => null,
+    );
     final isActive = user != null && isProActive(user);
     final isExpired = user != null && _isProExpired(user);
     final isRenewal = isActive || isExpired;
@@ -188,7 +188,10 @@ class _IotSubscriptionPageState extends State<IotSubscriptionPage> {
                     );
                     context.pop(true);
                   } else {
-                    showWarningSnackBar(context, 'iot.subscription_payment_pending'.tr());
+                    showWarningSnackBar(
+                      context,
+                      'iot.subscription_payment_pending'.tr(),
+                    );
                   }
                 }
               } else {
@@ -306,16 +309,18 @@ class _IotSubscriptionPageState extends State<IotSubscriptionPage> {
                         text: isActive
                             ? 'iot.subscription_renew_cta'.tr()
                             : isExpired
-                                ? 'iot.subscription_renew_now_cta'.tr()
-                                : 'iot.subscription_activate_cta'.tr(),
+                            ? 'iot.subscription_renew_now_cta'.tr()
+                            : 'iot.subscription_activate_cta'.tr(),
                         useGradient: true,
-                        onPressed: _selectedChannelCode == null || _selectedMethod == null
+                        onPressed:
+                            _selectedChannelCode == null ||
+                                _selectedMethod == null
                             ? null
                             : () {
                                 context.read<IotCubit>().subscribePro(
-                                      _selectedChannelCode!,
-                                      _selectedMethod!,
-                                    );
+                                  _selectedChannelCode!,
+                                  _selectedMethod!,
+                                );
                               },
                       ),
                       if (isRenewal) ...[
@@ -338,7 +343,9 @@ class _IotSubscriptionPageState extends State<IotSubscriptionPage> {
                   Container(
                     color: AppColors.black.withValues(alpha: 0.3),
                     child: const Center(
-                      child: CircularProgressIndicator(color: AppColors.primary),
+                      child: CircularProgressIndicator(
+                        color: AppColors.primary,
+                      ),
                     ),
                   ),
               ],
@@ -353,10 +360,7 @@ class _IotSubscriptionPageState extends State<IotSubscriptionPage> {
     if (_loadingChannels) {
       return Padding(
         padding: EdgeInsets.symmetric(vertical: AppSpacing.sm),
-        child: ShimmerListPlaceholder(
-          itemCount: 3,
-          itemHeight: 56.h,
-        ),
+        child: ShimmerListPlaceholder(itemCount: 3, itemHeight: 56.h),
       );
     }
 
@@ -371,7 +375,10 @@ class _IotSubscriptionPageState extends State<IotSubscriptionPage> {
         ),
         child: Column(
           children: [
-            Text(_channelsError!, style: TextStyle(color: AppColors.textSecondary, fontSize: 13.sp)),
+            Text(
+              _channelsError!,
+              style: TextStyle(color: AppColors.textSecondary, fontSize: 13.sp),
+            ),
             SizedBox(height: AppSpacing.sm10),
             TextButton(
               onPressed: _fetchChannels,
@@ -416,7 +423,10 @@ class _IotSubscriptionPageState extends State<IotSubscriptionPage> {
             });
           },
           child: Container(
-            padding: EdgeInsets.symmetric(horizontal: AppSpacing.md, vertical: AppSpacing.section),
+            padding: EdgeInsets.symmetric(
+              horizontal: AppSpacing.md,
+              vertical: AppSpacing.section,
+            ),
             decoration: BoxDecoration(
               color: AppColors.surface,
               borderRadius: BorderRadius.circular(AppRadius.tile),
@@ -552,7 +562,10 @@ class _IotSubscriptionPageState extends State<IotSubscriptionPage> {
         backgroundColor: AppColors.surface,
       ),
       body: Padding(
-        padding: EdgeInsets.symmetric(horizontal: 24.w, vertical: 40.h),
+        padding: EdgeInsets.symmetric(
+          horizontal: AppSpacing.pageGutter,
+          vertical: AppSpacing.spacious,
+        ),
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
@@ -634,7 +647,10 @@ class _IotSubscriptionPageState extends State<IotSubscriptionPage> {
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
               Container(
-                padding: EdgeInsets.symmetric(horizontal: AppSpacing.md12, vertical: AppSpacing.xs6),
+                padding: EdgeInsets.symmetric(
+                  horizontal: AppSpacing.md12,
+                  vertical: AppSpacing.xs6,
+                ),
                 decoration: BoxDecoration(
                   color: AppColors.white.withValues(alpha: 0.2),
                   borderRadius: BorderRadius.circular(AppRadius.lg),

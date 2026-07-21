@@ -10,6 +10,7 @@ import 'package:mobile_bisa/features/gis/presentation/bloc/gis_cubit.dart';
 import '../../../../core/constants/app_layout.dart';
 import '../../../../core/constants/app_colors.dart';
 import '../../../../core/utils/app_feedback.dart';
+import '../../../../core/utils/safe_area_utils.dart';
 import '../../../../core/utils/safe_navigator.dart';
 import '../../../../core/services/location_service.dart';
 import '../../../../injection_container.dart';
@@ -51,12 +52,15 @@ class AddressListPage extends StatelessWidget {
                         scrollable: true,
                         padding: EdgeInsets.fromLTRB(16.w, 12.h, 16.w, 4.h),
                       ),
-                      error: (message) => Center(child: Text(message.localizedFailure)),
+                      error: (message) =>
+                          Center(child: Text(message.localizedFailure)),
                       addressesLoaded: (addresses) {
                         if (addresses.isEmpty) {
                           return Center(
                             child: Padding(
-                              padding: EdgeInsets.symmetric(horizontal: 24.w),
+                              padding: EdgeInsets.symmetric(
+                                horizontal: AppSpacing.pageGutter,
+                              ),
                               child: Column(
                                 mainAxisAlignment: MainAxisAlignment.center,
                                 children: [
@@ -69,7 +73,9 @@ class AddressListPage extends StatelessWidget {
                                   Text(
                                     'profile.address_empty'.tr(),
                                     textAlign: TextAlign.center,
-                                    style: TextStyle(color: AppColors.textSecondary),
+                                    style: TextStyle(
+                                      color: AppColors.textSecondary,
+                                    ),
                                   ),
                                 ],
                               ),
@@ -314,7 +320,10 @@ class AddressListPage extends StatelessWidget {
     );
   }
 
-  Future<void> _confirmDeleteAddress(BuildContext context, dynamic address) async {
+  Future<void> _confirmDeleteAddress(
+    BuildContext context,
+    dynamic address,
+  ) async {
     final label = address.name?.toString().trim().isNotEmpty == true
         ? address.name.toString().trim()
         : 'profile.address_default_label'.tr();
@@ -369,10 +378,7 @@ class _AddAddressSheet extends StatefulWidget {
   final dynamic existingAddress;
   final BuildContext pageContext;
 
-  const _AddAddressSheet({
-    this.existingAddress,
-    required this.pageContext,
-  });
+  const _AddAddressSheet({this.existingAddress, required this.pageContext});
 
   @override
   State<_AddAddressSheet> createState() => _AddAddressSheetState();
@@ -519,10 +525,7 @@ class _AddAddressSheetState extends State<_AddAddressSheet> {
 
   Map<String, dynamic> _optionalCoordFields() {
     if (!_hasValidPinCoords()) return const {};
-    return {
-      'latitude': _latitude,
-      'longitude': _longitude,
-    };
+    return {'latitude': _latitude, 'longitude': _longitude};
   }
 
   Future<List<RegionEntity>> _fetchRegions({
@@ -537,7 +540,8 @@ class _AddAddressSheetState extends State<_AddAddressSheet> {
   Future<void> _initDefaultCountry() async {
     if (_selectedCountry != null && _selectedCountry!.id.isNotEmpty) return;
     final countries = await _fetchRegions(level: 'country');
-    final indonesia = _matchRegionByName(countries, 'Indonesia') ??
+    final indonesia =
+        _matchRegionByName(countries, 'Indonesia') ??
         (countries.isNotEmpty ? countries.first : null);
     if (!mounted || indonesia == null) return;
     setState(() => _selectedCountry = indonesia);
@@ -560,7 +564,7 @@ class _AddAddressSheetState extends State<_AddAddressSheet> {
         );
         _selectedProvince =
             _matchRegionByName(provinces, _selectedProvince!.name) ??
-                _selectedProvince;
+            _selectedProvince;
       }
 
       if (_selectedProvince != null &&
@@ -574,7 +578,7 @@ class _AddAddressSheetState extends State<_AddAddressSheet> {
         );
         _selectedRegency =
             _matchRegionByName(regencies, _selectedRegency!.name) ??
-                _selectedRegency;
+            _selectedRegency;
       }
 
       if (_selectedRegency != null &&
@@ -588,7 +592,7 @@ class _AddAddressSheetState extends State<_AddAddressSheet> {
         );
         _selectedDistrict =
             _matchRegionByName(districts, _selectedDistrict!.name) ??
-                _selectedDistrict;
+            _selectedDistrict;
       }
 
       if (_selectedDistrict != null &&
@@ -601,7 +605,8 @@ class _AddAddressSheetState extends State<_AddAddressSheet> {
           parentId: _selectedDistrict!.id,
         );
         _selectedVillage =
-            _matchRegionByName(villages, _selectedVillage!.name) ?? _selectedVillage;
+            _matchRegionByName(villages, _selectedVillage!.name) ??
+            _selectedVillage;
       }
     } finally {
       if (mounted) setState(() => _hydratingRegions = false);
@@ -617,12 +622,13 @@ class _AddAddressSheetState extends State<_AddAddressSheet> {
     if (formatted.length >= 10) return formatted;
 
     final parts = <String>[];
-    final road = (addressData['road'] ??
-            addressData['street'] ??
-            addressData['pedestrian'] ??
-            addressData['residential'])
-        ?.toString()
-        .trim();
+    final road =
+        (addressData['road'] ??
+                addressData['street'] ??
+                addressData['pedestrian'] ??
+                addressData['residential'])
+            ?.toString()
+            .trim();
     final house = addressData['house_number']?.toString().trim();
     if (road != null && road.isNotEmpty) {
       parts.add(house != null && house.isNotEmpty ? '$road No. $house' : road);
@@ -652,20 +658,27 @@ class _AddAddressSheetState extends State<_AddAddressSheet> {
     return formatted.isNotEmpty ? formatted : '';
   }
 
-  Future<void> _applyRegionsFromMapData(Map<String, dynamic> addressData) async {
-    final provinceName = (addressData['state'] ?? addressData['region'])?.toString();
-    final regencyName = (addressData['county'] ??
-            addressData['city'] ??
-            addressData['town'] ??
-            addressData['municipality'])
+  Future<void> _applyRegionsFromMapData(
+    Map<String, dynamic> addressData,
+  ) async {
+    final provinceName = (addressData['state'] ?? addressData['region'])
         ?.toString();
-    final districtName =
-        (addressData['suburb'] ?? addressData['district'] ?? addressData['city_district'])
+    final regencyName =
+        (addressData['county'] ??
+                addressData['city'] ??
+                addressData['town'] ??
+                addressData['municipality'])
             ?.toString();
-    final villageName = (addressData['village'] ??
-            addressData['neighbourhood'] ??
-            addressData['hamlet'])
-        ?.toString();
+    final districtName =
+        (addressData['suburb'] ??
+                addressData['district'] ??
+                addressData['city_district'])
+            ?.toString();
+    final villageName =
+        (addressData['village'] ??
+                addressData['neighbourhood'] ??
+                addressData['hamlet'])
+            ?.toString();
 
     await _initDefaultCountry();
     if (_selectedCountry == null || _selectedCountry!.id.isEmpty) return;
@@ -770,7 +783,9 @@ class _AddAddressSheetState extends State<_AddAddressSheet> {
       setState(() {
         _latitude = picked.latLong.latitude;
         _longitude = picked.latLong.longitude;
-        _mapAddressLabel = fullAddress.isNotEmpty ? fullAddress : picked.formattedAddress;
+        _mapAddressLabel = fullAddress.isNotEmpty
+            ? fullAddress
+            : picked.formattedAddress;
 
         // Hasil cari/pilih di peta selalu masuk ke alamat lengkap.
         if (fullAddress.isNotEmpty) {
@@ -887,7 +902,10 @@ class _AddAddressSheetState extends State<_AddAddressSheet> {
                 const CircularProgressIndicator(color: AppColors.white)
               else
                 Container(
-                  padding: EdgeInsets.symmetric(horizontal: 14.w, vertical: 10.h),
+                  padding: EdgeInsets.symmetric(
+                    horizontal: 14.w,
+                    vertical: 10.h,
+                  ),
                   decoration: BoxDecoration(
                     color: AppColors.white.withValues(alpha: 0.95),
                     borderRadius: BorderRadius.circular(12.r),
@@ -963,7 +981,11 @@ class _AddAddressSheetState extends State<_AddAddressSheet> {
         SizedBox(height: 4.h),
         Text(
           'profile.address_map_helper'.tr(),
-          style: TextStyle(fontSize: 11.sp, color: AppColors.textHint, height: 1.35),
+          style: TextStyle(
+            fontSize: 11.sp,
+            color: AppColors.textHint,
+            height: 1.35,
+          ),
         ),
       ],
     );
@@ -980,15 +1002,12 @@ class _AddAddressSheetState extends State<_AddAddressSheet> {
 
   @override
   Widget build(BuildContext context) {
-    final viewInsets = MediaQuery.viewInsetsOf(context);
-    final bottomSafe = MediaQuery.paddingOf(context).bottom;
-
     return Padding(
-      padding: EdgeInsets.only(
-        left: 20.w,
-        right: 20.w,
-        top: 8.h,
-        bottom: viewInsets.bottom,
+      padding: bisaSheetPadding(
+        context,
+        horizontal: AppSpacing.lg,
+        top: AppSpacing.compact,
+        bottom: AppSpacing.compact,
       ),
       child: Column(
         children: [
@@ -1009,241 +1028,247 @@ class _AddAddressSheetState extends State<_AddAddressSheet> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-            if (_formError != null) ...[
-              Container(
-                width: double.infinity,
-                padding: EdgeInsets.all(12.w),
-                margin: EdgeInsets.only(bottom: 12.h),
-                decoration: BoxDecoration(
-                  color: AppColors.error.withValues(alpha: 0.1),
-                  borderRadius: BorderRadius.circular(8.r),
-                  border: Border.all(
-                    color: AppColors.error.withValues(alpha: 0.35),
-                  ),
-                ),
-                child: Text(
-                  _formError!,
-                  style: TextStyle(
-                    color: AppColors.error,
-                    fontSize: 12.sp,
-                    fontWeight: FontWeight.w600,
-                  ),
-                ),
-              ),
-            ],
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                Text(
-                  widget.existingAddress != null
-                      ? 'profile.address_edit_title'.tr()
-                      : 'profile.address_add_title'.tr(),
-                  style: TextStyle(
-                    fontSize: 18.sp,
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
-                IconButton(
-                  onPressed: () => Navigator.pop(context),
-                  icon: Icon(
-                    LucideIcons.x,
-                    color: AppColors.textSecondary,
-                    size: 20.sp,
-                  ),
-                  padding: EdgeInsets.zero,
-                  constraints: const BoxConstraints(),
-                ),
-              ],
-            ),
-            SizedBox(height: 12.h),
-            _buildMapPickerSection(),
-            SizedBox(height: 12.h),
-            if (_hydratingRegions)
-              Padding(
-                padding: EdgeInsets.only(bottom: 12.h),
-                child: Row(
-                  children: [
-                    SizedBox(
-                      width: 14.w,
-                      height: 14.w,
-                      child: const CircularProgressIndicator(strokeWidth: 2),
-                    ),
-                    SizedBox(width: 8.w),
-                    Text(
-                      'profile.address_loading_regions'.tr(),
-                      style: TextStyle(
-                        fontSize: 12.sp,
-                        color: AppColors.textSecondary,
+                  if (_formError != null) ...[
+                    Container(
+                      width: double.infinity,
+                      padding: EdgeInsets.all(12.w),
+                      margin: EdgeInsets.only(bottom: 12.h),
+                      decoration: BoxDecoration(
+                        color: AppColors.error.withValues(alpha: 0.1),
+                        borderRadius: BorderRadius.circular(8.r),
+                        border: Border.all(
+                          color: AppColors.error.withValues(alpha: 0.35),
+                        ),
                       ),
-                    ),
-                  ],
-                ),
-              ),
-            if (_selectedVillage != null &&
-                _selectedVillage!.name.isNotEmpty &&
-                _selectedVillage!.id.isEmpty)
-              Container(
-                padding: EdgeInsets.all(12.w),
-                margin: EdgeInsets.only(bottom: 12.h),
-                decoration: BoxDecoration(
-                  color: AppColors.warning.withValues(alpha: 0.12),
-                  borderRadius: BorderRadius.circular(8.r),
-                ),
-                child: Row(
-                  children: [
-                    Icon(
-                      LucideIcons.triangleAlert,
-                      color: AppColors.warning,
-                      size: 16.sp,
-                    ),
-                    SizedBox(width: 8.w),
-                    Expanded(
                       child: Text(
-                        'profile.address_village_invalid'.tr(),
+                        _formError!,
                         style: TextStyle(
-                          color: AppColors.warning,
+                          color: AppColors.error,
                           fontSize: 12.sp,
+                          fontWeight: FontWeight.w600,
                         ),
                       ),
                     ),
                   ],
-                ),
-              ),
-            SizedBox(height: 8.h),
-            CustomTextField(
-              label: 'profile.address_label'.tr(),
-              hint: 'profile.address_label_hint'.tr(),
-              controller: _labelController,
-              isRequired: true,
-            ),
-            SizedBox(height: 12.h),
-            CustomTextField(
-              label: 'profile.address_phone_label'.tr(),
-              hint: 'profile.address_phone_hint'.tr(),
-              controller: _phoneController,
-              keyboardType: TextInputType.phone,
-              isOptional: true,
-            ),
-            SizedBox(height: 12.h),
-
-            // GIS Dropdowns
-            _buildRegionDropdown(
-              label: 'profile.address_country'.tr(),
-              value: _selectedCountry,
-              isRequired: true,
-              onChanged: (val) {
-                setState(() {
-                  _selectedCountry = val;
-                  _selectedProvince = null;
-                  _selectedRegency = null;
-                  _selectedDistrict = null;
-                  _selectedVillage = null;
-                });
-                if (val != null) context.read<GisCubit>().getProvinces(val.id);
-              },
-              level: 'country',
-            ),
-            SizedBox(height: 12.h),
-            _buildRegionDropdown(
-              label: 'profile.address_province'.tr(),
-              value: _selectedProvince,
-              enabled: _selectedCountry != null,
-              isRequired: true,
-              onChanged: (val) {
-                setState(() {
-                  _selectedProvince = val;
-                  _selectedRegency = null;
-                  _selectedDistrict = null;
-                  _selectedVillage = null;
-                });
-                if (val != null) context.read<GisCubit>().getRegencies(val.id);
-              },
-              level: 'province',
-            ),
-            SizedBox(height: 12.h),
-            _buildRegionDropdown(
-              label: 'profile.address_regency'.tr(),
-              value: _selectedRegency,
-              enabled: _selectedProvince != null,
-              isRequired: true,
-              onChanged: (val) {
-                setState(() {
-                  _selectedRegency = val;
-                  _selectedDistrict = null;
-                  _selectedVillage = null;
-                });
-                if (val != null) context.read<GisCubit>().getDistricts(val.id);
-              },
-              level: 'regency',
-            ),
-            SizedBox(height: 12.h),
-            _buildRegionDropdown(
-              label: 'profile.address_district'.tr(),
-              value: _selectedDistrict,
-              enabled: _selectedRegency != null,
-              isRequired: true,
-              onChanged: (val) {
-                setState(() {
-                  _selectedDistrict = val;
-                  _selectedVillage = null;
-                });
-                if (val != null) context.read<GisCubit>().getVillages(val.id);
-              },
-              level: 'district',
-            ),
-            SizedBox(height: 12.h),
-            _buildRegionDropdown(
-              label: 'profile.address_village'.tr(),
-              value: _selectedVillage,
-              enabled: _selectedDistrict != null,
-              isRequired: true,
-              onChanged: (val) {
-                setState(() {
-                  _selectedVillage = val;
-                });
-              },
-              level: 'village',
-            ),
-            SizedBox(height: 12.h),
-
-            CustomTextField(
-              label: 'profile.address_full_label'.tr(),
-              hint: 'profile.address_full_hint'.tr(),
-              controller: _fullAddressController,
-              maxLines: 3,
-              isRequired: true,
-            ),
-            SizedBox(height: 12.h),
-            CustomTextField(
-              label: 'profile.address_zip_label'.tr(),
-              hint: 'profile.address_zip_hint'.tr(),
-              controller: _zipCodeController,
-              keyboardType: TextInputType.number,
-              isRequired: true,
-            ),
-            SizedBox(height: 16.h),
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                Text(
-                  'profile.address_set_primary_toggle'.tr(),
-                  style: TextStyle(
-                    fontSize: 14.sp,
-                    fontWeight: FontWeight.w600,
-                    color: AppColors.textPrimary,
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Text(
+                        widget.existingAddress != null
+                            ? 'profile.address_edit_title'.tr()
+                            : 'profile.address_add_title'.tr(),
+                        style: TextStyle(
+                          fontSize: 18.sp,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                      IconButton(
+                        onPressed: () => Navigator.pop(context),
+                        icon: Icon(
+                          LucideIcons.x,
+                          color: AppColors.textSecondary,
+                          size: 20.sp,
+                        ),
+                        padding: EdgeInsets.zero,
+                        constraints: const BoxConstraints(),
+                      ),
+                    ],
                   ),
-                ),
-                Switch(
-                  value: _isPrimary,
-                  onChanged: (val) {
-                    setState(() {
-                      _isPrimary = val;
-                    });
-                  },
-                  activeColor: AppColors.primary,
-                ),
-              ],
-            ),
+                  SizedBox(height: 12.h),
+                  _buildMapPickerSection(),
+                  SizedBox(height: 12.h),
+                  if (_hydratingRegions)
+                    Padding(
+                      padding: EdgeInsets.only(bottom: 12.h),
+                      child: Row(
+                        children: [
+                          SizedBox(
+                            width: 14.w,
+                            height: 14.w,
+                            child: const CircularProgressIndicator(
+                              strokeWidth: 2,
+                            ),
+                          ),
+                          SizedBox(width: 8.w),
+                          Text(
+                            'profile.address_loading_regions'.tr(),
+                            style: TextStyle(
+                              fontSize: 12.sp,
+                              color: AppColors.textSecondary,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  if (_selectedVillage != null &&
+                      _selectedVillage!.name.isNotEmpty &&
+                      _selectedVillage!.id.isEmpty)
+                    Container(
+                      padding: EdgeInsets.all(12.w),
+                      margin: EdgeInsets.only(bottom: 12.h),
+                      decoration: BoxDecoration(
+                        color: AppColors.warning.withValues(alpha: 0.12),
+                        borderRadius: BorderRadius.circular(8.r),
+                      ),
+                      child: Row(
+                        children: [
+                          Icon(
+                            LucideIcons.triangleAlert,
+                            color: AppColors.warning,
+                            size: 16.sp,
+                          ),
+                          SizedBox(width: 8.w),
+                          Expanded(
+                            child: Text(
+                              'profile.address_village_invalid'.tr(),
+                              style: TextStyle(
+                                color: AppColors.warning,
+                                fontSize: 12.sp,
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  SizedBox(height: 8.h),
+                  CustomTextField(
+                    label: 'profile.address_label'.tr(),
+                    hint: 'profile.address_label_hint'.tr(),
+                    controller: _labelController,
+                    isRequired: true,
+                  ),
+                  SizedBox(height: 12.h),
+                  CustomTextField(
+                    label: 'profile.address_phone_label'.tr(),
+                    hint: 'profile.address_phone_hint'.tr(),
+                    controller: _phoneController,
+                    keyboardType: TextInputType.phone,
+                    isOptional: true,
+                  ),
+                  SizedBox(height: 12.h),
+
+                  // GIS Dropdowns
+                  _buildRegionDropdown(
+                    label: 'profile.address_country'.tr(),
+                    value: _selectedCountry,
+                    isRequired: true,
+                    onChanged: (val) {
+                      setState(() {
+                        _selectedCountry = val;
+                        _selectedProvince = null;
+                        _selectedRegency = null;
+                        _selectedDistrict = null;
+                        _selectedVillage = null;
+                      });
+                      if (val != null)
+                        context.read<GisCubit>().getProvinces(val.id);
+                    },
+                    level: 'country',
+                  ),
+                  SizedBox(height: 12.h),
+                  _buildRegionDropdown(
+                    label: 'profile.address_province'.tr(),
+                    value: _selectedProvince,
+                    enabled: _selectedCountry != null,
+                    isRequired: true,
+                    onChanged: (val) {
+                      setState(() {
+                        _selectedProvince = val;
+                        _selectedRegency = null;
+                        _selectedDistrict = null;
+                        _selectedVillage = null;
+                      });
+                      if (val != null)
+                        context.read<GisCubit>().getRegencies(val.id);
+                    },
+                    level: 'province',
+                  ),
+                  SizedBox(height: 12.h),
+                  _buildRegionDropdown(
+                    label: 'profile.address_regency'.tr(),
+                    value: _selectedRegency,
+                    enabled: _selectedProvince != null,
+                    isRequired: true,
+                    onChanged: (val) {
+                      setState(() {
+                        _selectedRegency = val;
+                        _selectedDistrict = null;
+                        _selectedVillage = null;
+                      });
+                      if (val != null)
+                        context.read<GisCubit>().getDistricts(val.id);
+                    },
+                    level: 'regency',
+                  ),
+                  SizedBox(height: 12.h),
+                  _buildRegionDropdown(
+                    label: 'profile.address_district'.tr(),
+                    value: _selectedDistrict,
+                    enabled: _selectedRegency != null,
+                    isRequired: true,
+                    onChanged: (val) {
+                      setState(() {
+                        _selectedDistrict = val;
+                        _selectedVillage = null;
+                      });
+                      if (val != null)
+                        context.read<GisCubit>().getVillages(val.id);
+                    },
+                    level: 'district',
+                  ),
+                  SizedBox(height: 12.h),
+                  _buildRegionDropdown(
+                    label: 'profile.address_village'.tr(),
+                    value: _selectedVillage,
+                    enabled: _selectedDistrict != null,
+                    isRequired: true,
+                    onChanged: (val) {
+                      setState(() {
+                        _selectedVillage = val;
+                      });
+                    },
+                    level: 'village',
+                  ),
+                  SizedBox(height: 12.h),
+
+                  CustomTextField(
+                    label: 'profile.address_full_label'.tr(),
+                    hint: 'profile.address_full_hint'.tr(),
+                    controller: _fullAddressController,
+                    maxLines: 3,
+                    isRequired: true,
+                  ),
+                  SizedBox(height: 12.h),
+                  CustomTextField(
+                    label: 'profile.address_zip_label'.tr(),
+                    hint: 'profile.address_zip_hint'.tr(),
+                    controller: _zipCodeController,
+                    keyboardType: TextInputType.number,
+                    isRequired: true,
+                  ),
+                  SizedBox(height: 16.h),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Text(
+                        'profile.address_set_primary_toggle'.tr(),
+                        style: TextStyle(
+                          fontSize: 14.sp,
+                          fontWeight: FontWeight.w600,
+                          color: AppColors.textPrimary,
+                        ),
+                      ),
+                      Switch(
+                        value: _isPrimary,
+                        onChanged: (val) {
+                          setState(() {
+                            _isPrimary = val;
+                          });
+                        },
+                        activeColor: AppColors.primary,
+                      ),
+                    ],
+                  ),
                   SizedBox(height: 16.h),
                 ],
               ),
@@ -1251,7 +1276,7 @@ class _AddAddressSheetState extends State<_AddAddressSheet> {
           ),
           Container(
             width: double.infinity,
-            padding: EdgeInsets.fromLTRB(0, 8.h, 0, bottomSafe + 8.h),
+            padding: EdgeInsets.only(top: AppSpacing.compact),
             decoration: BoxDecoration(
               color: AppColors.surface,
               border: Border(top: BorderSide(color: AppColors.grey200)),
@@ -1267,8 +1292,8 @@ class _AddAddressSheetState extends State<_AddAddressSheet> {
               text: _saving
                   ? 'profile.saving'.tr()
                   : (!_formReady || _hydratingRegions)
-                      ? 'profile.loading'.tr()
-                      : 'profile.address_save'.tr(),
+                  ? 'profile.loading'.tr()
+                  : 'profile.address_save'.tr(),
               onPressed: (_saving || !_formReady || _hydratingRegions)
                   ? null
                   : _submit,
@@ -1358,7 +1383,9 @@ class _AddAddressSheetState extends State<_AddAddressSheet> {
                 Expanded(
                   child: Text(
                     value?.name ??
-                        'profile.address_select_region'.tr(namedArgs: {'label': label}),
+                        'profile.address_select_region'.tr(
+                          namedArgs: {'label': label},
+                        ),
                     style: TextStyle(
                       color: value != null
                           ? AppColors.textPrimary
@@ -1390,7 +1417,7 @@ class _AddAddressSheetState extends State<_AddAddressSheet> {
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
-      useSafeArea: true,
+      useSafeArea: false,
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(20.r)),
       ),
@@ -1511,7 +1538,12 @@ class _RegionPickerSheet extends StatelessWidget {
   Widget build(BuildContext context) {
     return Container(
       height: MediaQuery.of(context).size.height * 0.7,
-      padding: EdgeInsets.all(20.w),
+      padding: bisaSheetPadding(
+        context,
+        horizontal: AppSpacing.comfortable,
+        top: AppSpacing.comfortable,
+        bottom: AppSpacing.comfortable,
+      ),
       child: Column(
         children: [
           Row(
@@ -1554,8 +1586,10 @@ class _RegionPickerSheet extends StatelessWidget {
                       );
                     },
                   ),
-                  error: (message) => Center(child: Text(message.localizedFailure)),
-                  orElse: () => Center(child: Text('profile.address_no_data'.tr())),
+                  error: (message) =>
+                      Center(child: Text(message.localizedFailure)),
+                  orElse: () =>
+                      Center(child: Text('profile.address_no_data'.tr())),
                 );
               },
             ),

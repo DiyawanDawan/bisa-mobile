@@ -35,6 +35,18 @@ val facebookAppId = resolveFacebookProp("facebook.app.id", "FACEBOOK_APP_ID")
 val facebookClientToken =
     resolveFacebookProp("facebook.client.token", "FACEBOOK_CLIENT_TOKEN")
 
+if (
+    facebookAppId.isEmpty() ||
+        facebookAppId == "FACEBOOK_APP_ID" ||
+        facebookAppId == "YOUR_NUMERIC_APP_ID"
+) {
+    logger.warn(
+        "Facebook App ID belum dikonfigurasi. Login Facebook akan gagal " +
+            "sampai android/local.properties berisi facebook.app.id dan " +
+            "facebook.client.token (lihat local.properties.example).",
+    )
+}
+
 android {
     namespace = "com.apps.mobile_bisa"
     compileSdk = flutter.compileSdkVersion

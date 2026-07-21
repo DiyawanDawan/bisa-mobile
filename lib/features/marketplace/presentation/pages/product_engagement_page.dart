@@ -47,7 +47,8 @@ class _ProductEngagementPageState extends State<ProductEngagementPage>
       _loading = true;
       _error = null;
     });
-    final result = await sl<MarketplaceRepository>().getSupplierProductEngagement();
+    final result = await sl<MarketplaceRepository>()
+        .getSupplierProductEngagement();
     if (!mounted) return;
     result.fold(
       (failure) => setState(() {
@@ -99,7 +100,11 @@ class _ProductEngagementPageState extends State<ProductEngagementPage>
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              Icon(LucideIcons.circleAlert, size: 48.sp, color: AppColors.error),
+              Icon(
+                LucideIcons.circleAlert,
+                size: 48.sp,
+                color: AppColors.error,
+              ),
               SizedBox(height: AppSpacing.md12),
               Text(_error!.localizedFailure, textAlign: TextAlign.center),
               SizedBox(height: AppSpacing.md),
@@ -124,8 +129,8 @@ class _ProductEngagementPageState extends State<ProductEngagementPage>
                   data.topLiked,
                   isLikedTab: true,
                   emptyTitle: 'marketplace.engagement_empty_liked_title'.tr(),
-                  emptySubtitle:
-                      'marketplace.engagement_empty_liked_subtitle'.tr(),
+                  emptySubtitle: 'marketplace.engagement_empty_liked_subtitle'
+                      .tr(),
                   metricLabel: 'marketplace.engagement_metric_liked'.tr(),
                   metricIcon: LucideIcons.heart,
                   metricColor: AppColors.error,
@@ -134,8 +139,8 @@ class _ProductEngagementPageState extends State<ProductEngagementPage>
                   data.topInCart,
                   isLikedTab: false,
                   emptyTitle: 'marketplace.engagement_empty_cart_title'.tr(),
-                  emptySubtitle:
-                      'marketplace.engagement_empty_cart_subtitle'.tr(),
+                  emptySubtitle: 'marketplace.engagement_empty_cart_subtitle'
+                      .tr(),
                   metricLabel: 'marketplace.engagement_metric_cart'.tr(),
                   metricIcon: LucideIcons.shoppingCart,
                   metricColor: AppColors.primary,
@@ -151,7 +156,12 @@ class _ProductEngagementPageState extends State<ProductEngagementPage>
   Widget _buildSummary(ProductEngagementSummary summary) {
     return Container(
       width: double.infinity,
-      margin: EdgeInsets.fromLTRB(AppSpacing.md, AppSpacing.md12, AppSpacing.md, AppSpacing.sm),
+      margin: EdgeInsets.fromLTRB(
+        AppSpacing.md,
+        AppSpacing.md12,
+        AppSpacing.md,
+        AppSpacing.sm,
+      ),
       padding: EdgeInsets.all(AppSpacing.section),
       decoration: BoxDecoration(
         color: AppColors.surface,
@@ -216,7 +226,7 @@ class _ProductEngagementPageState extends State<ProductEngagementPage>
       return ListView(
         physics: const AlwaysScrollableScrollPhysics(),
         children: [
-          SizedBox(height: 48.h),
+          SizedBox(height: AppSpacing.spacious),
           Icon(LucideIcons.chartBar, size: 48.sp, color: AppColors.grey300),
           SizedBox(height: AppSpacing.md12),
           Text(
@@ -297,7 +307,8 @@ class _EngagementTile extends StatelessWidget {
             children: [
               ClipRRect(
                 borderRadius: BorderRadius.circular(AppRadius.md),
-                child: item.thumbnailUrl != null && item.thumbnailUrl!.isNotEmpty
+                child:
+                    item.thumbnailUrl != null && item.thumbnailUrl!.isNotEmpty
                     ? BisaNetworkImage(
                         imageUrl: item.thumbnailUrl!,
                         width: 56.w,
@@ -308,7 +319,10 @@ class _EngagementTile extends StatelessWidget {
                         width: 56.w,
                         height: 56.w,
                         color: AppColors.grey100,
-                        child: Icon(LucideIcons.package, color: AppColors.grey400),
+                        child: Icon(
+                          LucideIcons.package,
+                          color: AppColors.grey400,
+                        ),
                       ),
               ),
               SizedBox(width: AppSpacing.md12),
@@ -337,10 +351,13 @@ class _EngagementTile extends StatelessWidget {
                     ),
                     SizedBox(height: 2.h),
                     Text(
-                      'marketplace.engagement_sold'.tr(namedArgs: {
-                        'count': '${item.totalSold}',
-                      }),
-                      style: TextStyle(fontSize: 10.sp, color: AppColors.textHint),
+                      'marketplace.engagement_sold'.tr(
+                        namedArgs: {'count': '${item.totalSold}'},
+                      ),
+                      style: TextStyle(
+                        fontSize: 10.sp,
+                        color: AppColors.textHint,
+                      ),
                     ),
                   ],
                 ),

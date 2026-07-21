@@ -127,9 +127,11 @@ class _HorizontalProductSectionState extends State<HorizontalProductSection> {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Padding(
-                    padding: EdgeInsets.symmetric(
-                      horizontal: 20.w,
-                      vertical: 10.h,
+                    padding: EdgeInsets.fromLTRB(
+                      AppSpacing.pageGutter,
+                      AppSpacing.sectionGap,
+                      AppSpacing.pageGutter,
+                      AppSpacing.compact,
                     ),
                     child: Row(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -174,7 +176,6 @@ class _HorizontalProductSectionState extends State<HorizontalProductSection> {
                       ),
                     ),
                   ),
-                  SizedBox(height: AppSpacing.sm10),
                 ],
               );
             },

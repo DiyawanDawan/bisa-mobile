@@ -21,6 +21,8 @@ abstract class AppSpacing {
   static const double buttonHeightSmPx = 40;
   static const double buttonHeightPx = 48;
   static const double buttonHeightLgPx = 56;
+  static const double bottomNavHeightPx = 46;
+  static const double fabSizePx = 56;
 
   /// 4px — gap sangat kecil (badge, icon-text)
   static double get xs => xsPx.w;
@@ -79,4 +81,18 @@ abstract class AppSpacing {
 
   /// 14px — jarak antar section / list block
   static double get section => sectionPx.h;
+
+  /// Semantic spacing contract. Prefer these aliases in page chrome and shared primitives.
+  static double get tight => xs;
+  static double get compact => sm;
+  static double get comfortable => md;
+  static const double spaciousPx = xlPx;
+  static double get spacious => xl;
+  static double get pageGutter => md;
+  static double get sectionGap => section;
+  static double get sectionGapLarge => lg;
+  static double get controlHeight => buttonHeight;
+  static double get ctaHeight => buttonHeightLg;
+  static double get bottomNavHeight => bottomNavHeightPx.h;
+  static double get fabSize => fabSizePx.r;
 }

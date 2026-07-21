@@ -4,13 +4,15 @@ import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
 import '../../../../core/constants/app_layout.dart';
 import '../../../../core/constants/app_colors.dart';
+import '../../../../core/utils/safe_area_utils.dart';
 import '../../data/models/category_model.dart';
 
-typedef SupplierProductFilterApply = void Function({
-  required String? status,
-  required String? categoryId,
-  required String sortKey,
-});
+typedef SupplierProductFilterApply =
+    void Function({
+      required String? status,
+      required String? categoryId,
+      required String sortKey,
+    });
 
 class SupplierProductFilterSheet extends StatefulWidget {
   const SupplierProductFilterSheet({
@@ -55,25 +57,26 @@ class SupplierProductFilterSheet extends StatefulWidget {
       _SupplierProductFilterSheetState();
 }
 
-class _SupplierProductFilterSheetState extends State<SupplierProductFilterSheet> {
+class _SupplierProductFilterSheetState
+    extends State<SupplierProductFilterSheet> {
   late String? _status;
   late String? _categoryId;
   late String _sortKey;
 
   List<MapEntry<String?, String>> get _statusOptions => [
-        MapEntry(null, 'marketplace.status_all'.tr()),
-        MapEntry('ACTIVE', 'marketplace.status_active'.tr()),
-        MapEntry('DRAFT', 'marketplace.status_draft'.tr()),
-        MapEntry('OUT_OF_STOCK', 'marketplace.status_out_of_stock'.tr()),
-        MapEntry('INACTIVE', 'marketplace.status_inactive'.tr()),
-      ];
+    MapEntry(null, 'marketplace.status_all'.tr()),
+    MapEntry('ACTIVE', 'marketplace.status_active'.tr()),
+    MapEntry('DRAFT', 'marketplace.status_draft'.tr()),
+    MapEntry('OUT_OF_STOCK', 'marketplace.status_out_of_stock'.tr()),
+    MapEntry('INACTIVE', 'marketplace.status_inactive'.tr()),
+  ];
 
   List<MapEntry<String, String>> get _sortOptions => [
-        MapEntry('newest', 'marketplace.sort_newest'.tr()),
-        MapEntry('priceAsc', 'marketplace.sort_price_low'.tr()),
-        MapEntry('priceDesc', 'marketplace.sort_price_high'.tr()),
-        MapEntry('sold', 'marketplace.sort_bestseller'.tr()),
-      ];
+    MapEntry('newest', 'marketplace.sort_newest'.tr()),
+    MapEntry('priceAsc', 'marketplace.sort_price_low'.tr()),
+    MapEntry('priceDesc', 'marketplace.sort_price_high'.tr()),
+    MapEntry('sold', 'marketplace.sort_bestseller'.tr()),
+  ];
 
   @override
   void initState() {
@@ -93,15 +96,16 @@ class _SupplierProductFilterSheetState extends State<SupplierProductFilterSheet>
 
   @override
   Widget build(BuildContext context) {
-    final bottomPadding = MediaQuery.paddingOf(context).bottom;
     final maxH = MediaQuery.sizeOf(context).height * 0.88;
 
     return Container(
       constraints: BoxConstraints(maxHeight: maxH),
-      padding: EdgeInsets.fromLTRB(24.w, 12.h, 24.w, 24.h + bottomPadding),
+      padding: bisaSheetPadding(context),
       decoration: BoxDecoration(
         color: AppColors.surface,
-        borderRadius: BorderRadius.vertical(top: Radius.circular(AppSpacing.xxlPx.r)),
+        borderRadius: BorderRadius.vertical(
+          top: Radius.circular(AppSpacing.xxlPx.r),
+        ),
       ),
       child: Column(
         mainAxisSize: MainAxisSize.min,
@@ -117,10 +121,14 @@ class _SupplierProductFilterSheetState extends State<SupplierProductFilterSheet>
               ),
             ),
           ),
-          SizedBox(height: AppSpacing.lg),
+          SizedBox(height: AppSpacing.sectionGap),
           Row(
             children: [
-              Icon(LucideIcons.listFilter, size: 22.sp, color: AppColors.primary),
+              Icon(
+                LucideIcons.listFilter,
+                size: 22.sp,
+                color: AppColors.primary,
+              ),
               SizedBox(width: AppSpacing.sm10),
               Expanded(
                 child: Text(
@@ -144,7 +152,11 @@ class _SupplierProductFilterSheetState extends State<SupplierProductFilterSheet>
                 ),
               ),
               IconButton(
-                icon: Icon(LucideIcons.x, color: AppColors.grey500, size: 22.sp),
+                icon: Icon(
+                  LucideIcons.x,
+                  color: AppColors.grey500,
+                  size: 22.sp,
+                ),
                 onPressed: () => Navigator.pop(context),
               ),
             ],
@@ -168,7 +180,7 @@ class _SupplierProductFilterSheetState extends State<SupplierProductFilterSheet>
                       );
                     }).toList(),
                   ),
-                  SizedBox(height: AppSpacing.xl),
+                  SizedBox(height: AppSpacing.sectionGap),
                   _sectionTitle('marketplace.filter_section_category'.tr()),
                   SizedBox(height: AppSpacing.md12),
                   Wrap(
@@ -189,7 +201,7 @@ class _SupplierProductFilterSheetState extends State<SupplierProductFilterSheet>
                       ),
                     ],
                   ),
-                  SizedBox(height: AppSpacing.xl),
+                  SizedBox(height: AppSpacing.sectionGap),
                   _sectionTitle('marketplace.filter_section_sort'.tr()),
                   SizedBox(height: AppSpacing.md12),
                   Wrap(
@@ -203,7 +215,7 @@ class _SupplierProductFilterSheetState extends State<SupplierProductFilterSheet>
                       );
                     }).toList(),
                   ),
-                  SizedBox(height: AppSpacing.xl),
+                  SizedBox(height: AppSpacing.sectionGap),
                 ],
               ),
             ),
@@ -230,10 +242,7 @@ class _SupplierProductFilterSheetState extends State<SupplierProductFilterSheet>
               },
               child: Text(
                 'marketplace.apply_filter'.tr(),
-                style: TextStyle(
-                  fontSize: 16.sp,
-                  fontWeight: FontWeight.w800,
-                ),
+                style: TextStyle(fontSize: 16.sp, fontWeight: FontWeight.w800),
               ),
             ),
           ),
@@ -260,7 +269,10 @@ class _SupplierProductFilterSheetState extends State<SupplierProductFilterSheet>
         onTap: onTap,
         borderRadius: BorderRadius.circular(AppRadius.pill),
         child: Container(
-          padding: EdgeInsets.symmetric(horizontal: AppSpacing.md, vertical: AppSpacing.sm10),
+          padding: EdgeInsets.symmetric(
+            horizontal: AppSpacing.md,
+            vertical: AppSpacing.sm10,
+          ),
           decoration: BoxDecoration(
             color: isSelected ? AppColors.primaryLight : AppColors.grey50,
             border: Border.all(
@@ -271,7 +283,9 @@ class _SupplierProductFilterSheetState extends State<SupplierProductFilterSheet>
           child: Text(
             label,
             style: TextStyle(
-              color: isSelected ? AppColors.primaryDark : AppColors.textSecondary,
+              color: isSelected
+                  ? AppColors.primaryDark
+                  : AppColors.textSecondary,
               fontWeight: isSelected ? FontWeight.w800 : FontWeight.w600,
               fontSize: 13.sp,
             ),
@@ -283,7 +297,9 @@ class _SupplierProductFilterSheetState extends State<SupplierProductFilterSheet>
 }
 
 /// Konversi sortKey ke parameter API.
-({String? sortBy, String? sortOrder}) resolveSupplierProductSort(String sortKey) {
+({String? sortBy, String? sortOrder}) resolveSupplierProductSort(
+  String sortKey,
+) {
   switch (sortKey) {
     case 'priceAsc':
       return (sortBy: 'pricePerUnit', sortOrder: 'asc');

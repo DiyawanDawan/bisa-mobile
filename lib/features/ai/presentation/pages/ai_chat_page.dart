@@ -7,6 +7,8 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
 import '../../../../core/constants/app_colors.dart';
+import '../../../../core/constants/app_layout.dart';
+import '../../../../core/utils/safe_area_utils.dart';
 import '../../../../core/i18n/failure_messages.dart';
 import '../../../../shared/widgets/auth_sheet.dart';
 import '../../../../shared/widgets/bisa_app_bar.dart';
@@ -110,14 +112,14 @@ class _AiChatPageState extends State<AiChatPage> {
     if (_startingHandoff) return;
 
     final isLoggedIn = blocContext.read<AuthCubit>().state.maybeWhen(
-          authenticated: (_) => true,
-          orElse: () => false,
-        );
+      authenticated: (_) => true,
+      orElse: () => false,
+    );
     if (!isLoggedIn) {
       if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('support.login_required'.tr())),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text('support.login_required'.tr())));
       AuthSheet.show(context);
       return;
     }
@@ -189,9 +191,9 @@ class _AiChatPageState extends State<AiChatPage> {
       if (!mounted) return;
       final status = e.response?.statusCode;
       if (status == 401 || status == 403) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('support.login_required'.tr())),
-        );
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text('support.login_required'.tr())));
         AuthSheet.show(context);
         return;
       }
@@ -219,9 +221,9 @@ class _AiChatPageState extends State<AiChatPage> {
           detail = metaMsg;
         }
       }
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(detail)),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text(detail)));
     } catch (_) {
       if (!mounted) return;
       final existing = await _supportApi.getActiveTicket().catchError(
@@ -233,11 +235,9 @@ class _AiChatPageState extends State<AiChatPage> {
         _syncCsHandoffFlag(blocContext);
         await context.push('/support/${existing.id}');
       } else {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('support.handoff_failed'.tr()),
-          ),
-        );
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text('support.handoff_failed'.tr())));
       }
     } finally {
       if (mounted) setState(() => _startingHandoff = false);
@@ -412,16 +412,19 @@ class _AiChatPageState extends State<AiChatPage> {
     return LayoutBuilder(
       builder: (context, constraints) {
         return SingleChildScrollView(
-          padding: EdgeInsets.symmetric(horizontal: 20.w, vertical: 24.h),
+          padding: EdgeInsets.symmetric(
+            horizontal: AppSpacing.pageGutter,
+            vertical: AppSpacing.spacious,
+          ),
           child: ConstrainedBox(
             constraints: BoxConstraints(
-              minHeight: constraints.maxHeight - 48.h,
+              minHeight: constraints.maxHeight - AppSpacing.spacious * 2,
             ),
             child: Column(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
                 _buildEmptyHero(),
-                SizedBox(height: 28.h),
+                SizedBox(height: AppSpacing.spacious),
                 Text(
                   'ai.greeting'.tr(),
                   textAlign: TextAlign.center,
@@ -553,7 +556,7 @@ class _AiChatPageState extends State<AiChatPage> {
   Widget _buildSwipeBackground(bool isUser) {
     return Container(
       margin: EdgeInsets.only(bottom: 12.h, left: 16.w, right: 16.w),
-      padding: EdgeInsets.symmetric(horizontal: 20.w),
+      padding: EdgeInsets.symmetric(horizontal: AppSpacing.pageGutter),
       decoration: BoxDecoration(
         color: AppColors.error.withValues(alpha: 0.9),
         borderRadius: BorderRadius.circular(12.r),
@@ -633,7 +636,7 @@ class _AiChatPageState extends State<AiChatPage> {
               topRight: Radius.circular(20),
             ),
           ),
-          padding: EdgeInsets.symmetric(horizontal: 20.w, vertical: 24.h),
+          padding: bisaSheetPadding(bottomSheetContext),
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
@@ -922,9 +925,9 @@ class _AiChatPageState extends State<AiChatPage> {
 
     if (looksLikeCsHandoffRequest(text)) {
       context.read<AiCubit>().appendLocalExchange(
-            userText: text,
-            assistantText: 'ai.cs_handoff_ack'.tr(),
-          );
+        userText: text,
+        assistantText: 'ai.cs_handoff_ack'.tr(),
+      );
       WidgetsBinding.instance.addPostFrameCallback((_) {
         if (mounted) _openCustomerService(context);
       });

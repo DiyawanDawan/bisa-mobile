@@ -5,12 +5,13 @@ import 'package:lucide_icons_flutter/lucide_icons.dart';
 import 'package:mobile_bisa/core/constants/app_layout.dart';
 import 'package:mobile_bisa/core/constants/app_colors.dart';
 import 'package:mobile_bisa/core/utils/app_feedback.dart';
+import 'package:mobile_bisa/core/utils/safe_area_utils.dart';
 
 /// Bottom sheet pemilih bahasa — dipakai di Profil & Pengaturan.
 void showLanguagePickerSheet(BuildContext context) {
   showModalBottomSheet(
     context: context,
-    useSafeArea: true,
+    useSafeArea: false,
     shape: RoundedRectangleBorder(
       borderRadius: BorderRadius.vertical(
         top: Radius.circular(AppSpacing.xlPx.r),
@@ -18,8 +19,13 @@ void showLanguagePickerSheet(BuildContext context) {
     ),
     builder: (sheetContext) {
       final currentLocale = sheetContext.locale;
-      return Container(
-        padding: EdgeInsets.all(AppSpacing.xl),
+      return Padding(
+        padding: bisaSheetPadding(
+          sheetContext,
+          horizontal: AppSpacing.xl,
+          top: AppSpacing.xl,
+          bottom: AppSpacing.md12,
+        ),
         child: Column(
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.start,

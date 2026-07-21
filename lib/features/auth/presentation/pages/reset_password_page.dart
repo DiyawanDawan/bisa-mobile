@@ -4,6 +4,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:go_router/go_router.dart';
 import '../../../../core/constants/app_colors.dart';
+import '../../../../core/constants/app_layout.dart';
 import '../../../../core/utils/app_feedback.dart';
 import '../../../../shared/widgets/custom_button.dart';
 import '../../../../shared/widgets/custom_text_field.dart';
@@ -52,13 +53,13 @@ class _ResetPasswordPageState extends State<ResetPasswordPage> {
         },
         child: SafeArea(
           child: SingleChildScrollView(
-            padding: EdgeInsets.symmetric(horizontal: 24.w),
+            padding: EdgeInsets.symmetric(horizontal: AppSpacing.pageGutter),
             child: Form(
               key: _formKey,
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  SizedBox(height: 32.h),
+                  SizedBox(height: AppSpacing.sectionGapLarge),
                   Container(
                     padding: EdgeInsets.all(16.r),
                     decoration: BoxDecoration(
@@ -75,8 +76,8 @@ class _ResetPasswordPageState extends State<ResetPasswordPage> {
                   Text(
                     'auth.reset_password_title'.tr(),
                     style: TextStyle(
-                      fontSize: 28.sp, 
-                      fontWeight: FontWeight.w800, 
+                      fontSize: 28.sp,
+                      fontWeight: FontWeight.w800,
                       color: AppColors.textPrimary,
                       letterSpacing: -0.5,
                     ),
@@ -85,12 +86,12 @@ class _ResetPasswordPageState extends State<ResetPasswordPage> {
                   Text(
                     'auth.reset_password_subtitle'.tr(),
                     style: TextStyle(
-                      fontSize: 16.sp, 
+                      fontSize: 16.sp,
                       color: AppColors.textSecondary,
                       height: 1.5,
                     ),
                   ),
-                  SizedBox(height: 40.h),
+                  SizedBox(height: AppSpacing.spacious),
                   CustomTextField(
                     label: 'kata_sandi_baru'.tr(),
                     hint: 'masukkan_kata_sandi_baru'.tr(),
@@ -99,7 +100,8 @@ class _ResetPasswordPageState extends State<ResetPasswordPage> {
                     prefixIcon: Icons.lock_outline_rounded,
                     isRequired: true,
                     validator: (value) {
-                      if (value == null || value.isEmpty) return 'password_required'.tr();
+                      if (value == null || value.isEmpty)
+                        return 'password_required'.tr();
                       if (value.length < 6) return 'password_min'.tr();
                       return null;
                     },
@@ -113,23 +115,27 @@ class _ResetPasswordPageState extends State<ResetPasswordPage> {
                     prefixIcon: Icons.shield_outlined,
                     isRequired: true,
                     validator: (value) {
-                      if (value != _passwordController.text) return 'auth.password_mismatch'.tr();
+                      if (value != _passwordController.text)
+                        return 'auth.password_mismatch'.tr();
                       return null;
                     },
                   ),
-                  SizedBox(height: 48.h),
+                  SizedBox(height: AppSpacing.spacious),
                   BlocBuilder<AuthCubit, AuthState>(
                     builder: (context, state) {
                       return CustomButton(
                         text: 'simpan_kata_sandi'.tr(),
                         useGradient: true,
-                        isLoading: state.maybeWhen(loading: () => true, orElse: () => false),
+                        isLoading: state.maybeWhen(
+                          loading: () => true,
+                          orElse: () => false,
+                        ),
                         onPressed: () {
                           if (_formKey.currentState!.validate()) {
                             context.read<AuthCubit>().resetPasswordWithToken(
-                                  widget.token,
-                                  _passwordController.text,
-                                );
+                              widget.token,
+                              _passwordController.text,
+                            );
                           }
                         },
                       );

@@ -39,7 +39,12 @@ class NegotiationOfferPreviewPage extends StatelessWidget {
         children: [
           Expanded(
             child: SingleChildScrollView(
-              padding: EdgeInsets.fromLTRB(20.w, 12.h, 20.w, 16.h),
+              padding: EdgeInsets.fromLTRB(
+                AppSpacing.pageGutter,
+                AppSpacing.md12,
+                AppSpacing.pageGutter,
+                AppSpacing.comfortable,
+              ),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
@@ -66,7 +71,8 @@ class NegotiationOfferPreviewPage extends StatelessWidget {
                   _ComparisonCard(draft: draft),
                   SizedBox(height: AppSpacing.md12),
                   _QuantityRow(draft: draft),
-                  if (draft.message != null && draft.message!.trim().isNotEmpty) ...[
+                  if (draft.message != null &&
+                      draft.message!.trim().isNotEmpty) ...[
                     SizedBox(height: AppSpacing.md12),
                     _NoteCard(message: draft.message!),
                   ],
@@ -134,8 +140,8 @@ class _ComparisonCard extends StatelessWidget {
             tone: draft.hasDiscount
                 ? _RowTone.success
                 : draft.isHigherThanCatalog
-                    ? _RowTone.warning
-                    : _RowTone.primary,
+                ? _RowTone.warning
+                : _RowTone.primary,
           ),
           if (draft.hasDiscount) ...[
             SizedBox(height: AppSpacing.sm10),
@@ -247,7 +253,6 @@ class _PriceCompareRow extends StatelessWidget {
     }
   }
 
-
   @override
   Widget build(BuildContext context) {
     return Row(
@@ -269,8 +274,7 @@ class _PriceCompareRow extends StatelessWidget {
             fontSize: emphasized ? 15.sp : 13.sp,
             fontWeight: FontWeight.w900,
             color: strikethrough ? AppColors.error : _valueColor,
-            decoration:
-                strikethrough ? TextDecoration.lineThrough : null,
+            decoration: strikethrough ? TextDecoration.lineThrough : null,
             decorationColor: AppColors.error,
             decorationThickness: strikethrough ? 2 : null,
           ),
@@ -295,7 +299,10 @@ class _QuantityRow extends StatelessWidget {
     );
 
     return Container(
-      padding: EdgeInsets.symmetric(horizontal: AppSpacing.section, vertical: AppSpacing.md12),
+      padding: EdgeInsets.symmetric(
+        horizontal: AppSpacing.section,
+        vertical: AppSpacing.md12,
+      ),
       decoration: BoxDecoration(
         color: AppColors.surface,
         borderRadius: BorderRadius.circular(AppRadius.lg),
@@ -338,7 +345,11 @@ class _QuantityRow extends StatelessWidget {
           SizedBox(height: AppSpacing.sm),
           Row(
             children: [
-              Icon(LucideIcons.warehouse, size: 14.sp, color: AppColors.textHint),
+              Icon(
+                LucideIcons.warehouse,
+                size: 14.sp,
+                color: AppColors.textHint,
+              ),
               SizedBox(width: 6.w),
               Text(
                 'negotiation.preview_stock_available'.tr(
@@ -480,7 +491,12 @@ class _BottomActions extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding: EdgeInsets.fromLTRB(20.w, 12.h, 20.w, 16.h),
+      padding: EdgeInsets.fromLTRB(
+        AppSpacing.pageGutter,
+        AppSpacing.md12,
+        AppSpacing.pageGutter,
+        0,
+      ),
       decoration: BoxDecoration(
         color: AppColors.surface,
         boxShadow: [
@@ -534,12 +550,12 @@ class _BottomActions extends StatelessWidget {
                           }
                           if (!context.mounted) return;
                           context.read<NegotiationCubit>().createOffer(
-                                productId: draft.productId,
-                                quantity: draft.quantity,
-                                pricePerUnit: draft.offerPricePerUnit,
-                                message: draft.message,
-                                localImagePath: draft.localImagePath,
-                              );
+                            productId: draft.productId,
+                            quantity: draft.quantity,
+                            pricePerUnit: draft.offerPricePerUnit,
+                            message: draft.message,
+                            localImagePath: draft.localImagePath,
+                          );
                         }
                       : null,
                 ),

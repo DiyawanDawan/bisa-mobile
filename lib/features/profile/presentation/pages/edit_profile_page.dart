@@ -7,6 +7,7 @@ import 'package:image_picker/image_picker.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
 import 'package:mobile_bisa/features/auth/domain/entities/user_entity.dart';
 import '../../../../core/constants/app_colors.dart';
+import '../../../../core/constants/app_layout.dart';
 import '../../../../core/utils/app_feedback.dart';
 import '../../../../core/utils/media_url_utils.dart';
 import '../../../../shared/widgets/custom_button.dart';
@@ -47,8 +48,9 @@ class _EditProfilePageState extends State<EditProfilePage> {
   void initState() {
     super.initState();
     _nameController = TextEditingController(text: widget.user.name);
-    _companyController =
-        TextEditingController(text: widget.user.companyName ?? '');
+    _companyController = TextEditingController(
+      text: widget.user.companyName ?? '',
+    );
     _phoneController = TextEditingController(text: widget.user.phone);
   }
 
@@ -99,7 +101,7 @@ class _EditProfilePageState extends State<EditProfilePage> {
             );
           },
           child: SingleChildScrollView(
-            padding: EdgeInsets.all(24.w),
+            padding: EdgeInsets.all(AppSpacing.pageGutter),
             child: Form(
               key: _formKey,
               child: Column(
@@ -113,7 +115,8 @@ class _EditProfilePageState extends State<EditProfilePage> {
                           backgroundImage: _imageFile != null
                               ? FileImage(_imageFile!)
                               : resolveMediaImageProvider(widget.user.avatar),
-                          child: _imageFile == null && widget.user.avatar == null
+                          child:
+                              _imageFile == null && widget.user.avatar == null
                               ? Icon(
                                   LucideIcons.user,
                                   size: 60.sp,
@@ -147,7 +150,7 @@ class _EditProfilePageState extends State<EditProfilePage> {
                       ],
                     ),
                   ),
-                  SizedBox(height: 32.h),
+                  SizedBox(height: AppSpacing.sectionGapLarge),
                   CustomTextField(
                     label: 'profile.edit_full_name_label'.tr(),
                     hint: 'profile.edit_full_name_hint'.tr(),
@@ -161,13 +164,14 @@ class _EditProfilePageState extends State<EditProfilePage> {
                       return null;
                     },
                   ),
-                  SizedBox(height: 20.h),
+                  SizedBox(height: AppSpacing.sectionGap),
                   CustomTextField(
                     label: _companyLabel,
                     hint: _companyHint,
                     controller: _companyController,
-                    prefixIcon:
-                        _isSupplier ? LucideIcons.store : LucideIcons.building2,
+                    prefixIcon: _isSupplier
+                        ? LucideIcons.store
+                        : LucideIcons.building2,
                     isRequired: true,
                     validator: (value) {
                       if (value == null || value.trim().isEmpty) {
@@ -178,7 +182,7 @@ class _EditProfilePageState extends State<EditProfilePage> {
                       return null;
                     },
                   ),
-                  SizedBox(height: 20.h),
+                  SizedBox(height: AppSpacing.sectionGap),
                   CustomTextField(
                     label: 'profile.edit_phone_label'.tr(),
                     hint: 'profile.edit_phone_hint'.tr(),
@@ -187,7 +191,7 @@ class _EditProfilePageState extends State<EditProfilePage> {
                     keyboardType: TextInputType.phone,
                     isOptional: true,
                   ),
-                  SizedBox(height: 40.h),
+                  SizedBox(height: AppSpacing.spacious),
                   BlocBuilder<ProfileCubit, ProfileState>(
                     builder: (context, state) {
                       return CustomButton(
@@ -200,11 +204,11 @@ class _EditProfilePageState extends State<EditProfilePage> {
                           if (_formKey.currentState!.validate()) {
                             _awaitingSaveResult = true;
                             context.read<ProfileCubit>().updateProfile(
-                                  fullName: _nameController.text.trim(),
-                                  companyName: _companyController.text.trim(),
-                                  phone: _phoneController.text.trim(),
-                                  avatarPath: _imageFile?.path,
-                                );
+                              fullName: _nameController.text.trim(),
+                              companyName: _companyController.text.trim(),
+                              phone: _phoneController.text.trim(),
+                              avatarPath: _imageFile?.path,
+                            );
                           }
                         },
                       );

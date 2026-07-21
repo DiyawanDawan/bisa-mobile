@@ -180,27 +180,36 @@ class AuthCubit extends Cubit<AuthState> {
 
       String? backendToken;
 
-      // Path A — Facebook native SDK → Firebase credential (atau kirim access token)
-      final native = await _loginFacebookNativeAccessToken();
-      if (native.cancelled) {
-        emit(const AuthState.initial());
-        return;
-      }
-      final accessToken = native.token;
-      if (accessToken != null && accessToken.isNotEmpty) {
-        try {
-          final credential = FacebookAuthProvider.credential(accessToken);
-          final userCredential =
-              await FirebaseAuth.instance.signInWithCredential(credential);
-          backendToken = await userCredential.user?.getIdToken(true);
-        } catch (e) {
-          if (kDebugMode) {
-            debugPrint(
-              '[Auth] Firebase Facebook credential gagal, kirim access token: $e',
-            );
-          }
-          backendToken = accessToken;
+      // Path A — Facebook native SDK (hanya jika App ID + Client Token sudah diisi).
+      // Tanpa konfigurasi, manifest masih berisi placeholder dan Meta menampilkan
+      // "ID Aplikasi Tidak Valid".
+      if (AppConfig.hasFacebookNativeConfig) {
+        final native = await _loginFacebookNativeAccessToken();
+        if (native.cancelled) {
+          emit(const AuthState.initial());
+          return;
         }
+        final accessToken = native.token;
+        if (accessToken != null && accessToken.isNotEmpty) {
+          try {
+            final credential = FacebookAuthProvider.credential(accessToken);
+            final userCredential =
+                await FirebaseAuth.instance.signInWithCredential(credential);
+            backendToken = await userCredential.user?.getIdToken(true);
+          } catch (e) {
+            if (kDebugMode) {
+              debugPrint(
+                '[Auth] Firebase Facebook credential gagal, kirim access token: $e',
+              );
+            }
+            backendToken = accessToken;
+          }
+        }
+      } else if (kDebugMode) {
+        debugPrint(
+          '[Auth] Facebook native dilewati — isi FACEBOOK_APP_ID + '
+          'FACEBOOK_CLIENT_TOKEN (dart-define) dan android/local.properties.',
+        );
       }
 
       // Path B — Firebase OAuth browser (tanpa native Facebook SDK)

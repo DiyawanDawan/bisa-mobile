@@ -12,11 +12,17 @@ part of 'auth_cubit.dart';
 // dart format off
 T _$identity<T>(T value) => value;
 /// @nodoc
-mixin _$AuthState {
+mixin _$AuthState implements DiagnosticableTreeMixin {
 
 
 
 
+@override
+void debugFillProperties(DiagnosticPropertiesBuilder properties) {
+  properties
+    ..add(DiagnosticsProperty('type', 'AuthState'))
+    ;
+}
 
 @override
 bool operator ==(Object other) {
@@ -28,7 +34,7 @@ bool operator ==(Object other) {
 int get hashCode => runtimeType.hashCode;
 
 @override
-String toString() {
+String toString({ DiagnosticLevel minLevel = DiagnosticLevel.info }) {
   return 'AuthState()';
 }
 
@@ -210,7 +216,7 @@ return error(_that.message);case _:
 /// @nodoc
 
 
-class _Initial implements AuthState {
+class _Initial with DiagnosticableTreeMixin implements AuthState {
   const _Initial();
   
 
@@ -218,6 +224,12 @@ class _Initial implements AuthState {
 
 
 
+@override
+void debugFillProperties(DiagnosticPropertiesBuilder properties) {
+  properties
+    ..add(DiagnosticsProperty('type', 'AuthState.initial'))
+    ;
+}
 
 @override
 bool operator ==(Object other) {
@@ -229,7 +241,7 @@ bool operator ==(Object other) {
 int get hashCode => runtimeType.hashCode;
 
 @override
-String toString() {
+String toString({ DiagnosticLevel minLevel = DiagnosticLevel.info }) {
   return 'AuthState.initial()';
 }
 
@@ -242,7 +254,7 @@ String toString() {
 /// @nodoc
 
 
-class _Loading implements AuthState {
+class _Loading with DiagnosticableTreeMixin implements AuthState {
   const _Loading();
   
 
@@ -250,6 +262,12 @@ class _Loading implements AuthState {
 
 
 
+@override
+void debugFillProperties(DiagnosticPropertiesBuilder properties) {
+  properties
+    ..add(DiagnosticsProperty('type', 'AuthState.loading'))
+    ;
+}
 
 @override
 bool operator ==(Object other) {
@@ -261,7 +279,7 @@ bool operator ==(Object other) {
 int get hashCode => runtimeType.hashCode;
 
 @override
-String toString() {
+String toString({ DiagnosticLevel minLevel = DiagnosticLevel.info }) {
   return 'AuthState.loading()';
 }
 
@@ -274,7 +292,7 @@ String toString() {
 /// @nodoc
 
 
-class _Authenticated implements AuthState {
+class _Authenticated with DiagnosticableTreeMixin implements AuthState {
   const _Authenticated(this.user);
   
 
@@ -287,6 +305,12 @@ class _Authenticated implements AuthState {
 _$AuthenticatedCopyWith<_Authenticated> get copyWith => __$AuthenticatedCopyWithImpl<_Authenticated>(this, _$identity);
 
 
+@override
+void debugFillProperties(DiagnosticPropertiesBuilder properties) {
+  properties
+    ..add(DiagnosticsProperty('type', 'AuthState.authenticated'))
+    ..add(DiagnosticsProperty('user', user));
+}
 
 @override
 bool operator ==(Object other) {
@@ -298,7 +322,7 @@ bool operator ==(Object other) {
 int get hashCode => Object.hash(runtimeType,user);
 
 @override
-String toString() {
+String toString({ DiagnosticLevel minLevel = DiagnosticLevel.info }) {
   return 'AuthState.authenticated(user: $user)';
 }
 
@@ -349,7 +373,7 @@ $UserEntityCopyWith<$Res> get user {
 /// @nodoc
 
 
-class _Unauthenticated implements AuthState {
+class _Unauthenticated with DiagnosticableTreeMixin implements AuthState {
   const _Unauthenticated();
   
 
@@ -357,6 +381,12 @@ class _Unauthenticated implements AuthState {
 
 
 
+@override
+void debugFillProperties(DiagnosticPropertiesBuilder properties) {
+  properties
+    ..add(DiagnosticsProperty('type', 'AuthState.unauthenticated'))
+    ;
+}
 
 @override
 bool operator ==(Object other) {
@@ -368,7 +398,7 @@ bool operator ==(Object other) {
 int get hashCode => runtimeType.hashCode;
 
 @override
-String toString() {
+String toString({ DiagnosticLevel minLevel = DiagnosticLevel.info }) {
   return 'AuthState.unauthenticated()';
 }
 
@@ -381,7 +411,7 @@ String toString() {
 /// @nodoc
 
 
-class _Success implements AuthState {
+class _Success with DiagnosticableTreeMixin implements AuthState {
   const _Success(this.message);
   
 
@@ -394,6 +424,12 @@ class _Success implements AuthState {
 _$SuccessCopyWith<_Success> get copyWith => __$SuccessCopyWithImpl<_Success>(this, _$identity);
 
 
+@override
+void debugFillProperties(DiagnosticPropertiesBuilder properties) {
+  properties
+    ..add(DiagnosticsProperty('type', 'AuthState.success'))
+    ..add(DiagnosticsProperty('message', message));
+}
 
 @override
 bool operator ==(Object other) {
@@ -405,7 +441,7 @@ bool operator ==(Object other) {
 int get hashCode => Object.hash(runtimeType,message);
 
 @override
-String toString() {
+String toString({ DiagnosticLevel minLevel = DiagnosticLevel.info }) {
   return 'AuthState.success(message: $message)';
 }
 
@@ -447,7 +483,7 @@ as String,
 /// @nodoc
 
 
-class _ResetTokenReceived implements AuthState {
+class _ResetTokenReceived with DiagnosticableTreeMixin implements AuthState {
   const _ResetTokenReceived(this.token);
   
 
@@ -460,6 +496,12 @@ class _ResetTokenReceived implements AuthState {
 _$ResetTokenReceivedCopyWith<_ResetTokenReceived> get copyWith => __$ResetTokenReceivedCopyWithImpl<_ResetTokenReceived>(this, _$identity);
 
 
+@override
+void debugFillProperties(DiagnosticPropertiesBuilder properties) {
+  properties
+    ..add(DiagnosticsProperty('type', 'AuthState.resetTokenReceived'))
+    ..add(DiagnosticsProperty('token', token));
+}
 
 @override
 bool operator ==(Object other) {
@@ -471,7 +513,7 @@ bool operator ==(Object other) {
 int get hashCode => Object.hash(runtimeType,token);
 
 @override
-String toString() {
+String toString({ DiagnosticLevel minLevel = DiagnosticLevel.info }) {
   return 'AuthState.resetTokenReceived(token: $token)';
 }
 
@@ -513,7 +555,7 @@ as String,
 /// @nodoc
 
 
-class _Error implements AuthState {
+class _Error with DiagnosticableTreeMixin implements AuthState {
   const _Error(this.message);
   
 
@@ -526,6 +568,12 @@ class _Error implements AuthState {
 _$ErrorCopyWith<_Error> get copyWith => __$ErrorCopyWithImpl<_Error>(this, _$identity);
 
 
+@override
+void debugFillProperties(DiagnosticPropertiesBuilder properties) {
+  properties
+    ..add(DiagnosticsProperty('type', 'AuthState.error'))
+    ..add(DiagnosticsProperty('message', message));
+}
 
 @override
 bool operator ==(Object other) {
@@ -537,7 +585,7 @@ bool operator ==(Object other) {
 int get hashCode => Object.hash(runtimeType,message);
 
 @override
-String toString() {
+String toString({ DiagnosticLevel minLevel = DiagnosticLevel.info }) {
   return 'AuthState.error(message: $message)';
 }
 

@@ -14,7 +14,7 @@ void main() {
 
     await tester.pumpWidget(
       ScreenUtilInit(
-        designSize: const Size(390, 844),
+        designSize: const Size(393, 852),
         builder: (_, __) => MaterialApp(
           home: Scaffold(
             body: ReadinessGateSheet(

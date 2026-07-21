@@ -4,6 +4,7 @@ import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
 import '../../../../core/constants/app_layout.dart';
 import '../../../../core/constants/app_colors.dart';
+import '../../../../core/utils/safe_area_utils.dart';
 import '../marketplace_i18n.dart';
 
 class FilterBottomSheet extends StatefulWidget {
@@ -93,12 +94,13 @@ class _FilterBottomSheetState extends State<FilterBottomSheet> {
 
   @override
   Widget build(BuildContext context) {
-    final bottomPadding = MediaQuery.of(context).padding.bottom;
     return Container(
-      padding: EdgeInsets.fromLTRB(24.w, 12.h, 24.w, 24.h + bottomPadding),
+      padding: bisaSheetPadding(context),
       decoration: BoxDecoration(
         color: AppColors.surface,
-        borderRadius: BorderRadius.vertical(top: Radius.circular(AppSpacing.xxlPx.r)),
+        borderRadius: BorderRadius.vertical(
+          top: Radius.circular(AppSpacing.xxlPx.r),
+        ),
       ),
       child: Column(
         mainAxisSize: MainAxisSize.min,
@@ -114,7 +116,7 @@ class _FilterBottomSheetState extends State<FilterBottomSheet> {
               ),
             ),
           ),
-          SizedBox(height: AppSpacing.xl),
+          SizedBox(height: AppSpacing.sectionGap),
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
@@ -178,7 +180,7 @@ class _FilterBottomSheetState extends State<FilterBottomSheet> {
                       ),
                     ],
                   ),
-                  SizedBox(height: AppSpacing.xxl),
+                  SizedBox(height: AppSpacing.sectionGap),
                   Text(
                     'marketplace.product_type'.tr(),
                     style: TextStyle(
@@ -208,7 +210,7 @@ class _FilterBottomSheetState extends State<FilterBottomSheet> {
                       ),
                     ],
                   ),
-                  SizedBox(height: AppSpacing.xxl),
+                  SizedBox(height: AppSpacing.sectionGap),
                   Text(
                     'marketplace.min_rating'.tr(),
                     style: TextStyle(
@@ -234,14 +236,15 @@ class _FilterBottomSheetState extends State<FilterBottomSheet> {
                       min: 0,
                       max: 5,
                       divisions: 5,
-                      label: _tempMinRating?.toStringAsFixed(1) ??
+                      label:
+                          _tempMinRating?.toStringAsFixed(1) ??
                           'marketplace.category_all'.tr(),
                       onChanged: (val) {
                         setState(() => _tempMinRating = val == 0 ? null : val);
                       },
                     ),
                   ),
-                  SizedBox(height: AppSpacing.xxl),
+                  SizedBox(height: AppSpacing.sectionGap),
                   Text(
                     'marketplace.price_range'.tr(),
                     style: TextStyle(
@@ -260,7 +263,9 @@ class _FilterBottomSheetState extends State<FilterBottomSheet> {
                         ),
                       ),
                       Padding(
-                        padding: EdgeInsets.symmetric(horizontal: AppSpacing.md),
+                        padding: EdgeInsets.symmetric(
+                          horizontal: AppSpacing.md,
+                        ),
                         child: Text(
                           '-',
                           style: TextStyle(
@@ -281,7 +286,7 @@ class _FilterBottomSheetState extends State<FilterBottomSheet> {
               ),
             ),
           ),
-          SizedBox(height: AppSpacing.xl),
+          SizedBox(height: AppSpacing.sectionGapLarge),
           SizedBox(
             width: double.infinity,
             height: 48.h,
@@ -324,7 +329,10 @@ class _FilterBottomSheetState extends State<FilterBottomSheet> {
         onTap: onTap,
         borderRadius: BorderRadius.circular(AppRadius.pill),
         child: Container(
-          padding: EdgeInsets.symmetric(horizontal: AppSpacing.md, vertical: AppSpacing.sm10),
+          padding: EdgeInsets.symmetric(
+            horizontal: AppSpacing.md,
+            vertical: AppSpacing.sm10,
+          ),
           decoration: BoxDecoration(
             color: isSelected ? AppColors.primaryLight : AppColors.white,
             border: Border.all(
@@ -370,7 +378,7 @@ class _FilterBottomSheetState extends State<FilterBottomSheet> {
           border: InputBorder.none,
           contentPadding: EdgeInsets.symmetric(
             horizontal: AppSpacing.md,
-                    vertical: AppSpacing.md12,
+            vertical: AppSpacing.md12,
           ),
         ),
       ),

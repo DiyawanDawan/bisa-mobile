@@ -15,6 +15,10 @@ import '../../../../shared/widgets/bisa_app_bar.dart';
 import '../../domain/entities/product_entity.dart';
 import '../../domain/entities/product_image_draft.dart';
 import '../widgets/product_image_editor.dart';
+import '../widgets/product_certificate_editor.dart';
+import '../widgets/product_certificate_draft_editor.dart';
+import '../../domain/entities/product_certificate_entity.dart';
+import '../bloc/product_certificate_cubit.dart';
 import '../utils/prediction_product_mapper.dart';
 import '../widgets/iot_prediction_import_sheet.dart';
 import '../widgets/product_specs_sheet.dart';
@@ -32,11 +36,7 @@ class AddEditProductPage extends StatefulWidget {
   final ProductEntity? product;
   final IotPredictionImportResult? predictionSeed;
 
-  const AddEditProductPage({
-    super.key,
-    this.product,
-    this.predictionSeed,
-  });
+  const AddEditProductPage({super.key, this.product, this.predictionSeed});
 
   @override
   State<AddEditProductPage> createState() => _AddEditProductPageState();
@@ -56,6 +56,8 @@ class _AddEditProductPageState extends State<AddEditProductPage> {
   late TextEditingController _minOrderController;
 
   ProductSpecsData _specsData = const ProductSpecsData();
+  ProductCertificateDraft? _certificateDraft;
+  bool _certificateSubmitInProgress = false;
 
   String _productMode = 'BIOMASS_MATERIAL';
   String _selectedBiomassaType = 'BIOCHAR';
@@ -99,10 +101,15 @@ class _AddEditProductPageState extends State<AddEditProductPage> {
       _productMode = widget.product!.productMode;
       _selectedCategoryId = widget.product!.categoryId;
       if (widget.product!.images != null) {
-        _imageDrafts = ProductImageDraft.fromProductImages(widget.product!.images);
+        _imageDrafts = ProductImageDraft.fromProductImages(
+          widget.product!.images,
+        );
       } else if (widget.product!.thumbnailUrl != null) {
         _imageDrafts = [
-          ProductImageDraft(id: 'thumb', remoteUrl: widget.product!.thumbnailUrl),
+          ProductImageDraft(
+            id: 'thumb',
+            remoteUrl: widget.product!.thumbnailUrl,
+          ),
         ];
       }
     }
@@ -116,7 +123,10 @@ class _AddEditProductPageState extends State<AddEditProductPage> {
     }
   }
 
-  void _applyPredictionSeed(IotPredictionImportResult result, {bool showSnack = true}) {
+  void _applyPredictionSeed(
+    IotPredictionImportResult result, {
+    bool showSnack = true,
+  }) {
     setState(() {
       _productMode = 'BIOMASS_MATERIAL';
       _selectedBiomassaType = result.biomassaType ?? 'BIOCHAR';
@@ -128,7 +138,9 @@ class _AddEditProductPageState extends State<AddEditProductPage> {
       }
       if (result.suggestedPricePerUnit != null &&
           _priceController.text.trim().isEmpty) {
-        _priceController.text = result.suggestedPricePerUnit!.round().toString();
+        _priceController.text = result.suggestedPricePerUnit!
+            .round()
+            .toString();
       }
     });
     _reloadCategories(context);
@@ -209,11 +221,15 @@ class _AddEditProductPageState extends State<AddEditProductPage> {
         data: {'imageBase64': imageBase64, 'mimeType': mimeType},
       );
 
-      final description = response.data?['data']?['description'] as String? ?? '';
+      final description =
+          response.data?['data']?['description'] as String? ?? '';
 
       if (description == 'BUKAN_PRODUK_BIOMASSA') {
         if (mounted) {
-          showErrorSnackBar(context, 'marketplace.generate_desc_not_biomass'.tr());
+          showErrorSnackBar(
+            context,
+            'marketplace.generate_desc_not_biomass'.tr(),
+          );
         }
         return;
       }
@@ -256,17 +272,14 @@ class _AddEditProductPageState extends State<AddEditProductPage> {
     if (_productMode == 'ORGANIC_PRODUCE') {
       return raw
           .where(
-            (c) =>
-                c.productMode == 'ORGANIC_PRODUCE' ||
-                c.productMode == null,
+            (c) => c.productMode == 'ORGANIC_PRODUCE' || c.productMode == null,
           )
           .toList(growable: false);
     }
     return raw
         .where(
           (c) =>
-              (c.productMode == 'BIOMASS_MATERIAL' ||
-                  c.productMode == null) &&
+              (c.productMode == 'BIOMASS_MATERIAL' || c.productMode == null) &&
               (c.biomassaType == _selectedBiomassaType ||
                   c.biomassaType == null),
         )
@@ -299,7 +312,9 @@ class _AddEditProductPageState extends State<AddEditProductPage> {
 
       final data = {
         'name': _nameController.text.trim(),
-        'biomassaType': _productMode == 'ORGANIC_PRODUCE' ? 'OTHER' : _selectedBiomassaType,
+        'biomassaType': _productMode == 'ORGANIC_PRODUCE'
+            ? 'OTHER'
+            : _selectedBiomassaType,
         'pricePerUnit': double.parse(_priceController.text),
         if (_originalPriceController.text.trim().isNotEmpty)
           'originalPrice': double.parse(_originalPriceController.text.trim()),
@@ -317,7 +332,44 @@ class _AddEditProductPageState extends State<AddEditProductPage> {
       };
 
       if (widget.product == null) {
-        context.read<MarketplaceCubit>().createProduct(data, payload.newImagePaths);
+        final draft = _certificateDraft;
+        if (draft == null) {
+          await context.read<MarketplaceCubit>().createProduct(
+            data,
+            payload.newImagePaths,
+          );
+        } else {
+          setState(() => _certificateSubmitInProgress = true);
+          final created = await context.read<MarketplaceCubit>().createProduct(
+            data,
+            payload.newImagePaths,
+          );
+          if (created == null || !mounted) {
+            if (mounted) setState(() => _certificateSubmitInProgress = false);
+            return;
+          }
+          try {
+            final certificateCubit = sl<ProductCertificateCubit>();
+            final submitted = await certificateCubit.submit(
+              productId: created.id,
+              localPath: draft.localPath,
+              metadata: draft.metadata,
+            );
+            await certificateCubit.close();
+            if (!submitted) throw Exception('Certificate upload failed');
+            if (mounted) {
+              showSuccessSnackBar(context, 'marketplace.product_added'.tr());
+            }
+          } catch (_) {
+            if (mounted) {
+              showErrorSnackBar(
+                context,
+                'certificate.upload_after_create_failed'.tr(),
+              );
+            }
+          }
+          if (mounted) Navigator.pop(context);
+        }
       } else {
         data['syncImages'] = 'true';
         context.read<MarketplaceCubit>().updateProduct(
@@ -376,283 +428,328 @@ class _AddEditProductPageState extends State<AddEditProductPage> {
             ),
             Expanded(
               child: BlocListener<MarketplaceCubit, MarketplaceState>(
-          listener: (context, state) {
-            state.maybeWhen(
-              loaded: (products, hasReachedMax) {
-                showSuccessSnackBar(
-                  context,
-                  isEdit
-                      ? 'marketplace.product_updated'.tr()
-                      : 'marketplace.product_added'.tr(),
-                );
-                Navigator.pop(context);
-              },
-              error: (message) async {
-                if (!context.mounted) return;
-                if (message.contains('toko') ||
-                    message.contains('pengiriman') ||
-                    message.contains('RajaOngkir')) {
-                  await ReadinessGate.ensureStoreReady(context);
-                  return;
-                }
-                showFailureSnackBarFromMessage(context, message);
-              },
-              orElse: () {},
-            );
-          },
-          child: SingleChildScrollView(
-            padding: EdgeInsets.fromLTRB(
-              _pageHPad.w,
-              12.h,
-              _pageHPad.w,
-              12.h,
-            ),
-            keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.onDrag,
-            child: Form(
-              key: _formKey,
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  _formSection(
-                    child: ProductImageEditor(
-                      key: _imageEditorKey,
-                      initialImages: _imageDrafts,
-                      onChanged: (items) => _imageDrafts = items,
-                    ),
+                listener: (context, state) {
+                  state.maybeWhen(
+                    loaded: (products, hasReachedMax) {
+                      if (_certificateSubmitInProgress) return;
+                      showSuccessSnackBar(
+                        context,
+                        isEdit
+                            ? 'marketplace.product_updated'.tr()
+                            : 'marketplace.product_added'.tr(),
+                      );
+                      Navigator.pop(context);
+                    },
+                    error: (message) async {
+                      if (!context.mounted) return;
+                      if (message.contains('toko') ||
+                          message.contains('pengiriman') ||
+                          message.contains('RajaOngkir')) {
+                        await ReadinessGate.ensureStoreReady(context);
+                        return;
+                      }
+                      showFailureSnackBarFromMessage(context, message);
+                    },
+                    orElse: () {},
+                  );
+                },
+                child: SingleChildScrollView(
+                  padding: EdgeInsets.fromLTRB(
+                    _pageHPad.w,
+                    12.h,
+                    _pageHPad.w,
+                    12.h,
                   ),
-                  SizedBox(height: _sectionGap.h),
-                  _formSection(
-                    title: 'marketplace.section_type_category'.tr(),
-                    children: [
-                      if (widget.product == null && _productMode == 'BIOMASS_MATERIAL')
-                        Padding(
-                          padding: EdgeInsets.only(bottom: _fieldGap.h),
-                          child: OutlinedButton.icon(
-                            onPressed: _importFromIot,
-                            icon: Icon(LucideIcons.radio, size: 18.sp),
-                            label: Text('marketplace.import_iot_cta'.tr()),
-                            style: OutlinedButton.styleFrom(
-                              foregroundColor: AppColors.primary,
-                              side: BorderSide(
-                                color: AppColors.primary.withValues(alpha: 0.35),
-                              ),
-                            ),
+                  keyboardDismissBehavior:
+                      ScrollViewKeyboardDismissBehavior.onDrag,
+                  child: Form(
+                    key: _formKey,
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        _formSection(
+                          child: ProductImageEditor(
+                            key: _imageEditorKey,
+                            initialImages: _imageDrafts,
+                            onChanged: (items) => _imageDrafts = items,
                           ),
                         ),
-                      _buildProductModeFormToggle(),
-                      if (_productMode == 'BIOMASS_MATERIAL')
-                        _buildBiomassaTypeSelector(),
-                      _buildCategoryPicker(),
-                    ],
-                  ),
-                  SizedBox(height: _sectionGap.h),
-                  _formSection(
-                    title: 'marketplace.section_product_info'.tr(),
-                    children: [
-                      CustomTextField(
-                        label: 'marketplace.product_name_label'.tr(),
-                        controller: _nameController,
-                        hint: _productMode == 'ORGANIC_PRODUCE'
-                            ? 'marketplace.product_name_hint_organic'.tr()
-                            : 'marketplace.product_name_hint_biomass'.tr(),
-                        isRequired: true,
-                        validator: (v) =>
-                            v!.isEmpty ? 'marketplace.required_field'.tr() : null,
-                      ),
-                      if (_productMode == 'BIOMASS_MATERIAL' &&
-                          _selectedBiomassaType == 'BIOCHAR')
-                        _buildDropdown(
-                          label: 'grade1'.tr(),
-                          value: _selectedGrade,
-                          items: ['A', 'B', 'C'],
-                          onChanged: (v) => setState(() => _selectedGrade = v),
-                        ),
-                      Row(
-                        children: [
-                          Expanded(
-                            child: CustomTextField(
-                              label: 'hargaperunit_1'.tr(),
-                              controller: _priceController,
-                              keyboardType: TextInputType.number,
-                              hint: '0',
-                              isRequired: true,
-                              validator: (v) =>
-                                  v!.isEmpty ? 'marketplace.required_short'.tr() : null,
-                            ),
-                          ),
-                          SizedBox(width: AppSpacing.sm),
-                          Expanded(
-                            child: _buildDropdown(
-                              label: 'satuan1'.tr(),
-                              value: _selectedUnit,
-                              items: ['KG', 'TON'],
-                              onChanged: (v) =>
-                                  setState(() => _selectedUnit = v!),
-                            ),
-                          ),
-                        ],
-                      ),
-                      Container(
-                        padding: EdgeInsets.symmetric(
-                          horizontal: AppSpacing.sm10,
-                    vertical: AppSpacing.sm,
-                        ),
-                        decoration: BoxDecoration(
-                          color: AppColors.grey50,
-                          borderRadius: BorderRadius.circular(AppRadius.button),
-                          border: Border.all(color: AppColors.grey100),
-                        ),
-                        child: Text(
-                          'marketplace.promo_hint'.tr(
-                            namedArgs: {'unit': _selectedUnit},
-                          ),
-                          style: TextStyle(
-                            fontSize: 10.sp,
-                            color: AppColors.textSecondary,
-                            height: 1.3,
-                          ),
-                        ),
-                      ),
-                      CustomTextField(
-                        label: 'marketplace.strikethrough_price'.tr(
-                          namedArgs: {'unit': _selectedUnit},
-                        ),
-                        controller: _originalPriceController,
-                        keyboardType: TextInputType.number,
-                        hint: 'marketplace.no_promo_hint'.tr(),
-                        isOptional: true,
-                      ),
-                    ],
-                  ),
-                  SizedBox(height: _sectionGap.h),
-                  ProductSpecsExpandableSection(
-                    key: ValueKey(_productMode),
-                    productMode: _productMode,
-                    specs: _specsData,
-                    onSpecsChanged: (data) => setState(() => _specsData = data),
-                    onOpenFullEditor: _openSpecsSheet,
-                  ),
-                  SizedBox(height: _sectionGap.h),
-                  _formSection(
-                    title: 'marketplace.section_stock_desc'.tr(),
-                    children: [
-                      Row(
-                        children: [
-                          Expanded(
-                            child: CustomTextField(
-                              label: 'stok1'.tr(),
-                              controller: _stockController,
-                              keyboardType: TextInputType.number,
-                              hint: '0',
-                              isRequired: true,
-                              validator: (v) =>
-                                  v!.isEmpty ? 'marketplace.required_short'.tr() : null,
-                            ),
-                          ),
-                          SizedBox(width: AppSpacing.sm),
-                          Expanded(
-                            child: CustomTextField(
-                              label: 'minorder'.tr(),
-                              controller: _minOrderController,
-                              keyboardType: TextInputType.number,
-                              hint: '100',
-                              isOptional: true,
-                            ),
-                          ),
-                        ],
-                      ),
-                      // Description field with ✨ Auto-generate button
-                      Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Row(
-                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                            children: [
-                              Text(
-                                'deskripsi'.tr(),
-                                style: TextStyle(
-                                  fontSize: 13.sp,
-                                  fontWeight: FontWeight.w600,
-                                  color: AppColors.textPrimary,
-                                ),
-                              ),
-                              GestureDetector(
-                                onTap: _isGeneratingDesc ? null : _generateDescription,
-                                child: AnimatedOpacity(
-                                  opacity: _isGeneratingDesc ? 0.5 : 1.0,
-                                  duration: const Duration(milliseconds: 200),
-                                  child: Container(
-                                    padding: EdgeInsets.symmetric(
-                                      horizontal: AppSpacing.sm,
-                                      vertical: 4.h,
+                        SizedBox(height: _sectionGap.h),
+                        _formSection(
+                          title: 'marketplace.section_type_category'.tr(),
+                          children: [
+                            if (widget.product == null &&
+                                _productMode == 'BIOMASS_MATERIAL')
+                              Padding(
+                                padding: EdgeInsets.only(bottom: _fieldGap.h),
+                                child: OutlinedButton.icon(
+                                  onPressed: _importFromIot,
+                                  icon: Icon(LucideIcons.radio, size: 18.sp),
+                                  label: Text(
+                                    'marketplace.import_iot_cta'.tr(),
+                                  ),
+                                  style: OutlinedButton.styleFrom(
+                                    foregroundColor: AppColors.primary,
+                                    side: BorderSide(
+                                      color: AppColors.primary.withValues(
+                                        alpha: 0.35,
+                                      ),
                                     ),
-                                    decoration: BoxDecoration(
-                                      gradient: AppColors.primaryGradient,
-                                      borderRadius: BorderRadius.circular(20),
-                                    ),
-                                    child: _isGeneratingDesc
-                                        ? Row(
-                                            mainAxisSize: MainAxisSize.min,
-                                            children: [
-                                              SizedBox(
-                                                width: 10.sp,
-                                                height: 10.sp,
-                                                child: const CircularProgressIndicator(
-                                                  strokeWidth: 1.5,
-                                                  color: AppColors.textOnPrimary,
-                                                ),
-                                              ),
-                                              SizedBox(width: 4.w),
-                                              Text(
-                                                'marketplace.generate_desc_loading'.tr(),
-                                                style: TextStyle(
-                                                  fontSize: 11.sp,
-                                                  color: AppColors.textOnPrimary,
-                                                  fontWeight: FontWeight.w600,
-                                                ),
-                                              ),
-                                            ],
-                                          )
-                                        : Text(
-                                            'marketplace.generate_desc_btn'.tr(),
-                                            style: TextStyle(
-                                              fontSize: 11.sp,
-                                              color: AppColors.textOnPrimary,
-                                              fontWeight: FontWeight.w600,
-                                            ),
-                                          ),
                                   ),
                                 ),
                               ),
-                            ],
+                            _buildProductModeFormToggle(),
+                            if (_productMode == 'BIOMASS_MATERIAL')
+                              _buildBiomassaTypeSelector(),
+                            _buildCategoryPicker(),
+                          ],
+                        ),
+                        SizedBox(height: _sectionGap.h),
+                        _formSection(
+                          title: 'marketplace.section_product_info'.tr(),
+                          children: [
+                            CustomTextField(
+                              label: 'marketplace.product_name_label'.tr(),
+                              controller: _nameController,
+                              hint: _productMode == 'ORGANIC_PRODUCE'
+                                  ? 'marketplace.product_name_hint_organic'.tr()
+                                  : 'marketplace.product_name_hint_biomass'
+                                        .tr(),
+                              isRequired: true,
+                              validator: (v) => v!.isEmpty
+                                  ? 'marketplace.required_field'.tr()
+                                  : null,
+                            ),
+                            if (_productMode == 'BIOMASS_MATERIAL' &&
+                                _selectedBiomassaType == 'BIOCHAR')
+                              _buildDropdown(
+                                label: 'grade1'.tr(),
+                                value: _selectedGrade,
+                                items: ['A', 'B', 'C'],
+                                onChanged: (v) =>
+                                    setState(() => _selectedGrade = v),
+                              ),
+                            Row(
+                              children: [
+                                Expanded(
+                                  child: CustomTextField(
+                                    label: 'hargaperunit_1'.tr(),
+                                    controller: _priceController,
+                                    keyboardType: TextInputType.number,
+                                    hint: '0',
+                                    isRequired: true,
+                                    validator: (v) => v!.isEmpty
+                                        ? 'marketplace.required_short'.tr()
+                                        : null,
+                                  ),
+                                ),
+                                SizedBox(width: AppSpacing.sm),
+                                Expanded(
+                                  child: _buildDropdown(
+                                    label: 'satuan1'.tr(),
+                                    value: _selectedUnit,
+                                    items: ['KG', 'TON'],
+                                    onChanged: (v) =>
+                                        setState(() => _selectedUnit = v!),
+                                  ),
+                                ),
+                              ],
+                            ),
+                            Container(
+                              padding: EdgeInsets.symmetric(
+                                horizontal: AppSpacing.sm10,
+                                vertical: AppSpacing.sm,
+                              ),
+                              decoration: BoxDecoration(
+                                color: AppColors.grey50,
+                                borderRadius: BorderRadius.circular(
+                                  AppRadius.button,
+                                ),
+                                border: Border.all(color: AppColors.grey100),
+                              ),
+                              child: Text(
+                                'marketplace.promo_hint'.tr(
+                                  namedArgs: {'unit': _selectedUnit},
+                                ),
+                                style: TextStyle(
+                                  fontSize: 10.sp,
+                                  color: AppColors.textSecondary,
+                                  height: 1.3,
+                                ),
+                              ),
+                            ),
+                            CustomTextField(
+                              label: 'marketplace.strikethrough_price'.tr(
+                                namedArgs: {'unit': _selectedUnit},
+                              ),
+                              controller: _originalPriceController,
+                              keyboardType: TextInputType.number,
+                              hint: 'marketplace.no_promo_hint'.tr(),
+                              isOptional: true,
+                            ),
+                          ],
+                        ),
+                        SizedBox(height: _sectionGap.h),
+                        ProductSpecsExpandableSection(
+                          key: ValueKey(_productMode),
+                          productMode: _productMode,
+                          specs: _specsData,
+                          onSpecsChanged: (data) =>
+                              setState(() => _specsData = data),
+                          onOpenFullEditor: _openSpecsSheet,
+                        ),
+                        SizedBox(height: _sectionGap.h),
+                        _formSection(
+                          title: 'marketplace.section_stock_desc'.tr(),
+                          children: [
+                            Row(
+                              children: [
+                                Expanded(
+                                  child: CustomTextField(
+                                    label: 'stok1'.tr(),
+                                    controller: _stockController,
+                                    keyboardType: TextInputType.number,
+                                    hint: '0',
+                                    isRequired: true,
+                                    validator: (v) => v!.isEmpty
+                                        ? 'marketplace.required_short'.tr()
+                                        : null,
+                                  ),
+                                ),
+                                SizedBox(width: AppSpacing.sm),
+                                Expanded(
+                                  child: CustomTextField(
+                                    label: 'minorder'.tr(),
+                                    controller: _minOrderController,
+                                    keyboardType: TextInputType.number,
+                                    hint: '100',
+                                    isOptional: true,
+                                  ),
+                                ),
+                              ],
+                            ),
+                            // Description field with ✨ Auto-generate button
+                            Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Row(
+                                  mainAxisAlignment:
+                                      MainAxisAlignment.spaceBetween,
+                                  children: [
+                                    Text(
+                                      'deskripsi'.tr(),
+                                      style: TextStyle(
+                                        fontSize: 13.sp,
+                                        fontWeight: FontWeight.w600,
+                                        color: AppColors.textPrimary,
+                                      ),
+                                    ),
+                                    GestureDetector(
+                                      onTap: _isGeneratingDesc
+                                          ? null
+                                          : _generateDescription,
+                                      child: AnimatedOpacity(
+                                        opacity: _isGeneratingDesc ? 0.5 : 1.0,
+                                        duration: const Duration(
+                                          milliseconds: 200,
+                                        ),
+                                        child: Container(
+                                          padding: EdgeInsets.symmetric(
+                                            horizontal: AppSpacing.sm,
+                                            vertical: 4.h,
+                                          ),
+                                          decoration: BoxDecoration(
+                                            gradient: AppColors.primaryGradient,
+                                            borderRadius: BorderRadius.circular(
+                                              20,
+                                            ),
+                                          ),
+                                          child: _isGeneratingDesc
+                                              ? Row(
+                                                  mainAxisSize:
+                                                      MainAxisSize.min,
+                                                  children: [
+                                                    SizedBox(
+                                                      width: 10.sp,
+                                                      height: 10.sp,
+                                                      child:
+                                                          const CircularProgressIndicator(
+                                                            strokeWidth: 1.5,
+                                                            color: AppColors
+                                                                .textOnPrimary,
+                                                          ),
+                                                    ),
+                                                    SizedBox(width: 4.w),
+                                                    Text(
+                                                      'marketplace.generate_desc_loading'
+                                                          .tr(),
+                                                      style: TextStyle(
+                                                        fontSize: 11.sp,
+                                                        color: AppColors
+                                                            .textOnPrimary,
+                                                        fontWeight:
+                                                            FontWeight.w600,
+                                                      ),
+                                                    ),
+                                                  ],
+                                                )
+                                              : Text(
+                                                  'marketplace.generate_desc_btn'
+                                                      .tr(),
+                                                  style: TextStyle(
+                                                    fontSize: 11.sp,
+                                                    color:
+                                                        AppColors.textOnPrimary,
+                                                    fontWeight: FontWeight.w600,
+                                                  ),
+                                                ),
+                                        ),
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                                SizedBox(height: 4.h),
+                                CustomTextField(
+                                  label: '',
+                                  controller: _descriptionController,
+                                  maxLines: 3,
+                                  hint: 'jelaskan_kualitas_produk'.tr(),
+                                ),
+                              ],
+                            ),
+                            _buildDropdown(
+                              label: 'status_produk'.tr(),
+                              value: _selectedStatus,
+                              items: [
+                                'ACTIVE',
+                                'DRAFT',
+                                'INACTIVE',
+                                'OUT_OF_STOCK',
+                              ],
+                              onChanged: (v) =>
+                                  setState(() => _selectedStatus = v!),
+                            ),
+                          ],
+                        ),
+                        SizedBox(height: _sectionGap.h),
+                        if (widget.product != null)
+                          ProductCertificateEditor(
+                            productId: widget.product!.id,
+                          )
+                        else
+                          ProductCertificateDraftEditor(
+                            onChanged: (draft) => _certificateDraft = draft,
                           ),
-                          SizedBox(height: 4.h),
-                          CustomTextField(
-                            label: '',
-                            controller: _descriptionController,
-                            maxLines: 3,
-                            hint: 'jelaskan_kualitas_produk'.tr(),
-                          ),
-                        ],
-                      ),
-                      _buildDropdown(
-                        label: 'status_produk'.tr(),
-                        value: _selectedStatus,
-                        items: ['ACTIVE', 'DRAFT', 'INACTIVE', 'OUT_OF_STOCK'],
-                        onChanged: (v) => setState(() => _selectedStatus = v!),
-                      ),
-                    ],
+                      ],
+                    ),
                   ),
-                ],
+                ),
               ),
             ),
-          ),
+          ],
         ),
       ),
-    ],
-  ),
-),
-);
+    );
   }
 
   Widget _buildSubmitBar(bool isEdit) {
@@ -683,11 +780,7 @@ class _AddEditProductPageState extends State<AddEditProductPage> {
     );
   }
 
-  Widget _formSection({
-    String? title,
-    Widget? child,
-    List<Widget>? children,
-  }) {
+  Widget _formSection({String? title, Widget? child, List<Widget>? children}) {
     final fields = child != null ? [child] : (children ?? const []);
     return Container(
       width: double.infinity,
@@ -932,20 +1025,22 @@ class _AddEditProductPageState extends State<AddEditProductPage> {
   Widget _buildFormModeTab({required String label, required String mode}) {
     final isSelected = _productMode == mode;
     return GestureDetector(
-      onTap: widget.product != null ? null : () {
-        setState(() {
-          _productMode = mode;
-          _specsData = const ProductSpecsData();
-          if (mode == 'ORGANIC_PRODUCE') {
-            _selectedUnit = 'KG';
-          } else {
-            _selectedUnit = 'TON';
-            _selectedBiomassaType = 'BIOCHAR';
-          }
-          _selectedCategoryId = null;
-        });
-        _reloadCategories(context);
-      },
+      onTap: widget.product != null
+          ? null
+          : () {
+              setState(() {
+                _productMode = mode;
+                _specsData = const ProductSpecsData();
+                if (mode == 'ORGANIC_PRODUCE') {
+                  _selectedUnit = 'KG';
+                } else {
+                  _selectedUnit = 'TON';
+                  _selectedBiomassaType = 'BIOCHAR';
+                }
+                _selectedCategoryId = null;
+              });
+              _reloadCategories(context);
+            },
       child: AnimatedContainer(
         duration: const Duration(milliseconds: 200),
         alignment: Alignment.center,
@@ -959,7 +1054,9 @@ class _AddEditProductPageState extends State<AddEditProductPage> {
           maxLines: 2,
           overflow: TextOverflow.ellipsis,
           style: TextStyle(
-            color: isSelected ? AppColors.textOnPrimary : AppColors.textSecondary,
+            color: isSelected
+                ? AppColors.textOnPrimary
+                : AppColors.textSecondary,
             fontWeight: isSelected ? FontWeight.w700 : FontWeight.w600,
             fontSize: 11.sp,
             height: 1.2,

@@ -5,6 +5,7 @@ import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:go_router/go_router.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
 import '../../../../core/constants/app_colors.dart';
+import '../../../../core/constants/app_layout.dart';
 import '../../../../core/utils/app_version.dart';
 import '../../../../shared/widgets/bisa_app_bar.dart';
 import '../../../../shared/widgets/app_version_label.dart';
@@ -39,12 +40,12 @@ class _SettingsPageState extends State<SettingsPage> {
           );
 
           return SingleChildScrollView(
-            padding: EdgeInsets.all(20.w),
+            padding: EdgeInsets.all(AppSpacing.pageGutter),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 _sectionTitle('profile.settings_section_preferences'.tr()),
-                SizedBox(height: 12.h),
+                SizedBox(height: AppSpacing.md12),
                 _settingsCard([
                   _settingsItem(
                     LucideIcons.languages,
@@ -86,9 +87,9 @@ class _SettingsPageState extends State<SettingsPage> {
                     ),
                   ),
                 ]),
-                SizedBox(height: 16.h),
+                SizedBox(height: AppSpacing.sectionGap),
                 _sectionTitle('profile.settings_section_security'.tr()),
-                SizedBox(height: 8.h),
+                SizedBox(height: AppSpacing.compact),
                 _settingsCard([
                   _settingsItem(
                     LucideIcons.lock,
@@ -109,9 +110,9 @@ class _SettingsPageState extends State<SettingsPage> {
                     () => context.push('/privacy'),
                   ),
                 ]),
-                SizedBox(height: 16.h),
+                SizedBox(height: AppSpacing.sectionGap),
                 _sectionTitle('profile.settings_section_about'.tr()),
-                SizedBox(height: 8.h),
+                SizedBox(height: AppSpacing.compact),
                 _settingsCard([
                   FutureBuilder<String>(
                     future: AppVersion.fullLabel,
@@ -135,8 +136,10 @@ class _SettingsPageState extends State<SettingsPage> {
                     () => context.push('/privacy'),
                   ),
                 ]),
-                SizedBox(height: 40.h),
-                Center(child: BisaLogo(width: 64.w, height: 28.h)),
+                SizedBox(height: AppSpacing.spacious),
+                Center(
+                  child: BisaLogo(width: 64.w, height: 28.h),
+                ),
                 SizedBox(height: 12.h),
                 const Center(child: AppVersionLabel()),
                 SizedBox(height: 6.h),
@@ -237,7 +240,8 @@ class _SettingsPageState extends State<SettingsPage> {
         subtitle,
         style: TextStyle(fontSize: 12.sp, color: AppColors.textSecondary),
       ),
-      trailing: trailing ??
+      trailing:
+          trailing ??
           (onTap != null
               ? Icon(
                   LucideIcons.chevronRight,
@@ -247,5 +251,4 @@ class _SettingsPageState extends State<SettingsPage> {
               : null),
     );
   }
-
 }

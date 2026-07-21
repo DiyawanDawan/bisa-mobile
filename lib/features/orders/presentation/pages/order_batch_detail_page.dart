@@ -46,8 +46,9 @@ class _OrderBatchDetailPageState extends State<OrderBatchDetailPage> {
       _loading = true;
       _error = null;
     });
-    final result =
-        await sl<OrderRepository>().getCheckoutBatchDetail(widget.anchorOrderId);
+    final result = await sl<OrderRepository>().getCheckoutBatchDetail(
+      widget.anchorOrderId,
+    );
     if (!mounted) return;
     result.fold(
       (f) => setState(() {
@@ -94,56 +95,60 @@ class _OrderBatchDetailPageState extends State<OrderBatchDetailPage> {
         onBackTap: () => context.pop(),
       ),
       body: _loading
-          ? Center(child: ShimmerLoading(child: SizedBox(height: 200.h)))
+          ? Center(
+              child: ShimmerLoading(child: SizedBox(height: 200.h)),
+            )
           : _error != null
-              ? _ErrorBody(message: _error!, onRetry: _load)
-              : _batch == null
-                  ? _ErrorBody(
-                      message: 'orders.data_not_found'.tr(),
-                      onRetry: _load,
-                    )
-                  : RefreshIndicator(
-                      onRefresh: _load,
-                      color: AppColors.primary,
-                      child: ListView(
-                        padding: EdgeInsets.fromLTRB(20.w, 12.h, 20.w, 24.h),
-                        children: [
-                          _BatchSummaryCard(
-                            batch: _batch!,
-                            address: _addressLine(_batch!),
-                            onCopy: () => _copy(_batch!.displayOrderNumber),
-                          ),
-                          SizedBox(height: AppSpacing.md),
-          Text(
-            'orders.batch_per_store_title'.tr(
-              namedArgs: {'count': '${_batch!.orders.length}'},
-            ),
-            style: TextStyle(
-              fontSize: 14.sp,
-              fontWeight: FontWeight.w900,
-              color: AppColors.textPrimary,
-            ),
-          ),
-          SizedBox(height: 4.h),
-          Text(
-            'orders.batch_per_store_subtitle'.tr(),
-            style: TextStyle(
-              fontSize: 11.sp,
-              height: 1.4,
-              color: AppColors.textSecondary,
-            ),
-          ),
-                          SizedBox(height: AppSpacing.md12),
-                          ..._batch!.orders.map(
-                            (order) => _SupplierDetailCard(
-                              order: order,
-                              tracking: _trackingOf(order),
-                              onOpenDetail: () => context.push('/order/${order.id}'),
-                            ),
-                          ),
-                        ],
-                      ),
+          ? _ErrorBody(message: _error!, onRetry: _load)
+          : _batch == null
+          ? _ErrorBody(message: 'orders.data_not_found'.tr(), onRetry: _load)
+          : RefreshIndicator(
+              onRefresh: _load,
+              color: AppColors.primary,
+              child: ListView(
+                padding: EdgeInsets.fromLTRB(
+                  AppSpacing.pageGutter,
+                  AppSpacing.md12,
+                  AppSpacing.pageGutter,
+                  AppSpacing.spacious,
+                ),
+                children: [
+                  _BatchSummaryCard(
+                    batch: _batch!,
+                    address: _addressLine(_batch!),
+                    onCopy: () => _copy(_batch!.displayOrderNumber),
+                  ),
+                  SizedBox(height: AppSpacing.md),
+                  Text(
+                    'orders.batch_per_store_title'.tr(
+                      namedArgs: {'count': '${_batch!.orders.length}'},
                     ),
+                    style: TextStyle(
+                      fontSize: 14.sp,
+                      fontWeight: FontWeight.w900,
+                      color: AppColors.textPrimary,
+                    ),
+                  ),
+                  SizedBox(height: 4.h),
+                  Text(
+                    'orders.batch_per_store_subtitle'.tr(),
+                    style: TextStyle(
+                      fontSize: 11.sp,
+                      height: 1.4,
+                      color: AppColors.textSecondary,
+                    ),
+                  ),
+                  SizedBox(height: AppSpacing.md12),
+                  ..._batch!.orders.map(
+                    (order) => _SupplierDetailCard(
+                      order: order,
+                      tracking: _trackingOf(order),
+                      onOpenDetail: () => context.push('/order/${order.id}'),
+                    ),
+                  ),
+                ],
+              ),
+            ),
     );
   }
 }
@@ -185,8 +190,10 @@ class _BatchSummaryCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final dateLabel =
-        DateFormat('d MMMM yyyy, HH:mm', 'id_ID').format(batch.createdAt);
+    final dateLabel = DateFormat(
+      'd MMMM yyyy, HH:mm',
+      'id_ID',
+    ).format(batch.createdAt);
 
     return Container(
       padding: EdgeInsets.all(AppSpacing.md),
@@ -242,24 +249,37 @@ class _BatchSummaryCard extends StatelessWidget {
                     ),
                   ),
                 ),
-                Icon(LucideIcons.copy, size: 14.sp, color: AppColors.textSecondary),
+                Icon(
+                  LucideIcons.copy,
+                  size: 14.sp,
+                  color: AppColors.textSecondary,
+                ),
               ],
             ),
           ),
           SizedBox(height: AppSpacing.sm10),
-          Text(dateLabel,
-              style: TextStyle(fontSize: 11.sp, color: AppColors.textSecondary)),
+          Text(
+            dateLabel,
+            style: TextStyle(fontSize: 11.sp, color: AppColors.textSecondary),
+          ),
           if (address != null) ...[
             SizedBox(height: AppSpacing.sm10),
             Row(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Icon(LucideIcons.mapPin, size: 14.sp, color: AppColors.textSecondary),
+                Icon(
+                  LucideIcons.mapPin,
+                  size: 14.sp,
+                  color: AppColors.textSecondary,
+                ),
                 SizedBox(width: 6.w),
                 Expanded(
                   child: Text(
                     address!,
-                    style: TextStyle(fontSize: 11.sp, color: AppColors.textSecondary),
+                    style: TextStyle(
+                      fontSize: 11.sp,
+                      color: AppColors.textSecondary,
+                    ),
                   ),
                 ),
               ],
@@ -307,10 +327,9 @@ class _SupplierDetailCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final sellerName =
-        order.seller.name.isNotEmpty
-            ? order.seller.name
-            : 'orders.fallback_supplier'.tr();
+    final sellerName = order.seller.name.isNotEmpty
+        ? order.seller.name
+        : 'orders.fallback_supplier'.tr();
 
     return Container(
       margin: EdgeInsets.only(bottom: AppSpacing.md12),
@@ -392,7 +411,8 @@ class _SupplierDetailCard extends StatelessWidget {
                       width: 52.w,
                       height: 52.w,
                       color: AppColors.grey50,
-                      child: item.thumbnailUrl != null &&
+                      child:
+                          item.thumbnailUrl != null &&
                               item.thumbnailUrl!.isNotEmpty
                           ? BisaNetworkImage(
                               imageUrl: item.thumbnailUrl!,
@@ -445,7 +465,10 @@ class _SupplierDetailCard extends StatelessWidget {
             children: [
               Text(
                 'orders.store_subtotal'.tr(),
-                style: TextStyle(fontSize: 11.sp, color: AppColors.textSecondary),
+                style: TextStyle(
+                  fontSize: 11.sp,
+                  color: AppColors.textSecondary,
+                ),
               ),
               Text(
                 formatMoneyIdr(order.totalAmount),

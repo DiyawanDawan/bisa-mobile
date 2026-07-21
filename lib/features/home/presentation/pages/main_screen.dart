@@ -124,8 +124,6 @@ class _MainScreenState extends State<MainScreen> {
         final isAuthenticated = user != null;
         final isSupplier = user?.role == 'SUPPLIER';
 
-        final bottomInset = MediaQuery.paddingOf(context).bottom;
-
         return MainShellScope(
           selectTab: _selectTab,
           child: Scaffold(
@@ -135,8 +133,9 @@ class _MainScreenState extends State<MainScreen> {
               children: _getPages(isSupplier),
             ),
             extendBody: false,
+            // Scaffold sudah meletakkan FAB di atas bottom nav; jangan double-add system inset.
             floatingActionButton: Padding(
-              padding: EdgeInsets.only(bottom: bottomInset + 4.h),
+              padding: EdgeInsets.only(bottom: 4.h),
               child: FloatingActionButton(
                 onPressed: () => context.push('/ai-chat'),
                 backgroundColor: AppColors.transparent,

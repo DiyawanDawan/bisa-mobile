@@ -89,7 +89,7 @@ class _HelpCenterPageState extends State<HelpCenterPage> {
               onRefresh: _load,
               child: SingleChildScrollView(
                 physics: const AlwaysScrollableScrollPhysics(),
-                padding: EdgeInsets.all(20.w),
+                padding: EdgeInsets.all(AppSpacing.comfortable),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
@@ -137,7 +137,7 @@ class _HelpCenterPageState extends State<HelpCenterPage> {
 
   Widget _buildContactCard() {
     return Container(
-      padding: EdgeInsets.all(20.w),
+      padding: EdgeInsets.all(AppSpacing.comfortable),
       decoration: BoxDecoration(
         gradient: LinearGradient(
           colors: [AppColors.primary, AppColors.primary.withValues(alpha: 0.8)],

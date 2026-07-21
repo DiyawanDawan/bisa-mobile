@@ -31,6 +31,7 @@ import '../bloc/product_management_cubit.dart';
 import '../bloc/review_cubit.dart';
 import '../bloc/review_state.dart';
 import '../widgets/product_image_manager_section.dart';
+import '../widgets/product_certificate_editor.dart';
 import 'dart:convert';
 
 import 'package:file_picker/file_picker.dart';
@@ -49,9 +50,16 @@ class ProductManagementDetailPage extends StatelessWidget {
   Widget build(BuildContext context) {
     return MultiBlocProvider(
       providers: [
-        BlocProvider(create: (_) => sl<ProductManagementCubit>()..getProductDetail(productId)),
-        BlocProvider(create: (_) => sl<ReviewCubit>()..getProductReviews(productId)),
-        BlocProvider(create: (_) => sl<NegotiationCubit>()..getIncomingOffers()),
+        BlocProvider(
+          create: (_) =>
+              sl<ProductManagementCubit>()..getProductDetail(productId),
+        ),
+        BlocProvider(
+          create: (_) => sl<ReviewCubit>()..getProductReviews(productId),
+        ),
+        BlocProvider(
+          create: (_) => sl<NegotiationCubit>()..getIncomingOffers(),
+        ),
       ],
       child: BlocConsumer<ProductManagementCubit, ProductManagementState>(
         listener: (context, state) {
@@ -61,7 +69,10 @@ class ProductManagementDetailPage extends StatelessWidget {
               showSuccessSnackBar(context, 'marketplace.product_deleted'.tr());
             },
             duplicated: (product) {
-              showSuccessSnackBar(context, 'marketplace.product_duplicated'.tr());
+              showSuccessSnackBar(
+                context,
+                'marketplace.product_duplicated'.tr(),
+              );
               context.pushReplacement('/product-manage/${product.id}');
             },
             error: (message) {
@@ -94,7 +105,9 @@ class ProductManagementDetailPage extends StatelessWidget {
                       Text(
                         message,
                         textAlign: TextAlign.center,
-                        style: AppTextStyles.body(color: AppColors.textSecondary),
+                        style: AppTextStyles.body(
+                          color: AppColors.textSecondary,
+                        ),
                       ),
                       SizedBox(height: AppSpacing.md),
                       TextButton(
@@ -189,11 +202,16 @@ class ProductManagementDetailPage extends StatelessWidget {
           _buildPromotionSection(context, p),
           SizedBox(height: _secGap.h),
           _buildVideoSection(context, p),
+          SizedBox(height: _secGap.h),
+          ProductCertificateEditor(productId: p.id),
           _section(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                _rowHeader('marketplace.section_product_info_short'.tr(), onEdit: () => _editTitle(context, p)),
+                _rowHeader(
+                  'marketplace.section_product_info_short'.tr(),
+                  onEdit: () => _editTitle(context, p),
+                ),
                 SizedBox(height: 6.h),
                 _buildInfoGrid(context, p),
               ],
@@ -204,7 +222,10 @@ class ProductManagementDetailPage extends StatelessWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                _rowHeader('marketplace.section_stock_price'.tr(), onEdit: () => _editStock(context, p)),
+                _rowHeader(
+                  'marketplace.section_stock_price'.tr(),
+                  onEdit: () => _editStock(context, p),
+                ),
                 SizedBox(height: 6.h),
                 _buildStockGrid(context, p),
               ],
@@ -215,7 +236,10 @@ class ProductManagementDetailPage extends StatelessWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                _rowHeader('marketplace.section_description'.tr(), onEdit: () => _editDescription(context, p)),
+                _rowHeader(
+                  'marketplace.section_description'.tr(),
+                  onEdit: () => _editDescription(context, p),
+                ),
                 SizedBox(height: 6.h),
                 _buildDescriptionBody(p),
               ],
@@ -227,7 +251,10 @@ class ProductManagementDetailPage extends StatelessWidget {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  _rowHeader('marketplace.section_specs'.tr(), onEdit: () => _editSpecs(context, p)),
+                  _rowHeader(
+                    'marketplace.section_specs'.tr(),
+                    onEdit: () => _editSpecs(context, p),
+                  ),
                   SizedBox(height: 6.h),
                   _buildSpecsBody(p),
                 ],
@@ -239,7 +266,10 @@ class ProductManagementDetailPage extends StatelessWidget {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  _rowHeader('marketplace.section_specs'.tr(), onEdit: () => _editSpecs(context, p)),
+                  _rowHeader(
+                    'marketplace.section_specs'.tr(),
+                    onEdit: () => _editSpecs(context, p),
+                  ),
                   SizedBox(height: 6.h),
                   Text(
                     'marketplace.no_specs_hint'.tr(),
@@ -446,7 +476,10 @@ class ProductManagementDetailPage extends StatelessWidget {
             Text(
               'marketplace.promote_active_until'.tr(
                 namedArgs: {
-                  'date': LocaleFormatters.formatDateTime(context, p.promotedUntil!),
+                  'date': LocaleFormatters.formatDateTime(
+                    context,
+                    p.promotedUntil!,
+                  ),
                 },
               ),
               style: TextStyle(fontSize: 12.sp, color: AppColors.success),
@@ -466,7 +499,11 @@ class ProductManagementDetailPage extends StatelessWidget {
           SizedBox(height: AppSpacing.sm10),
           Text(
             'marketplace.promote_hint'.tr(),
-            style: TextStyle(fontSize: 11.sp, color: AppColors.textSecondary, height: 1.4),
+            style: TextStyle(
+              fontSize: 11.sp,
+              color: AppColors.textSecondary,
+              height: 1.4,
+            ),
           ),
           SizedBox(height: AppSpacing.md12),
           CustomButton(
@@ -493,7 +530,11 @@ class ProductManagementDetailPage extends StatelessWidget {
           SizedBox(height: AppSpacing.sm),
           Text(
             'marketplace.video_section_hint'.tr(),
-            style: TextStyle(fontSize: 11.sp, color: AppColors.textSecondary, height: 1.4),
+            style: TextStyle(
+              fontSize: 11.sp,
+              color: AppColors.textSecondary,
+              height: 1.4,
+            ),
           ),
           if (hasVideo) ...[
             SizedBox(height: AppSpacing.md12),
@@ -515,7 +556,11 @@ class ProductManagementDetailPage extends StatelessWidget {
                 Expanded(
                   child: OutlinedButton.icon(
                     onPressed: () => _confirmDeleteVideo(context, p),
-                    icon: Icon(LucideIcons.trash2, size: 16.sp, color: AppColors.error),
+                    icon: Icon(
+                      LucideIcons.trash2,
+                      size: 16.sp,
+                      color: AppColors.error,
+                    ),
                     label: Text(
                       'marketplace.video_remove'.tr(),
                       style: TextStyle(color: AppColors.error),
@@ -537,7 +582,10 @@ class ProductManagementDetailPage extends StatelessWidget {
     );
   }
 
-  Future<void> _pickAndUploadVideo(BuildContext context, ProductEntity p) async {
+  Future<void> _pickAndUploadVideo(
+    BuildContext context,
+    ProductEntity p,
+  ) async {
     final result = await FilePicker.platform.pickFiles(
       type: FileType.video,
       allowMultiple: false,
@@ -545,7 +593,10 @@ class ProductManagementDetailPage extends StatelessWidget {
     final path = result?.files.single.path;
     if (path == null || !context.mounted) return;
 
-    final err = await context.read<ProductManagementCubit>().uploadProductVideo(p.id, path);
+    final err = await context.read<ProductManagementCubit>().uploadProductVideo(
+      p.id,
+      path,
+    );
     if (!context.mounted) return;
     if (err != null) {
       showFailureSnackBarFromMessage(context, err);
@@ -554,23 +605,34 @@ class ProductManagementDetailPage extends StatelessWidget {
     }
   }
 
-  Future<void> _confirmDeleteVideo(BuildContext context, ProductEntity p) async {
+  Future<void> _confirmDeleteVideo(
+    BuildContext context,
+    ProductEntity p,
+  ) async {
     final ok = await showDialog<bool>(
       context: context,
       builder: (ctx) => AlertDialog(
         title: Text('marketplace.video_remove_title'.tr()),
         content: Text('marketplace.video_remove_body'.tr()),
         actions: [
-          TextButton(onPressed: () => Navigator.pop(ctx, false), child: Text('cancel'.tr())),
+          TextButton(
+            onPressed: () => Navigator.pop(ctx, false),
+            child: Text('cancel'.tr()),
+          ),
           TextButton(
             onPressed: () => Navigator.pop(ctx, true),
-            child: Text('marketplace.video_remove'.tr(), style: TextStyle(color: AppColors.error)),
+            child: Text(
+              'marketplace.video_remove'.tr(),
+              style: TextStyle(color: AppColors.error),
+            ),
           ),
         ],
       ),
     );
     if (ok != true || !context.mounted) return;
-    final err = await context.read<ProductManagementCubit>().deleteProductVideo(p.id);
+    final err = await context.read<ProductManagementCubit>().deleteProductVideo(
+      p.id,
+    );
     if (!context.mounted) return;
     if (err != null) {
       showFailureSnackBarFromMessage(context, err);
@@ -584,16 +646,27 @@ class ProductManagementDetailPage extends StatelessWidget {
         title: Text('marketplace.promote_confirm_title'.tr()),
         content: Text('marketplace.promote_confirm_body'.tr()),
         actions: [
-          TextButton(onPressed: () => Navigator.pop(ctx, false), child: Text('cancel'.tr())),
+          TextButton(
+            onPressed: () => Navigator.pop(ctx, false),
+            child: Text('cancel'.tr()),
+          ),
           TextButton(
             onPressed: () => Navigator.pop(ctx, true),
-            child: Text('marketplace.promote_cta'.tr(), style: TextStyle(color: AppColors.primary, fontWeight: FontWeight.w700)),
+            child: Text(
+              'marketplace.promote_cta'.tr(),
+              style: TextStyle(
+                color: AppColors.primary,
+                fontWeight: FontWeight.w700,
+              ),
+            ),
           ),
         ],
       ),
     );
     if (ok != true || !context.mounted) return;
-    final err = await context.read<ProductManagementCubit>().promoteProduct(p.id);
+    final err = await context.read<ProductManagementCubit>().promoteProduct(
+      p.id,
+    );
     if (!context.mounted) return;
     if (err != null) {
       showFailureSnackBarFromMessage(context, err);
@@ -605,7 +678,12 @@ class ProductManagementDetailPage extends StatelessWidget {
   Widget _buildQuickActions(BuildContext context, ProductEntity p) {
     final isActive = p.status.toUpperCase() == 'ACTIVE';
     return Padding(
-      padding: EdgeInsets.fromLTRB(_hPad.w, AppSpacing.sm10, _hPad.w, AppSpacing.xs6),
+      padding: EdgeInsets.fromLTRB(
+        _hPad.w,
+        AppSpacing.sm10,
+        _hPad.w,
+        AppSpacing.xs6,
+      ),
       child: Row(
         children: [
           Expanded(
@@ -629,7 +707,9 @@ class ProductManagementDetailPage extends StatelessWidget {
           Expanded(
             child: _actionBtn(
               isActive ? LucideIcons.eyeOff : LucideIcons.eye,
-              isActive ? 'marketplace.deactivate'.tr() : 'marketplace.activate'.tr(),
+              isActive
+                  ? 'marketplace.deactivate'.tr()
+                  : 'marketplace.activate'.tr(),
               isActive ? AppColors.warning : AppColors.success,
               () => _confirmToggleStatus(context, p),
             ),
@@ -700,10 +780,11 @@ class ProductManagementDetailPage extends StatelessWidget {
 
   Widget _buildInfoGrid(BuildContext context, ProductEntity p) {
     final isOrganic = p.productMode == 'ORGANIC_PRODUCE';
-    final typeLabel = (isOrganic
-            ? (p.cropType ?? 'marketplace.badge_mode_organic'.tr())
-            : p.biomassaType)
-        .toUpperCase();
+    final typeLabel =
+        (isOrganic
+                ? (p.cropType ?? 'marketplace.badge_mode_organic'.tr())
+                : p.biomassaType)
+            .toUpperCase();
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -725,7 +806,10 @@ class ProductManagementDetailPage extends StatelessWidget {
           runSpacing: 6.h,
           children: [
             Container(
-              padding: EdgeInsets.symmetric(horizontal: AppSpacing.sm, vertical: AppSpacing.xs),
+              padding: EdgeInsets.symmetric(
+                horizontal: AppSpacing.sm,
+                vertical: AppSpacing.xs,
+              ),
               decoration: BoxDecoration(
                 color: isOrganic
                     ? AppColors.primaryLight.withOpacity(0.5)
@@ -754,9 +838,11 @@ class ProductManagementDetailPage extends StatelessWidget {
           ],
         ),
         SizedBox(height: AppSpacing.sm),
-        _dotRow('marketplace.created_at'.tr(namedArgs: {
-          'date': context.formatDate(p.createdAt),
-        })),
+        _dotRow(
+          'marketplace.created_at'.tr(
+            namedArgs: {'date': context.formatDate(p.createdAt)},
+          ),
+        ),
       ],
     );
   }
@@ -861,18 +947,19 @@ class ProductManagementDetailPage extends StatelessWidget {
           children: [
             _metaChip(
               LucideIcons.package,
-              'marketplace.stock_chip'.tr(namedArgs: {
-                'stock': '${p.stock.toInt()}',
-                'unit': p.unit,
-              }),
+              'marketplace.stock_chip'.tr(
+                namedArgs: {'stock': '${p.stock.toInt()}', 'unit': p.unit},
+              ),
               AppColors.info,
             ),
             _metaChip(
               LucideIcons.shoppingCart,
-              'marketplace.min_buy'.tr(namedArgs: {
-                'qty': ProductPricingInfo.formatQty(p.minOrder),
-                'unit': p.unit,
-              }),
+              'marketplace.min_buy'.tr(
+                namedArgs: {
+                  'qty': ProductPricingInfo.formatQty(p.minOrder),
+                  'unit': p.unit,
+                },
+              ),
               AppColors.grey500,
             ),
           ],
@@ -928,14 +1015,38 @@ class ProductManagementDetailPage extends StatelessWidget {
   Widget _dotRow(String text) {
     return Padding(
       padding: EdgeInsets.only(top: 5.h),
-      child: Row(children: [Container(width: 5.w, height: 5.w, decoration: BoxDecoration(color: AppColors.grey200, shape: BoxShape.circle)), SizedBox(width: AppSpacing.sm), Text(text, style: AppTextStyles.bodySecondary(color: AppColors.textSecondary))]),
+      child: Row(
+        children: [
+          Container(
+            width: 5.w,
+            height: 5.w,
+            decoration: BoxDecoration(
+              color: AppColors.grey200,
+              shape: BoxShape.circle,
+            ),
+          ),
+          SizedBox(width: AppSpacing.sm),
+          Text(
+            text,
+            style: AppTextStyles.bodySecondary(color: AppColors.textSecondary),
+          ),
+        ],
+      ),
     );
   }
 
   Widget _buildDescriptionBody(ProductEntity p) {
     return Text(
-      p.description?.isNotEmpty == true ? p.description! : 'marketplace.no_description_short'.tr(),
-      style: TextStyle(fontSize: 13.sp, color: p.description?.isNotEmpty == true ? AppColors.textSecondary : AppColors.textHint, height: 1.4),
+      p.description?.isNotEmpty == true
+          ? p.description!
+          : 'marketplace.no_description_short'.tr(),
+      style: TextStyle(
+        fontSize: 13.sp,
+        color: p.description?.isNotEmpty == true
+            ? AppColors.textSecondary
+            : AppColors.textHint,
+        height: 1.4,
+      ),
     );
   }
 
@@ -959,27 +1070,52 @@ class ProductManagementDetailPage extends StatelessWidget {
 
   Widget _buildStatsGrid(ProductEntity p, {ProductStatsEntity? stats}) {
     Widget row(List<Widget> cards) => Row(
-          children: [
-            for (int i = 0; i < cards.length; i++) ...[
-              if (i > 0) SizedBox(width: AppSpacing.sm),
-              Expanded(child: cards[i]),
-            ],
-          ],
-        );
+      children: [
+        for (int i = 0; i < cards.length; i++) ...[
+          if (i > 0) SizedBox(width: AppSpacing.sm),
+          Expanded(child: cards[i]),
+        ],
+      ],
+    );
 
     return Padding(
       padding: EdgeInsets.symmetric(horizontal: _hPad.w),
       child: Column(
         children: [
           row([
-            _statCard(LucideIcons.eye, '${stats?.viewCount ?? 0}', 'marketplace.stat_views'.tr(), AppColors.info),
-            _statCard(LucideIcons.shoppingBag, '${stats?.totalSold ?? p.totalSold}', 'marketplace.stat_sold'.tr(), AppColors.success),
-            _statCard(LucideIcons.handshake, '${stats?.activeNegotiations ?? 0}', 'marketplace.stat_active_nego'.tr(), AppColors.warning),
+            _statCard(
+              LucideIcons.eye,
+              '${stats?.viewCount ?? 0}',
+              'marketplace.stat_views'.tr(),
+              AppColors.info,
+            ),
+            _statCard(
+              LucideIcons.shoppingBag,
+              '${stats?.totalSold ?? p.totalSold}',
+              'marketplace.stat_sold'.tr(),
+              AppColors.success,
+            ),
+            _statCard(
+              LucideIcons.handshake,
+              '${stats?.activeNegotiations ?? 0}',
+              'marketplace.stat_active_nego'.tr(),
+              AppColors.warning,
+            ),
           ]),
           SizedBox(height: AppSpacing.sm),
           row([
-            _statCard(LucideIcons.star, '${p.averageRating}', 'marketplace.stat_rating'.tr(), AppColors.warning),
-            _statCard(LucideIcons.package, '${p.stock.toInt()}', 'marketplace.stat_stock'.tr(), AppColors.primary),
+            _statCard(
+              LucideIcons.star,
+              '${p.averageRating}',
+              'marketplace.stat_rating'.tr(),
+              AppColors.warning,
+            ),
+            _statCard(
+              LucideIcons.package,
+              '${p.stock.toInt()}',
+              'marketplace.stat_stock'.tr(),
+              AppColors.primary,
+            ),
             _statCard(
               p.isCertified ? LucideIcons.award : LucideIcons.shield,
               p.isCertified ? 'marketplace.yes'.tr() : 'marketplace.no'.tr(),
@@ -998,23 +1134,30 @@ class ProductManagementDetailPage extends StatelessWidget {
         return state.maybeWhen(
           loading: () => _section(
             child: Padding(
-              padding: EdgeInsets.symmetric(horizontal: AppSpacing.sm, vertical: AppSpacing.sm),
+              padding: EdgeInsets.symmetric(
+                horizontal: AppSpacing.sm,
+                vertical: AppSpacing.sm,
+              ),
               child: const ShimmerListPlaceholder(itemCount: 2, itemHeight: 56),
             ),
           ),
           loaded: (negotiations) {
             final active = negotiations
-                .where((n) =>
-                    n.productId == productId &&
-                    n.status.toUpperCase() == 'OPEN_NEGOTIATION')
+                .where(
+                  (n) =>
+                      n.productId == productId &&
+                      n.status.toUpperCase() == 'OPEN_NEGOTIATION',
+                )
                 .toList();
             return _section(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  _rowHeader('marketplace.active_negotiations'.tr(namedArgs: {
-                    'count': '${active.length}',
-                  })),
+                  _rowHeader(
+                    'marketplace.active_negotiations'.tr(
+                      namedArgs: {'count': '${active.length}'},
+                    ),
+                  ),
                   SizedBox(height: AppSpacing.sm),
                   if (active.isEmpty)
                     Padding(
@@ -1057,10 +1200,13 @@ class ProductManagementDetailPage extends StatelessWidget {
               CircleAvatar(
                 radius: AppRadius.xl,
                 backgroundColor: AppColors.grey200,
-                backgroundImage:
-                    resolveMediaImageProvider(n.buyer.avatarUrl),
+                backgroundImage: resolveMediaImageProvider(n.buyer.avatarUrl),
                 child: n.buyer.avatarUrl == null
-                    ? Icon(LucideIcons.user, size: 14.sp, color: AppColors.grey500)
+                    ? Icon(
+                        LucideIcons.user,
+                        size: 14.sp,
+                        color: AppColors.grey500,
+                      )
                     : null,
               ),
               SizedBox(width: AppSpacing.sm10),
@@ -1079,12 +1225,18 @@ class ProductManagementDetailPage extends StatelessWidget {
                     ),
                     Text(
                       '${n.quantity.toInt()} ${n.product.unit} · ${formatMoneyDisplay(n.pricePerUnit)}',
-                      style: AppTextStyles.caption(color: AppColors.textSecondary),
+                      style: AppTextStyles.caption(
+                        color: AppColors.textSecondary,
+                      ),
                     ),
                   ],
                 ),
               ),
-              Icon(LucideIcons.chevronRight, size: 16.sp, color: AppColors.grey300),
+              Icon(
+                LucideIcons.chevronRight,
+                size: 16.sp,
+                color: AppColors.grey300,
+              ),
             ],
           ),
         ),
@@ -1095,7 +1247,10 @@ class ProductManagementDetailPage extends StatelessWidget {
   Widget _statCard(IconData icon, String value, String label, Color color) {
     return Expanded(
       child: Container(
-        padding: EdgeInsets.symmetric(vertical: AppSpacing.md12, horizontal: AppSpacing.xs),
+        padding: EdgeInsets.symmetric(
+          vertical: AppSpacing.md12,
+          horizontal: AppSpacing.xs,
+        ),
         decoration: BoxDecoration(
           color: AppColors.surface,
           borderRadius: BorderRadius.circular(AppRadius.lg),
@@ -1131,7 +1286,10 @@ class ProductManagementDetailPage extends StatelessWidget {
             ),
             Text(
               label,
-              style: AppTextStyles.chip(fontSize: 9.sp, color: AppColors.textHint),
+              style: AppTextStyles.chip(
+                fontSize: 9.sp,
+                color: AppColors.textHint,
+              ),
               maxLines: 1,
               overflow: TextOverflow.ellipsis,
             ),
@@ -1188,7 +1346,10 @@ class ProductManagementDetailPage extends StatelessWidget {
           },
           loading: () => _section(
             child: Padding(
-              padding: EdgeInsets.symmetric(horizontal: AppSpacing.sm, vertical: AppSpacing.sm),
+              padding: EdgeInsets.symmetric(
+                horizontal: AppSpacing.sm,
+                vertical: AppSpacing.sm,
+              ),
               child: const ShimmerListPlaceholder(itemCount: 2, itemHeight: 56),
             ),
           ),
@@ -1272,9 +1433,9 @@ class ProductManagementDetailPage extends StatelessWidget {
       ],
       onSave: () async {
         final error = await context.read<ProductManagementCubit>().updateField(
-              p.id,
-              {'name': ctrl.text.trim()},
-            );
+          p.id,
+          {'name': ctrl.text.trim()},
+        );
         if (error != null && context.mounted) {
           showFailureSnackBarFromMessage(context, error);
           return false;
@@ -1287,7 +1448,9 @@ class ProductManagementDetailPage extends StatelessWidget {
   void _editStock(BuildContext context, ProductEntity p) {
     final stockCtrl = TextEditingController(text: p.stock.toStringAsFixed(0));
     final minCtrl = TextEditingController(text: p.minOrder.toStringAsFixed(0));
-    final priceCtrl = TextEditingController(text: p.pricePerUnit.toStringAsFixed(0));
+    final priceCtrl = TextEditingController(
+      text: p.pricePerUnit.toStringAsFixed(0),
+    );
     final originalCtrl = TextEditingController(
       text: p.originalPrice != null ? p.originalPrice!.toStringAsFixed(0) : '',
     );
@@ -1305,19 +1468,27 @@ class ProductManagementDetailPage extends StatelessWidget {
           ),
           child: Text(
             'marketplace.promo_edit_hint'.tr(namedArgs: {'unit': p.unit}),
-            style: TextStyle(fontSize: 11.sp, color: AppColors.textSecondary, height: 1.35),
+            style: TextStyle(
+              fontSize: 11.sp,
+              color: AppColors.textSecondary,
+              height: 1.35,
+            ),
           ),
         ),
         SizedBox(height: AppSpacing.md12),
         CustomTextField(
-          label: 'marketplace.sell_price_per_unit'.tr(namedArgs: {'unit': p.unit}),
+          label: 'marketplace.sell_price_per_unit'.tr(
+            namedArgs: {'unit': p.unit},
+          ),
           hint: '0',
           controller: priceCtrl,
           keyboardType: TextInputType.number,
         ),
         SizedBox(height: AppSpacing.md12),
         CustomTextField(
-          label: 'marketplace.strikethrough_price'.tr(namedArgs: {'unit': p.unit}),
+          label: 'marketplace.strikethrough_price'.tr(
+            namedArgs: {'unit': p.unit},
+          ),
           hint: 'marketplace.no_promo_hint'.tr(),
           controller: originalCtrl,
           keyboardType: TextInputType.number,
@@ -1331,7 +1502,9 @@ class ProductManagementDetailPage extends StatelessWidget {
         ),
         SizedBox(height: AppSpacing.md12),
         CustomTextField(
-          label: 'marketplace.min_purchase_field'.tr(namedArgs: {'unit': p.unit}),
+          label: 'marketplace.min_purchase_field'.tr(
+            namedArgs: {'unit': p.unit},
+          ),
           hint: '0',
           controller: minCtrl,
           keyboardType: TextInputType.number,
@@ -1353,7 +1526,10 @@ class ProductManagementDetailPage extends StatelessWidget {
           final orig = double.tryParse(originalText);
           if (orig != null) {
             if (pr != null && orig <= pr) {
-              showErrorSnackBar(context, 'marketplace.strikethrough_must_exceed'.tr());
+              showErrorSnackBar(
+                context,
+                'marketplace.strikethrough_must_exceed'.tr(),
+              );
               return false;
             }
             data['originalPrice'] = orig;
@@ -1362,7 +1538,10 @@ class ProductManagementDetailPage extends StatelessWidget {
 
         if (data.isEmpty) return true;
 
-        final error = await context.read<ProductManagementCubit>().updateField(p.id, data);
+        final error = await context.read<ProductManagementCubit>().updateField(
+          p.id,
+          data,
+        );
         if (error != null && context.mounted) {
           showFailureSnackBarFromMessage(context, error);
           return false;
@@ -1387,9 +1566,9 @@ class ProductManagementDetailPage extends StatelessWidget {
       ],
       onSave: () async {
         final error = await context.read<ProductManagementCubit>().updateField(
-              p.id,
-              {'description': ctrl.text.trim()},
-            );
+          p.id,
+          {'description': ctrl.text.trim()},
+        );
         if (error != null && context.mounted) {
           showFailureSnackBarFromMessage(context, error);
           return false;
@@ -1411,7 +1590,10 @@ class ProductManagementDetailPage extends StatelessWidget {
     final specs = data.remove('specs');
     data['specs'] = jsonEncode(specs ?? []);
     if (data.isNotEmpty) {
-      final error = await context.read<ProductManagementCubit>().updateField(p.id, data);
+      final error = await context.read<ProductManagementCubit>().updateField(
+        p.id,
+        data,
+      );
       if (error != null && context.mounted) {
         showFailureSnackBarFromMessage(context, error);
       }
@@ -1422,17 +1604,30 @@ class ProductManagementDetailPage extends StatelessWidget {
     showDialog(
       context: context,
       builder: (ctx) => AlertDialog(
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(AppRadius.xl)),
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(AppRadius.xl),
+        ),
         title: Text('marketplace.duplicate_confirm_title'.tr()),
-        content: Text('marketplace.duplicate_confirm_body'.tr(namedArgs: {'name': p.name})),
+        content: Text(
+          'marketplace.duplicate_confirm_body'.tr(namedArgs: {'name': p.name}),
+        ),
         actions: [
-          TextButton(onPressed: () => Navigator.pop(ctx), child: Text('batal'.tr())),
+          TextButton(
+            onPressed: () => Navigator.pop(ctx),
+            child: Text('batal'.tr()),
+          ),
           TextButton(
             onPressed: () {
               Navigator.pop(ctx);
               context.read<ProductManagementCubit>().duplicateProduct(p.id);
             },
-            child: Text('marketplace.duplicate'.tr(), style: TextStyle(color: AppColors.primary, fontWeight: FontWeight.w700)),
+            child: Text(
+              'marketplace.duplicate'.tr(),
+              style: TextStyle(
+                color: AppColors.primary,
+                fontWeight: FontWeight.w700,
+              ),
+            ),
           ),
         ],
       ),
@@ -1444,11 +1639,39 @@ class ProductManagementDetailPage extends StatelessWidget {
     showDialog(
       context: context,
       builder: (ctx) => AlertDialog(
-        title: Text(isActive ? 'marketplace.deactivate_confirm_title'.tr() : 'marketplace.activate_confirm_title'.tr()),
-        content: Text(isActive ? 'marketplace.deactivate_confirm_body'.tr() : 'marketplace.activate_confirm_body'.tr()),
+        title: Text(
+          isActive
+              ? 'marketplace.deactivate_confirm_title'.tr()
+              : 'marketplace.activate_confirm_title'.tr(),
+        ),
+        content: Text(
+          isActive
+              ? 'marketplace.deactivate_confirm_body'.tr()
+              : 'marketplace.activate_confirm_body'.tr(),
+        ),
         actions: [
-          TextButton(onPressed: () => Navigator.pop(ctx), child: Text('batal'.tr())),
-          TextButton(onPressed: () { Navigator.pop(ctx); context.read<ProductManagementCubit>().toggleStatus(p.id, p.status); }, child: Text(isActive ? 'marketplace.deactivate'.tr() : 'marketplace.activate'.tr(), style: TextStyle(color: isActive ? AppColors.warning : AppColors.success, fontWeight: FontWeight.w700))),
+          TextButton(
+            onPressed: () => Navigator.pop(ctx),
+            child: Text('batal'.tr()),
+          ),
+          TextButton(
+            onPressed: () {
+              Navigator.pop(ctx);
+              context.read<ProductManagementCubit>().toggleStatus(
+                p.id,
+                p.status,
+              );
+            },
+            child: Text(
+              isActive
+                  ? 'marketplace.deactivate'.tr()
+                  : 'marketplace.activate'.tr(),
+              style: TextStyle(
+                color: isActive ? AppColors.warning : AppColors.success,
+                fontWeight: FontWeight.w700,
+              ),
+            ),
+          ),
         ],
       ),
     );
@@ -1459,25 +1682,34 @@ class ProductManagementDetailPage extends StatelessWidget {
       context: context,
       builder: (ctx) => AlertDialog(
         title: Text('marketplace.delete_product'.tr()),
-        content: Text('marketplace.delete_confirm_body'.tr(namedArgs: {'name': p.name})),
+        content: Text(
+          'marketplace.delete_confirm_body'.tr(namedArgs: {'name': p.name}),
+        ),
         actions: [
-          TextButton(onPressed: () => Navigator.pop(ctx), child: Text('batal'.tr())),
+          TextButton(
+            onPressed: () => Navigator.pop(ctx),
+            child: Text('batal'.tr()),
+          ),
           TextButton(
             onPressed: () async {
               Navigator.pop(ctx);
-              final error = await context.read<ProductManagementCubit>().deleteProduct(p.id);
+              final error = await context
+                  .read<ProductManagementCubit>()
+                  .deleteProduct(p.id);
               if (error != null && context.mounted) {
                 showFailureSnackBarFromMessage(context, error);
               }
             },
             style: TextButton.styleFrom(foregroundColor: AppColors.error),
-            child: Text('hapus'.tr(), style: const TextStyle(fontWeight: FontWeight.w700)),
+            child: Text(
+              'hapus'.tr(),
+              style: const TextStyle(fontWeight: FontWeight.w700),
+            ),
           ),
         ],
       ),
     );
   }
-
 }
 
 void _showManagementEditDialog(
@@ -1499,12 +1731,22 @@ void _showManagementEditDialog(
         duration: const Duration(milliseconds: 150),
         curve: Curves.easeOut,
         child: Dialog(
-          insetPadding: EdgeInsets.symmetric(horizontal: AppSpacing.lg, vertical: AppSpacing.xl),
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(AppRadius.xl)),
+          insetPadding: EdgeInsets.symmetric(
+            horizontal: AppSpacing.lg,
+            vertical: AppSpacing.xl,
+          ),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(AppRadius.xl),
+          ),
           child: ConstrainedBox(
             constraints: BoxConstraints(maxHeight: maxDialogH),
             child: Padding(
-              padding: EdgeInsets.fromLTRB(AppSpacing.lg, AppSpacing.lg, AppSpacing.lg, AppSpacing.md),
+              padding: EdgeInsets.fromLTRB(
+                AppSpacing.lg,
+                AppSpacing.lg,
+                AppSpacing.lg,
+                AppSpacing.md,
+              ),
               child: Column(
                 mainAxisSize: MainAxisSize.min,
                 crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -1521,7 +1763,8 @@ void _showManagementEditDialog(
                   Flexible(
                     child: SingleChildScrollView(
                       physics: const BouncingScrollPhysics(),
-                      keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.onDrag,
+                      keyboardDismissBehavior:
+                          ScrollViewKeyboardDismissBehavior.onDrag,
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.stretch,
                         children: fields,
@@ -1597,8 +1840,11 @@ class _ProductImageCarouselState extends State<_ProductImageCarousel> {
                     ),
                   )
                 : Center(
-                    child: Icon(LucideIcons.image,
-                        size: 48.sp, color: AppColors.grey400),
+                    child: Icon(
+                      LucideIcons.image,
+                      size: 48.sp,
+                      color: AppColors.grey400,
+                    ),
                   ),
           ),
           if (images.length > 1)
@@ -1630,7 +1876,10 @@ class _ProductImageCarouselState extends State<_ProductImageCarousel> {
               top: AppSpacing.md12,
               left: AppSpacing.md12,
               child: Container(
-                padding: EdgeInsets.symmetric(horizontal: AppSpacing.sm, vertical: 3.h),
+                padding: EdgeInsets.symmetric(
+                  horizontal: AppSpacing.sm,
+                  vertical: 3.h,
+                ),
                 decoration: BoxDecoration(
                   color: AppColors.black.withOpacity(0.45),
                   borderRadius: BorderRadius.circular(AppRadius.pill),
@@ -1659,7 +1908,12 @@ class _ReviewFilterSection extends StatefulWidget {
   final double averageRating;
   final int totalReviews;
 
-  const _ReviewFilterSection({required this.productId, required this.allReviews, required this.averageRating, required this.totalReviews});
+  const _ReviewFilterSection({
+    required this.productId,
+    required this.allReviews,
+    required this.averageRating,
+    required this.totalReviews,
+  });
 
   @override
   State<_ReviewFilterSection> createState() => _ReviewFilterSectionState();
@@ -1671,8 +1925,12 @@ class _ReviewFilterSectionState extends State<_ReviewFilterSection> {
 
   List<ReviewModel> get _filtered {
     var list = widget.allReviews;
-    if (_ratingFilter != null) list = list.where((r) => r.rating.toInt() == _ratingFilter).toList();
-    if (_hasImageOnly) list = list.where((r) => r.images != null && r.images!.isNotEmpty).toList();
+    if (_ratingFilter != null)
+      list = list.where((r) => r.rating.toInt() == _ratingFilter).toList();
+    if (_hasImageOnly)
+      list = list
+          .where((r) => r.images != null && r.images!.isNotEmpty)
+          .toList();
     return list;
   }
 
@@ -1680,10 +1938,15 @@ class _ReviewFilterSectionState extends State<_ReviewFilterSection> {
   Widget build(BuildContext context) {
     final filtered = _filtered;
     final starCounts = <int, int>{5: 0, 4: 0, 3: 0, 2: 0, 1: 0};
-    for (final r in widget.allReviews) { final k = r.rating.toInt(); starCounts[k] = (starCounts[k] ?? 0) + 1; }
+    for (final r in widget.allReviews) {
+      final k = r.rating.toInt();
+      starCounts[k] = (starCounts[k] ?? 0) + 1;
+    }
 
     return Container(
-      margin: EdgeInsets.symmetric(horizontal: ProductManagementDetailPage._hPad.w),
+      margin: EdgeInsets.symmetric(
+        horizontal: ProductManagementDetailPage._hPad.w,
+      ),
       padding: EdgeInsets.all(AppSpacing.md12),
       decoration: BoxDecoration(
         color: AppColors.surface,
@@ -1713,9 +1976,9 @@ class _ReviewFilterSectionState extends State<_ReviewFilterSection> {
               SizedBox(width: AppSpacing.sm),
               Expanded(
                 child: Text(
-                  'marketplace.reviews_with_count'.tr(namedArgs: {
-                    'count': '${widget.totalReviews}',
-                  }),
+                  'marketplace.reviews_with_count'.tr(
+                    namedArgs: {'count': '${widget.totalReviews}'},
+                  ),
                   style: TextStyle(
                     fontSize: 13.sp,
                     fontWeight: FontWeight.w700,
@@ -1724,7 +1987,10 @@ class _ReviewFilterSectionState extends State<_ReviewFilterSection> {
                 ),
               ),
               Container(
-                padding: EdgeInsets.symmetric(horizontal: AppSpacing.sm, vertical: AppSpacing.xs),
+                padding: EdgeInsets.symmetric(
+                  horizontal: AppSpacing.sm,
+                  vertical: AppSpacing.xs,
+                ),
                 decoration: BoxDecoration(
                   color: AppColors.warning.withOpacity(0.1),
                   borderRadius: BorderRadius.circular(AppRadius.button),
@@ -1753,97 +2019,130 @@ class _ReviewFilterSectionState extends State<_ReviewFilterSection> {
           ),
           SizedBox(height: AppSpacing.section),
 
-        // Rating bars
-        ...starCounts.entries.map((e) => Padding(
-          padding: EdgeInsets.only(bottom: 4.h),
-          child: InkWell(
-            onTap: () => setState(() => _ratingFilter = _ratingFilter == e.key ? null : e.key),
-            child: Row(children: [
-              SizedBox(width: 24.w, child: Text('${e.key}★', style: TextStyle(fontSize: 11.sp, color: _ratingFilter == e.key ? AppColors.primary : AppColors.textHint, fontWeight: _ratingFilter == e.key ? FontWeight.w800 : FontWeight.w500))),
-              Expanded(
-                child: ClipRRect(
-                  borderRadius: BorderRadius.circular(2.r),
-                  child: LinearProgressIndicator(
-                    value: widget.totalReviews > 0
-                        ? e.value / widget.totalReviews
-                        : 0,
-                    minHeight: 6.h,
-                    backgroundColor: AppColors.grey100,
-                    valueColor: AlwaysStoppedAnimation<Color>(
-                      _ratingFilter == e.key
-                          ? AppColors.primary
-                          : AppColors.warning.withOpacity(0.5),
+          // Rating bars
+          ...starCounts.entries.map(
+            (e) => Padding(
+              padding: EdgeInsets.only(bottom: 4.h),
+              child: InkWell(
+                onTap: () => setState(
+                  () => _ratingFilter = _ratingFilter == e.key ? null : e.key,
+                ),
+                child: Row(
+                  children: [
+                    SizedBox(
+                      width: 24.w,
+                      child: Text(
+                        '${e.key}★',
+                        style: TextStyle(
+                          fontSize: 11.sp,
+                          color: _ratingFilter == e.key
+                              ? AppColors.primary
+                              : AppColors.textHint,
+                          fontWeight: _ratingFilter == e.key
+                              ? FontWeight.w800
+                              : FontWeight.w500,
+                        ),
+                      ),
+                    ),
+                    Expanded(
+                      child: ClipRRect(
+                        borderRadius: BorderRadius.circular(2.r),
+                        child: LinearProgressIndicator(
+                          value: widget.totalReviews > 0
+                              ? e.value / widget.totalReviews
+                              : 0,
+                          minHeight: 6.h,
+                          backgroundColor: AppColors.grey100,
+                          valueColor: AlwaysStoppedAnimation<Color>(
+                            _ratingFilter == e.key
+                                ? AppColors.primary
+                                : AppColors.warning.withOpacity(0.5),
+                          ),
+                        ),
+                      ),
+                    ),
+                    SizedBox(width: AppSpacing.sm),
+                    Text(
+                      '${e.value}',
+                      style: TextStyle(
+                        fontSize: 10.sp,
+                        color: AppColors.textHint,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ),
+          SizedBox(height: AppSpacing.sm),
+
+          // Filter chips
+          Wrap(
+            spacing: 6.w,
+            runSpacing: 6.h,
+            children: [
+              _reviewChip(
+                'marketplace.category_all'.tr(),
+                _ratingFilter == null && !_hasImageOnly,
+                () => setState(() {
+                  _ratingFilter = null;
+                  _hasImageOnly = false;
+                }),
+              ),
+              ...List.generate(
+                5,
+                (i) => _reviewChip(
+                  '${5 - i}★',
+                  _ratingFilter == 5 - i,
+                  () => setState(
+                    () => _ratingFilter = _ratingFilter == 5 - i ? null : 5 - i,
+                  ),
+                ),
+              ),
+              _reviewChip(
+                'marketplace.filter_with_photo'.tr(),
+                _hasImageOnly,
+                () => setState(() => _hasImageOnly = !_hasImageOnly),
+                icon: LucideIcons.image,
+              ),
+            ],
+          ),
+          SizedBox(height: AppSpacing.md12),
+
+          if (filtered.isEmpty)
+            Padding(
+              padding: EdgeInsets.symmetric(vertical: AppSpacing.lg),
+              child: Center(
+                child: Text(
+                  'marketplace.no_reviews_filter'.tr(),
+                  style: AppTextStyles.bodySecondary(color: AppColors.textHint),
+                ),
+              ),
+            )
+          else
+            ...filtered.take(10).map((r) => _buildReviewCard(r)),
+          if (filtered.length > 10)
+            Padding(
+              padding: EdgeInsets.only(top: AppSpacing.sm),
+              child: Center(
+                child: TextButton(
+                  onPressed: () => context.push(
+                    '/product-reviews/${widget.productId}',
+                    extra: {'name': ''},
+                  ),
+                  child: Text(
+                    'marketplace.view_all_reviews'.tr(
+                      namedArgs: {'count': '${filtered.length}'},
+                    ),
+                    style: TextStyle(
+                      fontSize: 12.sp,
+                      fontWeight: FontWeight.w700,
+                      color: AppColors.primary,
                     ),
                   ),
                 ),
               ),
-              SizedBox(width: AppSpacing.sm),
-              Text('${e.value}', style: TextStyle(fontSize: 10.sp, color: AppColors.textHint)),
-            ]),
-          ),
-        )),
-        SizedBox(height: AppSpacing.sm),
-
-        // Filter chips
-        Wrap(
-          spacing: 6.w,
-          runSpacing: 6.h,
-          children: [
-            _reviewChip(
-              'marketplace.category_all'.tr(),
-              _ratingFilter == null && !_hasImageOnly,
-              () => setState(() {
-                _ratingFilter = null;
-                _hasImageOnly = false;
-              }),
             ),
-            ...List.generate(
-              5,
-              (i) => _reviewChip(
-                '${5 - i}★',
-                _ratingFilter == 5 - i,
-                () => setState(
-                  () => _ratingFilter =
-                      _ratingFilter == 5 - i ? null : 5 - i,
-                ),
-              ),
-            ),
-            _reviewChip(
-              'marketplace.filter_with_photo'.tr(),
-              _hasImageOnly,
-              () => setState(() => _hasImageOnly = !_hasImageOnly),
-              icon: LucideIcons.image,
-            ),
-          ],
-        ),
-        SizedBox(height: AppSpacing.md12),
-
-        if (filtered.isEmpty)
-          Padding(padding: EdgeInsets.symmetric(vertical: AppSpacing.lg), child: Center(child: Text('marketplace.no_reviews_filter'.tr(), style: AppTextStyles.bodySecondary(color: AppColors.textHint))))
-        else
-          ...filtered.take(10).map((r) => _buildReviewCard(r)),
-        if (filtered.length > 10)
-          Padding(
-            padding: EdgeInsets.only(top: AppSpacing.sm),
-            child: Center(
-              child: TextButton(
-                onPressed: () => context.push(
-                  '/product-reviews/${widget.productId}',
-                  extra: {'name': ''},
-                ),
-                child: Text(
-                  'marketplace.view_all_reviews'.tr(namedArgs: {
-                    'count': '${filtered.length}',
-                  }),
-                  style: TextStyle(
-                    fontSize: 12.sp,
-                    fontWeight: FontWeight.w700,
-                    color: AppColors.primary,
-                  ),
-                ),
-              ),
-            ),
-          ),
         ],
       ),
     );
@@ -1858,7 +2157,10 @@ class _ReviewFilterSectionState extends State<_ReviewFilterSection> {
     return GestureDetector(
       onTap: onTap,
       child: Container(
-        padding: EdgeInsets.symmetric(horizontal: AppSpacing.md12, vertical: AppSpacing.xs6),
+        padding: EdgeInsets.symmetric(
+          horizontal: AppSpacing.md12,
+          vertical: AppSpacing.xs6,
+        ),
         decoration: BoxDecoration(
           color: selected ? AppColors.primary : AppColors.grey50,
           borderRadius: BorderRadius.circular(AppRadius.pill),
@@ -1908,10 +2210,13 @@ class _ReviewFilterSectionState extends State<_ReviewFilterSection> {
               CircleAvatar(
                 radius: AppRadius.xl,
                 backgroundColor: AppColors.grey200,
-                backgroundImage:
-                    resolveMediaImageProvider(r.userAvatar),
+                backgroundImage: resolveMediaImageProvider(r.userAvatar),
                 child: r.userAvatar == null
-                    ? Icon(LucideIcons.user, size: 14.sp, color: AppColors.grey500)
+                    ? Icon(
+                        LucideIcons.user,
+                        size: 14.sp,
+                        color: AppColors.grey500,
+                      )
                     : null,
               ),
               SizedBox(width: AppSpacing.sm10),
@@ -1934,20 +2239,54 @@ class _ReviewFilterSectionState extends State<_ReviewFilterSection> {
                     i < r.rating
                         ? Icons.star_rounded
                         : Icons.star_outline_rounded,
-                    color: i < r.rating
-                        ? AppColors.warning
-                        : AppColors.grey300,
+                    color: i < r.rating ? AppColors.warning : AppColors.grey300,
                     size: 14.sp,
                   ),
                 ),
               ),
             ],
           ),
-        if (r.comment.isNotEmpty) ...[SizedBox(height: 6.h), Text(r.comment, style: AppTextStyles.bodySecondary(color: AppColors.textSecondary), maxLines: 3, overflow: TextOverflow.ellipsis)],
-        if (r.images != null && r.images!.isNotEmpty) ...[SizedBox(height: 6.h), SizedBox(height: 50.h, child: ListView.separated(scrollDirection: Axis.horizontal, itemCount: r.images!.length, separatorBuilder: (_, __) => SizedBox(width: 6.w), itemBuilder: (_, i) => ClipRRect(borderRadius: BorderRadius.circular(6.r), child: BisaNetworkImage(imageUrl: r.images![i], width: 50.w, height: 50.h, fit: BoxFit.cover))))],
-        SizedBox(height: 4.h),
-        Text(timeago.format(r.createdAt), style: AppTextStyles.chip(fontSize: 9.sp, color: AppColors.textHint)),
-      ]),
+          if (r.comment.isNotEmpty) ...[
+            SizedBox(height: 6.h),
+            Text(
+              r.comment,
+              style: AppTextStyles.bodySecondary(
+                color: AppColors.textSecondary,
+              ),
+              maxLines: 3,
+              overflow: TextOverflow.ellipsis,
+            ),
+          ],
+          if (r.images != null && r.images!.isNotEmpty) ...[
+            SizedBox(height: 6.h),
+            SizedBox(
+              height: 50.h,
+              child: ListView.separated(
+                scrollDirection: Axis.horizontal,
+                itemCount: r.images!.length,
+                separatorBuilder: (_, __) => SizedBox(width: 6.w),
+                itemBuilder: (_, i) => ClipRRect(
+                  borderRadius: BorderRadius.circular(6.r),
+                  child: BisaNetworkImage(
+                    imageUrl: r.images![i],
+                    width: 50.w,
+                    height: 50.h,
+                    fit: BoxFit.cover,
+                  ),
+                ),
+              ),
+            ),
+          ],
+          SizedBox(height: 4.h),
+          Text(
+            timeago.format(r.createdAt),
+            style: AppTextStyles.chip(
+              fontSize: 9.sp,
+              color: AppColors.textHint,
+            ),
+          ),
+        ],
+      ),
     );
   }
 }

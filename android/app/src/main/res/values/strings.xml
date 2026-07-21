@@ -2,15 +2,12 @@
 <resources>
     <string name="app_name">Bisa</string>
     <!--
-      Meta Developer → App settings → Basic:
-      - App ID → facebook_app_id
-      - Client Token → facebook_client_token
-      Firebase Console → Authentication → Facebook: isi App ID + App Secret yang sama.
-      Atau set di android/local.properties:
-        facebook.app.id=YOUR_APP_ID
-        facebook.client.token=YOUR_CLIENT_TOKEN
+      Meta Developer → Settings → Basic:
+      - App ID + Client Token di bawah ini
+      - App Secret HANYA di Firebase Console (jangan di APK)
     -->
-    <string name="facebook_app_id">FACEBOOK_APP_ID</string>
-    <string name="fb_login_protocol_scheme">fbFACEBOOK_APP_ID</string>
-    <string name="facebook_client_token">FACEBOOK_CLIENT_TOKEN</string>
+    <string name="facebook_app_id">2022510065291974</string>
+    <string name="fb_login_protocol_scheme">fb2022510065291974</string>
+    <!-- Client Token: Meta → Settings → Basic → Client token (bukan App Secret) -->
+    <string name="facebook_client_token">bf56991b7c85596ac30b7c24379a31a8</string>
 </resources>

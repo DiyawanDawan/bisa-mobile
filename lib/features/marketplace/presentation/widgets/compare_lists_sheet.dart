@@ -6,10 +6,12 @@ import 'package:go_router/go_router.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
 
 import '../../../../core/constants/app_colors.dart';
+import '../../../../core/utils/safe_area_utils.dart';
 import '../../../../core/constants/app_layout.dart';
 import '../../../../core/constants/app_text_styles.dart';
 import '../../../../core/utils/app_feedback.dart';
 import '../bloc/compare_cubit.dart';
+
 class CompareListsSheet extends StatefulWidget {
   const CompareListsSheet({super.key});
 
@@ -37,8 +39,8 @@ class _CompareListsSheetState extends State<CompareListsSheet> {
 
   Future<void> _saveList() async {
     final err = await context.read<CompareCubit>().saveCurrentAsNamedList(
-          _nameCtrl.text,
-        );
+      _nameCtrl.text,
+    );
     if (!mounted) return;
     if (err != null) {
       showErrorSnackBar(context, err);
@@ -50,8 +52,6 @@ class _CompareListsSheetState extends State<CompareListsSheet> {
 
   @override
   Widget build(BuildContext context) {
-    final bottom = MediaQuery.viewInsetsOf(context).bottom;
-
     return Container(
       margin: EdgeInsets.only(top: 48.h),
       decoration: BoxDecoration(
@@ -60,12 +60,7 @@ class _CompareListsSheetState extends State<CompareListsSheet> {
           top: Radius.circular(AppSpacing.xlPx.r),
         ),
       ),
-      padding: EdgeInsets.fromLTRB(
-        AppSpacing.md,
-        AppSpacing.md,
-        AppSpacing.md,
-        AppSpacing.md + bottom,
-      ),
+      padding: bisaSheetPadding(context),
       child: BlocBuilder<CompareCubit, CompareState>(
         builder: (context, state) {
           return SingleChildScrollView(
@@ -97,7 +92,9 @@ class _CompareListsSheetState extends State<CompareListsSheet> {
                 if (state.products.isEmpty)
                   Text(
                     'product.compare_empty'.tr(),
-                    style: AppTextStyles.caption(color: AppColors.textSecondary),
+                    style: AppTextStyles.caption(
+                      color: AppColors.textSecondary,
+                    ),
                   )
                 else ...[
                   ...state.products.map(
@@ -156,8 +153,8 @@ class _CompareListsSheetState extends State<CompareListsSheet> {
                           onSelected: (v) async {
                             if (v == 'load') {
                               context.read<CompareCubit>().loadSavedList(
-                                    list.id,
-                                  );
+                                list.id,
+                              );
                               if (!context.mounted) return;
                               Navigator.pop(context);
                               context.push('/compare-products');

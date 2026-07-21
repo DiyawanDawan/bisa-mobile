@@ -19,10 +19,10 @@ class SupplierQuickActions extends StatelessWidget {
 
     return Padding(
       padding: EdgeInsets.fromLTRB(
-        AppSpacing.md,
-        AppSpacing.sm,
-        AppSpacing.md,
-        AppSpacing.sm,
+        AppSpacing.pageGutter,
+        0,
+        AppSpacing.pageGutter,
+        0,
       ),
       child: Container(
         width: double.infinity,
@@ -77,7 +77,7 @@ class SupplierQuickActions extends StatelessWidget {
                 const cellAspectRatio = 1.35;
                 final cellWidth =
                     (constraints.maxWidth - spacing * (_columns - 1)) /
-                        _columns;
+                    _columns;
                 final cellHeight = cellWidth / cellAspectRatio;
                 final gridHeight = cellHeight * 2 + spacing;
 
@@ -159,7 +159,10 @@ class _QuickActionItem extends StatelessWidget {
         onTap: data.onTap,
         borderRadius: BorderRadius.circular(AppRadius.tile),
         child: Padding(
-          padding: EdgeInsets.symmetric(horizontal: AppSpacing.sm10, vertical: 10.h),
+          padding: EdgeInsets.symmetric(
+            horizontal: AppSpacing.sm10,
+            vertical: 10.h,
+          ),
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
@@ -170,11 +173,7 @@ class _QuickActionItem extends StatelessWidget {
                   color: AppColors.primaryLight,
                   borderRadius: BorderRadius.circular(AppRadius.lg),
                 ),
-                child: Icon(
-                  data.icon,
-                  color: AppColors.primary,
-                  size: 18.sp,
-                ),
+                child: Icon(data.icon, color: AppColors.primary, size: 18.sp),
               ),
               SizedBox(height: 6.h),
               Text(

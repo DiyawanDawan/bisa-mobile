@@ -47,6 +47,7 @@ import '../bloc/compare_cubit.dart';
 import '../bloc/product_qa_cubit.dart';
 import '../widgets/product_qa_section.dart';
 import '../widgets/product_recommendations_section.dart';
+import '../widgets/product_certificate_section.dart';
 import '../../../ai/presentation/widgets/predict_quality_sheet.dart';
 import '../../../commerce/presentation/widgets/product_like_button.dart';
 import '../../../follow/presentation/widgets/follow_button.dart';
@@ -83,7 +84,9 @@ class _ProductDetailPageState extends State<ProductDetailPage> {
 
   void _maybeOpenNegotiateFromQuery() {
     if (_autoNegotiateOpened || _product == null) return;
-    final negotiate = GoRouterState.of(context).uri.queryParameters['negotiate'];
+    final negotiate = GoRouterState.of(
+      context,
+    ).uri.queryParameters['negotiate'];
     if (negotiate != '1') return;
     _autoNegotiateOpened = true;
     WidgetsBinding.instance.addPostFrameCallback((_) {
@@ -105,11 +108,13 @@ class _ProductDetailPageState extends State<ProductDetailPage> {
       builder: (ctx) => AlertDialog(
         title: Text('product.sample_order_title'.tr()),
         content: Text(
-          'product.sample_order_confirm'.tr(namedArgs: {
-            'qty': '$qty',
-            'unit': p.unit,
-            'price': formatMoneyDisplay(unitPrice),
-          }),
+          'product.sample_order_confirm'.tr(
+            namedArgs: {
+              'qty': '$qty',
+              'unit': p.unit,
+              'price': formatMoneyDisplay(unitPrice),
+            },
+          ),
         ),
         actions: [
           TextButton(
@@ -207,10 +212,7 @@ class _ProductDetailPageState extends State<ProductDetailPage> {
       physics: const BouncingScrollPhysics(),
       slivers: [
         SliverToBoxAdapter(
-          child: BisaMediaSkeleton(
-            width: double.infinity,
-            height: 350.h,
-          ),
+          child: BisaMediaSkeleton(width: double.infinity, height: 350.h),
         ),
         SliverPadding(
           padding: AppSpacing.cardPadding,
@@ -299,10 +301,12 @@ class _ProductDetailPageState extends State<ProductDetailPage> {
           child: ConstrainedBox(
             constraints: BoxConstraints(maxHeight: maxHeight),
             child: Container(
-              padding: EdgeInsets.all(AppSpacing.xl),
+              padding: EdgeInsets.all(AppSpacing.comfortable),
               decoration: BoxDecoration(
                 color: AppColors.surface,
-                borderRadius: BorderRadius.vertical(top: Radius.circular(AppSpacing.xxlPx.r)),
+                borderRadius: BorderRadius.vertical(
+                  top: Radius.circular(AppSpacing.xxlPx.r),
+                ),
               ),
               child: BlocConsumer<NegotiationCubit, NegotiationState>(
                 listener: (context, state) {
@@ -321,435 +325,511 @@ class _ProductDetailPageState extends State<ProductDetailPage> {
                     orElse: () => false,
                   );
                   return StatefulBuilder(
-                builder: (context, setSheetState) {
-                  final requestedQty = double.tryParse(quantityController.text);
-                  final outOfStock =
-                      NegotiationQuantityRules.isOutOfStock(p.stock);
+                    builder: (context, setSheetState) {
+                      final requestedQty = double.tryParse(
+                        quantityController.text,
+                      );
+                      final outOfStock = NegotiationQuantityRules.isOutOfStock(
+                        p.stock,
+                      );
 
-                  if (confirmStep && draft != null) {
-                    final d = draft!;
-                    final savings = d.totalSavings;
-                    return SingleChildScrollView(
-                      physics: const ClampingScrollPhysics(),
-                      child: Column(
-                        mainAxisSize: MainAxisSize.min,
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Row(
-                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      if (confirmStep && draft != null) {
+                        final d = draft!;
+                        final savings = d.totalSavings;
+                        return SingleChildScrollView(
+                          physics: const ClampingScrollPhysics(),
+                          child: Column(
+                            mainAxisSize: MainAxisSize.min,
+                            crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
+                              Row(
+                                mainAxisAlignment:
+                                    MainAxisAlignment.spaceBetween,
+                                children: [
+                                  Text(
+                                    'negotiation.preview_title'.tr(),
+                                    style: TextStyle(
+                                      fontSize: 20.sp,
+                                      fontWeight: FontWeight.w900,
+                                      color: AppColors.textPrimary,
+                                    ),
+                                  ),
+                                  IconButton(
+                                    icon: const Icon(Icons.close),
+                                    onPressed: sending
+                                        ? null
+                                        : () => Navigator.pop(sheetContext),
+                                  ),
+                                ],
+                              ),
+                              SizedBox(height: AppSpacing.md12),
+                              NegotiationSellerChip(
+                                displayName: d.sellerDisplayName,
+                                avatarUrl: d.sellerAvatarUrl,
+                                isVerified: d.sellerIsVerified,
+                              ),
+                              SizedBox(height: AppSpacing.sm10),
+                              NegotiationProductPreview(
+                                name: d.productName,
+                                thumbnailUrl: d.productThumbnailUrl,
+                                priceLabel: formatMoneyDisplay(
+                                  d.catalogPricePerUnit,
+                                ),
+                                subtitle: 'marketplace.catalog_price'.tr(),
+                              ),
+                              SizedBox(height: AppSpacing.md12),
+                              Container(
+                                width: double.infinity,
+                                padding: EdgeInsets.all(AppSpacing.md12),
+                                decoration: BoxDecoration(
+                                  color: AppColors.grey50,
+                                  borderRadius: BorderRadius.circular(
+                                    AppRadius.lg,
+                                  ),
+                                ),
+                                child: Column(
+                                  children: [
+                                    _sheetSummaryRow(
+                                      'marketplace.qty_label'.tr(
+                                        namedArgs: {'unit': d.unit},
+                                      ),
+                                      '${ProductPricingInfo.formatQty(d.quantity)} ${d.unit}',
+                                    ),
+                                    _sheetSummaryRow(
+                                      'marketplace.offer_price_label'.tr(
+                                        namedArgs: {'unit': d.unit},
+                                      ),
+                                      formatMoneyDisplay(d.offerPricePerUnit),
+                                    ),
+                                    _sheetSummaryRow(
+                                      'negotiation.preview_total_offer'.tr(),
+                                      formatMoneyDisplay(d.offerSubtotal),
+                                      emphasized: true,
+                                    ),
+                                    if (d.hasDiscount)
+                                      _sheetSummaryRow(
+                                        'negotiation.preview_savings_total'.tr(
+                                          namedArgs: {
+                                            'amount': formatMoneyDisplay(
+                                              savings,
+                                            ),
+                                            'percent': d.discountTotalPercent
+                                                .abs()
+                                                .toStringAsFixed(1),
+                                          },
+                                        ),
+                                        '',
+                                      ),
+                                  ],
+                                ),
+                              ),
+                              SizedBox(height: AppSpacing.sectionGapLarge),
+                              CustomButton(
+                                text: 'negotiation.preview_edit_offer'.tr(),
+                                height: AppSpacing.buttonHeightSm,
+                                isOutlined: true,
+                                onPressed: sending
+                                    ? null
+                                    : () => setSheetState(
+                                        () => confirmStep = false,
+                                      ),
+                              ),
+                              SizedBox(height: AppSpacing.sm10),
+                              CustomButton(
+                                text: 'negotiation.preview_send_offer'.tr(),
+                                useGradient: true,
+                                height: 48.h,
+                                isLoading: sending,
+                                onPressed: sending
+                                    ? null
+                                    : () async {
+                                        if (!await ReadinessGate.ensureBuyerReady(
+                                          context,
+                                        )) {
+                                          return;
+                                        }
+                                        if (!context.mounted) return;
+                                        context
+                                            .read<NegotiationCubit>()
+                                            .createOffer(
+                                              productId: d.productId,
+                                              quantity: d.quantity,
+                                              pricePerUnit: d.offerPricePerUnit,
+                                              message: d.message,
+                                              localImagePath: d.localImagePath,
+                                            );
+                                      },
+                              ),
+                              SizedBox(height: AppSpacing.md),
+                            ],
+                          ),
+                        );
+                      }
+
+                      return SingleChildScrollView(
+                        physics: const ClampingScrollPhysics(),
+                        child: Form(
+                          key: formKey,
+                          child: Column(
+                            mainAxisSize: MainAxisSize.min,
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Row(
+                                mainAxisAlignment:
+                                    MainAxisAlignment.spaceBetween,
+                                children: [
+                                  Text(
+                                    'marketplace.negotiate_title'.tr(),
+                                    style: TextStyle(
+                                      fontSize: 20.sp,
+                                      fontWeight: FontWeight.w900,
+                                      color: AppColors.textPrimary,
+                                    ),
+                                  ),
+                                  IconButton(
+                                    icon: const Icon(Icons.close),
+                                    onPressed: () =>
+                                        Navigator.pop(sheetContext),
+                                  ),
+                                ],
+                              ),
+                              SizedBox(height: AppSpacing.md12),
+                              NegotiationSellerChip(
+                                displayName:
+                                    prefill?.sellerDisplayName ??
+                                    _sellerDisplayName(p),
+                                avatarUrl:
+                                    prefill?.sellerAvatarUrl ??
+                                    p.seller.avatarUrl,
+                                isVerified:
+                                    prefill?.sellerIsVerified ??
+                                    p.seller.isVerified,
+                              ),
+                              SizedBox(height: AppSpacing.sm10),
+                              NegotiationProductPreview(
+                                name: p.name,
+                                thumbnailUrl: p.thumbnailUrl,
+                                priceLabel: formatMoneyDisplay(p.pricePerUnit),
+                                subtitle: 'marketplace.catalog_price'.tr(),
+                              ),
+                              SizedBox(height: AppSpacing.sm10),
+                              NegotiationStockBanner(
+                                stock: p.stock,
+                                minOrder: p.minOrder,
+                                unit: p.unit,
+                                requestedQty: requestedQty,
+                              ),
+                              SizedBox(height: AppSpacing.md12),
+                              Container(
+                                width: double.infinity,
+                                padding: EdgeInsets.all(AppSpacing.md12),
+                                decoration: BoxDecoration(
+                                  color: AppColors.primary.withValues(
+                                    alpha: 0.06,
+                                  ),
+                                  borderRadius: BorderRadius.circular(
+                                    AppRadius.lg,
+                                  ),
+                                ),
+                                child: Row(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Icon(
+                                      LucideIcons.messageCircle,
+                                      size: 18.sp,
+                                      color: AppColors.primary,
+                                    ),
+                                    SizedBox(width: AppSpacing.sm10),
+                                    Expanded(
+                                      child: Text(
+                                        'marketplace.negotiate_hint'.tr(),
+                                        style: TextStyle(
+                                          fontSize: 11.sp,
+                                          height: 1.4,
+                                          color: AppColors.textSecondary,
+                                          fontWeight: FontWeight.w600,
+                                        ),
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                              SizedBox(height: AppSpacing.lg),
                               Text(
-                                'negotiation.preview_title'.tr(),
+                                'marketplace.step_qty'.tr(),
                                 style: TextStyle(
-                                  fontSize: 20.sp,
-                                  fontWeight: FontWeight.w900,
+                                  fontSize: 13.sp,
+                                  fontWeight: FontWeight.w800,
                                   color: AppColors.textPrimary,
                                 ),
                               ),
-                              IconButton(
-                                icon: const Icon(Icons.close),
-                                onPressed: sending
-                                    ? null
-                                    : () => Navigator.pop(sheetContext),
-                              ),
-                            ],
-                          ),
-                          SizedBox(height: AppSpacing.md12),
-                          NegotiationSellerChip(
-                            displayName: d.sellerDisplayName,
-                            avatarUrl: d.sellerAvatarUrl,
-                            isVerified: d.sellerIsVerified,
-                          ),
-                          SizedBox(height: AppSpacing.sm10),
-                          NegotiationProductPreview(
-                            name: d.productName,
-                            thumbnailUrl: d.productThumbnailUrl,
-                            priceLabel: formatMoneyDisplay(d.catalogPricePerUnit),
-                            subtitle: 'marketplace.catalog_price'.tr(),
-                          ),
-                          SizedBox(height: AppSpacing.md12),
-                          Container(
-                            width: double.infinity,
-                            padding: EdgeInsets.all(AppSpacing.md12),
-                            decoration: BoxDecoration(
-                              color: AppColors.grey50,
-                              borderRadius: BorderRadius.circular(AppRadius.lg),
-                            ),
-                            child: Column(
-                              children: [
-                                _sheetSummaryRow(
-                                  'marketplace.qty_label'.tr(namedArgs: {'unit': d.unit}),
-                                  '${ProductPricingInfo.formatQty(d.quantity)} ${d.unit}',
+                              SizedBox(height: AppSpacing.sm),
+                              CustomTextField(
+                                label: 'marketplace.qty_label'.tr(
+                                  namedArgs: {'unit': p.unit},
                                 ),
-                                _sheetSummaryRow(
-                                  'marketplace.offer_price_label'.tr(namedArgs: {'unit': d.unit}),
-                                  formatMoneyDisplay(d.offerPricePerUnit),
-                                ),
-                                _sheetSummaryRow(
-                                  'negotiation.preview_total_offer'.tr(),
-                                  formatMoneyDisplay(d.offerSubtotal),
-                                  emphasized: true,
-                                ),
-                                if (d.hasDiscount)
-                                  _sheetSummaryRow(
-                                    'negotiation.preview_savings_total'.tr(
-                                      namedArgs: {
-                                        'amount': formatMoneyDisplay(savings),
-                                        'percent': d.discountTotalPercent.abs().toStringAsFixed(1),
-                                      },
+                                hint: 'marketplace.qty_hint'.tr(
+                                  namedArgs: {
+                                    'min': ProductPricingInfo.formatQty(
+                                      p.minOrder,
                                     ),
-                                    '',
-                                  ),
-                              ],
-                            ),
-                          ),
-                          SizedBox(height: AppSpacing.xxl),
-                          CustomButton(
-                            text: 'negotiation.preview_edit_offer'.tr(),
-                            height: AppSpacing.buttonHeightSm,
-                            isOutlined: true,
-                            onPressed: sending
-                                ? null
-                                : () => setSheetState(() => confirmStep = false),
-                          ),
-                          SizedBox(height: AppSpacing.sm10),
-                          CustomButton(
-                            text: 'negotiation.preview_send_offer'.tr(),
-                            useGradient: true,
-                            height: 48.h,
-                            isLoading: sending,
-                            onPressed: sending
-                                ? null
-                                : () async {
-                                    if (!await ReadinessGate.ensureBuyerReady(context)) {
-                                      return;
-                                    }
-                                    if (!context.mounted) return;
-                                    context.read<NegotiationCubit>().createOffer(
-                                          productId: d.productId,
-                                          quantity: d.quantity,
-                                          pricePerUnit: d.offerPricePerUnit,
-                                          message: d.message,
-                                          localImagePath: d.localImagePath,
-                                        );
+                                    'max': ProductPricingInfo.formatQty(
+                                      p.stock,
+                                    ),
                                   },
-                          ),
-                          SizedBox(height: AppSpacing.md),
-                        ],
-                      ),
-                    );
-                  }
-
-                  return SingleChildScrollView(
-                physics: const ClampingScrollPhysics(),
-                child: Form(
-                  key: formKey,
-                  child: Column(
-                    mainAxisSize: MainAxisSize.min,
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    Text(
-                      'marketplace.negotiate_title'.tr(),
-                      style: TextStyle(
-                        fontSize: 20.sp,
-                        fontWeight: FontWeight.w900,
-                        color: AppColors.textPrimary,
-                      ),
-                    ),
-                    IconButton(
-                      icon: const Icon(Icons.close),
-                      onPressed: () => Navigator.pop(sheetContext),
-                    ),
-                  ],
-                ),
-                SizedBox(height: AppSpacing.md12),
-                NegotiationSellerChip(
-                  displayName:
-                      prefill?.sellerDisplayName ?? _sellerDisplayName(p),
-                  avatarUrl: prefill?.sellerAvatarUrl ?? p.seller.avatarUrl,
-                  isVerified:
-                      prefill?.sellerIsVerified ?? p.seller.isVerified,
-                ),
-                SizedBox(height: AppSpacing.sm10),
-                NegotiationProductPreview(
-                  name: p.name,
-                  thumbnailUrl: p.thumbnailUrl,
-                  priceLabel: formatMoneyDisplay(p.pricePerUnit),
-                  subtitle: 'marketplace.catalog_price'.tr(),
-                ),
-                SizedBox(height: AppSpacing.sm10),
-                NegotiationStockBanner(
-                  stock: p.stock,
-                  minOrder: p.minOrder,
-                  unit: p.unit,
-                  requestedQty: requestedQty,
-                ),
-                SizedBox(height: AppSpacing.md12),
-                Container(
-                  width: double.infinity,
-                  padding: EdgeInsets.all(AppSpacing.md12),
-                  decoration: BoxDecoration(
-                    color: AppColors.primary.withValues(alpha: 0.06),
-                    borderRadius: BorderRadius.circular(AppRadius.lg),
-                  ),
-                  child: Row(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Icon(
-                        LucideIcons.messageCircle,
-                        size: 18.sp,
-                        color: AppColors.primary,
-                      ),
-                      SizedBox(width: AppSpacing.sm10),
-                      Expanded(
-                        child: Text(
-                          'marketplace.negotiate_hint'.tr(),
-                          style: TextStyle(
-                            fontSize: 11.sp,
-                            height: 1.4,
-                            color: AppColors.textSecondary,
-                            fontWeight: FontWeight.w600,
-                          ),
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-                SizedBox(height: AppSpacing.lg),
-                Text(
-                  'marketplace.step_qty'.tr(),
-                  style: TextStyle(
-                    fontSize: 13.sp,
-                    fontWeight: FontWeight.w800,
-                    color: AppColors.textPrimary,
-                  ),
-                ),
-                SizedBox(height: AppSpacing.sm),
-                CustomTextField(
-                  label: 'marketplace.qty_label'.tr(namedArgs: {'unit': p.unit}),
-                  hint: 'marketplace.qty_hint'.tr(namedArgs: {
-                    'min': ProductPricingInfo.formatQty(p.minOrder),
-                    'max': ProductPricingInfo.formatQty(p.stock),
-                  }),
-                  controller: quantityController,
-                  keyboardType: TextInputType.number,
-                  prefixIcon: LucideIcons.package,
-                  onChanged: (_) => setSheetState(() {}),
-                  validator: (value) {
-                    if (value == null || value.isEmpty) {
-                      return 'marketplace.required_field'.tr();
-                    }
-                    return NegotiationQuantityRules.validate(
-                      quantity: double.tryParse(value),
-                      minOrder: p.minOrder,
-                      stock: p.stock,
-                      unit: p.unit,
-                    );
-                  },
-                ),
-                SizedBox(height: AppSpacing.lg),
-                Text(
-                  'marketplace.step_offer_price'.tr(),
-                  style: TextStyle(
-                    fontSize: 13.sp,
-                    fontWeight: FontWeight.w800,
-                    color: AppColors.textPrimary,
-                  ),
-                ),
-                SizedBox(height: 4.h),
-                Text(
-                  'marketplace.catalog_price_line'.tr(namedArgs: {
-                    'price': formatMoneyDisplay(p.pricePerUnit),
-                    'unit': p.unit,
-                  }),
-                  style: TextStyle(
-                    fontSize: 11.sp,
-                    color: AppColors.textSecondary,
-                    fontWeight: FontWeight.w600,
-                  ),
-                ),
-                SizedBox(height: AppSpacing.sm),
-                CustomTextField(
-                  label: 'marketplace.offer_price_label'.tr(
-                    namedArgs: {'unit': p.unit},
-                  ),
-                  hint: formatRupiahInput(p.pricePerUnit),
-                  controller: priceController,
-                  keyboardType: TextInputType.number,
-                  prefixIcon: LucideIcons.banknote,
-                  inputFormatters: [RupiahInputFormatter()],
-                  validator: (value) {
-                    if (value == null || value.trim().isEmpty) {
-                      return 'marketplace.required_field'.tr();
-                    }
-                    if (parseRupiahInput(value) == null) {
-                      return 'marketplace.invalid_amount'.tr();
-                    }
-                    return null;
-                  },
-                ),
-                SizedBox(height: AppSpacing.lg),
-                Text(
-                  'marketplace.step_seller_note'.tr(),
-                  style: TextStyle(
-                    fontSize: 13.sp,
-                    fontWeight: FontWeight.w800,
-                    color: AppColors.textPrimary,
-                  ),
-                ),
-                SizedBox(height: AppSpacing.sm),
-                CustomTextField(
-                  label: 'marketplace.optional_message_label'.tr(),
-                  hint: 'marketplace.optional_message_hint'.tr(),
-                  controller: _messageController,
-                  maxLines: 3,
-                  prefixIcon: LucideIcons.messageSquare,
-                ),
-                SizedBox(height: AppSpacing.md),
-                Text(
-                  'marketplace.support_photo_optional'.tr(),
-                  style: TextStyle(
-                    fontSize: 12.sp,
-                    fontWeight: FontWeight.w700,
-                    color: AppColors.textSecondary,
-                  ),
-                ),
-                SizedBox(height: AppSpacing.md12),
-                InkWell(
-                  onTap: _pickImage,
-                  child: Container(
-                    height: 100.h,
-                    width: double.infinity,
-                    decoration: BoxDecoration(
-                      color: AppColors.grey50,
-                      borderRadius: BorderRadius.circular(AppRadius.xl),
-                      border: Border.all(color: AppColors.grey200, width: 1),
-                    ),
-                    child: _imageFile != null
-                        ? Stack(
-                            fit: StackFit.expand,
-                            children: [
-                              ClipRRect(
-                                borderRadius: BorderRadius.circular(AppRadius.xl),
-                                child: Image.file(
-                                  _imageFile!,
-                                  fit: BoxFit.cover,
+                                ),
+                                controller: quantityController,
+                                keyboardType: TextInputType.number,
+                                prefixIcon: LucideIcons.package,
+                                onChanged: (_) => setSheetState(() {}),
+                                validator: (value) {
+                                  if (value == null || value.isEmpty) {
+                                    return 'marketplace.required_field'.tr();
+                                  }
+                                  return NegotiationQuantityRules.validate(
+                                    quantity: double.tryParse(value),
+                                    minOrder: p.minOrder,
+                                    stock: p.stock,
+                                    unit: p.unit,
+                                  );
+                                },
+                              ),
+                              SizedBox(height: AppSpacing.lg),
+                              Text(
+                                'marketplace.step_offer_price'.tr(),
+                                style: TextStyle(
+                                  fontSize: 13.sp,
+                                  fontWeight: FontWeight.w800,
+                                  color: AppColors.textPrimary,
                                 ),
                               ),
-                              Positioned(
-                                top: AppSpacing.sm,
-                                right: AppSpacing.sm,
-                                child: GestureDetector(
-                                  onTap: () =>
-                                      setState(() => _imageFile = null),
-                                  child: CircleAvatar(
-                                    radius: AppRadius.lg,
-                                    backgroundColor: AppColors.black.withValues(
-                                      alpha: 0.5,
-                                    ),
-                                    child: Icon(
-                                      Icons.close,
-                                      size: 14.sp,
-                                      color: AppColors.surface,
-                                    ),
-                                  ),
+                              SizedBox(height: 4.h),
+                              Text(
+                                'marketplace.catalog_price_line'.tr(
+                                  namedArgs: {
+                                    'price': formatMoneyDisplay(p.pricePerUnit),
+                                    'unit': p.unit,
+                                  },
                                 ),
-                              ),
-                            ],
-                          )
-                        : Column(
-                            mainAxisAlignment: MainAxisAlignment.center,
-                            children: [
-                              Icon(
-                                LucideIcons.imagePlus,
-                                color: AppColors.grey400,
-                                size: 32.sp,
+                                style: TextStyle(
+                                  fontSize: 11.sp,
+                                  color: AppColors.textSecondary,
+                                  fontWeight: FontWeight.w600,
+                                ),
                               ),
                               SizedBox(height: AppSpacing.sm),
+                              CustomTextField(
+                                label: 'marketplace.offer_price_label'.tr(
+                                  namedArgs: {'unit': p.unit},
+                                ),
+                                hint: formatRupiahInput(p.pricePerUnit),
+                                controller: priceController,
+                                keyboardType: TextInputType.number,
+                                prefixIcon: LucideIcons.banknote,
+                                inputFormatters: [RupiahInputFormatter()],
+                                validator: (value) {
+                                  if (value == null || value.trim().isEmpty) {
+                                    return 'marketplace.required_field'.tr();
+                                  }
+                                  if (parseRupiahInput(value) == null) {
+                                    return 'marketplace.invalid_amount'.tr();
+                                  }
+                                  return null;
+                                },
+                              ),
+                              SizedBox(height: AppSpacing.lg),
                               Text(
-                                'marketplace.tap_add_image'.tr(),
+                                'marketplace.step_seller_note'.tr(),
                                 style: TextStyle(
-                                  color: AppColors.textHint,
-                                  fontSize: 12.sp,
+                                  fontSize: 13.sp,
+                                  fontWeight: FontWeight.w800,
+                                  color: AppColors.textPrimary,
                                 ),
                               ),
+                              SizedBox(height: AppSpacing.sm),
+                              CustomTextField(
+                                label: 'marketplace.optional_message_label'
+                                    .tr(),
+                                hint: 'marketplace.optional_message_hint'.tr(),
+                                controller: _messageController,
+                                maxLines: 3,
+                                prefixIcon: LucideIcons.messageSquare,
+                              ),
+                              SizedBox(height: AppSpacing.md),
+                              Text(
+                                'marketplace.support_photo_optional'.tr(),
+                                style: TextStyle(
+                                  fontSize: 12.sp,
+                                  fontWeight: FontWeight.w700,
+                                  color: AppColors.textSecondary,
+                                ),
+                              ),
+                              SizedBox(height: AppSpacing.md12),
+                              InkWell(
+                                onTap: _pickImage,
+                                child: Container(
+                                  height: 100.h,
+                                  width: double.infinity,
+                                  decoration: BoxDecoration(
+                                    color: AppColors.grey50,
+                                    borderRadius: BorderRadius.circular(
+                                      AppRadius.xl,
+                                    ),
+                                    border: Border.all(
+                                      color: AppColors.grey200,
+                                      width: 1,
+                                    ),
+                                  ),
+                                  child: _imageFile != null
+                                      ? Stack(
+                                          fit: StackFit.expand,
+                                          children: [
+                                            ClipRRect(
+                                              borderRadius:
+                                                  BorderRadius.circular(
+                                                    AppRadius.xl,
+                                                  ),
+                                              child: Image.file(
+                                                _imageFile!,
+                                                fit: BoxFit.cover,
+                                              ),
+                                            ),
+                                            Positioned(
+                                              top: AppSpacing.sm,
+                                              right: AppSpacing.sm,
+                                              child: GestureDetector(
+                                                onTap: () => setState(
+                                                  () => _imageFile = null,
+                                                ),
+                                                child: CircleAvatar(
+                                                  radius: AppRadius.lg,
+                                                  backgroundColor: AppColors
+                                                      .black
+                                                      .withValues(alpha: 0.5),
+                                                  child: Icon(
+                                                    Icons.close,
+                                                    size: 14.sp,
+                                                    color: AppColors.surface,
+                                                  ),
+                                                ),
+                                              ),
+                                            ),
+                                          ],
+                                        )
+                                      : Column(
+                                          mainAxisAlignment:
+                                              MainAxisAlignment.center,
+                                          children: [
+                                            Icon(
+                                              LucideIcons.imagePlus,
+                                              color: AppColors.grey400,
+                                              size: 32.sp,
+                                            ),
+                                            SizedBox(height: AppSpacing.sm),
+                                            Text(
+                                              'marketplace.tap_add_image'.tr(),
+                                              style: TextStyle(
+                                                color: AppColors.textHint,
+                                                fontSize: 12.sp,
+                                              ),
+                                            ),
+                                          ],
+                                        ),
+                                ),
+                              ),
+                              SizedBox(height: AppSpacing.sectionGapLarge),
+                              CustomButton(
+                                text: outOfStock
+                                    ? 'marketplace.out_of_stock'.tr()
+                                    : 'marketplace.review_and_send'.tr(),
+                                useGradient: true,
+                                onPressed: outOfStock
+                                    ? null
+                                    : () {
+                                        if (!formKey.currentState!.validate())
+                                          return;
+                                        final qty = double.tryParse(
+                                          quantityController.text,
+                                        );
+                                        final price = parseRupiahInput(
+                                          priceController.text,
+                                        );
+                                        if (qty == null || price == null)
+                                          return;
+                                        final qtyError =
+                                            NegotiationQuantityRules.validate(
+                                              quantity: qty,
+                                              minOrder: p.minOrder,
+                                              stock: p.stock,
+                                              unit: p.unit,
+                                            );
+                                        if (qtyError != null) return;
+
+                                        draft =
+                                            NegotiationOfferDraft.fromProduct(
+                                              p,
+                                              quantity: qty,
+                                              offerPricePerUnit: price,
+                                              message:
+                                                  _messageController.text
+                                                      .trim()
+                                                      .isEmpty
+                                                  ? null
+                                                  : _messageController.text
+                                                        .trim(),
+                                              localImagePath: _imageFile?.path,
+                                            );
+                                        setSheetState(() => confirmStep = true);
+                                      },
+                              ),
+                              SizedBox(height: AppSpacing.sm),
+                              TextButton(
+                                onPressed: outOfStock
+                                    ? null
+                                    : () {
+                                        if (!formKey.currentState!.validate())
+                                          return;
+                                        final qty = double.tryParse(
+                                          quantityController.text,
+                                        );
+                                        final price = parseRupiahInput(
+                                          priceController.text,
+                                        );
+                                        if (qty == null || price == null)
+                                          return;
+                                        final d =
+                                            NegotiationOfferDraft.fromProduct(
+                                              p,
+                                              quantity: qty,
+                                              offerPricePerUnit: price,
+                                              message:
+                                                  _messageController.text
+                                                      .trim()
+                                                      .isEmpty
+                                                  ? null
+                                                  : _messageController.text
+                                                        .trim(),
+                                              localImagePath: _imageFile?.path,
+                                            );
+                                        Navigator.pop(sheetContext);
+                                        _openNegotiationPreview(d);
+                                      },
+                                child: Text(
+                                  'marketplace.open_full_preview'.tr(),
+                                  style: TextStyle(
+                                    fontSize: 12.sp,
+                                    fontWeight: FontWeight.w600,
+                                    color: AppColors.textSecondary,
+                                  ),
+                                ),
+                              ),
+                              SizedBox(height: AppSpacing.md),
                             ],
                           ),
-                  ),
-                ),
-                SizedBox(height: AppSpacing.xxl),
-                CustomButton(
-                  text: outOfStock
-                      ? 'marketplace.out_of_stock'.tr()
-                      : 'marketplace.review_and_send'.tr(),
-                  useGradient: true,
-                  onPressed: outOfStock
-                      ? null
-                      : () {
-                    if (!formKey.currentState!.validate()) return;
-                    final qty = double.tryParse(quantityController.text);
-                    final price = parseRupiahInput(priceController.text);
-                    if (qty == null || price == null) return;
-                    final qtyError = NegotiationQuantityRules.validate(
-                      quantity: qty,
-                      minOrder: p.minOrder,
-                      stock: p.stock,
-                      unit: p.unit,
-                    );
-                    if (qtyError != null) return;
-
-                    draft = NegotiationOfferDraft.fromProduct(
-                      p,
-                      quantity: qty,
-                      offerPricePerUnit: price,
-                      message: _messageController.text.trim().isEmpty
-                          ? null
-                          : _messageController.text.trim(),
-                      localImagePath: _imageFile?.path,
-                    );
-                    setSheetState(() => confirmStep = true);
-                  },
-                ),
-                SizedBox(height: AppSpacing.sm),
-                TextButton(
-                  onPressed: outOfStock
-                      ? null
-                      : () {
-                          if (!formKey.currentState!.validate()) return;
-                          final qty = double.tryParse(quantityController.text);
-                          final price = parseRupiahInput(priceController.text);
-                          if (qty == null || price == null) return;
-                          final d = NegotiationOfferDraft.fromProduct(
-                            p,
-                            quantity: qty,
-                            offerPricePerUnit: price,
-                            message: _messageController.text.trim().isEmpty
-                                ? null
-                                : _messageController.text.trim(),
-                            localImagePath: _imageFile?.path,
-                          );
-                          Navigator.pop(sheetContext);
-                          _openNegotiationPreview(d);
-                        },
-                  child: Text(
-                    'marketplace.open_full_preview'.tr(),
-                    style: TextStyle(
-                      fontSize: 12.sp,
-                      fontWeight: FontWeight.w600,
-                      color: AppColors.textSecondary,
-                    ),
-                  ),
-                ),
-                SizedBox(height: AppSpacing.md),
-                    ],
-                  ),
-                ),
-              );
-                },
-              );
+                        ),
+                      );
+                    },
+                  );
                 },
               ),
             ),
@@ -759,7 +839,11 @@ class _ProductDetailPageState extends State<ProductDetailPage> {
     );
   }
 
-  Widget _sheetSummaryRow(String label, String value, {bool emphasized = false}) {
+  Widget _sheetSummaryRow(
+    String label,
+    String value, {
+    bool emphasized = false,
+  }) {
     if (value.isEmpty) {
       return Padding(
         padding: EdgeInsets.only(bottom: AppSpacing.sm),
@@ -909,8 +993,9 @@ class _ProductDetailPageState extends State<ProductDetailPage> {
                           ),
                           onPressed: () {
                             final cubit = context.read<CompareCubit>();
-                            final wasSelected =
-                                cubit.state.contains(_product!.id);
+                            final wasSelected = cubit.state.contains(
+                              _product!.id,
+                            );
                             final err = cubit.toggle(_product!);
                             if (!context.mounted) return;
                             if (err != null) {
@@ -946,8 +1031,7 @@ class _ProductDetailPageState extends State<ProductDetailPage> {
                     color: AppColors.textPrimary,
                     size: 18.sp,
                   ),
-                  onPressed: () =>
-                      ProductShareHelper.shareProduct(_product!),
+                  onPressed: () => ProductShareHelper.shareProduct(_product!),
                 ),
               ),
             ),
@@ -974,13 +1058,17 @@ class _ProductDetailPageState extends State<ProductDetailPage> {
                             right: AppSpacing.md12,
                             child: Material(
                               color: AppColors.black.withValues(alpha: 0.55),
-                              borderRadius: BorderRadius.circular(AppRadius.button),
+                              borderRadius: BorderRadius.circular(
+                                AppRadius.button,
+                              ),
                               child: InkWell(
                                 onTap: () => ProductVideoPlayer.openFullscreen(
                                   context,
                                   p.videoUrl!,
                                 ),
-                                borderRadius: BorderRadius.circular(AppRadius.button),
+                                borderRadius: BorderRadius.circular(
+                                  AppRadius.button,
+                                ),
                                 child: Padding(
                                   padding: EdgeInsets.symmetric(
                                     horizontal: AppSpacing.sm10,
@@ -1068,7 +1156,9 @@ class _ProductDetailPageState extends State<ProductDetailPage> {
           child: Container(
             decoration: BoxDecoration(
               color: AppColors.surface,
-              borderRadius: BorderRadius.vertical(top: Radius.circular(AppSpacing.xxlPx.r)),
+              borderRadius: BorderRadius.vertical(
+                top: Radius.circular(AppSpacing.xxlPx.r),
+              ),
               boxShadow: [
                 BoxShadow(
                   color: AppColors.black.withValues(alpha: 0.05),
@@ -1108,6 +1198,10 @@ class _ProductDetailPageState extends State<ProductDetailPage> {
               child: _buildTechnicalSpecs(p),
             ),
           ),
+        if (p.certificates.isNotEmpty)
+          SliverToBoxAdapter(
+            child: ProductCertificateSection(certificates: p.certificates),
+          ),
         SliverToBoxAdapter(
           child: ProductRecommendationsSection(productId: p.id),
         ),
@@ -1115,7 +1209,7 @@ class _ProductDetailPageState extends State<ProductDetailPage> {
         SliverToBoxAdapter(
           child: Container(
             color: AppColors.background,
-            padding: EdgeInsets.only(top: AppSpacing.xl),
+            padding: EdgeInsets.zero,
             child: HorizontalProductSection(
               title: _product?.productMode == 'ORGANIC_PRODUCE'
                   ? 'marketplace.rec_organic'.tr()
@@ -1141,10 +1235,10 @@ class _ProductDetailPageState extends State<ProductDetailPage> {
         SliverToBoxAdapter(
           child: Padding(
             padding: EdgeInsets.fromLTRB(
-              AppSpacing.lg,
-              AppSpacing.xxl,
-              AppSpacing.lg,
-              AppSpacing.md,
+              AppSpacing.pageGutter,
+              AppSpacing.sectionGap,
+              AppSpacing.pageGutter,
+              AppSpacing.compact,
             ),
             child: Text(
               _product?.productMode == 'ORGANIC_PRODUCE'
@@ -1160,25 +1254,30 @@ class _ProductDetailPageState extends State<ProductDetailPage> {
         ),
         SliverToBoxAdapter(
           child: BlocProvider(
-            create: (context) => sl<MarketplaceCubit>()
-              ..getProducts(productMode: _product?.productMode),
+            create: (context) =>
+                sl<MarketplaceCubit>()
+                  ..getProducts(productMode: _product?.productMode),
             child: BlocBuilder<MarketplaceCubit, MarketplaceState>(
               builder: (context, state) {
                 return state.maybeWhen(
                   loading: () => ShimmerProductGridPlaceholder(
                     itemCount: 4,
-                    padding: EdgeInsets.symmetric(horizontal: AppSpacing.lg),
+                    padding: EdgeInsets.symmetric(
+                      horizontal: AppSpacing.pageGutter,
+                    ),
                   ),
                   loaded: (products, hasReachedMax) {
                     if (products.isEmpty) return const SizedBox.shrink();
                     return Padding(
-                      padding: EdgeInsets.symmetric(horizontal: AppSpacing.lg),
+                      padding: EdgeInsets.symmetric(
+                        horizontal: AppSpacing.pageGutter,
+                      ),
                       child: MasonryGridView.count(
                         shrinkWrap: true,
                         physics: const NeverScrollableScrollPhysics(),
                         crossAxisCount: 2,
-                        crossAxisSpacing: AppSpacing.md,
-                        mainAxisSpacing: AppSpacing.md,
+                        crossAxisSpacing: AppSpacing.md12,
+                        mainAxisSpacing: AppSpacing.md12,
                         itemCount: products.length,
                         itemBuilder: (context, index) {
                           return ProductCard(product: products[index]);
@@ -1192,7 +1291,7 @@ class _ProductDetailPageState extends State<ProductDetailPage> {
             ),
           ),
         ),
-        SliverToBoxAdapter(child: SizedBox(height: 100.h)),
+        SliverToBoxAdapter(child: SizedBox(height: AppSpacing.sectionGap)),
       ],
     );
   }
@@ -1223,7 +1322,8 @@ class _ProductDetailPageState extends State<ProductDetailPage> {
             ),
             child: Text(
               p.productMode == 'ORGANIC_PRODUCE'
-                  ? (p.cropType ?? 'marketplace.badge_mode_organic'.tr()).toUpperCase()
+                  ? (p.cropType ?? 'marketplace.badge_mode_organic'.tr())
+                        .toUpperCase()
                   : p.biomassaType.toUpperCase(),
               style: TextStyle(
                 fontSize: 10.sp,
@@ -1277,7 +1377,9 @@ class _ProductDetailPageState extends State<ProductDetailPage> {
                   decoration: BoxDecoration(
                     color: AppColors.error.withValues(alpha: 0.1),
                     borderRadius: BorderRadius.circular(4.r),
-                    border: Border.all(color: AppColors.error.withValues(alpha: 0.5)),
+                    border: Border.all(
+                      color: AppColors.error.withValues(alpha: 0.5),
+                    ),
                   ),
                   child: Text(
                     '${((p.originalPrice! - p.pricePerUnit) / p.originalPrice! * 100).round()}% OFF / ${p.unit}',
@@ -1360,11 +1462,15 @@ class _ProductDetailPageState extends State<ProductDetailPage> {
                         ),
                       ] else
                         Text(
-                          'marketplace.min_buy'.tr(namedArgs: {
-                            'qty': ProductPricingInfo.formatQty(p.minOrder),
-                            'unit': p.unit,
-                          }),
-                          style: AppTextStyles.caption(color: AppColors.textSecondary),
+                          'marketplace.min_buy'.tr(
+                            namedArgs: {
+                              'qty': ProductPricingInfo.formatQty(p.minOrder),
+                              'unit': p.unit,
+                            },
+                          ),
+                          style: AppTextStyles.caption(
+                            color: AppColors.textSecondary,
+                          ),
                         ),
                     ],
                   ),
@@ -1391,7 +1497,8 @@ class _ProductDetailPageState extends State<ProductDetailPage> {
                 ),
                 child: Text(
                   p.productMode == 'ORGANIC_PRODUCE'
-                      ? (p.cropType ?? 'marketplace.badge_mode_organic'.tr()).toUpperCase()
+                      ? (p.cropType ?? 'marketplace.badge_mode_organic'.tr())
+                            .toUpperCase()
                       : p.biomassaType.toUpperCase(),
                   style: TextStyle(
                     color: p.productMode == 'ORGANIC_PRODUCE'
@@ -1421,7 +1528,9 @@ class _ProductDetailPageState extends State<ProductDetailPage> {
                 if (p.grade != null)
                   _buildSmallBadge(
                     LucideIcons.medal,
-                    'marketplace.badge_grade'.tr(namedArgs: {'grade': '${p.grade}'}),
+                    'marketplace.badge_grade'.tr(
+                      namedArgs: {'grade': '${p.grade}'},
+                    ),
                     AppColors.warning,
                   ),
               ],
@@ -1474,7 +1583,11 @@ class _ProductDetailPageState extends State<ProductDetailPage> {
                   '${p.minOrder} ${p.unit}',
                 ),
                 _buildDivider(),
-                _buildQuickInfoItem(LucideIcons.mapPin, 'marketplace.location_label'.tr(), p.province),
+                _buildQuickInfoItem(
+                  LucideIcons.mapPin,
+                  'marketplace.location_label'.tr(),
+                  p.province,
+                ),
               ],
             ),
           ),
@@ -1679,10 +1792,12 @@ class _ProductDetailPageState extends State<ProductDetailPage> {
             SizedBox(width: AppSpacing.sm),
             Expanded(
               child: Text(
-                'marketplace.reviews_count'.tr(namedArgs: {
-                  'rating': '${p.averageRating}',
-                  'count': '${p.totalReviews}',
-                }),
+                'marketplace.reviews_count'.tr(
+                  namedArgs: {
+                    'rating': '${p.averageRating}',
+                    'count': '${p.totalReviews}',
+                  },
+                ),
                 style: TextStyle(
                   fontWeight: FontWeight.w700,
                   fontSize: 13.sp,
@@ -1741,7 +1856,9 @@ class _ProductDetailPageState extends State<ProductDetailPage> {
               child: Padding(
                 padding: EdgeInsets.only(top: AppSpacing.sm),
                 child: Text(
-                  _isDescriptionExpanded ? 'marketplace.show_less'.tr() : 'marketplace.show_more'.tr(),
+                  _isDescriptionExpanded
+                      ? 'marketplace.show_less'.tr()
+                      : 'marketplace.show_more'.tr(),
                   style: TextStyle(
                     fontSize: 13.sp,
                     fontWeight: FontWeight.w700,
@@ -1785,11 +1902,17 @@ class _ProductDetailPageState extends State<ProductDetailPage> {
                 ],
               ),
               borderRadius: BorderRadius.circular(AppRadius.tile),
-              border: Border.all(color: AppColors.primary.withValues(alpha: 0.25)),
+              border: Border.all(
+                color: AppColors.primary.withValues(alpha: 0.25),
+              ),
             ),
             child: Row(
               children: [
-                Icon(LucideIcons.sparkles, color: AppColors.primary, size: 22.sp),
+                Icon(
+                  LucideIcons.sparkles,
+                  color: AppColors.primary,
+                  size: 22.sp,
+                ),
                 SizedBox(width: AppSpacing.md12),
                 Expanded(
                   child: Column(
@@ -1801,12 +1924,18 @@ class _ProductDetailPageState extends State<ProductDetailPage> {
                       ),
                       Text(
                         'ai.predict_entry_subtitle'.tr(),
-                        style: AppTextStyles.caption(color: AppColors.textSecondary),
+                        style: AppTextStyles.caption(
+                          color: AppColors.textSecondary,
+                        ),
                       ),
                     ],
                   ),
                 ),
-                Icon(LucideIcons.chevronRight, color: AppColors.grey400, size: 18.sp),
+                Icon(
+                  LucideIcons.chevronRight,
+                  color: AppColors.grey400,
+                  size: 18.sp,
+                ),
               ],
             ),
           ),
@@ -1830,8 +1959,9 @@ class _ProductDetailPageState extends State<ProductDetailPage> {
     final previewSpecs = specs.length > _specPreviewLimit
         ? specs.take(_specPreviewLimit).toList()
         : specs;
-    final title =
-        isOrganic ? 'marketplace.specs_organic'.tr() : 'marketplace.specs_technical'.tr();
+    final title = isOrganic
+        ? 'marketplace.specs_organic'.tr()
+        : 'marketplace.specs_technical'.tr();
 
     return Padding(
       padding: EdgeInsets.fromLTRB(
@@ -1921,11 +2051,7 @@ class _ProductDetailPageState extends State<ProductDetailPage> {
         children: [
           Row(
             children: [
-              Icon(
-                LucideIcons.globe,
-                color: AppColors.primary,
-                size: 20.sp,
-              ),
+              Icon(LucideIcons.globe, color: AppColors.primary, size: 20.sp),
               SizedBox(width: AppSpacing.md12),
               Text(
                 'marketplace.esg_title'.tr(),
@@ -2006,7 +2132,9 @@ class _ProductDetailPageState extends State<ProductDetailPage> {
           ),
           decoration: BoxDecoration(
             color: AppColors.surface,
-            borderRadius: BorderRadius.vertical(top: Radius.circular(AppSpacing.xxlPx.r)),
+            borderRadius: BorderRadius.vertical(
+              top: Radius.circular(AppSpacing.xxlPx.r),
+            ),
           ),
           child: Column(
             mainAxisSize: MainAxisSize.min,
@@ -2226,17 +2354,17 @@ class _ProductDetailPageState extends State<ProductDetailPage> {
                                     showCustomSnackBar(
                                       context,
                                       content: Text(
-                                        'marketplace.added_to_cart'
-                                            .tr(namedArgs: {
-                                          'qty': '${p.minOrder.toInt()}',
-                                          'unit': p.unit,
-                                        }),
+                                        'marketplace.added_to_cart'.tr(
+                                          namedArgs: {
+                                            'qty': '${p.minOrder.toInt()}',
+                                            'unit': p.unit,
+                                          },
+                                        ),
                                       ),
                                       backgroundColor: AppColors.success,
                                       action: SnackBarAction(
                                         label: 'marketplace.view_cart'.tr(),
-                                        onPressed: () =>
-                                            context.push('/cart'),
+                                        onPressed: () => context.push('/cart'),
                                       ),
                                     );
                                   }
@@ -2296,4 +2424,3 @@ class _ProductDetailPageState extends State<ProductDetailPage> {
     );
   }
 }
-

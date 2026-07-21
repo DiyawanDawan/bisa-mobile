@@ -5,6 +5,7 @@ import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
 import 'package:mobile_bisa/shared/widgets/custom_button.dart';
 import '../../../../core/constants/app_colors.dart';
+import '../../../../core/constants/app_layout.dart';
 import '../../../../shared/widgets/bisa_app_bar.dart';
 import '../../../../shared/widgets/custom_text_field.dart';
 import '../../../../injection_container.dart';
@@ -75,7 +76,7 @@ class _ChangePasswordPageState extends State<ChangePasswordPage> {
         title: 'profile.change_password_title'.tr(),
       ),
       body: SingleChildScrollView(
-        padding: EdgeInsets.all(24.w),
+        padding: EdgeInsets.all(AppSpacing.pageGutter),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
@@ -87,7 +88,7 @@ class _ChangePasswordPageState extends State<ChangePasswordPage> {
                 height: 1.5,
               ),
             ),
-            SizedBox(height: 32.h),
+            SizedBox(height: AppSpacing.sectionGapLarge),
             CustomTextField(
               label: 'kata_sandi_baru'.tr(),
               hint: 'masukkan_kata_sandi_baru'.tr(),
@@ -96,7 +97,7 @@ class _ChangePasswordPageState extends State<ChangePasswordPage> {
               prefixIcon: LucideIcons.key,
               isRequired: true,
             ),
-            SizedBox(height: 20.h),
+            SizedBox(height: AppSpacing.sectionGap),
             CustomTextField(
               label: 'konfirmasi_kata_sandi_baru'.tr(),
               hint: 'ulangi_kata_sandi_baru'.tr(),
@@ -105,7 +106,7 @@ class _ChangePasswordPageState extends State<ChangePasswordPage> {
               prefixIcon: LucideIcons.shieldCheck,
               isRequired: true,
             ),
-            SizedBox(height: 40.h),
+            SizedBox(height: AppSpacing.spacious),
             CustomButton(
               text: 'simpan_perubahan'.tr(),
               onPressed: _isLoading ? null : _submit,

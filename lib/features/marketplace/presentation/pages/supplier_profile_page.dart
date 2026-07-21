@@ -23,6 +23,9 @@ import '../widgets/supplier_trade_history_section.dart';
 import '../../../../shared/widgets/shimmer_loading.dart';
 import '../../../follow/presentation/widgets/follow_button.dart';
 import '../../../../core/utils/product_share_helper.dart';
+import '../../domain/entities/product_certificate_entity.dart';
+import '../../domain/repositories/marketplace_repository.dart';
+import '../widgets/product_certificate_section.dart';
 
 class SupplierProfilePage extends StatefulWidget {
   final String supplierId;
@@ -45,6 +48,9 @@ class _SupplierProfilePageState extends State<SupplierProfilePage> {
   String _searchQuery = '';
   String _selectedFilter = 'ALL';
   UserEntity? _supplier;
+  List<ProductCertificateEntity> _certificates = const [];
+  bool _certificatesLoading = true;
+  String? _certificatesError;
 
   static const _filterAll = 'ALL';
   static const _filterNewest = 'NEWEST';
@@ -53,21 +59,21 @@ class _SupplierProfilePageState extends State<SupplierProfilePage> {
   static const _filterRatingHigh = 'RATING_HIGH';
 
   List<Map<String, String>> _filterOptions() => [
-        {'value': _filterAll, 'label': 'marketplace.filter_all'.tr()},
-        {'value': _filterNewest, 'label': 'marketplace.sort_newest'.tr()},
-        {'value': _filterPriceLow, 'label': 'marketplace.sort_price_low'.tr()},
-        {'value': _filterPriceHigh, 'label': 'marketplace.sort_price_high'.tr()},
-        {
-          'value': _filterRatingHigh,
-          'label': 'marketplace.sort_rating_high'.tr(),
-        },
-      ];
+    {'value': _filterAll, 'label': 'marketplace.filter_all'.tr()},
+    {'value': _filterNewest, 'label': 'marketplace.sort_newest'.tr()},
+    {'value': _filterPriceLow, 'label': 'marketplace.sort_price_low'.tr()},
+    {'value': _filterPriceHigh, 'label': 'marketplace.sort_price_high'.tr()},
+    {'value': _filterRatingHigh, 'label': 'marketplace.sort_rating_high'.tr()},
+  ];
 
   @override
   void initState() {
     super.initState();
     _loadSupplierProfile();
-    WidgetsBinding.instance.addPostFrameCallback((_) => _redirectOwnerToStoreManagement());
+    _loadCertificates();
+    WidgetsBinding.instance.addPostFrameCallback(
+      (_) => _redirectOwnerToStoreManagement(),
+    );
   }
 
   void _redirectOwnerToStoreManagement() {
@@ -83,11 +89,40 @@ class _SupplierProfilePageState extends State<SupplierProfilePage> {
   }
 
   Future<void> _loadSupplierProfile() async {
-    final result = await sl<AuthRepository>().getPublicProfile(widget.supplierId);
+    final result = await sl<AuthRepository>().getPublicProfile(
+      widget.supplierId,
+    );
+    result.fold((_) {}, (user) {
+      if (mounted) setState(() => _supplier = user);
+    });
+  }
+
+  Future<void> _loadCertificates() async {
+    if (mounted) {
+      setState(() {
+        _certificatesLoading = true;
+        _certificatesError = null;
+      });
+    }
+    final result = await sl<MarketplaceRepository>().getSupplierCertificates(
+      widget.supplierId,
+    );
     result.fold(
-      (_) {},
-      (user) {
-        if (mounted) setState(() => _supplier = user);
+      (failure) {
+        if (mounted) {
+          setState(() {
+            _certificatesLoading = false;
+            _certificatesError = failure.localizedMessage;
+          });
+        }
+      },
+      (items) {
+        if (mounted) {
+          setState(() {
+            _certificates = items;
+            _certificatesLoading = false;
+          });
+        }
       },
     );
   }
@@ -186,7 +221,10 @@ class _SupplierProfilePageState extends State<SupplierProfilePage> {
               if (widget.previewAsOwner)
                 Container(
                   width: double.infinity,
-                  padding: EdgeInsets.symmetric(horizontal: AppSpacing.md, vertical: AppSpacing.sm10),
+                  padding: EdgeInsets.symmetric(
+                    horizontal: AppSpacing.md,
+                    vertical: AppSpacing.sm10,
+                  ),
                   color: AppColors.primaryLight.withValues(alpha: 0.35),
                   child: Row(
                     children: [
@@ -217,101 +255,134 @@ class _SupplierProfilePageState extends State<SupplierProfilePage> {
                 child: BlocBuilder<MarketplaceCubit, MarketplaceState>(
                   builder: (context, state) {
                     return state.maybeWhen(
-                loading: () => ShimmerProductGridPlaceholder(
-                  itemCount: 6,
-                  imageHeight: 152.h,
-                  padding: EdgeInsets.fromLTRB(
-                    AppSpacing.sm,
-                    AppSpacing.sm10,
-                    AppSpacing.sm,
-                    40.h,
-                  ),
-                ),
-                error: (message) => Center(
-                  child: Padding(
-                    padding: EdgeInsets.all(AppSpacing.xl),
-                    child: Column(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        Icon(
-                          LucideIcons.circleAlert,
-                          size: 48.sp,
-                          color: AppColors.error,
-                        ),
-                        SizedBox(height: AppSpacing.md12),
-                        Text(
-                          message,
-                          textAlign: TextAlign.center,
-                          style: TextStyle(
-                            color: AppColors.textSecondary,
-                            fontSize: 14.sp,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                ),
-                loaded: (products, hasReachedMax) {
-                  final filtered = _applyFilters(products);
-                  final avgRating = _avgRating(products);
-
-                  return CustomScrollView(
-                    physics: const BouncingScrollPhysics(),
-                    slivers: [
-                      SliverToBoxAdapter(
-                        child: Column(
-                          children: [
-                            StoreBannerCarousel(height: 168.h),
-                            Transform.translate(
-                              offset: Offset(0, -28.h),
-                              child: _buildSupplierHeader(
-                                productCount: products.length,
-                                avgRating: avgRating,
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                      SliverToBoxAdapter(
-                        child: SupplierTradeHistorySection(
-                          supplierId: widget.supplierId,
-                        ),
-                      ),
-                      SliverToBoxAdapter(child: _buildSearchFilterCard()),
-                      SliverPadding(
+                      loading: () => ShimmerProductGridPlaceholder(
+                        itemCount: 6,
+                        imageHeight: 152.h,
                         padding: EdgeInsets.fromLTRB(
                           AppSpacing.sm,
                           AppSpacing.sm10,
                           AppSpacing.sm,
                           40.h,
                         ),
-                        sliver: filtered.isEmpty
-                            ? SliverToBoxAdapter(child: _buildEmptyState())
-                            : SliverToBoxAdapter(
-                                child: MasonryGridView.count(
-                                  shrinkWrap: true,
-                                  physics: const NeverScrollableScrollPhysics(),
-                                  crossAxisCount: 2,
-                                  mainAxisSpacing: AppSpacing.sm,
-                                  crossAxisSpacing: AppSpacing.sm,
-                                  itemCount: filtered.length,
-                                  itemBuilder: (context, index) {
-                                    return ProductCard(
-                                      product: _enrichProductForCard(
-                                        filtered[index],
-                                      ),
-                                      imageHeight: 152.h,
-                                    );
-                                  },
+                      ),
+                      error: (message) => Center(
+                        child: Padding(
+                          padding: EdgeInsets.all(AppSpacing.xl),
+                          child: Column(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              Icon(
+                                LucideIcons.circleAlert,
+                                size: 48.sp,
+                                color: AppColors.error,
+                              ),
+                              SizedBox(height: AppSpacing.md12),
+                              Text(
+                                message,
+                                textAlign: TextAlign.center,
+                                style: TextStyle(
+                                  color: AppColors.textSecondary,
+                                  fontSize: 14.sp,
                                 ),
                               ),
+                            ],
+                          ),
+                        ),
                       ),
-                    ],
-                  );
-                },
-                orElse: () => const SizedBox.shrink(),
-              );
-            },
+                      loaded: (products, hasReachedMax) {
+                        final filtered = _applyFilters(products);
+                        final avgRating = _avgRating(products);
+
+                        return CustomScrollView(
+                          physics: const BouncingScrollPhysics(),
+                          slivers: [
+                            SliverToBoxAdapter(
+                              child: Column(
+                                children: [
+                                  StoreBannerCarousel(height: 168.h),
+                                  Transform.translate(
+                                    offset: Offset(0, -28.h),
+                                    child: _buildSupplierHeader(
+                                      productCount: products.length,
+                                      avgRating: avgRating,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                            SliverToBoxAdapter(
+                              child: SupplierTradeHistorySection(
+                                supplierId: widget.supplierId,
+                              ),
+                            ),
+                            if (_certificatesLoading)
+                              const SliverToBoxAdapter(
+                                child: Padding(
+                                  padding: EdgeInsets.all(16),
+                                  child: Center(
+                                    child: CircularProgressIndicator(),
+                                  ),
+                                ),
+                              )
+                            else if (_certificatesError != null)
+                              SliverToBoxAdapter(
+                                child: Padding(
+                                  padding: EdgeInsets.symmetric(
+                                    horizontal: AppSpacing.md,
+                                  ),
+                                  child: OutlinedButton.icon(
+                                    onPressed: _loadCertificates,
+                                    icon: const Icon(LucideIcons.refreshCw),
+                                    label: Text('certificate.retry_load'.tr()),
+                                  ),
+                                ),
+                              )
+                            else if (_certificates.isNotEmpty)
+                              SliverToBoxAdapter(
+                                child: ProductCertificateSection(
+                                  certificates: _certificates,
+                                  onProductTap: (productId) =>
+                                      context.push('/product/$productId'),
+                                ),
+                              ),
+                            SliverToBoxAdapter(child: _buildSearchFilterCard()),
+                            SliverPadding(
+                              padding: EdgeInsets.fromLTRB(
+                                AppSpacing.sm,
+                                AppSpacing.sm10,
+                                AppSpacing.sm,
+                                40.h,
+                              ),
+                              sliver: filtered.isEmpty
+                                  ? SliverToBoxAdapter(
+                                      child: _buildEmptyState(),
+                                    )
+                                  : SliverToBoxAdapter(
+                                      child: MasonryGridView.count(
+                                        shrinkWrap: true,
+                                        physics:
+                                            const NeverScrollableScrollPhysics(),
+                                        crossAxisCount: 2,
+                                        mainAxisSpacing: AppSpacing.sm,
+                                        crossAxisSpacing: AppSpacing.sm,
+                                        itemCount: filtered.length,
+                                        itemBuilder: (context, index) {
+                                          return ProductCard(
+                                            product: _enrichProductForCard(
+                                              filtered[index],
+                                            ),
+                                            imageHeight: 152.h,
+                                          );
+                                        },
+                                      ),
+                                    ),
+                            ),
+                          ],
+                        );
+                      },
+                      orElse: () => const SizedBox.shrink(),
+                    );
+                  },
                 ),
               ),
             ],
@@ -323,7 +394,12 @@ class _SupplierProfilePageState extends State<SupplierProfilePage> {
 
   Widget _buildSearchFilterCard() {
     return Padding(
-      padding: EdgeInsets.fromLTRB(AppSpacing.sm, 0, AppSpacing.sm, AppSpacing.xs),
+      padding: EdgeInsets.fromLTRB(
+        AppSpacing.sm,
+        0,
+        AppSpacing.sm,
+        AppSpacing.xs,
+      ),
       child: Container(
         padding: EdgeInsets.fromLTRB(14.w, 14.h, 14.w, 12.h),
         decoration: BoxDecoration(
@@ -366,8 +442,9 @@ class _SupplierProfilePageState extends State<SupplierProfilePage> {
                       label,
                       style: TextStyle(
                         fontSize: 11.sp,
-                        fontWeight:
-                            isSelected ? FontWeight.w800 : FontWeight.w600,
+                        fontWeight: isSelected
+                            ? FontWeight.w800
+                            : FontWeight.w600,
                         color: isSelected
                             ? AppColors.white
                             : AppColors.textSecondary,
@@ -378,15 +455,12 @@ class _SupplierProfilePageState extends State<SupplierProfilePage> {
                     selectedColor: AppColors.primary,
                     backgroundColor: AppColors.grey50,
                     side: BorderSide(
-                      color: isSelected
-                          ? AppColors.primary
-                          : AppColors.grey200,
+                      color: isSelected ? AppColors.primary : AppColors.grey200,
                     ),
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(AppRadius.pill),
                     ),
-                    onSelected: (_) =>
-                        setState(() => _selectedFilter = value),
+                    onSelected: (_) => setState(() => _selectedFilter = value),
                   );
                 },
               ),
@@ -402,8 +476,7 @@ class _SupplierProfilePageState extends State<SupplierProfilePage> {
     required double avgRating,
   }) {
     final isVerified = _supplier?.isVerified ?? false;
-    final displayName =
-        _supplier?.companyName ?? widget.supplierName;
+    final displayName = _supplier?.companyName ?? widget.supplierName;
 
     return Container(
       margin: EdgeInsets.symmetric(horizontal: AppSpacing.sm),
@@ -582,9 +655,9 @@ class _SupplierProfilePageState extends State<SupplierProfilePage> {
     if (widget.previewAsOwner) return const SizedBox.shrink();
 
     final currentUser = context.watch<AuthCubit>().state.maybeWhen(
-          authenticated: (u) => u,
-          orElse: () => null,
-        );
+      authenticated: (u) => u,
+      orElse: () => null,
+    );
     if (currentUser == null || currentUser.role == 'SUPPLIER') {
       return const SizedBox.shrink();
     }
@@ -637,10 +710,7 @@ class _SupplierProfilePageState extends State<SupplierProfilePage> {
 }
 
 class _SupplierInlineStat extends StatelessWidget {
-  const _SupplierInlineStat({
-    required this.label,
-    required this.value,
-  });
+  const _SupplierInlineStat({required this.label, required this.value});
 
   final String label;
   final String value;
@@ -663,10 +733,7 @@ class _SupplierInlineStat extends StatelessWidget {
           textAlign: TextAlign.center,
           maxLines: 1,
           overflow: TextOverflow.ellipsis,
-          style: TextStyle(
-            fontSize: 10.sp,
-            color: AppColors.textSecondary,
-          ),
+          style: TextStyle(fontSize: 10.sp, color: AppColors.textSecondary),
         ),
       ],
     );
@@ -676,10 +743,6 @@ class _SupplierInlineStat extends StatelessWidget {
 class _SupplierStatDivider extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
-    return Container(
-      width: 1,
-      height: 28.h,
-      color: AppColors.grey200,
-    );
+    return Container(width: 1, height: 28.h, color: AppColors.grey200);
   }
 }

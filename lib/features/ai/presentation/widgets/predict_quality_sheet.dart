@@ -8,6 +8,7 @@ import 'package:lucide_icons_flutter/lucide_icons.dart';
 
 import '../../../../core/constants/app_colors.dart';
 import '../../../../core/constants/app_layout.dart';
+import '../../../../core/utils/safe_area_utils.dart';
 import '../../../../core/i18n/failure_messages.dart';
 import '../../../../core/i18n/tr_safe.dart';
 import '../../../../core/utils/batch_weight_util.dart';
@@ -47,10 +48,8 @@ class PredictQualitySheet extends StatefulWidget {
       context: context,
       isScrollControlled: true,
       backgroundColor: AppColors.transparent,
-      builder: (_) => Padding(
-        padding: EdgeInsets.only(
-          bottom: MediaQuery.of(context).viewInsets.bottom,
-        ),
+      builder: (sheetCtx) => Padding(
+        padding: bisaSheetPadding(sheetCtx),
         child: PredictQualitySheet(
           initialBiomassaType: initialBiomassaType,
           initialSuhu: initialSuhu,
@@ -109,9 +108,9 @@ class _PredictQualitySheetState extends State<PredictQualitySheet> {
 
   Future<void> _loadQuota() async {
     final user = context.read<AuthCubit>().state.maybeWhen(
-          authenticated: (u) => u,
-          orElse: () => null,
-        );
+      authenticated: (u) => u,
+      orElse: () => null,
+    );
     final rem = await PredictQualityQuota.remaining(user);
     if (mounted) setState(() => _remaining = rem);
   }
@@ -126,9 +125,9 @@ class _PredictQualitySheetState extends State<PredictQualitySheet> {
 
   Future<void> _predict() async {
     final user = context.read<AuthCubit>().state.maybeWhen(
-          authenticated: (u) => u,
-          orElse: () => null,
-        );
+      authenticated: (u) => u,
+      orElse: () => null,
+    );
     if (user == null) return;
 
     if (!await PredictQualityQuota.canPredict(user)) {
@@ -138,24 +137,31 @@ class _PredictQualitySheetState extends State<PredictQualitySheet> {
 
     final temp = double.tryParse(_tempCtrl.text.trim());
     final time = double.tryParse(_timeCtrl.text.trim());
-    final beratKg = BatchWeightUtil.parseFieldToKg(_weightCtrl.text, _weightUnit);
+    final beratKg = BatchWeightUtil.parseFieldToKg(
+      _weightCtrl.text,
+      _weightUnit,
+    );
 
     if (temp == null || time == null || beratKg == null) {
       setState(() => _error = 'ai.predict_invalid_input'.tr());
       return;
     }
     if (temp < 20 || temp > 1000) {
-      setState(() => _error = trSafe(
-            'ai.predict_temp_range',
-            fallback: 'Suhu harus antara 20–1000°C',
-          ));
+      setState(
+        () => _error = trSafe(
+          'ai.predict_temp_range',
+          fallback: 'Suhu harus antara 20–1000°C',
+        ),
+      );
       return;
     }
     if (time < 1) {
-      setState(() => _error = trSafe(
-            'ai.predict_time_min',
-            fallback: 'Waktu pembakaran minimal 1 menit',
-          ));
+      setState(
+        () => _error = trSafe(
+          'ai.predict_time_min',
+          fallback: 'Waktu pembakaran minimal 1 menit',
+        ),
+      );
       return;
     }
 
@@ -198,38 +204,47 @@ class _PredictQualitySheetState extends State<PredictQualitySheet> {
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(16.r)),
       ),
-      builder: (ctx) => SafeArea(
-        child: Padding(
-          padding: EdgeInsets.fromLTRB(16.w, 12.h, 16.w, 8.h),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Text(
-                trSafe(
-                  'ai.scan_temp_source_title',
-                  fallback: 'Foto termometer digital',
-                ),
-                style: TextStyle(fontSize: 15.sp, fontWeight: FontWeight.w700),
+      builder: (ctx) => Padding(
+        padding: bisaSheetPadding(
+          ctx,
+          top: AppSpacing.md12,
+          bottom: AppSpacing.compact,
+        ),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Text(
+              trSafe(
+                'ai.scan_temp_source_title',
+                fallback: 'Foto termometer digital',
               ),
-              SizedBox(height: 12.h),
-              ListTile(
-                leading: Icon(LucideIcons.camera, color: AppColors.primary),
-                title: Text(trSafe('ai.scan_temp_camera', fallback: 'Ambil foto')),
-                onTap: () => Navigator.pop(ctx, ImageSource.camera),
+              style: TextStyle(fontSize: 15.sp, fontWeight: FontWeight.w700),
+            ),
+            SizedBox(height: 12.h),
+            ListTile(
+              leading: Icon(LucideIcons.camera, color: AppColors.primary),
+              title: Text(
+                trSafe('ai.scan_temp_camera', fallback: 'Ambil foto'),
               ),
-              ListTile(
-                leading: Icon(LucideIcons.image, color: AppColors.primary),
-                title: Text(trSafe('ai.scan_temp_gallery', fallback: 'Pilih dari galeri')),
-                onTap: () => Navigator.pop(ctx, ImageSource.gallery),
+              onTap: () => Navigator.pop(ctx, ImageSource.camera),
+            ),
+            ListTile(
+              leading: Icon(LucideIcons.image, color: AppColors.primary),
+              title: Text(
+                trSafe('ai.scan_temp_gallery', fallback: 'Pilih dari galeri'),
               ),
-            ],
-          ),
+              onTap: () => Navigator.pop(ctx, ImageSource.gallery),
+            ),
+          ],
         ),
       ),
     );
     if (source == null || !mounted) return;
 
-    final picked = await ImagePicker().pickImage(source: source, imageQuality: 85);
+    final picked = await ImagePicker().pickImage(
+      source: source,
+      imageQuality: 85,
+    );
     if (picked == null || !mounted) return;
 
     setState(() => _scanningTemp = true);
@@ -276,14 +291,16 @@ class _PredictQualitySheetState extends State<PredictQualitySheet> {
   @override
   Widget build(BuildContext context) {
     final user = context.watch<AuthCubit>().state.maybeWhen(
-          authenticated: (u) => u,
-          orElse: () => null,
-        );
+      authenticated: (u) => u,
+      orElse: () => null,
+    );
     final isPro = user != null && isProActive(user);
 
     return Container(
-      constraints: BoxConstraints(maxHeight: MediaQuery.of(context).size.height * 0.92),
-      padding: EdgeInsets.fromLTRB(16.w, 10.h, 16.w, 16.h),
+      constraints: BoxConstraints(
+        maxHeight: MediaQuery.of(context).size.height * 0.92,
+      ),
+      padding: EdgeInsets.only(top: AppSpacing.sectionGap),
       decoration: BoxDecoration(
         color: AppColors.surface,
         borderRadius: BorderRadius.vertical(top: Radius.circular(20.r)),
@@ -306,12 +323,19 @@ class _PredictQualitySheetState extends State<PredictQualitySheet> {
             SizedBox(height: 10.h),
             Row(
               children: [
-                Icon(LucideIcons.sparkles, color: AppColors.primary, size: 18.sp),
+                Icon(
+                  LucideIcons.sparkles,
+                  color: AppColors.primary,
+                  size: 18.sp,
+                ),
                 SizedBox(width: 8.w),
                 Expanded(
                   child: Text(
                     'ai.predict_title'.tr(),
-                    style: TextStyle(fontSize: 16.sp, fontWeight: FontWeight.w800),
+                    style: TextStyle(
+                      fontSize: 16.sp,
+                      fontWeight: FontWeight.w800,
+                    ),
                   ),
                 ),
               ],
@@ -320,7 +344,9 @@ class _PredictQualitySheetState extends State<PredictQualitySheet> {
             Text(
               isPro
                   ? 'ai.predict_subtitle_pro'.tr()
-                  : 'ai.predict_subtitle_free'.tr(namedArgs: {'remaining': '$_remaining'}),
+                  : 'ai.predict_subtitle_free'.tr(
+                      namedArgs: {'remaining': '$_remaining'},
+                    ),
               style: TextStyle(fontSize: 11.sp, color: AppColors.textSecondary),
             ),
             SizedBox(height: 10.h),
@@ -331,7 +357,10 @@ class _PredictQualitySheetState extends State<PredictQualitySheet> {
                   .map(
                     (t) => DropdownMenuItem(
                       value: t,
-                      child: Text(_biomassLabel(t), style: TextStyle(fontSize: 13.sp)),
+                      child: Text(
+                        _biomassLabel(t),
+                        style: TextStyle(fontSize: 13.sp),
+                      ),
                     ),
                   )
                   .toList(),
@@ -379,7 +408,9 @@ class _PredictQualitySheetState extends State<PredictQualitySheet> {
                 decoration: BoxDecoration(
                   color: AppColors.error.withValues(alpha: 0.08),
                   borderRadius: BorderRadius.circular(8.r),
-                  border: Border.all(color: AppColors.error.withValues(alpha: 0.25)),
+                  border: Border.all(
+                    color: AppColors.error.withValues(alpha: 0.25),
+                  ),
                 ),
                 child: Text(
                   _error!,
@@ -471,19 +502,26 @@ class _CompactNumField extends StatelessWidget {
         suffixIcon: onCameraTap == null
             ? null
             : cameraLoading
-                ? Padding(
-                    padding: EdgeInsets.all(12.w),
-                    child: SizedBox(
-                      width: 16.w,
-                      height: 16.w,
-                      child: const CircularProgressIndicator(strokeWidth: 2),
-                    ),
-                  )
-                : IconButton(
-                    icon: Icon(LucideIcons.camera, size: 18.sp, color: AppColors.primary),
-                    tooltip: trSafe('ai.scan_temp_tooltip', fallback: 'Foto termometer'),
-                    onPressed: onCameraTap,
-                  ),
+            ? Padding(
+                padding: EdgeInsets.all(12.w),
+                child: SizedBox(
+                  width: 16.w,
+                  height: 16.w,
+                  child: const CircularProgressIndicator(strokeWidth: 2),
+                ),
+              )
+            : IconButton(
+                icon: Icon(
+                  LucideIcons.camera,
+                  size: 18.sp,
+                  color: AppColors.primary,
+                ),
+                tooltip: trSafe(
+                  'ai.scan_temp_tooltip',
+                  fallback: 'Foto termometer',
+                ),
+                onPressed: onCameraTap,
+              ),
         contentPadding: EdgeInsets.symmetric(horizontal: 12.w, vertical: 10.h),
         border: OutlineInputBorder(borderRadius: BorderRadius.circular(8.r)),
         enabledBorder: OutlineInputBorder(

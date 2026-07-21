@@ -40,6 +40,7 @@ class _CreateInvoicePageState extends State<CreateInvoicePage> {
   final _qtyController = TextEditingController();
   final _priceController = TextEditingController();
   bool _termsInitialized = false;
+
   /// 0 = kesepakatan, 1 = pengiriman + terbitkan
   int _step = 0;
 
@@ -85,15 +86,16 @@ class _CreateInvoicePageState extends State<CreateInvoicePage> {
                   onPressed: state.status == CreateInvoiceStatus.submitting
                       ? null
                       : () => InvoiceExportHelper.exportPreview(
-                            context,
-                            exportPreview,
-                            sellerShippingSnapshot:
-                                state.sellerShippingSnapshot ??
-                                    exportPreview.sellerShippingSnapshot,
-                            sellerOriginLabel: state.sellerOriginLabel ??
-                                exportPreview.sellerOriginLabel,
-                            shippingSelection: state.shippingSelection,
-                          ),
+                          context,
+                          exportPreview,
+                          sellerShippingSnapshot:
+                              state.sellerShippingSnapshot ??
+                              exportPreview.sellerShippingSnapshot,
+                          sellerOriginLabel:
+                              state.sellerOriginLabel ??
+                              exportPreview.sellerOriginLabel,
+                          shippingSelection: state.shippingSelection,
+                        ),
                 );
               },
             ),
@@ -119,7 +121,10 @@ class _CreateInvoicePageState extends State<CreateInvoicePage> {
                 state.status == CreateInvoiceStatus.initial) {
               return Padding(
                 padding: EdgeInsets.all(16.w),
-                child: const ShimmerListPlaceholder(itemCount: 4, itemHeight: 88),
+                child: const ShimmerListPlaceholder(
+                  itemCount: 4,
+                  itemHeight: 88,
+                ),
               );
             }
 
@@ -138,10 +143,8 @@ class _CreateInvoicePageState extends State<CreateInvoicePage> {
               return _errorState('invoice.error_preview_unavailable'.tr());
             }
 
-            final buyerLabel =
-                preview.buyerCompanyName ?? preview.buyerName;
-            final isSubmitting =
-                state.status == CreateInvoiceStatus.submitting;
+            final buyerLabel = preview.buyerCompanyName ?? preview.buyerName;
+            final isSubmitting = state.status == CreateInvoiceStatus.submitting;
             final exportPreview = state.previewWithDraft!;
             final cubit = context.read<CreateInvoiceCubit>();
             final readiness = cubit.issueReadiness;
@@ -153,7 +156,12 @@ class _CreateInvoicePageState extends State<CreateInvoicePage> {
                 Expanded(
                   child: SingleChildScrollView(
                     physics: const BouncingScrollPhysics(),
-                    padding: EdgeInsets.fromLTRB(16.w, 16.h, 16.w, 24.h),
+                    padding: EdgeInsets.fromLTRB(
+                      AppSpacing.pageGutter,
+                      AppSpacing.comfortable,
+                      AppSpacing.pageGutter,
+                      AppSpacing.spacious,
+                    ),
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
@@ -183,8 +191,11 @@ class _CreateInvoicePageState extends State<CreateInvoicePage> {
                                   onChanged: (v) {
                                     final qty = double.tryParse(v);
                                     if (qty == null) return;
-                                    final cubit = context.read<CreateInvoiceCubit>();
-                                    cubit.updateDraft(draft.copyWith(quantity: qty));
+                                    final cubit = context
+                                        .read<CreateInvoiceCubit>();
+                                    cubit.updateDraft(
+                                      draft.copyWith(quantity: qty),
+                                    );
                                     cubit.refreshPreview(widget.negotiationId);
                                   },
                                 ),
@@ -200,8 +211,11 @@ class _CreateInvoicePageState extends State<CreateInvoicePage> {
                                   onChanged: (v) {
                                     final price = double.tryParse(v);
                                     if (price == null) return;
-                                    final cubit = context.read<CreateInvoiceCubit>();
-                                    cubit.updateDraft(draft.copyWith(pricePerUnit: price));
+                                    final cubit = context
+                                        .read<CreateInvoiceCubit>();
+                                    cubit.updateDraft(
+                                      draft.copyWith(pricePerUnit: price),
+                                    );
                                     cubit.refreshPreview(widget.negotiationId);
                                   },
                                 ),
@@ -232,9 +246,9 @@ class _CreateInvoicePageState extends State<CreateInvoicePage> {
                               maxLines: 4,
                               isOptional: true,
                               onChanged: (v) {
-                                context
-                                    .read<CreateInvoiceCubit>()
-                                    .updateDraft(draft.copyWith(specifications: v));
+                                context.read<CreateInvoiceCubit>().updateDraft(
+                                  draft.copyWith(specifications: v),
+                                );
                               },
                             ),
                           ),
@@ -243,12 +257,15 @@ class _CreateInvoicePageState extends State<CreateInvoicePage> {
                           _sectionTitle('invoice.shipping_section'.tr()),
                           SizedBox(height: 8.h),
                           InvoiceShippingRouteOverview(
-                            sellerSnapshot: state.sellerShippingSnapshot ??
+                            sellerSnapshot:
+                                state.sellerShippingSnapshot ??
                                 exportPreview.sellerShippingSnapshot,
                             buyerDraft: draft,
-                            sellerOriginLabel: state.sellerOriginLabel ??
+                            sellerOriginLabel:
+                                state.sellerOriginLabel ??
                                 exportPreview.sellerOriginLabel,
-                            sellerOriginResolved: (state.sellerOriginId ??
+                            sellerOriginResolved:
+                                (state.sellerOriginId ??
                                     exportPreview.sellerOriginId) !=
                                 null,
                           ),
@@ -262,7 +279,9 @@ class _CreateInvoicePageState extends State<CreateInvoicePage> {
                               final cubit = context.read<CreateInvoiceCubit>();
                               final shouldRefresh = cubit.updateDraft(updated);
                               if (shouldRefresh) {
-                                await cubit.refreshPreview(widget.negotiationId);
+                                await cubit.refreshPreview(
+                                  widget.negotiationId,
+                                );
                               }
                             },
                           ),
@@ -311,7 +330,11 @@ class _CreateInvoicePageState extends State<CreateInvoicePage> {
           _stepChip(0, 'invoice.step_deal'.tr()),
           Padding(
             padding: EdgeInsets.symmetric(horizontal: 8.w),
-            child: Icon(Icons.chevron_right, size: 16.sp, color: AppColors.grey400),
+            child: Icon(
+              Icons.chevron_right,
+              size: 16.sp,
+              color: AppColors.grey400,
+            ),
           ),
           _stepChip(1, 'invoice.step_shipping'.tr()),
         ],
@@ -393,9 +416,9 @@ class _CreateInvoicePageState extends State<CreateInvoicePage> {
                   useGradient: canIssue,
                   height: 48.h,
                   onPressed: canIssue
-                      ? () => context
-                          .read<CreateInvoiceCubit>()
-                          .issueInvoice(widget.negotiationId)
+                      ? () => context.read<CreateInvoiceCubit>().issueInvoice(
+                          widget.negotiationId,
+                        )
                       : null,
                 ),
                 SizedBox(height: 6.h),
@@ -410,7 +433,9 @@ class _CreateInvoicePageState extends State<CreateInvoicePage> {
                 ),
                 SizedBox(height: 8.h),
                 TextButton(
-                  onPressed: isSubmitting ? null : () => setState(() => _step = 0),
+                  onPressed: isSubmitting
+                      ? null
+                      : () => setState(() => _step = 0),
                   child: Text('invoice.step_back_deal'.tr()),
                 ),
               ],
@@ -425,15 +450,16 @@ class _CreateInvoicePageState extends State<CreateInvoicePage> {
                       onPressed: isSubmitting
                           ? null
                           : () => InvoiceExportHelper.exportPreview(
-                                context,
-                                exportPreview,
-                                sellerShippingSnapshot:
-                                    state.sellerShippingSnapshot ??
-                                        exportPreview.sellerShippingSnapshot,
-                                sellerOriginLabel: state.sellerOriginLabel ??
-                                    exportPreview.sellerOriginLabel,
-                                shippingSelection: state.shippingSelection,
-                              ),
+                              context,
+                              exportPreview,
+                              sellerShippingSnapshot:
+                                  state.sellerShippingSnapshot ??
+                                  exportPreview.sellerShippingSnapshot,
+                              sellerOriginLabel:
+                                  state.sellerOriginLabel ??
+                                  exportPreview.sellerOriginLabel,
+                              shippingSelection: state.shippingSelection,
+                            ),
                     ),
                   ),
                   SizedBox(width: 10.w),
@@ -445,10 +471,10 @@ class _CreateInvoicePageState extends State<CreateInvoicePage> {
                       onPressed: isSubmitting
                           ? null
                           : () => InvoiceExportHelper.sendPreviewToChat(
-                                context,
-                                widget.negotiationId,
-                                exportPreview,
-                              ),
+                              context,
+                              widget.negotiationId,
+                              exportPreview,
+                            ),
                     ),
                   ),
                 ],
@@ -507,7 +533,10 @@ class _CreateInvoicePageState extends State<CreateInvoicePage> {
                     width: 52.w,
                     height: 52.w,
                     color: AppColors.primary.withValues(alpha: 0.08),
-                    child: Icon(Icons.inventory_2_outlined, color: AppColors.primary),
+                    child: Icon(
+                      Icons.inventory_2_outlined,
+                      color: AppColors.primary,
+                    ),
                   ),
           ),
           SizedBox(width: 12.w),
@@ -568,7 +597,7 @@ class _CreateInvoicePageState extends State<CreateInvoicePage> {
   Widget _errorState(String message) {
     return Center(
       child: Padding(
-        padding: EdgeInsets.all(24.w),
+        padding: EdgeInsets.all(AppSpacing.spacious),
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [

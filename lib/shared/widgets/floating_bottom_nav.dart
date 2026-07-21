@@ -16,6 +16,7 @@ class FloatingBottomNavItem {
   });
 }
 
+/// Bottom nav ringkas (buyer & supplier) — tinggi lebih pendek ala Shopee.
 class FloatingBottomNav extends StatelessWidget {
   final int currentIndex;
   final List<FloatingBottomNavItem> items;
@@ -28,50 +29,33 @@ class FloatingBottomNav extends StatelessWidget {
     required this.onTap,
   });
 
+  /// Tinggi bar isi (tanpa safe area sistem).
+  static double get barHeight => AppSpacing.bottomNavHeight;
+
   @override
   Widget build(BuildContext context) {
-    return SafeArea(
-      top: false,
-      minimum: EdgeInsets.only(bottom: AppSpacing.sm),
-      child: DecoratedBox(
-        decoration: BoxDecoration(
-          border: Border(
-            top: BorderSide(color: AppColors.grey200, width: 1.h),
-          ),
-        ),
-        child: Padding(
-          padding: EdgeInsets.fromLTRB(
-            AppSpacing.md12,
-            AppSpacing.sm,
-            AppSpacing.md12,
-            AppSpacing.xs,
-          ),
-          child: Container(
-            height: 58.h,
-            padding: EdgeInsets.symmetric(
-              horizontal: AppSpacing.xs6,
-              vertical: AppSpacing.xs6,
+    return Material(
+      color: AppColors.surface,
+      elevation: 8,
+      shadowColor: AppColors.black.withValues(alpha: 0.06),
+      child: SafeArea(
+        top: false,
+        minimum: EdgeInsets.zero,
+        child: DecoratedBox(
+          decoration: const BoxDecoration(
+            border: Border(
+              top: BorderSide(color: AppColors.grey200, width: 0.5),
             ),
-            decoration: BoxDecoration(
-              color: AppColors.grey100,
-              borderRadius: BorderRadius.circular(AppSpacing.xxlPx.r),
-              boxShadow: [
-                BoxShadow(
-                  color: AppColors.black.withValues(alpha: 0.08),
-                  blurRadius: 16,
-                  offset: const Offset(0, 4),
-                ),
-              ],
-            ),
+          ),
+          child: SizedBox(
+            height: barHeight,
             child: Row(
-              mainAxisAlignment: MainAxisAlignment.spaceAround,
               children: List.generate(items.length, (index) {
                 final item = items[index];
                 final selected = currentIndex == index;
                 return Expanded(
                   child: InkWell(
                     onTap: () => onTap(index),
-                    borderRadius: BorderRadius.circular(AppSpacing.xlPx.r),
                     child: Column(
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
@@ -80,7 +64,7 @@ class FloatingBottomNav extends StatelessWidget {
                           children: [
                             Icon(
                               item.icon,
-                              size: 20.sp,
+                              size: 18.sp,
                               color: selected
                                   ? AppColors.primary
                                   : AppColors.grey400,
@@ -88,10 +72,10 @@ class FloatingBottomNav extends StatelessWidget {
                             if ((item.badgeCount ?? 0) > 0)
                               Positioned(
                                 right: -AppSpacing.sm,
-                                top: -6.h,
+                                top: -5.h,
                                 child: Container(
                                   padding: EdgeInsets.symmetric(
-                                    horizontal: AppSpacing.xs,
+                                    horizontal: 3.w,
                                     vertical: 1.h,
                                   ),
                                   decoration: const BoxDecoration(
@@ -99,15 +83,17 @@ class FloatingBottomNav extends StatelessWidget {
                                     shape: BoxShape.circle,
                                   ),
                                   constraints: BoxConstraints(
-                                    minWidth: AppSpacing.section,
-                                    minHeight: AppSpacing.section,
+                                    minWidth: 14.w,
+                                    minHeight: 14.w,
                                   ),
                                   child: Center(
                                     child: Text(
                                       '${item.badgeCount}',
-                                      style: AppTextStyles.micro(
+                                      style: TextStyle(
+                                        fontSize: 8.sp,
                                         color: AppColors.textOnPrimary,
                                         fontWeight: FontWeight.w900,
+                                        height: 1,
                                       ),
                                     ),
                                   ),
@@ -115,18 +101,19 @@ class FloatingBottomNav extends StatelessWidget {
                               ),
                           ],
                         ),
-                        SizedBox(height: 2.h),
+                        SizedBox(height: 1.h),
                         Text(
                           item.label.toUpperCase(),
                           maxLines: 1,
                           overflow: TextOverflow.ellipsis,
                           style: AppTextStyles.micro(
-                            fontWeight:
-                                selected ? FontWeight.w800 : FontWeight.w600,
+                            fontWeight: selected
+                                ? FontWeight.w800
+                                : FontWeight.w600,
                             color: selected
                                 ? AppColors.primary
                                 : AppColors.grey400,
-                          ),
+                          ).copyWith(fontSize: 9.sp, height: 1.1),
                         ),
                       ],
                     ),

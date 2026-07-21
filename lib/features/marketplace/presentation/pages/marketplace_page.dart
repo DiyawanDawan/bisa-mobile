@@ -133,9 +133,12 @@ class _MarketplacePageState extends State<MarketplacePage> {
       maxPrice: _maxPrice,
       minRating: _minRating,
       productMode: _activeProductMode,
-      availableNow: _activeProductMode == 'ORGANIC_PRODUCE' ? _availableNow : null,
-      preHarvestBookable:
-          _activeProductMode == 'ORGANIC_PRODUCE' ? _preHarvestBookable : null,
+      availableNow: _activeProductMode == 'ORGANIC_PRODUCE'
+          ? _availableNow
+          : null,
+      preHarvestBookable: _activeProductMode == 'ORGANIC_PRODUCE'
+          ? _preHarvestBookable
+          : null,
       canBook: true,
       sortBy: sortBy,
       sortOrder: sortOrder,
@@ -171,7 +174,8 @@ class _MarketplacePageState extends State<MarketplacePage> {
               FilterBottomSheet.show(
                 context,
                 sortBy: _sortBy,
-                category: _selectedCategory?.name ?? kMarketplaceFilterAllCategory,
+                category:
+                    _selectedCategory?.name ?? kMarketplaceFilterAllCategory,
                 minPrice: _minPrice,
                 maxPrice: _maxPrice,
                 minRating: _minRating,
@@ -221,7 +225,9 @@ class _MarketplacePageState extends State<MarketplacePage> {
                       SliverToBoxAdapter(
                         child: Padding(
                           padding: EdgeInsets.only(bottom: AppSpacing.xs),
-                          child: MarketplaceBanner(productMode: _activeProductMode),
+                          child: MarketplaceBanner(
+                            productMode: _activeProductMode,
+                          ),
                         ),
                       ),
                       SliverToBoxAdapter(
@@ -236,11 +242,15 @@ class _MarketplacePageState extends State<MarketplacePage> {
                         ),
                       ),
                       SliverToBoxAdapter(child: _buildProductModeSelector()),
-                      SliverToBoxAdapter(child: SizedBox(height: AppSpacing.sm)),
+                      SliverToBoxAdapter(
+                        child: SizedBox(height: AppSpacing.sm),
+                      ),
                       if (_activeProductMode == 'BIOMASS_MATERIAL')
                         SliverToBoxAdapter(child: _buildBiomassaTypeBar()),
                       if (_activeProductMode == 'ORGANIC_PRODUCE')
-                        SliverToBoxAdapter(child: _buildOrganicAvailabilityBar()),
+                        SliverToBoxAdapter(
+                          child: _buildOrganicAvailabilityBar(),
+                        ),
                       SliverToBoxAdapter(
                         child: HorizontalProductSection(
                           key: ValueKey(
@@ -378,7 +388,9 @@ class _MarketplacePageState extends State<MarketplacePage> {
                               ),
                             ),
                             error: (message) => SliverFillRemaining(
-                              child: Center(child: Text(message.localizedFailure)),
+                              child: Center(
+                                child: Text(message.localizedFailure),
+                              ),
                             ),
                             suppliersLoaded: (_) => const SliverToBoxAdapter(
                               child: SizedBox.shrink(),
@@ -395,19 +407,18 @@ class _MarketplacePageState extends State<MarketplacePage> {
                                   0,
                                   AppSpacing.sm,
                                   mainShellBottomPadding(
-                                  context,
-                                  kind: MainShellScrollKind.grid,
-                                ),
+                                    context,
+                                    kind: MainShellScrollKind.grid,
+                                  ),
                                 ),
                                 sliver: SliverMasonryGrid.count(
                                   crossAxisCount: 2,
                                   mainAxisSpacing: AppSpacing.sm,
                                   crossAxisSpacing: AppSpacing.sm,
-                                  itemBuilder: (context, index) =>
-                                      ProductCard(
-                                        product: products[index],
-                                        imageHeight: 152.h,
-                                      ),
+                                  itemBuilder: (context, index) => ProductCard(
+                                    product: products[index],
+                                    imageHeight: 152.h,
+                                  ),
                                   childCount: products.length,
                                 ),
                               );
@@ -463,7 +474,9 @@ class _MarketplacePageState extends State<MarketplacePage> {
                 padding: EdgeInsets.symmetric(horizontal: AppSpacing.section),
                 alignment: Alignment.center,
                 decoration: BoxDecoration(
-                  color: isSel ? AppColors.primary.withValues(alpha: 0.12) : AppColors.surface,
+                  color: isSel
+                      ? AppColors.primary.withValues(alpha: 0.12)
+                      : AppColors.surface,
                   borderRadius: BorderRadius.circular(AppRadius.pill),
                   border: Border.all(
                     color: isSel ? AppColors.primary : AppColors.grey200,
@@ -494,13 +507,15 @@ class _MarketplacePageState extends State<MarketplacePage> {
         }
 
         return Container(
-          height: 70.h,
-          padding: EdgeInsets.symmetric(vertical: 15.h),
+          height: 48.h,
+          padding: EdgeInsets.symmetric(vertical: AppSpacing.tight),
           child: Row(
             children: [
               Expanded(
                 child: ListView.builder(
-                  padding: EdgeInsets.symmetric(horizontal: AppSpacing.lg),
+                  padding: EdgeInsets.symmetric(
+                    horizontal: AppSpacing.pageGutter,
+                  ),
                   scrollDirection: Axis.horizontal,
                   physics: const BouncingScrollPhysics(),
                   itemCount: categories.length + 1,
@@ -520,7 +535,9 @@ class _MarketplacePageState extends State<MarketplacePage> {
                         },
                         child: AnimatedContainer(
                           duration: const Duration(milliseconds: 200),
-                          padding: EdgeInsets.symmetric(horizontal: AppSpacing.md),
+                          padding: EdgeInsets.symmetric(
+                            horizontal: AppSpacing.md,
+                          ),
                           alignment: Alignment.center,
                           decoration: BoxDecoration(
                             color: isSel
@@ -559,7 +576,9 @@ class _MarketplacePageState extends State<MarketplacePage> {
                     FilterBottomSheet.show(
                       context,
                       sortBy: _sortBy,
-                      category: _selectedCategory?.name ?? kMarketplaceFilterAllCategory,
+                      category:
+                          _selectedCategory?.name ??
+                          kMarketplaceFilterAllCategory,
                       minPrice: _minPrice,
                       maxPrice: _maxPrice,
                       minRating: _minRating,
@@ -653,16 +672,8 @@ class _MarketplacePageState extends State<MarketplacePage> {
     return BlocBuilder<CategoryCubit, CategoryState>(
       builder: (context, state) {
         List<String> suggestions = _activeProductMode == 'ORGANIC_PRODUCE'
-            ? [
-                'Beras Organik',
-                'Sayur Segar',
-                'Buah-buahan',
-              ]
-            : [
-                'Biochar Premium',
-                'Arang Batok',
-                'Sekam Padi',
-              ];
+            ? ['Beras Organik', 'Sayur Segar', 'Buah-buahan']
+            : ['Biochar Premium', 'Arang Batok', 'Sekam Padi'];
 
         if (state is CategoryLoaded) {
           suggestions = state.categories.map((e) => e.name).toList();
@@ -776,7 +787,9 @@ class _MarketplacePageState extends State<MarketplacePage> {
           });
           context.read<CategoryCubit>().getCategories(
             productMode: mode,
-            biomassaType: mode == 'BIOMASS_MATERIAL' ? _selectedBiomassaType : null,
+            biomassaType: mode == 'BIOMASS_MATERIAL'
+                ? _selectedBiomassaType
+                : null,
           );
           _fetchProducts();
           // Notify parent (MainScreen) so other tabs update
@@ -805,13 +818,17 @@ class _MarketplacePageState extends State<MarketplacePage> {
             Icon(
               icon,
               size: 16.sp,
-              color: isSelected ? AppColors.textOnPrimary : AppColors.textSecondary,
+              color: isSelected
+                  ? AppColors.textOnPrimary
+                  : AppColors.textSecondary,
             ),
             SizedBox(width: AppSpacing.sm),
             Text(
               label,
               style: TextStyle(
-                color: isSelected ? AppColors.textOnPrimary : AppColors.textSecondary,
+                color: isSelected
+                    ? AppColors.textOnPrimary
+                    : AppColors.textSecondary,
                 fontWeight: isSelected ? FontWeight.w800 : FontWeight.w600,
                 fontSize: 12.sp,
               ),
@@ -898,7 +915,11 @@ class _MarketplacePageState extends State<MarketplacePage> {
       ),
     ];
 
-    final cardW = (MediaQuery.of(context).size.width - AppSpacing.md * 2 - AppSpacing.md12 * 2) / 5;
+    final cardW =
+        (MediaQuery.of(context).size.width -
+            AppSpacing.md * 2 -
+            AppSpacing.md12 * 2) /
+        5;
 
     return Container(
       padding: EdgeInsets.symmetric(
@@ -967,7 +988,8 @@ class _MarketplacePageState extends State<MarketplacePage> {
   Widget _buildOrganicAvailabilityBar() {
     final bool showAll = _availableNow != true && _preHarvestBookable != true;
     final bool readyOnly = _availableNow == true && _preHarvestBookable != true;
-    final bool preHarvestOnly = _preHarvestBookable == true && _availableNow != true;
+    final bool preHarvestOnly =
+        _preHarvestBookable == true && _availableNow != true;
 
     return Container(
       height: AppSpacing.buttonHeightSm,
@@ -1029,7 +1051,9 @@ class _MarketplacePageState extends State<MarketplacePage> {
         padding: EdgeInsets.symmetric(horizontal: AppSpacing.section),
         alignment: Alignment.center,
         decoration: BoxDecoration(
-          color: selected ? AppColors.primary.withValues(alpha: 0.12) : AppColors.surface,
+          color: selected
+              ? AppColors.primary.withValues(alpha: 0.12)
+              : AppColors.surface,
           borderRadius: BorderRadius.circular(AppRadius.pill),
           border: Border.all(
             color: selected ? AppColors.primary : AppColors.grey200,

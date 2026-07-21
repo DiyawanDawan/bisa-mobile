@@ -11,7 +11,6 @@ part of 'waste_point_model.dart';
 
 // dart format off
 T _$identity<T>(T value) => value;
-
 /// @nodoc
 mixin _$WastePointModel {
 
@@ -22,8 +21,6 @@ mixin _$WastePointModel {
 @pragma('vm:prefer-inline')
 $WastePointModelCopyWith<WastePointModel> get copyWith => _$WastePointModelCopyWithImpl<WastePointModel>(this as WastePointModel, _$identity);
 
-  /// Serializes this WastePointModel to a JSON map.
-  Map<String, dynamic> toJson();
 
 
 @override
@@ -31,7 +28,7 @@ bool operator ==(Object other) {
   return identical(this, other) || (other.runtimeType == runtimeType&&other is WastePointModel&&(identical(other.id, id) || other.id == id)&&(identical(other.province, province) || other.province == province)&&(identical(other.regency, regency) || other.regency == regency)&&(identical(other.biomassaType, biomassaType) || other.biomassaType == biomassaType)&&(identical(other.volumeTon, volumeTon) || other.volumeTon == volumeTon)&&(identical(other.year, year) || other.year == year)&&(identical(other.lat, lat) || other.lat == lat)&&(identical(other.lng, lng) || other.lng == lng)&&(identical(other.source, source) || other.source == source));
 }
 
-@JsonKey(includeFromJson: false, includeToJson: false)
+
 @override
 int get hashCode => Object.hash(runtimeType,id,province,regency,biomassaType,volumeTon,year,lat,lng,source);
 
@@ -214,11 +211,11 @@ return $default(_that.id,_that.province,_that.regency,_that.biomassaType,_that.v
 }
 
 /// @nodoc
-@JsonSerializable()
+
 
 class _WastePointModel extends WastePointModel {
   const _WastePointModel({required this.id, required this.province, required this.regency, required this.biomassaType, required this.volumeTon, required this.year, required this.lat, required this.lng, this.source}): super._();
-  factory _WastePointModel.fromJson(Map<String, dynamic> json) => _$WastePointModelFromJson(json);
+  
 
 @override final  String id;
 @override final  String province;
@@ -236,17 +233,14 @@ class _WastePointModel extends WastePointModel {
 @pragma('vm:prefer-inline')
 _$WastePointModelCopyWith<_WastePointModel> get copyWith => __$WastePointModelCopyWithImpl<_WastePointModel>(this, _$identity);
 
-@override
-Map<String, dynamic> toJson() {
-  return _$WastePointModelToJson(this, );
-}
+
 
 @override
 bool operator ==(Object other) {
   return identical(this, other) || (other.runtimeType == runtimeType&&other is _WastePointModel&&(identical(other.id, id) || other.id == id)&&(identical(other.province, province) || other.province == province)&&(identical(other.regency, regency) || other.regency == regency)&&(identical(other.biomassaType, biomassaType) || other.biomassaType == biomassaType)&&(identical(other.volumeTon, volumeTon) || other.volumeTon == volumeTon)&&(identical(other.year, year) || other.year == year)&&(identical(other.lat, lat) || other.lat == lat)&&(identical(other.lng, lng) || other.lng == lng)&&(identical(other.source, source) || other.source == source));
 }
 
-@JsonKey(includeFromJson: false, includeToJson: false)
+
 @override
 int get hashCode => Object.hash(runtimeType,id,province,regency,biomassaType,volumeTon,year,lat,lng,source);
 

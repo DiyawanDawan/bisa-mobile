@@ -21,7 +21,9 @@ class PredictResultTable extends StatelessWidget {
   final bool compact;
   final VoidCallback? onAddToProduct;
 
-  static Map<String, dynamic>? parseRawOutput(Map<String, dynamic>? prediction) {
+  static Map<String, dynamic>? parseRawOutput(
+    Map<String, dynamic>? prediction,
+  ) {
     if (prediction == null) return null;
     final raw = prediction['rawOutput'];
     if (raw == null) return null;
@@ -75,10 +77,15 @@ class PredictResultTable extends StatelessWidget {
     ];
 
     if (pricePerTon != null) {
-      final perTon = pricePerTon is num ? pricePerTon : num.tryParse('$pricePerTon');
+      final perTon = pricePerTon is num
+          ? pricePerTon
+          : num.tryParse('$pricePerTon');
       rows.add(
         _PredictRow(
-          label: trSafe('ai.predict_table_price_ton', fallback: 'Harga estimasi'),
+          label: trSafe(
+            'ai.predict_table_price_ton',
+            fallback: 'Harga estimasi',
+          ),
           value: 'Rp ${formatIdr(perTon)}/ton',
         ),
       );
@@ -86,7 +93,10 @@ class PredictResultTable extends StatelessWidget {
         final total = totalIdr is num ? totalIdr : num.tryParse('$totalIdr');
         rows.add(
           _PredictRow(
-            label: trSafe('ai.predict_table_price_batch', fallback: 'Nilai batch'),
+            label: trSafe(
+              'ai.predict_table_price_batch',
+              fallback: 'Nilai batch',
+            ),
             value: 'Rp ${formatIdr(total)}',
             emphasize: true,
           ),
@@ -111,13 +121,17 @@ class PredictResultTable extends StatelessWidget {
           ),
         ),
         DecoratedBox(
-          decoration: BoxDecoration(
-            color: AppColors.surface,
-            borderRadius: BorderRadius.circular(8.r),
-            border: Border.all(color: AppColors.grey200),
-          ),
+          decoration: compact
+              ? const BoxDecoration()
+              : BoxDecoration(
+                  color: AppColors.surface,
+                  borderRadius: BorderRadius.circular(8.r),
+                  border: Border.all(color: AppColors.grey200),
+                ),
           child: ClipRRect(
-            borderRadius: BorderRadius.circular(8.r),
+            borderRadius: compact
+                ? BorderRadius.zero
+                : BorderRadius.circular(8.r),
             child: Column(
               children: [
                 _headerRow(labelSize),
@@ -144,7 +158,10 @@ class PredictResultTable extends StatelessWidget {
               onPressed: onAddToProduct,
               icon: Icon(LucideIcons.package, size: compact ? 14.sp : 16.sp),
               label: Text(
-                trSafe('ai.predict_add_to_product', fallback: 'Tambah ke Produk'),
+                trSafe(
+                  'ai.predict_add_to_product',
+                  fallback: 'Tambah ke Produk',
+                ),
                 style: TextStyle(fontSize: compact ? 11.sp : 12.sp),
               ),
               style: OutlinedButton.styleFrom(
@@ -216,7 +233,10 @@ class PredictResultTable extends StatelessWidget {
             flex: 5,
             child: Text(
               row.label,
-              style: TextStyle(fontSize: labelSize, color: AppColors.textSecondary),
+              style: TextStyle(
+                fontSize: labelSize,
+                color: AppColors.textSecondary,
+              ),
             ),
           ),
           Expanded(
@@ -228,8 +248,12 @@ class PredictResultTable extends StatelessWidget {
                     textAlign: TextAlign.right,
                     style: TextStyle(
                       fontSize: valueSize,
-                      fontWeight: row.emphasize ? FontWeight.w800 : FontWeight.w700,
-                      color: row.emphasize ? AppColors.primary : AppColors.textPrimary,
+                      fontWeight: row.emphasize
+                          ? FontWeight.w800
+                          : FontWeight.w700,
+                      color: row.emphasize
+                          ? AppColors.primary
+                          : AppColors.textPrimary,
                     ),
                   ),
           ),

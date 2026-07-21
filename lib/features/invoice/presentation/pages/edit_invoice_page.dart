@@ -58,7 +58,7 @@ class _EditInvoicePageState extends State<EditInvoicePage> {
   }
 
   ({double subtotal, double platformFee, double vatAmount, double total})
-      _recalcTotals(OrderEntity order, InvoiceDraft draft) {
+  _recalcTotals(OrderEntity order, InvoiceDraft draft) {
     final subtotal = draft.quantity * draft.pricePerUnit;
     final base = order.subtotal;
     double platformFee = order.platformFee;
@@ -99,10 +99,10 @@ class _EditInvoicePageState extends State<EditInvoicePage> {
                   onPressed: state.status == EditInvoiceStatus.submitting
                       ? null
                       : () => InvoiceExportHelper.exportPdfData(
-                            context,
-                            InvoicePdfData.fromOrderDraft(order, draft),
-                            order: order,
-                          ),
+                          context,
+                          InvoicePdfData.fromOrderDraft(order, draft),
+                          order: order,
+                        ),
                 );
               },
             ),
@@ -128,11 +128,15 @@ class _EditInvoicePageState extends State<EditInvoicePage> {
                 state.status == EditInvoiceStatus.initial) {
               return Padding(
                 padding: EdgeInsets.all(16.w),
-                child: const ShimmerListPlaceholder(itemCount: 4, itemHeight: 88),
+                child: const ShimmerListPlaceholder(
+                  itemCount: 4,
+                  itemHeight: 88,
+                ),
               );
             }
 
-            if (state.status == EditInvoiceStatus.error && state.order == null) {
+            if (state.status == EditInvoiceStatus.error &&
+                state.order == null) {
               return _errorState(
                 localizeFailureMessage(
                   state.errorMessage ?? 'invoice.error_load',
@@ -153,9 +157,8 @@ class _EditInvoicePageState extends State<EditInvoicePage> {
             final saveReadiness = state.saveReadiness;
             final canSave = saveReadiness.canIssue && !isSubmitting;
             final totals = _recalcTotals(order, draft);
-            final unit = negotiation?.product.unit ??
-                product?.productUnit ??
-                'unit';
+            final unit =
+                negotiation?.product.unit ?? product?.productUnit ?? 'unit';
             final catalogPrice =
                 negotiation?.product.pricePerUnit ?? product?.pricePerUnit;
 
@@ -164,7 +167,12 @@ class _EditInvoicePageState extends State<EditInvoicePage> {
                 Expanded(
                   child: SingleChildScrollView(
                     physics: const BouncingScrollPhysics(),
-                    padding: EdgeInsets.fromLTRB(16.w, 16.h, 16.w, 24.h),
+                    padding: EdgeInsets.fromLTRB(
+                      AppSpacing.pageGutter,
+                      AppSpacing.comfortable,
+                      AppSpacing.pageGutter,
+                      AppSpacing.spacious,
+                    ),
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
@@ -175,18 +183,22 @@ class _EditInvoicePageState extends State<EditInvoicePage> {
                           subtitle: canEdit
                               ? 'invoice.edit_banner_fix_subtitle'.tr()
                               : 'invoice.edit_banner_locked_subtitle'.tr(),
-                          color: canEdit ? AppColors.primary : AppColors.textHint,
+                          color: canEdit
+                              ? AppColors.primary
+                              : AppColors.textHint,
                         ),
                         SizedBox(height: 14.h),
                         InvoiceProductSummaryCard(
                           invoiceNumber: order.orderNumber,
-                          productName: product?.productName ??
+                          productName:
+                              product?.productName ??
                               negotiation?.product.name ??
                               'Produk',
                           quantity: draft.quantity,
                           pricePerUnit: draft.pricePerUnit,
                           unit: unit,
-                          thumbnailUrl: product?.thumbnailUrl ??
+                          thumbnailUrl:
+                              product?.thumbnailUrl ??
                               negotiation?.product.thumbnailUrl,
                           catalogPricePerUnit: catalogPrice,
                         ),
@@ -213,7 +225,9 @@ class _EditInvoicePageState extends State<EditInvoicePage> {
                                   onChanged: (v) {
                                     final qty = double.tryParse(v);
                                     if (qty == null) return;
-                                    context.read<EditInvoiceCubit>().updateDraft(
+                                    context
+                                        .read<EditInvoiceCubit>()
+                                        .updateDraft(
                                           draft.copyWith(quantity: qty),
                                         );
                                   },
@@ -230,7 +244,9 @@ class _EditInvoicePageState extends State<EditInvoicePage> {
                                   onChanged: (v) {
                                     final price = double.tryParse(v);
                                     if (price == null) return;
-                                    context.read<EditInvoiceCubit>().updateDraft(
+                                    context
+                                        .read<EditInvoiceCubit>()
+                                        .updateDraft(
                                           draft.copyWith(pricePerUnit: price),
                                         );
                                   },
@@ -261,9 +277,9 @@ class _EditInvoicePageState extends State<EditInvoicePage> {
                               : null,
                           onChanged: canEdit
                               ? (updated) {
-                                  context
-                                      .read<EditInvoiceCubit>()
-                                      .updateDraft(updated);
+                                  context.read<EditInvoiceCubit>().updateDraft(
+                                    updated,
+                                  );
                                 }
                               : null,
                         ),
@@ -293,7 +309,9 @@ class _EditInvoicePageState extends State<EditInvoicePage> {
                             isOptional: true,
                             onChanged: canEdit
                                 ? (v) {
-                                    context.read<EditInvoiceCubit>().updateDraft(
+                                    context
+                                        .read<EditInvoiceCubit>()
+                                        .updateDraft(
                                           draft.copyWith(specifications: v),
                                         );
                                   }
@@ -386,10 +404,10 @@ class _EditInvoicePageState extends State<EditInvoicePage> {
                 onPressed: isSubmitting
                     ? null
                     : () => InvoiceExportHelper.exportPdfData(
-                          context,
-                          InvoicePdfData.fromOrderDraft(order, draft),
-                          order: order,
-                        ),
+                        context,
+                        InvoicePdfData.fromOrderDraft(order, draft),
+                        order: order,
+                      ),
               ),
               SizedBox(height: 4.h),
               TextButton(
@@ -440,7 +458,10 @@ class _EditInvoicePageState extends State<EditInvoicePage> {
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
-          Text(label, style: TextStyle(fontSize: 12.sp, color: AppColors.textSecondary)),
+          Text(
+            label,
+            style: TextStyle(fontSize: 12.sp, color: AppColors.textSecondary),
+          ),
           Flexible(
             child: Text(
               value,
@@ -456,7 +477,7 @@ class _EditInvoicePageState extends State<EditInvoicePage> {
   Widget _errorState(String message) {
     return Center(
       child: Padding(
-        padding: EdgeInsets.all(24.w),
+        padding: EdgeInsets.all(AppSpacing.spacious),
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [

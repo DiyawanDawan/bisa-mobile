@@ -1,6 +1,7 @@
 import 'package:freezed_annotation/freezed_annotation.dart';
 import '../../../../core/utils/media_url_utils.dart';
 import '../../domain/entities/product_entity.dart';
+import 'product_certificate_model.dart';
 
 part 'product_model.freezed.dart';
 part 'product_model.g.dart';
@@ -52,6 +53,7 @@ abstract class ProductModel with _$ProductModel {
     String? promotedUntil,
     @Default(0) int promoImpressions,
     @Default(0) int promoClicks,
+    @Default([]) List<ProductCertificateModel> certificates,
   }) = _ProductModel;
 
   factory ProductModel.fromJson(Map<String, dynamic> json) {
@@ -104,8 +106,19 @@ abstract class ProductModel with _$ProductModel {
       videoUrl: json['videoUrl'] as String?,
       isPromoted: json['isPromoted'] as bool? ?? false,
       promotedUntil: json['promotedUntil'] as String?,
-      promoImpressions: int.tryParse(json['promoImpressions']?.toString() ?? '') ?? 0,
+      promoImpressions:
+          int.tryParse(json['promoImpressions']?.toString() ?? '') ?? 0,
       promoClicks: int.tryParse(json['promoClicks']?.toString() ?? '') ?? 0,
+      certificates:
+          (json['certificates'] as List<dynamic>?)
+              ?.whereType<Map>()
+              .map(
+                (item) => ProductCertificateModel.fromJson(
+                  Map<String, dynamic>.from(item),
+                ),
+              )
+              .toList() ??
+          const [],
     );
   }
 
@@ -121,7 +134,8 @@ abstract class ProductModel with _$ProductModel {
         : null,
     stock: double.tryParse(stock.toString()) ?? 0.0,
     reservedStock: double.tryParse(reservedStock.toString()) ?? 0.0,
-    availableStock: double.tryParse(availableStock.toString()) ??
+    availableStock:
+        double.tryParse(availableStock.toString()) ??
         (double.tryParse(stock.toString()) ?? 0.0),
     canBook: canBook,
     minOrder: double.tryParse(minOrder.toString()) ?? 0.0,
@@ -152,7 +166,9 @@ abstract class ProductModel with _$ProductModel {
     isChemicalFree: isChemicalFree,
     cropType: cropType,
     availabilityType: availabilityType,
-    nextHarvestDate: nextHarvestDate != null ? DateTime.tryParse(nextHarvestDate!) : null,
+    nextHarvestDate: nextHarvestDate != null
+        ? DateTime.tryParse(nextHarvestDate!)
+        : null,
     nextHarvestQtyTon: nextHarvestQtyTon != null
         ? double.tryParse(nextHarvestQtyTon.toString())
         : null,
@@ -169,9 +185,12 @@ abstract class ProductModel with _$ProductModel {
         .toList(),
     videoUrl: resolveMediaField(videoUrl),
     isPromoted: isPromoted,
-    promotedUntil: promotedUntil != null ? DateTime.tryParse(promotedUntil!) : null,
+    promotedUntil: promotedUntil != null
+        ? DateTime.tryParse(promotedUntil!)
+        : null,
     promoImpressions: promoImpressions,
     promoClicks: promoClicks,
+    certificates: certificates.map((item) => item.toEntity()).toList(),
   );
 }
 
@@ -209,7 +228,7 @@ class ProductSpecModel {
 
 @freezed
 abstract class ProductSellerModel with _$ProductSellerModel {
-const factory ProductSellerModel({
+  const factory ProductSellerModel({
     required String id,
     @JsonKey(name: 'fullName') required String name,
     String? avatarUrl,
@@ -241,8 +260,7 @@ abstract class ProductSellerProfileModel with _$ProductSellerProfileModel {
     String? companyName,
     int? rajaongkirOriginId,
     String? rajaongkirOriginLabel,
-  }) =
-      _ProductSellerProfileModel;
+  }) = _ProductSellerProfileModel;
 
   factory ProductSellerProfileModel.fromJson(Map<String, dynamic> json) =>
       _$ProductSellerProfileModelFromJson(json);

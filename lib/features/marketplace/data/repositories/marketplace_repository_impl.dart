@@ -11,6 +11,7 @@ import '../datasources/marketplace_remote_data_source.dart';
 
 import '../models/supplier_model.dart';
 import '../models/category_model.dart';
+import '../../domain/entities/product_certificate_entity.dart';
 
 class MarketplaceRepositoryImpl implements MarketplaceRepository {
   final MarketplaceRemoteDataSource remoteDataSource;
@@ -284,7 +285,8 @@ class MarketplaceRepositoryImpl implements MarketplaceRepository {
   }
 
   @override
-  Future<Either<Failure, ProductEngagementData>> getSupplierProductEngagement() async {
+  Future<Either<Failure, ProductEngagementData>>
+  getSupplierProductEngagement() async {
     try {
       final raw = await remoteDataSource.getSupplierProductEngagement();
       return Right(ProductEngagementData.fromJson(raw));
@@ -324,7 +326,10 @@ class MarketplaceRepositoryImpl implements MarketplaceRepository {
     String filePath,
   ) async {
     try {
-      final model = await remoteDataSource.uploadProductVideo(productId, filePath);
+      final model = await remoteDataSource.uploadProductVideo(
+        productId,
+        filePath,
+      );
       return Right(model.toEntity());
     } on DioException catch (e) {
       return Left(_mapDioExceptionToFailure(e));
@@ -334,13 +339,84 @@ class MarketplaceRepositoryImpl implements MarketplaceRepository {
   }
 
   @override
-  Future<Either<Failure, ProductEntity>> deleteProductVideo(String productId) async {
+  Future<Either<Failure, ProductEntity>> deleteProductVideo(
+    String productId,
+  ) async {
     try {
       final model = await remoteDataSource.deleteProductVideo(productId);
       return Right(model.toEntity());
     } on DioException catch (e) {
       return Left(_mapDioExceptionToFailure(e));
     } catch (e) {
+      return const Left(UnexpectedFailure());
+    }
+  }
+
+  @override
+  Future<Either<Failure, List<ProductCertificateEntity>>>
+  getMyProductCertificates(String productId) async {
+    try {
+      final models = await remoteDataSource.getMyProductCertificates(productId);
+      return Right(models.map((item) => item.toEntity()).toList());
+    } on DioException catch (e) {
+      return Left(_mapDioExceptionToFailure(e));
+    } catch (_) {
+      return const Left(UnexpectedFailure());
+    }
+  }
+
+  @override
+  Future<Either<Failure, ProductCertificateEntity>> submitProductCertificate({
+    required String productId,
+    required String localPath,
+    required Map<String, dynamic> metadata,
+  }) async {
+    try {
+      final model = await remoteDataSource.submitProductCertificate(
+        productId: productId,
+        localPath: localPath,
+        metadata: metadata,
+      );
+      return Right(model.toEntity());
+    } on DioException catch (e) {
+      return Left(_mapDioExceptionToFailure(e));
+    } catch (_) {
+      return const Left(UnexpectedFailure());
+    }
+  }
+
+  @override
+  Future<Either<Failure, void>> deleteProductCertificate(
+    String productId,
+    String certificateId,
+  ) async {
+    try {
+      await remoteDataSource.deleteProductCertificate(productId, certificateId);
+      return const Right(null);
+    } on DioException catch (e) {
+      return Left(_mapDioExceptionToFailure(e));
+    } catch (_) {
+      return const Left(UnexpectedFailure());
+    }
+  }
+
+  @override
+  Future<Either<Failure, List<ProductCertificateEntity>>>
+  getSupplierCertificates(
+    String supplierId, {
+    int page = 1,
+    int limit = 20,
+  }) async {
+    try {
+      final models = await remoteDataSource.getSupplierCertificates(
+        supplierId,
+        page: page,
+        limit: limit,
+      );
+      return Right(models.map((item) => item.toEntity()).toList());
+    } on DioException catch (e) {
+      return Left(_mapDioExceptionToFailure(e));
+    } catch (_) {
       return const Left(UnexpectedFailure());
     }
   }
@@ -366,7 +442,10 @@ class MarketplaceRepositoryImpl implements MarketplaceRepository {
         case 400:
         case 422:
           {
-            final readiness = ReadinessService.failureFromResponseData(data, message);
+            final readiness = ReadinessService.failureFromResponseData(
+              data,
+              message,
+            );
             if (readiness != null) return readiness;
             return ValidationFailure(
               message: message,
@@ -384,7 +463,8 @@ class MarketplaceRepositoryImpl implements MarketplaceRepository {
 
   String _resolveApiMessage(Map<String, dynamic>? data) {
     if (data == null) return 'errors.generic';
-    final base = data['meta']?['message'] ?? data['message'] ?? 'errors.generic';
+    final base =
+        data['meta']?['message'] ?? data['message'] ?? 'errors.generic';
     final details = data['data'];
     if (details is List && details.isNotEmpty) {
       final first = details.first;

@@ -164,7 +164,9 @@ class _WasteMappingPageState extends State<WasteMappingPage> {
                     points: points,
                     color: AppColors.transparent,
                     borderColor: borderColor,
-                    borderStrokeWidth: _selectedProvince == propName ? 2.5 : 1.8,
+                    borderStrokeWidth: _selectedProvince == propName
+                        ? 2.5
+                        : 1.8,
                     hitValue: propName,
                   ),
                 );
@@ -217,10 +219,7 @@ class _WasteMappingPageState extends State<WasteMappingPage> {
     final bounds = _boundsForProvince(province);
     if (bounds != null) {
       _mapController.fitCamera(
-        CameraFit.bounds(
-          bounds: bounds,
-          padding: EdgeInsets.all(56.w),
-        ),
+        CameraFit.bounds(bounds: bounds, padding: EdgeInsets.all(56.w)),
       );
       return;
     }
@@ -324,7 +323,9 @@ class _WasteMappingPageState extends State<WasteMappingPage> {
                   setState(() => _showMapBackground = !_showMapBackground),
               icon: Icon(
                 LucideIcons.map,
-                color: _showMapBackground ? AppColors.primary : AppColors.grey400,
+                color: _showMapBackground
+                    ? AppColors.primary
+                    : AppColors.grey400,
                 size: 20.sp,
               ),
               tooltip: _showMapBackground
@@ -355,7 +356,12 @@ class _WasteMappingPageState extends State<WasteMappingPage> {
                     itemCount: 4,
                     itemHeight: 72.h,
                     scrollable: true,
-                    padding: EdgeInsets.fromLTRB(AppSpacing.md, AppSpacing.xl, AppSpacing.md, 0),
+                    padding: EdgeInsets.fromLTRB(
+                      AppSpacing.md,
+                      AppSpacing.xl,
+                      AppSpacing.md,
+                      0,
+                    ),
                   ),
                 ],
               ),
@@ -441,66 +447,66 @@ class _WasteMappingPageState extends State<WasteMappingPage> {
         ColoredBox(
           color: AppColors.grey900,
           child: FlutterMap(
-          mapController: _mapController,
-          options: const MapOptions(
-            initialCenter: LatLng(-2.5, 118.0),
-            initialZoom: 5.0,
-          ),
-          children: [
-            if (_showMapBackground)
-              TileLayer(
-                urlTemplate: _tileUrl,
-                userAgentPackageName: 'com.bisa.app',
-                subdomains: const ['a', 'b', 'c'],
-              ),
-
-            // ── CHOROPLETH (Province boundaries) ──
-            if (_showChoropleth && _choroplethPolygons.isNotEmpty)
-              GestureDetector(
-                onTap: () {
-                  final hit = _hitNotifier.value;
-                  if (hit != null && hit.hitValues.isNotEmpty) {
-                    final province = hit.hitValues.first;
-                    setState(() {
-                      _selectedProvince = province;
-                      _selectedPoint = null;
-                      _showBottomPanel = true;
-                    });
-                    _zoomToProvince(province);
-                    _refreshChoroplethBorders();
-                  }
-                },
-                child: PolygonLayer(
-                  hitNotifier: _hitNotifier,
-                  polygons: _choroplethPolygons,
+            mapController: _mapController,
+            options: const MapOptions(
+              initialCenter: LatLng(-2.5, 118.0),
+              initialZoom: 5.0,
+            ),
+            children: [
+              if (_showMapBackground)
+                TileLayer(
+                  urlTemplate: _tileUrl,
+                  userAgentPackageName: 'com.bisa.app',
+                  subdomains: const ['a', 'b', 'c'],
                 ),
-              ),
 
-            // ── WASTE POINT MARKERS ──
-            MarkerLayer(
-              markers: filtered.map((point) {
-                final isSelected = point == _selectedPoint;
-                return Marker(
-                  point: LatLng(point.lat, point.lng),
-                  width: isSelected ? 48.w : 38.w,
-                  height: isSelected ? 48.w : 38.w,
-                  child: GestureDetector(
-                    onTap: () {
+              // ── CHOROPLETH (Province boundaries) ──
+              if (_showChoropleth && _choroplethPolygons.isNotEmpty)
+                GestureDetector(
+                  onTap: () {
+                    final hit = _hitNotifier.value;
+                    if (hit != null && hit.hitValues.isNotEmpty) {
+                      final province = hit.hitValues.first;
                       setState(() {
-                        _selectedPoint = point;
-                        _selectedProvince = null;
+                        _selectedProvince = province;
+                        _selectedPoint = null;
                         _showBottomPanel = true;
                       });
-                      _zoomToPoint(point);
+                      _zoomToProvince(province);
                       _refreshChoroplethBorders();
-                    },
-                    child: _buildMarker(point.biomassaType, isSelected),
+                    }
+                  },
+                  child: PolygonLayer(
+                    hitNotifier: _hitNotifier,
+                    polygons: _choroplethPolygons,
                   ),
-                );
-              }).toList(),
-            ),
-          ],
-        ),
+                ),
+
+              // ── WASTE POINT MARKERS ──
+              MarkerLayer(
+                markers: filtered.map((point) {
+                  final isSelected = point == _selectedPoint;
+                  return Marker(
+                    point: LatLng(point.lat, point.lng),
+                    width: isSelected ? 48.w : 38.w,
+                    height: isSelected ? 48.w : 38.w,
+                    child: GestureDetector(
+                      onTap: () {
+                        setState(() {
+                          _selectedPoint = point;
+                          _selectedProvince = null;
+                          _showBottomPanel = true;
+                        });
+                        _zoomToPoint(point);
+                        _refreshChoroplethBorders();
+                      },
+                      child: _buildMarker(point.biomassaType, isSelected),
+                    ),
+                  );
+                }).toList(),
+              ),
+            ],
+          ),
         ),
 
         // ── TYPE FILTER CHIPS ──
@@ -553,7 +559,9 @@ class _WasteMappingPageState extends State<WasteMappingPage> {
                           style: TextStyle(
                             fontSize: 12.sp,
                             fontWeight: FontWeight.bold,
-                            color: isSelected ? AppColors.textOnPrimary : AppColors.textPrimary,
+                            color: isSelected
+                                ? AppColors.textOnPrimary
+                                : AppColors.textPrimary,
                           ),
                         ),
                       ],
@@ -572,7 +580,10 @@ class _WasteMappingPageState extends State<WasteMappingPage> {
           child: GestureDetector(
             onTap: () => _showStatsSheet(context, topStats, filtered.length),
             child: Container(
-              padding: EdgeInsets.symmetric(horizontal: AppSpacing.md12, vertical: AppSpacing.sm),
+              padding: EdgeInsets.symmetric(
+                horizontal: AppSpacing.md12,
+                vertical: AppSpacing.sm,
+              ),
               decoration: BoxDecoration(
                 color: AppColors.surface,
                 borderRadius: BorderRadius.circular(AppRadius.lg),
@@ -624,20 +635,14 @@ class _WasteMappingPageState extends State<WasteMappingPage> {
             bottom: 0,
             left: 0,
             right: 0,
-            child: SafeArea(
-              top: false,
-              child: _buildDetailPanel(context),
-            ),
+            child: SafeArea(top: false, child: _buildDetailPanel(context)),
           )
         else if (_showBottomPanel && _selectedProvince != null)
           Positioned(
             bottom: 0,
             left: 0,
             right: 0,
-            child: SafeArea(
-              top: false,
-              child: _buildProvincePanel(context),
-            ),
+            child: SafeArea(top: false, child: _buildProvincePanel(context)),
           ),
 
         // ── FAB Supply Matching (GPS) ──
@@ -696,7 +701,10 @@ class _WasteMappingPageState extends State<WasteMappingPage> {
 
   Widget _buildLegend() {
     return Container(
-      padding: EdgeInsets.symmetric(horizontal: AppSpacing.sm10, vertical: AppSpacing.sm),
+      padding: EdgeInsets.symmetric(
+        horizontal: AppSpacing.sm10,
+        vertical: AppSpacing.sm,
+      ),
       decoration: BoxDecoration(
         color: AppColors.white.withValues(alpha: 0.92),
         borderRadius: BorderRadius.circular(AppRadius.md),
@@ -722,10 +730,22 @@ class _WasteMappingPageState extends State<WasteMappingPage> {
           ),
           SizedBox(height: 5.h),
           ...[
-            {'color': AppColors.mapVolumeHighest, 'label': 'gis.volume_legend_highest'.tr()},
-            {'color': AppColors.secondary, 'label': 'gis.volume_legend_high'.tr()},
-            {'color': AppColors.mapVolumeMid, 'label': 'gis.volume_legend_mid'.tr()},
-            {'color': AppColors.mapVolumeLow, 'label': 'gis.volume_legend_low'.tr()},
+            {
+              'color': AppColors.mapVolumeHighest,
+              'label': 'gis.volume_legend_highest'.tr(),
+            },
+            {
+              'color': AppColors.secondary,
+              'label': 'gis.volume_legend_high'.tr(),
+            },
+            {
+              'color': AppColors.mapVolumeMid,
+              'label': 'gis.volume_legend_mid'.tr(),
+            },
+            {
+              'color': AppColors.mapVolumeLow,
+              'label': 'gis.volume_legend_low'.tr(),
+            },
             {'color': AppColors.grey300, 'label': 'gis.no_data_label'.tr()},
           ].map(
             (item) => Padding(
@@ -744,7 +764,10 @@ class _WasteMappingPageState extends State<WasteMappingPage> {
                   SizedBox(width: 5.w),
                   Text(
                     item['label'] as String,
-                    style: TextStyle(fontSize: 9.sp, color: AppColors.textPrimary),
+                    style: TextStyle(
+                      fontSize: 9.sp,
+                      color: AppColors.textPrimary,
+                    ),
                   ),
                 ],
               ),
@@ -788,7 +811,11 @@ class _WasteMappingPageState extends State<WasteMappingPage> {
           ),
         ],
       ),
-      child: Icon(icon, color: AppColors.textOnPrimary, size: isSelected ? 22.sp : 17.sp),
+      child: Icon(
+        icon,
+        color: AppColors.textOnPrimary,
+        size: isSelected ? 22.sp : 17.sp,
+      ),
     );
   }
 
@@ -881,7 +908,11 @@ class _WasteMappingPageState extends State<WasteMappingPage> {
                   _selectedPoint = null;
                   _selectedProvince = null;
                 }),
-                child: Icon(LucideIcons.x, size: 20.sp, color: AppColors.grey400),
+                child: Icon(
+                  LucideIcons.x,
+                  size: 20.sp,
+                  color: AppColors.grey400,
+                ),
               ),
             ],
           ),
@@ -1023,7 +1054,11 @@ class _WasteMappingPageState extends State<WasteMappingPage> {
                   });
                   _refreshChoroplethBorders();
                 },
-                child: Icon(LucideIcons.x, size: 20.sp, color: AppColors.grey400),
+                child: Icon(
+                  LucideIcons.x,
+                  size: 20.sp,
+                  color: AppColors.grey400,
+                ),
               ),
             ],
           ),
@@ -1094,10 +1129,15 @@ class _WasteMappingPageState extends State<WasteMappingPage> {
   ) {
     showModalBottomSheet(
       context: context,
-      useSafeArea: true,
+      useSafeArea: false,
       backgroundColor: AppColors.transparent,
       builder: (context) => Container(
-        padding: EdgeInsets.all(AppSpacing.xl),
+        padding: bisaSheetPadding(
+          context,
+          horizontal: AppSpacing.xl,
+          top: AppSpacing.xl,
+          bottom: AppSpacing.xl,
+        ),
         decoration: BoxDecoration(
           color: AppColors.surface,
           borderRadius: BorderRadius.vertical(top: Radius.circular(28.r)),
@@ -1243,7 +1283,10 @@ class _WasteMappingPageState extends State<WasteMappingPage> {
                             ]
                             .map(
                               (c) => Expanded(
-                                child: Container(height: AppSpacing.md12, color: c),
+                                child: Container(
+                                  height: AppSpacing.md12,
+                                  color: c,
+                                ),
                               ),
                             )
                             .toList(),
@@ -1254,11 +1297,17 @@ class _WasteMappingPageState extends State<WasteMappingPage> {
                     children: [
                       Text(
                         'gis.scale_low'.tr(),
-                        style: TextStyle(fontSize: 9.sp, color: AppColors.grey400),
+                        style: TextStyle(
+                          fontSize: 9.sp,
+                          color: AppColors.grey400,
+                        ),
                       ),
                       Text(
                         'gis.scale_high'.tr(),
-                        style: TextStyle(fontSize: 9.sp, color: AppColors.grey400),
+                        style: TextStyle(
+                          fontSize: 9.sp,
+                          color: AppColors.grey400,
+                        ),
                       ),
                     ],
                   ),
@@ -1342,18 +1391,15 @@ class _WasteMappingPageState extends State<WasteMappingPage> {
       );
 
       // Move map to user location
-      _mapController.move(
-        LatLng(position.latitude, position.longitude),
-        8.0,
-      );
+      _mapController.move(LatLng(position.latitude, position.longitude), 8.0);
 
       // Trigger matching with 100km radius
       if (mounted) {
         context.read<GisCubit>().matchSupplyDemand(
-              position.latitude,
-              position.longitude,
-              100.0,
-            );
+          position.latitude,
+          position.longitude,
+          100.0,
+        );
       }
     } catch (e) {
       if (mounted) {
@@ -1365,16 +1411,22 @@ class _WasteMappingPageState extends State<WasteMappingPage> {
     }
   }
 
-  Future<void> _openNearbyProducts(BuildContext context, WastePointEntity point) async {
+  Future<void> _openNearbyProducts(
+    BuildContext context,
+    WastePointEntity point,
+  ) async {
     try {
-      final res = await sl<ApiClient>().dio.post('/gis/match', data: {
-        'lat': point.lat,
-        'lng': point.lng,
-        'radius': 100,
-        'biomassaType': point.biomassaType,
-        'regency': point.regency,
-        'province': point.province,
-      });
+      final res = await sl<ApiClient>().dio.post(
+        '/gis/match',
+        data: {
+          'lat': point.lat,
+          'lng': point.lng,
+          'radius': 100,
+          'biomassaType': point.biomassaType,
+          'regency': point.regency,
+          'province': point.province,
+        },
+      );
       if (!mounted) return;
       final data = Map<String, dynamic>.from(res.data['data'] as Map);
       _showMatchResultsSheet(context, data);
@@ -1390,12 +1442,19 @@ class _WasteMappingPageState extends State<WasteMappingPage> {
 
     showModalBottomSheet(
       context: context,
-      useSafeArea: true,
+      useSafeArea: false,
       backgroundColor: AppColors.transparent,
       isScrollControlled: true,
       builder: (context) => Container(
-        constraints: BoxConstraints(maxHeight: MediaQuery.of(context).size.height * 0.6),
-        padding: EdgeInsets.all(AppSpacing.xl),
+        constraints: BoxConstraints(
+          maxHeight: MediaQuery.of(context).size.height * 0.6,
+        ),
+        padding: bisaSheetPadding(
+          context,
+          horizontal: AppSpacing.xl,
+          top: AppSpacing.xl,
+          bottom: AppSpacing.xl,
+        ),
         decoration: BoxDecoration(
           color: AppColors.surface,
           borderRadius: BorderRadius.vertical(top: Radius.circular(28.r)),
@@ -1431,7 +1490,10 @@ class _WasteMappingPageState extends State<WasteMappingPage> {
                   ),
                 ),
                 Container(
-                  padding: EdgeInsets.symmetric(horizontal: AppSpacing.sm10, vertical: AppSpacing.xs),
+                  padding: EdgeInsets.symmetric(
+                    horizontal: AppSpacing.sm10,
+                    vertical: AppSpacing.xs,
+                  ),
                   decoration: BoxDecoration(
                     color: AppColors.primary.withValues(alpha: 0.1),
                     borderRadius: BorderRadius.circular(AppRadius.pill),
@@ -1454,11 +1516,18 @@ class _WasteMappingPageState extends State<WasteMappingPage> {
                   padding: EdgeInsets.all(AppSpacing.xxl),
                   child: Column(
                     children: [
-                      Icon(LucideIcons.searchX, size: 48.sp, color: AppColors.grey300),
+                      Icon(
+                        LucideIcons.searchX,
+                        size: 48.sp,
+                        color: AppColors.grey300,
+                      ),
                       SizedBox(height: AppSpacing.md12),
                       Text(
                         'gis.match_empty'.tr(),
-                        style: TextStyle(color: AppColors.textSecondary, fontSize: 13.sp),
+                        style: TextStyle(
+                          color: AppColors.textSecondary,
+                          fontSize: 13.sp,
+                        ),
                         textAlign: TextAlign.center,
                       ),
                     ],
@@ -1470,12 +1539,17 @@ class _WasteMappingPageState extends State<WasteMappingPage> {
                 child: ListView.separated(
                   shrinkWrap: true,
                   itemCount: matches.length,
-                  separatorBuilder: (_, __) => Divider(height: 1, color: AppColors.grey100),
+                  separatorBuilder: (_, __) =>
+                      Divider(height: 1, color: AppColors.grey100),
                   itemBuilder: (context, index) {
                     final match = matches[index] as Map<String, dynamic>;
-                    final name = match['supplierName'] ?? match['name'] ?? 'Supplier';
+                    final name =
+                        match['supplierName'] ?? match['name'] ?? 'Supplier';
                     final distance = match['distance'] ?? 0;
-                    final biomassType = (match['biomassType'] ?? match['type'] ?? '').toString().replaceAll('_', ' ');
+                    final biomassType =
+                        (match['biomassType'] ?? match['type'] ?? '')
+                            .toString()
+                            .replaceAll('_', ' ');
                     final volume = match['volume'] ?? match['volumeTon'] ?? 0;
 
                     final productId = match['productId']?.toString();
@@ -1484,12 +1558,16 @@ class _WasteMappingPageState extends State<WasteMappingPage> {
                         match['productName']?.toString() ?? name.toString();
 
                     return ListTile(
-                      contentPadding: EdgeInsets.symmetric(horizontal: 4.w, vertical: 4.h),
+                      contentPadding: EdgeInsets.symmetric(
+                        horizontal: 4.w,
+                        vertical: 4.h,
+                      ),
                       onTap: () {
                         Navigator.pop(context);
                         if (productId != null && productId.isNotEmpty) {
                           context.push('/product/$productId');
-                        } else if (supplierId != null && supplierId.isNotEmpty) {
+                        } else if (supplierId != null &&
+                            supplierId.isNotEmpty) {
                           context.push(
                             '/supplier/$supplierId',
                             extra: {'name': name.toString()},
@@ -1524,7 +1602,10 @@ class _WasteMappingPageState extends State<WasteMappingPage> {
                         ),
                       ),
                       trailing: Container(
-                        padding: EdgeInsets.symmetric(horizontal: AppSpacing.sm, vertical: AppSpacing.xs),
+                        padding: EdgeInsets.symmetric(
+                          horizontal: AppSpacing.sm,
+                          vertical: AppSpacing.xs,
+                        ),
                         decoration: BoxDecoration(
                           color: AppColors.info.withValues(alpha: 0.1),
                           borderRadius: BorderRadius.circular(AppRadius.button),

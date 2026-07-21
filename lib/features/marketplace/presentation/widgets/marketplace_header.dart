@@ -38,9 +38,15 @@ class MarketplaceHeader extends StatelessWidget {
   Widget build(BuildContext context) {
     final bool hasUser = userName != null;
     final guestBarHeight = _guestBarHeight.h;
+    final statusBarInset = MediaQuery.paddingOf(context).top;
 
     return Container(
-      padding: EdgeInsets.fromLTRB(20.w, 50.h, 20.w, 16.h),
+      padding: EdgeInsets.fromLTRB(
+        AppSpacing.pageGutter,
+        statusBarInset + AppSpacing.compact,
+        AppSpacing.pageGutter,
+        AppSpacing.comfortable,
+      ),
       decoration: BoxDecoration(
         color: AppColors.surface,
         borderRadius: BorderRadius.vertical(bottom: Radius.circular(24.r)),
@@ -61,10 +67,7 @@ class MarketplaceHeader extends StatelessWidget {
                 BisaLogo(size: guestBarHeight - 4.h),
                 SizedBox(width: AppSpacing.sm10),
                 Expanded(
-                  child: _buildSearchBar(
-                    height: guestBarHeight,
-                    compact: true,
-                  ),
+                  child: _buildSearchBar(height: guestBarHeight, compact: true),
                 ),
                 SizedBox(width: AppSpacing.sm10),
                 _buildLoginCTA(context, height: guestBarHeight),
@@ -75,10 +78,7 @@ class MarketplaceHeader extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.center,
               children: [
                 Expanded(
-                  child: _buildSearchBar(
-                    height: guestBarHeight,
-                    compact: true,
-                  ),
+                  child: _buildSearchBar(height: guestBarHeight, compact: true),
                 ),
                 SizedBox(width: AppSpacing.sm10),
                 _buildActionIcons(context),
@@ -115,9 +115,9 @@ class MarketplaceHeader extends StatelessWidget {
 
   Widget _buildActionIcons(BuildContext context) {
     final isBuyer = context.read<AuthCubit>().state.maybeWhen(
-          authenticated: (u) => u.role == 'BUYER',
-          orElse: () => false,
-        );
+      authenticated: (u) => u.role == 'BUYER',
+      orElse: () => false,
+    );
 
     return BlocBuilder<CommerceCubit, CommerceState>(
       builder: (context, commerce) {
@@ -129,13 +129,19 @@ class MarketplaceHeader extends StatelessWidget {
               Stack(
                 clipBehavior: Clip.none,
                 children: [
-                  _iconBtn(LucideIcons.shoppingCart, () => context.push('/cart')),
+                  _iconBtn(
+                    LucideIcons.shoppingCart,
+                    () => context.push('/cart'),
+                  ),
                   if (commerce.cartCount > 0)
                     Positioned(
                       right: 4.w,
                       top: 4.h,
                       child: Container(
-                        padding: EdgeInsets.symmetric(horizontal: 5.w, vertical: 2.h),
+                        padding: EdgeInsets.symmetric(
+                          horizontal: 5.w,
+                          vertical: 2.h,
+                        ),
                         decoration: const BoxDecoration(
                           color: AppColors.error,
                           shape: BoxShape.circle,
@@ -197,7 +203,9 @@ class MarketplaceHeader extends StatelessWidget {
                 ],
         ),
         child: Padding(
-          padding: EdgeInsets.symmetric(horizontal: compact ? AppSpacing.sm10 : AppSpacing.md),
+          padding: EdgeInsets.symmetric(
+            horizontal: compact ? AppSpacing.sm10 : AppSpacing.md,
+          ),
           child: Row(
             crossAxisAlignment: CrossAxisAlignment.center,
             children: [

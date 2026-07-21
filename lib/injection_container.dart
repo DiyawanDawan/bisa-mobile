@@ -46,6 +46,7 @@ import 'features/iot/domain/repositories/iot_repository.dart';
 import 'features/iot/data/repositories/iot_repository_impl.dart';
 import 'features/auth/presentation/bloc/auth_cubit.dart';
 import 'features/marketplace/presentation/bloc/marketplace_cubit.dart';
+import 'features/marketplace/presentation/bloc/product_certificate_cubit.dart';
 import 'features/forum/presentation/bloc/forum_cubit.dart';
 import 'features/forum/presentation/bloc/forum_group_cubit.dart';
 import 'features/orders/presentation/bloc/order_cubit.dart';
@@ -217,6 +218,7 @@ Future<void> init() async {
   sl.registerLazySingleton<MarketplaceRepository>(
     () => MarketplaceRepositoryImpl(remoteDataSource: sl()),
   );
+  sl.registerFactory(() => ProductCertificateCubit(sl()));
   sl.registerLazySingleton<StoreBannerRemoteDataSource>(
     () => StoreBannerRemoteDataSourceImpl(dio: sl<ApiClient>().dio),
   );

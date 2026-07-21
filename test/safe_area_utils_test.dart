@@ -5,7 +5,7 @@ import 'package:mobile_bisa/core/utils/safe_area_utils.dart';
 
 Widget _wrap(Widget child, {double bottomPadding = 0}) {
   return ScreenUtilInit(
-    designSize: const Size(390, 844),
+    designSize: const Size(393, 852),
     builder: (_, __) => MaterialApp(
       home: MediaQuery(
         data: MediaQueryData(padding: EdgeInsets.only(bottom: bottomPadding)),
@@ -31,7 +31,9 @@ void main() {
       );
     });
 
-    testWidgets('mainShellBottomPadding adds base + system inset', (tester) async {
+    testWidgets('mainShellBottomPadding does not double system inset', (
+      tester,
+    ) async {
       await tester.pumpWidget(
         _wrap(
           Builder(
@@ -40,7 +42,7 @@ void main() {
                 context,
                 kind: MainShellScrollKind.orders,
               );
-              expect(pad, greaterThan(100.h));
+              expect(pad, closeTo(72, 1));
               return const SizedBox();
             },
           ),
@@ -49,10 +51,12 @@ void main() {
       );
     });
 
-    testWidgets('sheetBottomPadding includes keyboard and system', (tester) async {
+    testWidgets('sheetBottomPadding uses the larger keyboard/system inset', (
+      tester,
+    ) async {
       await tester.pumpWidget(
         ScreenUtilInit(
-          designSize: const Size(390, 844),
+          designSize: const Size(393, 852),
           builder: (_, __) => MaterialApp(
             home: MediaQuery(
               data: const MediaQueryData(
@@ -62,7 +66,10 @@ void main() {
               child: Builder(
                 builder: (context) {
                   final pad = sheetBottomPadding(context);
-                  expect(pad.bottom, 324);
+                  expect(pad.bottom, 300);
+                  final canonical = bisaSheetPadding(context);
+                  expect(canonical.left, closeTo(16.w, 0.5));
+                  expect(canonical.bottom, closeTo(300 + 8.w, 0.5));
                   return const SizedBox();
                 },
               ),
@@ -72,12 +79,17 @@ void main() {
       );
     });
 
-    testWidgets('gisMapFloatingBottomOffset increases when panel open', (tester) async {
+    testWidgets('gisMapFloatingBottomOffset increases when panel open', (
+      tester,
+    ) async {
       await tester.pumpWidget(
         _wrap(
           Builder(
             builder: (context) {
-              final closed = gisMapFloatingBottomOffset(context, panelOpen: false);
+              final closed = gisMapFloatingBottomOffset(
+                context,
+                panelOpen: false,
+              );
               final open = gisMapFloatingBottomOffset(context, panelOpen: true);
               expect(open, greaterThan(closed));
               return const SizedBox();

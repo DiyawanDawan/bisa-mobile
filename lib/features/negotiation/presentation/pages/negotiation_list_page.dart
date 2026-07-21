@@ -28,10 +28,7 @@ import '../../../../shared/widgets/shimmer_loading.dart';
 class NegotiationListPage extends StatefulWidget {
   final String activeProductMode;
 
-  const NegotiationListPage({
-    super.key,
-    required this.activeProductMode,
-  });
+  const NegotiationListPage({super.key, required this.activeProductMode});
 
   @override
   State<NegotiationListPage> createState() => _NegotiationListPageState();
@@ -46,10 +43,9 @@ class _NegotiationListPageState extends State<NegotiationListPage>
   late final NegotiationCubit _negotiationCubit;
   String? _listOwnerUserId;
 
-  NegotiationChatPurpose get _activeRoomType =>
-      _roomTabController.index == 0
-          ? NegotiationChatPurpose.inquiry
-          : NegotiationChatPurpose.negotiation;
+  NegotiationChatPurpose get _activeRoomType => _roomTabController.index == 0
+      ? NegotiationChatPurpose.inquiry
+      : NegotiationChatPurpose.negotiation;
 
   static const _statusFilterValues = [
     'ALL',
@@ -99,7 +95,8 @@ class _NegotiationListPageState extends State<NegotiationListPage>
   }
 
   void _scheduleListLoadIfNeeded(String? currentUserId) {
-    final needsLoad = _negotiationCubit.state.maybeWhen(
+    final needsLoad =
+        _negotiationCubit.state.maybeWhen(
           loaded: (_) => _listOwnerUserId != currentUserId,
           loading: () => false,
           orElse: () => true,
@@ -125,14 +122,13 @@ class _NegotiationListPageState extends State<NegotiationListPage>
 
   void _reloadList() {
     final user = context.read<AuthCubit>().state.maybeWhen(
-          authenticated: (u) => u,
-          orElse: () => null,
-        );
+      authenticated: (u) => u,
+      orElse: () => null,
+    );
     if (user == null) return;
 
     _listOwnerUserId = user.id;
-    final apiStatus =
-        _selectedStatus != 'ALL' ? _selectedStatus : null;
+    final apiStatus = _selectedStatus != 'ALL' ? _selectedStatus : null;
     if (user.role == 'SUPPLIER') {
       _negotiationCubit.getIncomingOffers(
         roomType: _activeRoomType,
@@ -205,122 +201,120 @@ class _NegotiationListPageState extends State<NegotiationListPage>
           );
         },
         child: Scaffold(
-        backgroundColor: AppColors.background,
-        appBar: BisaAppBar(
-          backgroundColor: AppColors.surface,
-          centerTitle: false,
-          titleWidget: AnimatedBuilder(
-            animation: _roomTabController,
-            builder: (_, __) => Text(
-              _roomTabController.index == 0
-                  ? 'negotiation.list_title_inquiry'.tr()
-                  : 'negotiation.list_title_negotiation'.tr(),
-              style: const TextStyle(
-                fontWeight: FontWeight.w800,
-                color: AppColors.textPrimary,
+          backgroundColor: AppColors.background,
+          appBar: BisaAppBar(
+            backgroundColor: AppColors.surface,
+            centerTitle: false,
+            titleWidget: AnimatedBuilder(
+              animation: _roomTabController,
+              builder: (_, __) => Text(
+                _roomTabController.index == 0
+                    ? 'negotiation.list_title_inquiry'.tr()
+                    : 'negotiation.list_title_negotiation'.tr(),
+                style: const TextStyle(
+                  fontWeight: FontWeight.w800,
+                  color: AppColors.textPrimary,
+                ),
               ),
             ),
+            actions: const [NotificationBellButton()],
           ),
-          actions: const [
-            NotificationBellButton(),
-          ],
-        ),
-        body: user == null
-            ? SingleChildScrollView(
-                physics: const BouncingScrollPhysics(),
-                child: Column(
-                  children: [
-                    GuestPlaceholder(
-                      title: 'negotiation.guest_title'.tr(),
-                      subtitle: 'negotiation.guest_subtitle'.tr(),
-                      icon: Icons.handshake_rounded,
-                    ),
-                    SizedBox(height: AppSpacing.lg),
-                    HorizontalProductSection(
-                      title: widget.activeProductMode == 'ORGANIC_PRODUCE'
-                          ? 'profile.farm_for_you'.tr()
-                          : 'profile.products_for_you'.tr(),
-                      sortBy: 'createdAt',
-                      sortOrder: 'desc',
-                      limit: 10,
-                      productMode: widget.activeProductMode,
-                      onShowAll: () => context.go('/marketplace'),
-                    ),
-                    VerticalProductGridSection(
-                      title: widget.activeProductMode == 'ORGANIC_PRODUCE'
-                          ? 'marketplace.all_organic'.tr()
-                          : 'marketplace.all_biomass'.tr(),
-                      sortBy: 'createdAt',
-                      sortOrder: 'desc',
-                      productMode: widget.activeProductMode,
-                    ),
-                    SizedBox(height: 40.h),
-                  ],
-                ),
-              )
-            : BlocBuilder<NegotiationCubit, NegotiationState>(
-                builder: (context, state) {
-                  _scheduleListLoadIfNeeded(user.id);
-
-                  return Column(
-                    crossAxisAlignment: CrossAxisAlignment.stretch,
+          body: user == null
+              ? SingleChildScrollView(
+                  physics: const BouncingScrollPhysics(),
+                  child: Column(
                     children: [
-                      _buildListChrome(),
-                      Expanded(
-                        child: state.maybeWhen(
-                          loading: () => ShimmerListPlaceholder(
-                            itemCount: 6,
-                            itemHeight: 100.h,
-                            scrollable: true,
-                            padding: EdgeInsets.all(AppSpacing.md),
-                          ),
-                          error: (msg) => Center(
-                            child: Padding(
-                              padding: EdgeInsets.all(AppSpacing.xl),
-                              child: Column(
-                                mainAxisAlignment: MainAxisAlignment.center,
-                                children: [
-                                  Icon(
-                                    Icons.error_outline_rounded,
-                                    size: 48.sp,
-                                    color: AppColors.error,
-                                  ),
-                                  SizedBox(height: AppSpacing.md),
-                                  Text(
-                                    localizeFailureMessage(msg),
-                                    textAlign: TextAlign.center,
-                                    style: TextStyle(
-                                      color: AppColors.textSecondary,
+                      GuestPlaceholder(
+                        title: 'negotiation.guest_title'.tr(),
+                        subtitle: 'negotiation.guest_subtitle'.tr(),
+                        icon: Icons.handshake_rounded,
+                      ),
+                      SizedBox(height: AppSpacing.lg),
+                      HorizontalProductSection(
+                        title: widget.activeProductMode == 'ORGANIC_PRODUCE'
+                            ? 'profile.farm_for_you'.tr()
+                            : 'profile.products_for_you'.tr(),
+                        sortBy: 'createdAt',
+                        sortOrder: 'desc',
+                        limit: 10,
+                        productMode: widget.activeProductMode,
+                        onShowAll: () => context.go('/marketplace'),
+                      ),
+                      VerticalProductGridSection(
+                        title: widget.activeProductMode == 'ORGANIC_PRODUCE'
+                            ? 'marketplace.all_organic'.tr()
+                            : 'marketplace.all_biomass'.tr(),
+                        sortBy: 'createdAt',
+                        sortOrder: 'desc',
+                        productMode: widget.activeProductMode,
+                      ),
+                      SizedBox(height: 40.h),
+                    ],
+                  ),
+                )
+              : BlocBuilder<NegotiationCubit, NegotiationState>(
+                  builder: (context, state) {
+                    _scheduleListLoadIfNeeded(user.id);
+
+                    return Column(
+                      crossAxisAlignment: CrossAxisAlignment.stretch,
+                      children: [
+                        _buildListChrome(),
+                        Expanded(
+                          child: state.maybeWhen(
+                            loading: () => ShimmerListPlaceholder(
+                              itemCount: 6,
+                              itemHeight: 100.h,
+                              scrollable: true,
+                              padding: EdgeInsets.all(AppSpacing.md),
+                            ),
+                            error: (msg) => Center(
+                              child: Padding(
+                                padding: EdgeInsets.all(AppSpacing.xl),
+                                child: Column(
+                                  mainAxisAlignment: MainAxisAlignment.center,
+                                  children: [
+                                    Icon(
+                                      Icons.error_outline_rounded,
+                                      size: 48.sp,
+                                      color: AppColors.error,
                                     ),
-                                  ),
-                                  SizedBox(height: AppSpacing.lg),
-                                  CustomButton(
-                                    text: 'coba_lagi'.tr(),
-                                    onPressed: _reloadList,
-                                    width: 160.w,
-                                  ),
-                                ],
+                                    SizedBox(height: AppSpacing.md),
+                                    Text(
+                                      localizeFailureMessage(msg),
+                                      textAlign: TextAlign.center,
+                                      style: TextStyle(
+                                        color: AppColors.textSecondary,
+                                      ),
+                                    ),
+                                    SizedBox(height: AppSpacing.lg),
+                                    CustomButton(
+                                      text: 'coba_lagi'.tr(),
+                                      onPressed: _reloadList,
+                                      width: 160.w,
+                                    ),
+                                  ],
+                                ),
                               ),
                             ),
-                          ),
-                          loaded: (negotiations) => _buildLoadedListBody(
-                            negotiations: negotiations,
-                            isSupplier: isSupplier,
-                            isBuyer: isBuyer,
-                            user: user,
-                          ),
-                          orElse: () => ShimmerListPlaceholder(
-                            itemCount: 6,
-                            itemHeight: 100.h,
-                            scrollable: true,
-                            padding: EdgeInsets.all(AppSpacing.md),
+                            loaded: (negotiations) => _buildLoadedListBody(
+                              negotiations: negotiations,
+                              isSupplier: isSupplier,
+                              isBuyer: isBuyer,
+                              user: user,
+                            ),
+                            orElse: () => ShimmerListPlaceholder(
+                              itemCount: 6,
+                              itemHeight: 100.h,
+                              scrollable: true,
+                              padding: EdgeInsets.all(AppSpacing.md),
+                            ),
                           ),
                         ),
-                      ),
-                    ],
-                  );
-                },
-              ),
+                      ],
+                    );
+                  },
+                ),
         ),
       ),
     );
@@ -339,10 +333,7 @@ class _NegotiationListPageState extends State<NegotiationListPage>
             unselectedLabelColor: AppColors.textSecondary,
             indicatorColor: AppColors.primary,
             indicatorWeight: 3,
-            labelStyle: TextStyle(
-              fontSize: 13.sp,
-              fontWeight: FontWeight.w800,
-            ),
+            labelStyle: TextStyle(fontSize: 13.sp, fontWeight: FontWeight.w800),
             unselectedLabelStyle: TextStyle(
               fontSize: 13.sp,
               fontWeight: FontWeight.w600,
@@ -423,8 +414,7 @@ class _NegotiationListPageState extends State<NegotiationListPage>
     final filteredList = negotiations.where((n) {
       if (userId != null && !n.isParticipant(userId)) return false;
 
-      final matchesRoom =
-          _isInquiryTab ? n.isInquiryChat : n.isNegotiationChat;
+      final matchesRoom = _isInquiryTab ? n.isInquiryChat : n.isNegotiationChat;
       if (!matchesRoom) return false;
 
       final isSellerInRoom = userId != null && n.isSellerParticipant(userId);
@@ -460,10 +450,7 @@ class _NegotiationListPageState extends State<NegotiationListPage>
         child: Column(
           children: [
             if (negotiations.isEmpty || !hasRoomsOfCurrentTab)
-              _buildEmptyState(
-                inquiry: _isInquiryTab,
-                isSupplier: isSupplier,
-              )
+              _buildEmptyState(inquiry: _isInquiryTab, isSupplier: isSupplier)
             else if (filteredList.isEmpty)
               _buildNoMatchState(
                 inquiry: _isInquiryTab,
@@ -474,22 +461,20 @@ class _NegotiationListPageState extends State<NegotiationListPage>
               ListView.builder(
                 shrinkWrap: true,
                 physics: const NeverScrollableScrollPhysics(),
-                padding: EdgeInsets.symmetric(horizontal: AppSpacing.md, vertical: AppSpacing.xs),
+                padding: EdgeInsets.symmetric(
+                  horizontal: AppSpacing.md,
+                  vertical: AppSpacing.xs,
+                ),
                 itemCount: filteredList.length,
                 itemBuilder: (context, index) {
                   final n = filteredList[index];
-                  return _buildNegotiationCard(
-                    context,
-                    n,
-                    isSupplier,
-                    user,
-                  );
+                  return _buildNegotiationCard(context, n, isSupplier, user);
                 },
               ),
             if (isBuyer && !_isInquiryTab) ...[
-              SizedBox(height: AppSpacing.xxl),
+              SizedBox(height: AppSpacing.sectionGap),
               const Divider(),
-              SizedBox(height: AppSpacing.xl),
+              SizedBox(height: AppSpacing.compact),
               VerticalProductGridSection(
                 title: widget.activeProductMode == 'ORGANIC_PRODUCE'
                     ? 'negotiation.recommend_organic'.tr()
@@ -518,8 +503,7 @@ class _NegotiationListPageState extends State<NegotiationListPage>
     dynamic currentUser,
   ) {
     final userId = currentUser?.id as String?;
-    final isSellerInRoom =
-        userId != null && n.isSellerParticipant(userId);
+    final isSellerInRoom = userId != null && n.isSellerParticipant(userId);
     final otherParty = isSellerInRoom ? n.buyer : n.seller;
     final String name = isSellerInRoom
         ? n.buyer.name
@@ -541,7 +525,10 @@ class _NegotiationListPageState extends State<NegotiationListPage>
               currentUserId: userId,
             ),
             child: Padding(
-              padding: EdgeInsets.symmetric(horizontal: AppSpacing.md, vertical: AppSpacing.section),
+              padding: EdgeInsets.symmetric(
+                horizontal: AppSpacing.md,
+                vertical: AppSpacing.section,
+              ),
               child: Row(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
@@ -560,9 +547,8 @@ class _NegotiationListPageState extends State<NegotiationListPage>
                           ? BisaNetworkImage(
                               imageUrl: otherParty.avatarUrl!,
                               fit: BoxFit.cover,
-                              placeholder: (context, url) => BisaMediaSkeleton.circle(
-                                radius: 26.r,
-                              ),
+                              placeholder: (context, url) =>
+                                  BisaMediaSkeleton.circle(radius: 26.r),
                             )
                           : Center(
                               child: Text(
@@ -621,11 +607,7 @@ class _NegotiationListPageState extends State<NegotiationListPage>
                         ),
                         SizedBox(height: 2.h),
                         GestureDetector(
-                          onTap: () => _openProductContext(
-                            context,
-                            n,
-                            userId,
-                          ),
+                          onTap: () => _openProductContext(context, n, userId),
                           child: Text(
                             n.product.name,
                             style: TextStyle(
@@ -703,10 +685,7 @@ class _NegotiationListPageState extends State<NegotiationListPage>
     );
   }
 
-  Widget _buildStatusBadge(
-    String status, {
-    String? orderStatus,
-  }) {
+  Widget _buildStatusBadge(String status, {String? orderStatus}) {
     final display = NegotiationStatusDisplay.forList(
       status,
       orderStatus: orderStatus,
@@ -737,31 +716,30 @@ class _NegotiationListPageState extends State<NegotiationListPage>
     return Container(
       width: 112.r,
       height: 112.r,
-      decoration: BoxDecoration(
-        color: backgroundColor,
-        shape: BoxShape.circle,
-      ),
+      decoration: BoxDecoration(color: backgroundColor, shape: BoxShape.circle),
       child: Icon(icon, size: 52.sp, color: iconColor),
     );
   }
 
-  Widget _buildEmptyState({
-    required bool inquiry,
-    required bool isSupplier,
-  }) {
+  Widget _buildEmptyState({required bool inquiry, required bool isSupplier}) {
     final title = inquiry
         ? 'negotiation.empty_inquiry_title'.tr()
         : 'belum_ada_negosiasi'.tr();
     final subtitle = inquiry
         ? (isSupplier
-            ? 'negotiation.empty_inquiry_supplier_subtitle'.tr()
-            : 'negotiation.empty_inquiry_buyer_subtitle'.tr())
+              ? 'negotiation.empty_inquiry_supplier_subtitle'.tr()
+              : 'negotiation.empty_inquiry_buyer_subtitle'.tr())
         : 'penawaran_muncul_di_sini'.tr();
     final icon = inquiry ? Icons.forum_outlined : Icons.handshake_outlined;
     final tint = inquiry ? AppColors.info : AppColors.primary;
 
     return Padding(
-      padding: EdgeInsets.fromLTRB(24.w, 48.h, 24.w, 24.h),
+      padding: EdgeInsets.fromLTRB(
+        AppSpacing.pageGutter,
+        AppSpacing.spacious,
+        AppSpacing.pageGutter,
+        AppSpacing.spacious,
+      ),
       child: Column(
         children: [
           _buildEmptyIllustration(
@@ -812,22 +790,29 @@ class _NegotiationListPageState extends State<NegotiationListPage>
     final title = hasSearch
         ? 'negotiation.no_match_search_title'.tr()
         : hasStatusFilter
-            ? 'negotiation.no_match_filter_title'.tr()
-            : 'data_tidak_ditemukan'.tr();
+        ? 'negotiation.no_match_filter_title'.tr()
+        : 'data_tidak_ditemukan'.tr();
     final subtitle = hasSearch
         ? (inquiry
-            ? 'negotiation.no_match_search_subtitle_inquiry'.tr()
-            : 'negotiation.no_match_search_subtitle'.tr())
+              ? 'negotiation.no_match_search_subtitle_inquiry'.tr()
+              : 'negotiation.no_match_search_subtitle'.tr())
         : hasStatusFilter
-            ? 'negotiation.no_match_filter_subtitle'.tr()
-            : 'negotiation.no_match_filter_subtitle_generic'.tr();
+        ? 'negotiation.no_match_filter_subtitle'.tr()
+        : 'negotiation.no_match_filter_subtitle_generic'.tr();
 
     return Padding(
-      padding: EdgeInsets.fromLTRB(24.w, 48.h, 24.w, 24.h),
+      padding: EdgeInsets.fromLTRB(
+        AppSpacing.pageGutter,
+        AppSpacing.spacious,
+        AppSpacing.pageGutter,
+        AppSpacing.spacious,
+      ),
       child: Column(
         children: [
           _buildEmptyIllustration(
-            icon: hasSearch ? Icons.search_off_rounded : Icons.filter_list_off_rounded,
+            icon: hasSearch
+                ? Icons.search_off_rounded
+                : Icons.filter_list_off_rounded,
             iconColor: AppColors.textSecondary,
             backgroundColor: AppColors.grey100,
           ),

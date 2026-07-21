@@ -1,0 +1,7 @@
+sdk.dir=C:\\Users\\YOUR_USER\\AppData\\Local\\Android\\Sdk
+flutter.sdk=C:\\flutter
+
+# Meta Developer → App settings → Basic
+facebook.app.id=2022510065291974
+# Client Token (bukan App Secret Firebase) — isi dari Meta → Show Client token
+facebook.client.token=YOUR_CLIENT_TOKEN

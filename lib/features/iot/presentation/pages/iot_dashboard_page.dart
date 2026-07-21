@@ -133,7 +133,8 @@ class _IotDashboardPageState extends State<IotDashboardPage> {
                             shrinkWrap: true,
                             physics: const NeverScrollableScrollPhysics(),
                             itemCount: devices.length,
-                            separatorBuilder: (_, __) => SizedBox(height: AppSpacing.sm),
+                            separatorBuilder: (_, __) =>
+                                SizedBox(height: AppSpacing.sm),
                             itemBuilder: (context, index) => _buildDeviceCard(
                               context,
                               devices[index],
@@ -188,17 +189,22 @@ class _IotDashboardPageState extends State<IotDashboardPage> {
     IotStatusSummaryEntity? statusSummary,
   ) {
     final totals = fleet?.totals;
-    final total = totals?.devices ??
-        statusSummary?.totalDevices ??
-        devices.length;
-    final online = totals?.online ??
+    final total =
+        totals?.devices ?? statusSummary?.totalDevices ?? devices.length;
+    final online =
+        totals?.online ??
         statusSummary?.onlineCount ??
-        devices.where((d) => d.isMonitoringEnabled && d.status == 'ONLINE').length;
-    final alerts = totals?.alerting ??
+        devices
+            .where((d) => d.isMonitoringEnabled && d.status == 'ONLINE')
+            .length;
+    final alerts =
+        totals?.alerting ??
         statusSummary?.alertingCount ??
-        devices.where((d) => d.isMonitoringEnabled && d.status == 'ALERT').length;
-    final disabled = totals?.disabled ??
-        devices.where((d) => !d.isMonitoringEnabled).length;
+        devices
+            .where((d) => d.isMonitoringEnabled && d.status == 'ALERT')
+            .length;
+    final disabled =
+        totals?.disabled ?? devices.where((d) => !d.isMonitoringEnabled).length;
 
     return Container(
       padding: EdgeInsets.symmetric(horizontal: 10.w, vertical: 12.h),
@@ -268,8 +274,13 @@ class _IotDashboardPageState extends State<IotDashboardPage> {
   }) {
     final summaryRow = statusSummary?.rowFor(device.id);
     final liveStatus = summaryRow?.liveStatus ?? device.status;
-    final fleetDevice = fleet?.devices.where((d) => d.id == device.id).firstOrNull;
-    final statusMeta = _liveStatusMetaFromStatus(liveStatus, device.isMonitoringEnabled);
+    final fleetDevice = fleet?.devices
+        .where((d) => d.id == device.id)
+        .firstOrNull;
+    final statusMeta = _liveStatusMetaFromStatus(
+      liveStatus,
+      device.isMonitoringEnabled,
+    );
     final isDisabled = !device.isMonitoringEnabled;
 
     return Opacity(
@@ -398,9 +409,10 @@ class _IotDashboardPageState extends State<IotDashboardPage> {
                         if (!enabled) {
                           _confirmDisableMonitoring(context, device);
                         } else {
-                          context
-                              .read<IotCubit>()
-                              .setMonitoringEnabled(device.id, true);
+                          context.read<IotCubit>().setMonitoringEnabled(
+                            device.id,
+                            true,
+                          );
                         }
                       },
                     ),
@@ -408,7 +420,8 @@ class _IotDashboardPageState extends State<IotDashboardPage> {
                 ),
                 if (device.isMonitoringEnabled) ...[
                   SizedBox(height: 8.h),
-                  if (fleetDevice != null && fleetDevice.sparkline.length >= 2) ...[
+                  if (fleetDevice != null &&
+                      fleetDevice.sparkline.length >= 2) ...[
                     Row(
                       children: [
                         Text(
@@ -431,7 +444,10 @@ class _IotDashboardPageState extends State<IotDashboardPage> {
                     SizedBox(height: 6.h),
                   ],
                   Container(
-                    padding: EdgeInsets.symmetric(vertical: 8.h, horizontal: 4.w),
+                    padding: EdgeInsets.symmetric(
+                      vertical: 8.h,
+                      horizontal: 4.w,
+                    ),
                     decoration: BoxDecoration(
                       color: AppColors.grey50,
                       borderRadius: BorderRadius.circular(8.r),
@@ -490,7 +506,10 @@ class _IotDashboardPageState extends State<IotDashboardPage> {
     );
   }
 
-  _LiveStatusMeta _liveStatusMetaFromStatus(String status, bool monitoringEnabled) {
+  _LiveStatusMeta _liveStatusMetaFromStatus(
+    String status,
+    bool monitoringEnabled,
+  ) {
     if (!monitoringEnabled) {
       return _LiveStatusMeta(
         'iot.status_disabled'.tr(),
@@ -546,7 +565,7 @@ class _IotDashboardPageState extends State<IotDashboardPage> {
 
   Widget _buildEmptyState() {
     return Padding(
-      padding: EdgeInsets.symmetric(vertical: 24.h),
+      padding: EdgeInsets.symmetric(vertical: AppSpacing.spacious),
       child: Column(
         children: [
           Icon(LucideIcons.cpu, size: 40.sp, color: AppColors.grey200),
@@ -616,9 +635,7 @@ class _IotDashboardPageState extends State<IotDashboardPage> {
     final confirmed = await showBisaConfirmDialog(
       context,
       title: 'hapus_perangkat'.tr(),
-      message: 'iot.delete_device_message'.tr(
-        namedArgs: {'name': device.name},
-      ),
+      message: 'iot.delete_device_message'.tr(namedArgs: {'name': device.name}),
       confirmText: 'hapus'.tr(),
       destructive: true,
     );
@@ -669,11 +686,11 @@ class _IotDashboardPageState extends State<IotDashboardPage> {
           return false;
         }
         context.read<IotCubit>().claimDevice(
-              deviceSecret,
-              nameController.text.isEmpty
-                  ? 'iot.add_device_default_name'.tr()
-                  : nameController.text,
-            );
+          deviceSecret,
+          nameController.text.isEmpty
+              ? 'iot.add_device_default_name'.tr()
+              : nameController.text,
+        );
         return true;
       },
     );

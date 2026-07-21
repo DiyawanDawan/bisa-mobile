@@ -42,9 +42,9 @@ class _BookingDetailBody extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final userId = context.watch<AuthCubit>().state.maybeWhen(
-          authenticated: (u) => u.id,
-          orElse: () => null,
-        );
+      authenticated: (u) => u.id,
+      orElse: () => null,
+    );
 
     return Scaffold(
       backgroundColor: AppColors.background,
@@ -81,9 +81,11 @@ class _BookingDetailBody extends StatelessWidget {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       _HeaderCard(booking: b),
-                      SizedBox(height: AppSpacing.md),
-                      if (b.canCheckout && !b.isExpired) _CountdownBanner(booking: b),
-                      SizedBox(height: AppSpacing.md),
+                      if (b.canCheckout && !b.isExpired) ...[
+                        SizedBox(height: AppSpacing.comfortable),
+                        _CountdownBanner(booking: b),
+                      ],
+                      SizedBox(height: AppSpacing.sectionGap),
                       _Section(
                         title: 'booking.section_product'.tr(),
                         children: [
@@ -91,7 +93,9 @@ class _BookingDetailBody extends StatelessWidget {
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
                               ClipRRect(
-                                borderRadius: BorderRadius.circular(AppRadius.lg),
+                                borderRadius: BorderRadius.circular(
+                                  AppRadius.lg,
+                                ),
                                 child: SizedBox(
                                   width: 72.w,
                                   height: 72.w,
@@ -146,14 +150,17 @@ class _BookingDetailBody extends StatelessWidget {
                         title: 'booking.section_party'.tr(),
                         children: [
                           SellerIdentityRow(
-                            displayName: counterparty.companyName?.trim().isNotEmpty == true
+                            displayName:
+                                counterparty.companyName?.trim().isNotEmpty ==
+                                    true
                                 ? counterparty.companyName!
                                 : counterparty.fullName,
                             avatarUrl: counterparty.avatarUrl,
                             isVerified: counterparty.isVerified,
                             avatarRadius: 16.r,
-                            fallbackIcon:
-                                isSupplier ? LucideIcons.user : LucideIcons.store,
+                            fallbackIcon: isSupplier
+                                ? LucideIcons.user
+                                : LucideIcons.store,
                             nameStyle: TextStyle(
                               fontSize: 14.sp,
                               fontWeight: FontWeight.w700,
@@ -167,9 +174,9 @@ class _BookingDetailBody extends StatelessWidget {
                             dateFmt.format(b.createdAt),
                           ),
                           _Row(
-                            'booking.expires_at'.tr(namedArgs: {
-                              'date': dateFmt.format(b.expiresAt),
-                            }),
+                            'booking.expires_at'.tr(
+                              namedArgs: {'date': dateFmt.format(b.expiresAt)},
+                            ),
                             dateFmt.format(b.expiresAt),
                           ),
                           if (b.confirmedAt != null)
@@ -183,7 +190,9 @@ class _BookingDetailBody extends StatelessWidget {
                         SizedBox(height: AppSpacing.md),
                         _Section(
                           title: 'booking.field_notes'.tr(),
-                          children: [Text(b.notes!, style: TextStyle(fontSize: 13.sp))],
+                          children: [
+                            Text(b.notes!, style: TextStyle(fontSize: 13.sp)),
+                          ],
                         ),
                       ],
                       if (b.harvestLot != null) ...[
@@ -198,8 +207,9 @@ class _BookingDetailBody extends StatelessWidget {
                               ),
                             _Row(
                               'booking.field_harvest_date'.tr(),
-                              DateFormat('dd MMM yyyy')
-                                  .format(b.harvestLot!.expectedHarvestDate),
+                              DateFormat(
+                                'dd MMM yyyy',
+                              ).format(b.harvestLot!.expectedHarvestDate),
                             ),
                           ],
                         ),
@@ -207,7 +217,8 @@ class _BookingDetailBody extends StatelessWidget {
                       if (b.order != null) ...[
                         SizedBox(height: AppSpacing.md),
                         OutlinedButton.icon(
-                          onPressed: () => context.push('/order/${b.order!.id}'),
+                          onPressed: () =>
+                              context.push('/order/${b.order!.id}'),
                           icon: Icon(LucideIcons.shoppingBag, size: 18.sp),
                           label: Text('booking.view_order'.tr()),
                           style: OutlinedButton.styleFrom(
@@ -302,10 +313,9 @@ class _CountdownBanner extends StatelessWidget {
           SizedBox(width: AppSpacing.sm),
           Expanded(
             child: Text(
-              'booking.hold_countdown'.tr(namedArgs: {
-                'hours': '$hours',
-                'minutes': '$minutes',
-              }),
+              'booking.hold_countdown'.tr(
+                namedArgs: {'hours': '$hours', 'minutes': '$minutes'},
+              ),
               style: TextStyle(fontSize: 13.sp, color: AppColors.warning),
             ),
           ),
@@ -415,11 +425,16 @@ class _ActionBar extends StatelessWidget {
           title: Text('booking.cancel_title'.tr()),
           content: TextField(
             controller: ctrl,
-            decoration: InputDecoration(hintText: 'booking.cancel_reason_hint'.tr()),
+            decoration: InputDecoration(
+              hintText: 'booking.cancel_reason_hint'.tr(),
+            ),
             maxLines: 2,
           ),
           actions: [
-            TextButton(onPressed: () => Navigator.pop(ctx), child: Text('cancel'.tr())),
+            TextButton(
+              onPressed: () => Navigator.pop(ctx),
+              child: Text('cancel'.tr()),
+            ),
             TextButton(
               onPressed: () => Navigator.pop(ctx, ctrl.text.trim()),
               child: Text('booking.cancel_confirm'.tr()),
@@ -429,7 +444,10 @@ class _ActionBar extends StatelessWidget {
       },
     );
     if (!context.mounted) return;
-    final err = await context.read<BookingCubit>().cancel(booking.id, reason: reason);
+    final err = await context.read<BookingCubit>().cancel(
+      booking.id,
+      reason: reason,
+    );
     if (err == null && context.mounted) {
       showSuccessSnackBar(context, 'booking.cancel_success'.tr());
     }
@@ -448,9 +466,14 @@ class _ActionBar extends StatelessWidget {
             onPressed: isSubmitting
                 ? null
                 : () async {
-                    final err = await context.read<BookingCubit>().confirm(booking.id);
+                    final err = await context.read<BookingCubit>().confirm(
+                      booking.id,
+                    );
                     if (err == null && context.mounted) {
-                      showSuccessSnackBar(context, 'booking.confirm_success'.tr());
+                      showSuccessSnackBar(
+                        context,
+                        'booking.confirm_success'.tr(),
+                      );
                     }
                   },
           ),
@@ -486,15 +509,17 @@ class _ActionBar extends StatelessWidget {
     if (actions.isEmpty) return const SizedBox.shrink();
 
     return Container(
-      padding: EdgeInsets.all(AppSpacing.md),
+      padding: EdgeInsets.fromLTRB(
+        AppSpacing.md,
+        AppSpacing.md,
+        AppSpacing.md,
+        0,
+      ),
       decoration: BoxDecoration(
         color: AppColors.surface,
         border: Border(top: BorderSide(color: AppColors.grey100)),
       ),
-      child: SafeArea(
-        top: false,
-        child: Row(children: actions),
-      ),
+      child: SafeArea(top: false, child: Row(children: actions)),
     );
   }
 }

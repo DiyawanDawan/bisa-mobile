@@ -59,6 +59,7 @@ class _ForumPageState extends State<ForumPage> {
     if (i >= 0) return _categoryKeys[i].tr();
     return category;
   }
+
   bool _isSearching = false;
   final TextEditingController _searchController = TextEditingController();
   String? _activeTag;
@@ -176,8 +177,14 @@ class _ForumPageState extends State<ForumPage> {
               initial: () => const SizedBox.shrink(),
               loading: () => SingleChildScrollView(
                 physics: const AlwaysScrollableScrollPhysics(),
-                padding: EdgeInsets.symmetric(horizontal: AppSpacing.md, vertical: AppSpacing.md12),
-                child: const ShimmerListPlaceholder(itemCount: 5, itemHeight: 120),
+                padding: EdgeInsets.symmetric(
+                  horizontal: AppSpacing.md,
+                  vertical: AppSpacing.md12,
+                ),
+                child: const ShimmerListPlaceholder(
+                  itemCount: 5,
+                  itemHeight: 120,
+                ),
               ),
               success: () => const SizedBox.shrink(),
               error: (message) => Center(
@@ -221,7 +228,9 @@ class _ForumPageState extends State<ForumPage> {
                     physics: const BouncingScrollPhysics(),
                     children: [
                       if (_activeTag != null) _buildActiveTagBanner(),
-                      ForumPublicGroupsSection(key: ValueKey(_groupsRefreshToken)),
+                      ForumPublicGroupsSection(
+                        key: ValueKey(_groupsRefreshToken),
+                      ),
                       // Create Post Header
                       Container(
                         margin: EdgeInsets.fromLTRB(
@@ -286,11 +295,13 @@ class _ForumPageState extends State<ForumPage> {
                                 child: Container(
                                   padding: EdgeInsets.symmetric(
                                     horizontal: AppSpacing.md,
-                    vertical: AppSpacing.sm10,
+                                    vertical: AppSpacing.sm10,
                                   ),
                                   decoration: BoxDecoration(
                                     color: AppColors.grey50,
-                                    borderRadius: BorderRadius.circular(AppSpacing.xlPx.r),
+                                    borderRadius: BorderRadius.circular(
+                                      AppSpacing.xlPx.r,
+                                    ),
                                   ),
                                   child: Text(
                                     'forum.compose_hint'.tr(),
@@ -318,7 +329,9 @@ class _ForumPageState extends State<ForumPage> {
                           height: 36.h,
                           child: ListView.builder(
                             scrollDirection: Axis.horizontal,
-                            padding: EdgeInsets.symmetric(horizontal: AppSpacing.lg),
+                            padding: EdgeInsets.symmetric(
+                              horizontal: AppSpacing.lg,
+                            ),
                             itemCount: _categoryValues.length,
                             itemBuilder: (context, index) {
                               final category = _categoryValues[index];
@@ -347,7 +360,7 @@ class _ForumPageState extends State<ForumPage> {
                           child: Column(
                             mainAxisAlignment: MainAxisAlignment.center,
                             children: [
-                              SizedBox(height: 40.h),
+                              SizedBox(height: AppSpacing.spacious),
                               Icon(
                                 LucideIcons.messageSquare,
                                 size: 64.sp,
@@ -370,7 +383,9 @@ class _ForumPageState extends State<ForumPage> {
                         ...filteredPosts
                             .map(
                               (post) => Padding(
-                                padding: EdgeInsets.symmetric(horizontal: AppSpacing.lg),
+                                padding: EdgeInsets.symmetric(
+                                  horizontal: AppSpacing.lg,
+                                ),
                                 child: PostCard(
                                   post: post,
                                   onTap: () => Navigator.push(
@@ -445,14 +460,20 @@ class _ForumPageState extends State<ForumPage> {
   /// menghapus filter (kembali ke feed normal).
   Widget _buildActiveTagBanner() {
     return Container(
-      margin: EdgeInsets.fromLTRB(20.w, 16.h, 20.w, 0),
-      padding: EdgeInsets.symmetric(horizontal: AppSpacing.section, vertical: AppSpacing.sm10),
+      margin: EdgeInsets.fromLTRB(
+        AppSpacing.pageGutter,
+        AppSpacing.comfortable,
+        AppSpacing.pageGutter,
+        0,
+      ),
+      padding: EdgeInsets.symmetric(
+        horizontal: AppSpacing.section,
+        vertical: AppSpacing.sm10,
+      ),
       decoration: BoxDecoration(
         color: AppColors.primary.withValues(alpha: 0.1),
         borderRadius: BorderRadius.circular(AppRadius.lg),
-        border: Border.all(
-          color: AppColors.primary.withValues(alpha: 0.3),
-        ),
+        border: Border.all(color: AppColors.primary.withValues(alpha: 0.3)),
       ),
       child: Row(
         children: [
@@ -461,10 +482,7 @@ class _ForumPageState extends State<ForumPage> {
           Expanded(
             child: RichText(
               text: TextSpan(
-                style: TextStyle(
-                  fontSize: 12.sp,
-                  color: AppColors.textPrimary,
-                ),
+                style: TextStyle(fontSize: 12.sp, color: AppColors.textPrimary),
                 children: [
                   TextSpan(text: 'forum.tag_filter_prefix'.tr()),
                   TextSpan(
