@@ -3114,6 +3114,11 @@
   "certificate.status_pending": "Pending",
   "certificate.status_approved": "Approved",
   "certificate.status_rejected": "Rejected",
+  "certificate.store_section_title": "Store Certificates",
+  "certificate.store_upload_title": "Upload Store Certificate",
+  "certificate.store_review_hint": "Store legal documents (tax ID, business permit, ISO, etc.) are reviewed by admin before appearing on your profile.",
+  "certificate.store_empty_owner": "No store certificates yet.",
+  "certificate.store_verified_section": "Verified Store Certificates",
   "market.deep_analytics_card_subtitle": "AI price forecasts, projections and business insights",
   "ai.predict_quota_exhausted": "This month's prediction quota ({limit}x) is used up. Try again next month."
 }

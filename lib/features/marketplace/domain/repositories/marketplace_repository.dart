@@ -100,4 +100,12 @@ abstract class MarketplaceRepository {
   );
   Future<Either<Failure, List<ProductCertificateEntity>>>
   getSupplierCertificates(String supplierId, {int page = 1, int limit = 20});
+  Future<Either<Failure, List<StoreCertificateEntity>>> getMyStoreCertificates();
+  Future<Either<Failure, StoreCertificateEntity>> submitStoreCertificate({
+    required String localPath,
+    required Map<String, dynamic> metadata,
+  });
+  Future<Either<Failure, void>> deleteStoreCertificate(String certificateId);
+  Future<Either<Failure, List<StoreCertificateEntity>>>
+  getSupplierStoreCertificates(String supplierId);
 }

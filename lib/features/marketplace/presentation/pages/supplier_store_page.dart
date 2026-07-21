@@ -18,6 +18,7 @@ import '../../../profile/presentation/bloc/profile_cubit.dart';
 import '../bloc/marketplace_cubit.dart';
 import '../bloc/store_banner_cubit.dart';
 import '../widgets/store_banner_section.dart';
+import '../widgets/store_certificate_editor.dart';
 import '../../../../shared/widgets/bisa_app_bar.dart';
 import '../../../../shared/widgets/bisa_network_image.dart';
 import '../../../../shared/widgets/shimmer_loading.dart';
@@ -136,6 +137,8 @@ class _StoreManagementBody extends StatelessWidget {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   const StoreBannerSection(),
+                  SizedBox(height: AppSpacing.sm10),
+                  const StoreCertificateEditor(),
                   SizedBox(height: AppSpacing.sm10),
                   _StoreHeader(
                     user: user,

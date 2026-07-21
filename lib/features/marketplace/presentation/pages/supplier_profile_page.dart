@@ -26,6 +26,7 @@ import '../../../../core/utils/product_share_helper.dart';
 import '../../domain/entities/product_certificate_entity.dart';
 import '../../domain/repositories/marketplace_repository.dart';
 import '../widgets/product_certificate_section.dart';
+import '../widgets/store_certificate_section.dart';
 
 class SupplierProfilePage extends StatefulWidget {
   final String supplierId;
@@ -49,6 +50,7 @@ class _SupplierProfilePageState extends State<SupplierProfilePage> {
   String _selectedFilter = 'ALL';
   UserEntity? _supplier;
   List<ProductCertificateEntity> _certificates = const [];
+  List<StoreCertificateEntity> _storeCertificates = const [];
   bool _certificatesLoading = true;
   String? _certificatesError;
 
@@ -104,10 +106,20 @@ class _SupplierProfilePageState extends State<SupplierProfilePage> {
         _certificatesError = null;
       });
     }
-    final result = await sl<MarketplaceRepository>().getSupplierCertificates(
+    final repository = sl<MarketplaceRepository>();
+    final storeResult = await repository.getSupplierStoreCertificates(
       widget.supplierId,
     );
-    result.fold(
+    final productResult = await repository.getSupplierCertificates(
+      widget.supplierId,
+      limit: 50,
+    );
+    if (!mounted) return;
+
+    storeResult.fold((_) {}, (items) {
+      if (mounted) setState(() => _storeCertificates = items);
+    });
+    productResult.fold(
       (failure) {
         if (mounted) {
           setState(() {
@@ -121,6 +133,7 @@ class _SupplierProfilePageState extends State<SupplierProfilePage> {
           setState(() {
             _certificates = items;
             _certificatesLoading = false;
+            _certificatesError = null;
           });
         }
       },
@@ -337,14 +350,22 @@ class _SupplierProfilePageState extends State<SupplierProfilePage> {
                                   ),
                                 ),
                               )
-                            else if (_certificates.isNotEmpty)
-                              SliverToBoxAdapter(
-                                child: ProductCertificateSection(
-                                  certificates: _certificates,
-                                  onProductTap: (productId) =>
-                                      context.push('/product/$productId'),
+                            else ...[
+                              if (_storeCertificates.isNotEmpty)
+                                SliverToBoxAdapter(
+                                  child: StoreCertificateSection(
+                                    certificates: _storeCertificates,
+                                  ),
                                 ),
-                              ),
+                              if (_certificates.isNotEmpty)
+                                SliverToBoxAdapter(
+                                  child: ProductCertificateSection(
+                                    certificates: _certificates,
+                                    onProductTap: (productId) =>
+                                        context.push('/product/$productId'),
+                                  ),
+                                ),
+                            ],
                             SliverToBoxAdapter(child: _buildSearchFilterCard()),
                             SliverPadding(
                               padding: EdgeInsets.fromLTRB(

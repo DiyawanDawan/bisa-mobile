@@ -3114,6 +3114,11 @@
   "certificate.status_pending": "Menunggu",
   "certificate.status_approved": "Disetujui",
   "certificate.status_rejected": "Ditolak",
+  "certificate.store_section_title": "Sertifikat Toko",
+  "certificate.store_upload_title": "Unggah Sertifikat Toko",
+  "certificate.store_review_hint": "Dokumen legal toko (NPWP, SIUP, ISO, dll.) diperiksa admin sebelum ditampilkan di profil.",
+  "certificate.store_empty_owner": "Belum ada sertifikat toko.",
+  "certificate.store_verified_section": "Sertifikat Toko Terverifikasi",
   "market.deep_analytics_card_subtitle": "Prediksi harga AI, proyeksi dan insight bisnis",
   "ai.predict_quota_exhausted": "Kuota prediksi bulan ini ({limit}x) sudah habis. Coba lagi bulan depan."
 }

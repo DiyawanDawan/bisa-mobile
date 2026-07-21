@@ -8,6 +8,7 @@ import '../models/product_model.dart';
 import '../models/supplier_model.dart';
 import '../models/category_model.dart';
 import '../models/product_certificate_model.dart';
+import '../models/store_certificate_model.dart';
 
 abstract class MarketplaceRemoteDataSource {
   Future<List<ProductModel>> getMyProducts({
@@ -98,6 +99,15 @@ abstract class MarketplaceRemoteDataSource {
     int page = 1,
     int limit = 20,
   });
+  Future<List<StoreCertificateModel>> getMyStoreCertificates();
+  Future<StoreCertificateModel> submitStoreCertificate({
+    required String localPath,
+    required Map<String, dynamic> metadata,
+  });
+  Future<void> deleteStoreCertificate(String certificateId);
+  Future<List<StoreCertificateModel>> getSupplierStoreCertificates(
+    String supplierId,
+  );
 }
 
 class MarketplaceRemoteDataSourceImpl implements MarketplaceRemoteDataSource {
@@ -507,6 +517,57 @@ class MarketplaceRemoteDataSourceImpl implements MarketplaceRemoteDataSource {
         .map(
           (item) =>
               ProductCertificateModel.fromJson(Map<String, dynamic>.from(item)),
+        )
+        .toList();
+  }
+
+  @override
+  Future<List<StoreCertificateModel>> getMyStoreCertificates() async {
+    final response = await dio.get('/users/me/store-certificates');
+    final data = response.data['data'] as List<dynamic>? ?? const [];
+    return data
+        .whereType<Map>()
+        .map(
+          (item) =>
+              StoreCertificateModel.fromJson(Map<String, dynamic>.from(item)),
+        )
+        .toList();
+  }
+
+  @override
+  Future<StoreCertificateModel> submitStoreCertificate({
+    required String localPath,
+    required Map<String, dynamic> metadata,
+  }) async {
+    final uploaded = await uploadQueue.uploadFile(
+      localPath: localPath,
+      folder: 'store-certificates',
+    );
+    final response = await dio.post(
+      '/users/me/store-certificates',
+      data: {...metadata, 'storageKey': uploaded.path},
+    );
+    return StoreCertificateModel.fromJson(
+      Map<String, dynamic>.from(response.data['data'] as Map),
+    );
+  }
+
+  @override
+  Future<void> deleteStoreCertificate(String certificateId) async {
+    await dio.delete('/users/me/store-certificates/$certificateId');
+  }
+
+  @override
+  Future<List<StoreCertificateModel>> getSupplierStoreCertificates(
+    String supplierId,
+  ) async {
+    final response = await dio.get('/suppliers/$supplierId/store-certificates');
+    final data = response.data['data'] as List<dynamic>? ?? const [];
+    return data
+        .whereType<Map>()
+        .map(
+          (item) =>
+              StoreCertificateModel.fromJson(Map<String, dynamic>.from(item)),
         )
         .toList();
   }

@@ -40,6 +40,42 @@ class ProductCertificateEntity {
       (expiresAt == null || expiresAt!.isAfter(DateTime.now()));
 }
 
+class StoreCertificateEntity {
+  const StoreCertificateEntity({
+    required this.id,
+    required this.title,
+    required this.certificateType,
+    required this.fileName,
+    required this.mimeType,
+    required this.status,
+    this.issuerName,
+    this.certificateNumber,
+    this.issuedAt,
+    this.expiresAt,
+    this.documentUrl,
+    this.rejectionReason,
+    this.reviewedAt,
+  });
+
+  final String id;
+  final String title;
+  final String certificateType;
+  final String fileName;
+  final String mimeType;
+  final String status;
+  final String? issuerName;
+  final String? certificateNumber;
+  final DateTime? issuedAt;
+  final DateTime? expiresAt;
+  final String? documentUrl;
+  final String? rejectionReason;
+  final DateTime? reviewedAt;
+
+  bool get isApproved =>
+      status == 'APPROVED' &&
+      (expiresAt == null || expiresAt!.isAfter(DateTime.now()));
+}
+
 class ProductCertificateDraft {
   const ProductCertificateDraft({
     required this.localPath,

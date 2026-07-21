@@ -421,6 +421,66 @@ class MarketplaceRepositoryImpl implements MarketplaceRepository {
     }
   }
 
+  @override
+  Future<Either<Failure, List<StoreCertificateEntity>>>
+  getMyStoreCertificates() async {
+    try {
+      final models = await remoteDataSource.getMyStoreCertificates();
+      return Right(models.map((item) => item.toEntity()).toList());
+    } on DioException catch (e) {
+      return Left(_mapDioExceptionToFailure(e));
+    } catch (_) {
+      return const Left(UnexpectedFailure());
+    }
+  }
+
+  @override
+  Future<Either<Failure, StoreCertificateEntity>> submitStoreCertificate({
+    required String localPath,
+    required Map<String, dynamic> metadata,
+  }) async {
+    try {
+      final model = await remoteDataSource.submitStoreCertificate(
+        localPath: localPath,
+        metadata: metadata,
+      );
+      return Right(model.toEntity());
+    } on DioException catch (e) {
+      return Left(_mapDioExceptionToFailure(e));
+    } catch (_) {
+      return const Left(UnexpectedFailure());
+    }
+  }
+
+  @override
+  Future<Either<Failure, void>> deleteStoreCertificate(
+    String certificateId,
+  ) async {
+    try {
+      await remoteDataSource.deleteStoreCertificate(certificateId);
+      return const Right(null);
+    } on DioException catch (e) {
+      return Left(_mapDioExceptionToFailure(e));
+    } catch (_) {
+      return const Left(UnexpectedFailure());
+    }
+  }
+
+  @override
+  Future<Either<Failure, List<StoreCertificateEntity>>>
+  getSupplierStoreCertificates(String supplierId) async {
+    try {
+      final models = await remoteDataSource.getSupplierStoreCertificates(
+        supplierId,
+      );
+      return Right(models.map((item) => item.toEntity()).toList());
+    } on DioException catch (e) {
+      return Left(_mapDioExceptionToFailure(e));
+    } catch (_) {
+      return const Left(UnexpectedFailure());
+    }
+  }
+
   Failure _mapDioExceptionToFailure(DioException e) {
     if (e.type == DioExceptionType.connectionTimeout ||
         e.type == DioExceptionType.receiveTimeout ||
