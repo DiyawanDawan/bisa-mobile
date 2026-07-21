@@ -15,7 +15,6 @@ import '../../../../shared/widgets/bisa_app_bar.dart';
 import '../../../../shared/widgets/bisa_logo.dart';
 import '../../../../injection_container.dart';
 import '../bloc/ai_cubit.dart';
-import 'package:mobile_bisa/shared/widgets/pro_required_placeholder.dart';
 import 'package:mobile_bisa/shared/widgets/shimmer_loading.dart';
 import 'package:skeletonizer/skeletonizer.dart';
 import '../../../auth/presentation/bloc/auth_cubit.dart';
@@ -370,24 +369,30 @@ class _AiChatPageState extends State<AiChatPage> {
                         ),
                         error: (message) {
                           final display = localizeFailureMessage(message);
-                          final lowered = message.toLowerCase();
-                          final isProError =
-                              message.contains('PRO') ||
-                              message.contains('Langganan') ||
-                              lowered.contains('subscription') ||
-                              lowered.contains('langganan');
-                          if (isProError) {
-                            return ProRequiredPlaceholder(
-                              message: display,
-                              icon: LucideIcons.bot,
-                              onRetryPressed: () => context
-                                  .read<AiCubit>()
-                                  .sendMessage(''), // Or some refresh logic
-                              onActionPressed: () =>
-                                  context.push('/iot-subscription'),
-                            );
-                          }
-                          return Center(child: Text(display));
+                          return Center(
+                            child: Padding(
+                              padding: EdgeInsets.all(24.r),
+                              child: Column(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  Text(
+                                    display,
+                                    textAlign: TextAlign.center,
+                                    style: TextStyle(
+                                      color: AppColors.textSecondary,
+                                      fontSize: 14.sp,
+                                    ),
+                                  ),
+                                  SizedBox(height: 12.h),
+                                  TextButton(
+                                    onPressed: () =>
+                                        context.read<AiCubit>().sendMessage(''),
+                                    child: Text('market.retry'.tr()),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          );
                         },
                         orElse: () => const SizedBox.shrink(),
                       );

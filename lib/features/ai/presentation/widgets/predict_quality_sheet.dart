@@ -2,7 +2,6 @@ import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
-import 'package:go_router/go_router.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
 
@@ -12,7 +11,6 @@ import '../../../../core/utils/safe_area_utils.dart';
 import '../../../../core/i18n/failure_messages.dart';
 import '../../../../core/i18n/tr_safe.dart';
 import '../../../../core/utils/batch_weight_util.dart';
-import '../../../../core/utils/pro_subscription.dart';
 import '../../../../injection_container.dart';
 import '../../../../shared/widgets/batch_weight_field.dart';
 import '../../../../shared/widgets/custom_button.dart';
@@ -290,12 +288,6 @@ class _PredictQualitySheetState extends State<PredictQualitySheet> {
 
   @override
   Widget build(BuildContext context) {
-    final user = context.watch<AuthCubit>().state.maybeWhen(
-      authenticated: (u) => u,
-      orElse: () => null,
-    );
-    final isPro = user != null && isProActive(user);
-
     return Container(
       constraints: BoxConstraints(
         maxHeight: MediaQuery.of(context).size.height * 0.92,
@@ -342,11 +334,9 @@ class _PredictQualitySheetState extends State<PredictQualitySheet> {
             ),
             SizedBox(height: 2.h),
             Text(
-              isPro
-                  ? 'ai.predict_subtitle_pro'.tr()
-                  : 'ai.predict_subtitle_free'.tr(
-                      namedArgs: {'remaining': '$_remaining'},
-                    ),
+              'ai.predict_subtitle_free'.tr(
+                namedArgs: {'remaining': '$_remaining'},
+              ),
               style: TextStyle(fontSize: 11.sp, color: AppColors.textSecondary),
             ),
             SizedBox(height: 10.h),
@@ -438,25 +428,14 @@ class _PredictQualitySheetState extends State<PredictQualitySheet> {
                 onPressed: _loading ? null : _predict,
               ),
             ),
-            if (!isPro && _remaining <= 0) ...[
+            if (_remaining <= 0) ...[
               SizedBox(height: 6.h),
-              Align(
-                alignment: Alignment.centerRight,
-                child: TextButton(
-                  style: TextButton.styleFrom(
-                    padding: EdgeInsets.symmetric(horizontal: 4.w),
-                    minimumSize: Size.zero,
-                    tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-                  ),
-                  onPressed: () {
-                    Navigator.pop(context);
-                    context.push('/iot-subscription');
-                  },
-                  child: Text(
-                    'ai.predict_upgrade_pro'.tr(),
-                    style: TextStyle(fontSize: 12.sp),
-                  ),
+              Text(
+                'ai.predict_quota_exhausted'.tr(
+                  namedArgs: {'limit': '${PredictQualityQuota.freeLimitPerMonth}'},
                 ),
+                textAlign: TextAlign.center,
+                style: TextStyle(fontSize: 12.sp, color: AppColors.textSecondary),
               ),
             ],
           ],

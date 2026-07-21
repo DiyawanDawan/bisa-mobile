@@ -728,8 +728,8 @@
   "market.hero_free_badge": "Free for Everyone",
   "market.hero_title": "Track Biomass\nCommodity Prices",
   "market.insight_title": "Market Intelligence",
-  "market.pro_card_active_subtitle": "AI forecasts, price projections & business insights",
-  "market.pro_card_locked_subtitle": "Upgrade to PRO for AI forecasts & price projections",
+  "market.pro_card_active_subtitle": "AI forecasts, price projections and business insights",
+  "market.pro_card_locked_subtitle": "AI forecasts, price projections and business insights",
   "market.pro_card_title": "Deep Analytics",
   "market.retry": "Try Again",
   "market.section_today_prices": "Today's Market Prices",
@@ -3113,5 +3113,7 @@
   "certificate.preview_error": "The certificate preview could not be loaded.",
   "certificate.status_pending": "Pending",
   "certificate.status_approved": "Approved",
-  "certificate.status_rejected": "Rejected"
+  "certificate.status_rejected": "Rejected",
+  "market.deep_analytics_card_subtitle": "AI price forecasts, projections and business insights",
+  "ai.predict_quota_exhausted": "This month's prediction quota ({limit}x) is used up. Try again next month."
 }

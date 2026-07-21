@@ -11,7 +11,6 @@ import 'package:mobile_bisa/shared/widgets/bisa_app_bar.dart';
 import 'package:go_router/go_router.dart';
 import 'package:mobile_bisa/injection_container.dart';
 import 'package:mobile_bisa/shared/widgets/shimmer_loading.dart';
-import 'package:mobile_bisa/core/utils/pro_subscription.dart';
 import 'package:mobile_bisa/features/auth/presentation/bloc/auth_cubit.dart';
 
 class MarketInsightPage extends StatefulWidget {
@@ -27,7 +26,7 @@ class _MarketInsightPageState extends State<MarketInsightPage> {
     super.initState();
   }
 
-  /// Pro feature gating: Pro (IoT, Analitik Mendalam) khusus Supplier.
+  /// Analitik mendalam tersedia untuk Supplier (bukan fitur PRO).
   bool _isSupplier(BuildContext context) {
     return context.read<AuthCubit>().state.maybeWhen(
           authenticated: (u) => u.role == 'SUPPLIER',
@@ -196,12 +195,6 @@ class _MarketInsightPageState extends State<MarketInsightPage> {
   }
 
   Widget _buildProDeepAnalyticsCard(BuildContext context) {
-    final user = context.watch<AuthCubit>().state.maybeWhen(
-          authenticated: (u) => u,
-          orElse: () => null,
-        );
-    final isPro = user != null && isProActive(user);
-
     return InkWell(
       onTap: () => context.push('/market-deep-analytics'),
       borderRadius: BorderRadius.circular(20.r),
@@ -230,42 +223,17 @@ class _MarketInsightPageState extends State<MarketInsightPage> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Row(
-                    children: [
-                      Text(
-                        'market.pro_card_title'.tr(),
-                        style: TextStyle(
-                          color: AppColors.textOnPrimary,
-                          fontWeight: FontWeight.bold,
-                          fontSize: 15.sp,
-                        ),
-                      ),
-                      SizedBox(width: 6.w),
-                      Container(
-                        padding: EdgeInsets.symmetric(
-                          horizontal: 6.w,
-                          vertical: 2.h,
-                        ),
-                        decoration: BoxDecoration(
-                          color: AppColors.textOnPrimary,
-                          borderRadius: BorderRadius.circular(6.r),
-                        ),
-                        child: Text(
-                          'PRO',
-                          style: TextStyle(
-                            color: AppColors.primaryDark,
-                            fontSize: 9.sp,
-                            fontWeight: FontWeight.w900,
-                          ),
-                        ),
-                      ),
-                    ],
+                  Text(
+                    'market.pro_card_title'.tr(),
+                    style: TextStyle(
+                      color: AppColors.textOnPrimary,
+                      fontWeight: FontWeight.bold,
+                      fontSize: 15.sp,
+                    ),
                   ),
                   SizedBox(height: 4.h),
                   Text(
-                    isPro
-                        ? 'market.pro_card_active_subtitle'.tr()
-                        : 'market.pro_card_locked_subtitle'.tr(),
+                    'market.deep_analytics_card_subtitle'.tr(),
                     style: TextStyle(
                       color: AppColors.textOnPrimary.withValues(alpha: 0.9),
                       fontSize: 12.sp,

@@ -728,8 +728,8 @@
   "market.hero_free_badge": "Gratis buat Semua",
   "market.hero_title": "Pantau Tren Harga\nKomoditas Biomassa",
   "market.insight_title": "Market Intelligence",
-  "market.pro_card_active_subtitle": "Prediksi AI, proyeksi harga & insight bisnis",
-  "market.pro_card_locked_subtitle": "Upgrade PRO buat prediksi AI & proyeksi harga",
+  "market.pro_card_active_subtitle": "Prediksi AI, proyeksi harga dan insight bisnis",
+  "market.pro_card_locked_subtitle": "Prediksi AI, proyeksi harga dan insight bisnis",
   "market.pro_card_title": "Analitik Mendalam",
   "market.retry": "Coba lagi",
   "market.section_today_prices": "Harga Pasar Hari Ini",
@@ -3113,5 +3113,7 @@
   "certificate.preview_error": "Pratinjau sertifikat tidak dapat dimuat.",
   "certificate.status_pending": "Menunggu",
   "certificate.status_approved": "Disetujui",
-  "certificate.status_rejected": "Ditolak"
+  "certificate.status_rejected": "Ditolak",
+  "market.deep_analytics_card_subtitle": "Prediksi harga AI, proyeksi dan insight bisnis",
+  "ai.predict_quota_exhausted": "Kuota prediksi bulan ini ({limit}x) sudah habis. Coba lagi bulan depan."
 }

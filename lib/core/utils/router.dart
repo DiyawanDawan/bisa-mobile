@@ -85,8 +85,6 @@ import '../../features/market/presentation/pages/market_insight_page.dart';
 import '../../features/market/presentation/pages/market_trend_detail_page.dart';
 import '../../features/market/presentation/pages/market_deep_analytics_page.dart';
 import '../../features/market/data/models/market_trend_model.dart';
-import '../../shared/widgets/pro_gate.dart';
-import 'package:lucide_icons_flutter/lucide_icons.dart';
 import '../../features/gis/presentation/pages/waste_mapping_page.dart';
 import '../../features/commerce/presentation/pages/cart_page.dart';
 import '../../features/commerce/presentation/pages/wishlist_page.dart';
@@ -646,12 +644,7 @@ final goRouter = GoRouter(
     ),
     GoRoute(
       path: '/market-deep-analytics',
-      builder: (context, state) => ProGate(
-        title: 'market.deep_analytics_title'.tr(),
-        icon: LucideIcons.sparkles,
-        lockedMessage: 'market.deep_analytics_pro_locked',
-        child: const MarketDeepAnalyticsPage(),
-      ),
+      builder: (context, state) => const MarketDeepAnalyticsPage(),
     ),
     GoRoute(
       path: '/market-detail/:id',

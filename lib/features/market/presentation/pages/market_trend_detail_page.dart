@@ -1,21 +1,16 @@
 import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 import 'package:mobile_bisa/core/i18n/failure_messages.dart';
-import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:fl_chart/fl_chart.dart';
-import 'package:go_router/go_router.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
 import 'package:mobile_bisa/core/constants/app_colors.dart';
-import 'package:mobile_bisa/core/utils/pro_subscription.dart';
-import 'package:mobile_bisa/features/auth/presentation/bloc/auth_cubit.dart';
 import 'package:mobile_bisa/features/market/core/market_price_format.dart';
 import 'package:mobile_bisa/features/market/presentation/widgets/market_supply_demand_card.dart';
 import 'package:mobile_bisa/features/market/data/models/market_trend_model.dart';
 import 'package:mobile_bisa/features/market/domain/repositories/market_repository.dart';
 import 'package:mobile_bisa/injection_container.dart';
 import 'package:mobile_bisa/shared/widgets/bisa_app_bar.dart';
-import 'package:mobile_bisa/shared/widgets/custom_button.dart';
 import 'package:mobile_bisa/shared/widgets/shimmer_loading.dart';
 
 class MarketTrendDetailPage extends StatefulWidget {
@@ -38,18 +33,8 @@ class _MarketTrendDetailPageState extends State<MarketTrendDetailPage> {
   void initState() {
     super.initState();
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      if (_isProUser) {
-        _loadPrediction();
-      }
+      _loadPrediction();
     });
-  }
-
-  bool get _isProUser {
-    final user = context.read<AuthCubit>().state.maybeWhen(
-          authenticated: (u) => u,
-          orElse: () => null,
-        );
-    return user != null && isProActive(user);
   }
 
   Future<void> _loadPrediction() async {
@@ -79,14 +64,10 @@ class _MarketTrendDetailPageState extends State<MarketTrendDetailPage> {
 
   @override
   Widget build(BuildContext context) {
-    final title = _isProUser
-        ? 'market.detail_title_prediction'.tr()
-        : 'market.detail_title_market'.tr();
-
     return Scaffold(
       backgroundColor: AppColors.background,
       appBar: BisaAppBar(
-        title: title,
+        title: 'market.detail_title_prediction'.tr(),
         backgroundColor: AppColors.surface,
       ),
       body: _loadingPrediction
@@ -126,25 +107,20 @@ class _MarketTrendDetailPageState extends State<MarketTrendDetailPage> {
             SizedBox(height: 24.h),
           ],
           _buildDataTable(trend),
-          if (_isProUser) ...[
-            SizedBox(height: 24.h),
-            _buildInsightSection(trend),
-            if (trend.supplyDemand != null) ...[
-              SizedBox(height: 16.h),
-              Text(
-                'market.sd_section_title'.tr(),
-                style: TextStyle(
-                  fontWeight: FontWeight.bold,
-                  fontSize: 14.sp,
-                  color: AppColors.textPrimary,
-                ),
+          SizedBox(height: 24.h),
+          _buildInsightSection(trend),
+          if (trend.supplyDemand != null) ...[
+            SizedBox(height: 16.h),
+            Text(
+              'market.sd_section_title'.tr(),
+              style: TextStyle(
+                fontWeight: FontWeight.bold,
+                fontSize: 14.sp,
+                color: AppColors.textPrimary,
               ),
-              SizedBox(height: 8.h),
-              MarketSupplyDemandCard(data: trend.supplyDemand!),
-            ],
-          ] else ...[
-            SizedBox(height: 24.h),
-            _buildProLockedSection(),
+            ),
+            SizedBox(height: 8.h),
+            MarketSupplyDemandCard(data: trend.supplyDemand!),
           ],
         ],
       ),
@@ -189,7 +165,7 @@ class _MarketTrendDetailPageState extends State<MarketTrendDetailPage> {
         ? 'market.trend_up'.tr()
         : (isStable ? 'market.trend_stable'.tr() : 'market.trend_down'.tr());
     final hasProjection =
-        _isProUser && trend.projectedData != null && trend.projectedData!.isNotEmpty;
+        trend.projectedData != null && trend.projectedData!.isNotEmpty;
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -235,20 +211,17 @@ class _MarketTrendDetailPageState extends State<MarketTrendDetailPage> {
               LucideIcons.tag,
             ),
             SizedBox(width: 12.w),
-            if (_isProUser)
-              _buildStatCard(
-                'market.stat_prediction_3mo'.tr(),
-                hasProjection
-                    ? formatMarketPriceLikeCurrent(
-                        trend.projectedData!.last.y,
-                        trend.currentValue,
-                      )
-                    : 'market.prediction_not_available'.tr(),
-                AppColors.secondary,
-                LucideIcons.bot,
-              )
-            else
-              Expanded(child: _buildLockedStatCard()),
+            _buildStatCard(
+              'market.stat_prediction_3mo'.tr(),
+              hasProjection
+                  ? formatMarketPriceLikeCurrent(
+                      trend.projectedData!.last.y,
+                      trend.currentValue,
+                    )
+                  : 'market.prediction_not_available'.tr(),
+              AppColors.secondary,
+              LucideIcons.bot,
+            ),
           ],
         ),
       ],
@@ -300,45 +273,9 @@ class _MarketTrendDetailPageState extends State<MarketTrendDetailPage> {
     );
   }
 
-  Widget _buildLockedStatCard() {
-    return Container(
-      padding: EdgeInsets.all(16.r),
-      decoration: BoxDecoration(
-        color: AppColors.grey100.withValues(alpha: 0.5),
-        borderRadius: BorderRadius.circular(16.r),
-        border: Border.all(color: AppColors.grey100),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            children: [
-              Icon(LucideIcons.lock, size: 14.sp, color: AppColors.grey400),
-              SizedBox(width: 4.w),
-              Text(
-                'market.prediction_ai_badge'.tr(),
-                style: TextStyle(fontSize: 11.sp, color: AppColors.grey400),
-              ),
-            ],
-          ),
-          SizedBox(height: 6.h),
-          Text(
-            'market.pro_only_badge'.tr(),
-            style: TextStyle(
-              fontSize: 15.sp,
-              fontWeight: FontWeight.bold,
-              color: AppColors.grey400,
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
   Widget _buildChartSection(Color trendColor, MarketTrendModel trend) {
-    final showProjection = _isProUser &&
-        trend.projectedData != null &&
-        trend.projectedData!.isNotEmpty;
+    final showProjection =
+        trend.projectedData != null && trend.projectedData!.isNotEmpty;
 
     return Container(
       height: 260.h,
@@ -607,47 +544,6 @@ class _MarketTrendDetailPageState extends State<MarketTrendDetailPage> {
               color: AppColors.textPrimary,
               height: 1.6,
             ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildProLockedSection() {
-    return Container(
-      padding: EdgeInsets.all(20.r),
-      decoration: BoxDecoration(
-        color: AppColors.surface,
-        borderRadius: BorderRadius.circular(20.r),
-        border: Border.all(color: AppColors.grey100),
-      ),
-      child: Column(
-        children: [
-          Icon(LucideIcons.lock, size: 32.sp, color: AppColors.grey400),
-          SizedBox(height: 12.h),
-          Text(
-            'market.ai_prediction_section'.tr(),
-            style: TextStyle(
-              fontSize: 16.sp,
-              fontWeight: FontWeight.bold,
-              color: AppColors.textPrimary,
-            ),
-          ),
-          SizedBox(height: 8.h),
-          Text(
-            'market.ai_upgrade_prompt'.tr(),
-            textAlign: TextAlign.center,
-            style: TextStyle(
-              fontSize: 13.sp,
-              color: AppColors.textSecondary,
-              height: 1.5,
-            ),
-          ),
-          SizedBox(height: 16.h),
-          CustomButton(
-            text: 'market.upgrade_pro'.tr(),
-            useGradient: true,
-            onPressed: () => context.push('/iot-subscription'),
           ),
         ],
       ),

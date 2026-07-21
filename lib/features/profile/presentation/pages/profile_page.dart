@@ -749,7 +749,6 @@ class ProfilePage extends StatelessWidget {
                 LucideIcons.chartBar,
                 'profile.menu_sales_analytics'.tr(),
                 () => context.push('/sales-analytics'),
-                trailing: _proBadge(),
               ),
               _menuItem(
                 LucideIcons.heart,
@@ -800,13 +799,13 @@ class ProfilePage extends StatelessWidget {
                 LucideIcons.sparkles,
                 'profile.menu_deep_analytics'.tr(),
                 () => context.push('/market-deep-analytics'),
-                trailing: _proBadge(),
               ),
             if (isAuthenticated && isSupplier)
               _menuItem(
                 LucideIcons.cpu,
                 'profile.menu_iot_monitoring'.tr(),
                 () => context.push('/iot-dashboard'),
+                trailing: _proBadge(),
               ),
             _menuItem(
               LucideIcons.map,

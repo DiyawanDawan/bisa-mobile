@@ -1,7 +1,6 @@
 import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
 import 'package:fl_chart/fl_chart.dart';
@@ -10,12 +9,10 @@ import '../../../../core/constants/app_layout.dart';
 import '../../../../core/constants/app_colors.dart';
 import '../../../../core/utils/app_feedback.dart';
 import '../../../../core/utils/money_format.dart';
-import '../../../../core/utils/pro_subscription.dart';
 import '../../../../injection_container.dart';
 import '../../../../shared/widgets/bisa_app_bar.dart';
 import '../../../../shared/widgets/custom_button.dart';
 import '../../../../shared/widgets/bisa_network_image.dart';
-import '../../../auth/presentation/bloc/auth_cubit.dart';
 import '../../../home/presentation/pages/main_screen.dart';
 import '../bloc/order_cubit.dart';
 import '../utils/order_status_i18n.dart';
@@ -63,11 +60,9 @@ class _SalesAnalyticsPageState extends State<SalesAnalyticsPage> {
   }
 
   bool _isPro(BuildContext context) {
-    final user = context.watch<AuthCubit>().state.maybeWhen(
-          authenticated: (u) => u,
-          orElse: () => null,
-        );
-    return user != null && !requiresPro(user);
+    // Analitik penjualan terbuka untuk semua supplier login.
+    // Langganan PRO hanya untuk IoT.
+    return true;
   }
 
   void _exportCsv() {
