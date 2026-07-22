@@ -8,6 +8,7 @@ import 'package:lucide_icons_flutter/lucide_icons.dart';
 import 'package:url_launcher/url_launcher.dart';
 import '../../../../core/constants/app_colors.dart';
 import '../../../../core/constants/app_layout.dart';
+import '../../../../core/utils/safe_area_utils.dart';
 import '../../../../injection_container.dart';
 import '../../domain/entities/product_certificate_entity.dart';
 import '../bloc/product_certificate_cubit.dart';
@@ -58,7 +59,7 @@ class _ProductCertificateEditorState extends State<ProductCertificateEditor> {
     super.dispose();
   }
 
-  Future<void> _pickAndSubmit() async {
+  Future<void> _openUploadSheet() async {
     final selected = await FilePicker.platform.pickFiles(
       type: FileType.custom,
       allowedExtensions: const ['pdf', 'jpg', 'jpeg', 'png'],
@@ -68,115 +69,14 @@ class _ProductCertificateEditorState extends State<ProductCertificateEditor> {
     final path = selected?.files.single.path;
     if (path == null || !mounted) return;
 
-    final title = TextEditingController();
-    final type = TextEditingController();
-    final issuer = TextEditingController();
-    final number = TextEditingController();
-    DateTime? issuedAt;
-    DateTime? expiresAt;
-    final metadata = await showDialog<Map<String, dynamic>>(
+    final metadata = await showModalBottomSheet<Map<String, dynamic>>(
       context: context,
-      builder: (dialogContext) => StatefulBuilder(
-        builder: (context, setDialogState) => AlertDialog(
-          title: Text('certificate.upload_title'.tr()),
-          content: SingleChildScrollView(
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                TextField(
-                  controller: title,
-                  decoration: InputDecoration(
-                    labelText: 'certificate.name'.tr(),
-                  ),
-                ),
-                TextField(
-                  controller: type,
-                  decoration: InputDecoration(
-                    labelText: 'certificate.type'.tr(),
-                  ),
-                ),
-                TextField(
-                  controller: issuer,
-                  decoration: InputDecoration(
-                    labelText: 'certificate.issuer'.tr(),
-                  ),
-                ),
-                TextField(
-                  controller: number,
-                  decoration: InputDecoration(
-                    labelText: 'certificate.number'.tr(),
-                  ),
-                ),
-                SizedBox(height: AppSpacing.sm),
-                _DateButton(
-                  label: 'certificate.issued_at'.tr(),
-                  value: issuedAt,
-                  onTap: () async {
-                    final value = await showDatePicker(
-                      context: context,
-                      firstDate: DateTime(1950),
-                      lastDate: DateTime.now(),
-                      initialDate: issuedAt ?? DateTime.now(),
-                    );
-                    if (value != null) setDialogState(() => issuedAt = value);
-                  },
-                ),
-                _DateButton(
-                  label: 'certificate.expires_at'.tr(),
-                  value: expiresAt,
-                  onTap: () async {
-                    final value = await showDatePicker(
-                      context: context,
-                      firstDate: issuedAt ?? DateTime.now(),
-                      lastDate: DateTime.now().add(
-                        const Duration(days: 365 * 30),
-                      ),
-                      initialDate:
-                          expiresAt ??
-                          DateTime.now().add(const Duration(days: 365)),
-                    );
-                    if (value != null) setDialogState(() => expiresAt = value);
-                  },
-                ),
-              ],
-            ),
-          ),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.pop(dialogContext),
-              child: Text('batal'.tr()),
-            ),
-            ElevatedButton(
-              onPressed: () {
-                if (title.text.trim().length < 2 ||
-                    type.text.trim().length < 2) {
-                  return;
-                }
-                if (!areCertificateDatesValid(issuedAt, expiresAt)) {
-                  return;
-                }
-                Navigator.pop(dialogContext, {
-                  'title': title.text.trim(),
-                  'certificateType': type.text.trim(),
-                  if (issuer.text.trim().isNotEmpty)
-                    'issuerName': issuer.text.trim(),
-                  if (number.text.trim().isNotEmpty)
-                    'certificateNumber': number.text.trim(),
-                  if (issuedAt != null) 'issuedAt': issuedAt!.toIso8601String(),
-                  if (expiresAt != null)
-                    'expiresAt': expiresAt!.toIso8601String(),
-                });
-              },
-              child: Text('certificate.submit'.tr()),
-            ),
-          ],
-        ),
+      isScrollControlled: true,
+      backgroundColor: AppColors.transparent,
+      builder: (sheetContext) => _CertificateFormSheet(
+        titleText: 'certificate.upload_title'.tr(),
       ),
     );
-    title.dispose();
-    type.dispose();
-    issuer.dispose();
-    number.dispose();
     if (metadata == null || !mounted) return;
 
     await _cubit.submit(
@@ -186,8 +86,24 @@ class _ProductCertificateEditorState extends State<ProductCertificateEditor> {
     );
   }
 
-  Future<void> _remove(ProductCertificateEntity item) async {
-    await _cubit.remove(widget.productId, item.id);
+  Future<void> _openDetailSheet(ProductCertificateEntity item) async {
+    await showModalBottomSheet<void>(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: AppColors.transparent,
+      builder: (sheetContext) => _CertificateDetailSheet(
+        item: item,
+        uploading: _uploading,
+        onResubmit: () async {
+          Navigator.pop(sheetContext);
+          await _openUploadSheet();
+        },
+        onDelete: () async {
+          Navigator.pop(sheetContext);
+          await _cubit.remove(widget.productId, item.id);
+        },
+      ),
+    );
   }
 
   @override
@@ -211,7 +127,7 @@ class _ProductCertificateEditorState extends State<ProductCertificateEditor> {
                 ),
               ),
               TextButton.icon(
-                onPressed: _uploading ? null : _pickAndSubmit,
+                onPressed: _uploading ? null : _openUploadSheet,
                 icon: Icon(LucideIcons.upload, size: 16.sp),
                 label: Text('certificate.upload'.tr()),
               ),
@@ -235,11 +151,39 @@ class _ProductCertificateEditorState extends State<ProductCertificateEditor> {
             ..._items.map(
               (item) => ListTile(
                 contentPadding: EdgeInsets.zero,
-                leading: Icon(
-                  item.mimeType == 'application/pdf'
-                      ? LucideIcons.fileText
-                      : LucideIcons.image,
-                  color: AppColors.primary,
+                onTap: () => _openDetailSheet(item),
+                leading: ClipRRect(
+                  borderRadius: BorderRadius.circular(AppRadius.md),
+                  child: item.mimeType.startsWith('image/') &&
+                          item.documentUrl != null
+                      ? Image.network(
+                          item.documentUrl!,
+                          width: 44.r,
+                          height: 44.r,
+                          fit: BoxFit.cover,
+                          errorBuilder: (_, _, _) => Container(
+                            width: 44.r,
+                            height: 44.r,
+                            color: AppColors.primaryLight,
+                            child: Icon(
+                              LucideIcons.image,
+                              color: AppColors.primary,
+                              size: 20.sp,
+                            ),
+                          ),
+                        )
+                      : Container(
+                          width: 44.r,
+                          height: 44.r,
+                          color: AppColors.primaryLight,
+                          child: Icon(
+                            item.mimeType == 'application/pdf'
+                                ? LucideIcons.fileText
+                                : LucideIcons.image,
+                            color: AppColors.primary,
+                            size: 20.sp,
+                          ),
+                        ),
                 ),
                 title: Text(
                   item.title,
@@ -252,45 +196,13 @@ class _ProductCertificateEditorState extends State<ProductCertificateEditor> {
                     Text('${item.certificateType} · ${item.issuerName ?? '-'}'),
                     SizedBox(height: AppSpacing.xs),
                     CertificateStatusChip(status: item.status),
-                    if (item.rejectionReason != null)
-                      Text(
-                        item.rejectionReason!,
-                        style: TextStyle(
-                          fontSize: 11.sp,
-                          color: AppColors.error,
-                        ),
-                      ),
-                    if (item.status == 'REJECTED')
-                      TextButton(
-                        onPressed: _uploading ? null : _pickAndSubmit,
-                        style: TextButton.styleFrom(
-                          padding: EdgeInsets.zero,
-                          minimumSize: Size.zero,
-                          tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-                        ),
-                        child: Text('certificate.resubmit'.tr()),
-                      ),
                   ],
                 ),
-                trailing: item.status == 'APPROVED'
-                    ? IconButton(
-                        onPressed: item.documentUrl == null
-                            ? null
-                            : () => launchUrl(
-                                Uri.parse(item.documentUrl!),
-                                mode: LaunchMode.externalApplication,
-                              ),
-                        icon: const Icon(LucideIcons.externalLink),
-                      )
-                    : item.status == 'REJECTED'
-                    ? IconButton(
-                        onPressed: () => _remove(item),
-                        icon: const Icon(
-                          LucideIcons.trash2,
-                          color: AppColors.error,
-                        ),
-                      )
-                    : null,
+                trailing: Icon(
+                  LucideIcons.chevronRight,
+                  size: 18.sp,
+                  color: AppColors.grey400,
+                ),
               ),
             ),
           if (_uploading) const LinearProgressIndicator(),
@@ -300,6 +212,369 @@ class _ProductCertificateEditorState extends State<ProductCertificateEditor> {
               style: TextStyle(fontSize: 11.sp, color: AppColors.error),
             ),
         ],
+      ),
+    );
+  }
+}
+
+class _CertificateDetailSheet extends StatelessWidget {
+  const _CertificateDetailSheet({
+    required this.item,
+    required this.uploading,
+    required this.onResubmit,
+    required this.onDelete,
+  });
+
+  final ProductCertificateEntity item;
+  final bool uploading;
+  final VoidCallback onResubmit;
+  final VoidCallback onDelete;
+
+  bool get _isImage => item.mimeType.startsWith('image/');
+
+  Future<void> _openExternal() async {
+    final url = item.documentUrl;
+    if (url == null) return;
+    await launchUrl(Uri.parse(url), mode: LaunchMode.externalApplication);
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      constraints: BoxConstraints(maxHeight: 0.88.sh),
+      decoration: BoxDecoration(
+        color: AppColors.surface,
+        borderRadius: BorderRadius.vertical(
+          top: Radius.circular(AppSpacing.xxlPx.r),
+        ),
+      ),
+      child: SingleChildScrollView(
+        padding: bisaSheetPadding(
+          context,
+          horizontal: AppSpacing.xl,
+          top: AppSpacing.md,
+          bottom: AppSpacing.xl,
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Center(
+              child: Container(
+                width: 40.w,
+                height: 4.h,
+                decoration: BoxDecoration(
+                  color: AppColors.grey300,
+                  borderRadius: BorderRadius.circular(AppRadius.pill),
+                ),
+              ),
+            ),
+            SizedBox(height: AppSpacing.md),
+            Row(
+              children: [
+                Expanded(
+                  child: Text(
+                    'certificate.detail_title'.tr(),
+                    style: TextStyle(
+                      fontSize: 16.sp,
+                      fontWeight: FontWeight.w800,
+                    ),
+                  ),
+                ),
+                IconButton(
+                  onPressed: () => Navigator.pop(context),
+                  icon: Icon(LucideIcons.x, size: 18.sp),
+                ),
+              ],
+            ),
+            SizedBox(height: AppSpacing.sm),
+            if (_isImage && item.documentUrl != null)
+              ClipRRect(
+                borderRadius: BorderRadius.circular(AppRadius.xl),
+                child: AspectRatio(
+                  aspectRatio: 4 / 3,
+                  child: InteractiveViewer(
+                    child: Image.network(
+                      item.documentUrl!,
+                      fit: BoxFit.contain,
+                      errorBuilder: (_, _, _) => Container(
+                        color: AppColors.grey100,
+                        alignment: Alignment.center,
+                        child: Text('certificate.preview_error'.tr()),
+                      ),
+                    ),
+                  ),
+                ),
+              )
+            else
+              Container(
+                width: double.infinity,
+                padding: EdgeInsets.all(AppSpacing.xl),
+                decoration: BoxDecoration(
+                  color: AppColors.grey50,
+                  borderRadius: BorderRadius.circular(AppRadius.xl),
+                  border: Border.all(color: AppColors.grey200),
+                ),
+                child: Column(
+                  children: [
+                    Icon(
+                      LucideIcons.fileText,
+                      size: 40.sp,
+                      color: AppColors.primary,
+                    ),
+                    SizedBox(height: AppSpacing.sm),
+                    Text(
+                      item.fileName.isEmpty
+                          ? 'certificate.document_file'.tr()
+                          : item.fileName,
+                      textAlign: TextAlign.center,
+                      style: TextStyle(
+                        fontSize: 13.sp,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            SizedBox(height: AppSpacing.lg),
+            Text(
+              item.title,
+              style: TextStyle(fontSize: 15.sp, fontWeight: FontWeight.w800),
+            ),
+            SizedBox(height: AppSpacing.xs),
+            CertificateStatusChip(status: item.status),
+            SizedBox(height: AppSpacing.md),
+            _MetaRow(
+              label: 'certificate.type'.tr(),
+              value: item.certificateType,
+            ),
+            _MetaRow(
+              label: 'certificate.issuer'.tr(),
+              value: item.issuerName ?? '-',
+            ),
+            _MetaRow(
+              label: 'certificate.number'.tr(),
+              value: item.certificateNumber ?? '-',
+            ),
+            if (item.issuedAt != null)
+              _MetaRow(
+                label: 'certificate.issued_at'.tr(),
+                value: DateFormat('dd MMM yyyy').format(item.issuedAt!),
+              ),
+            if (item.expiresAt != null)
+              _MetaRow(
+                label: 'certificate.expires_at'.tr(),
+                value: DateFormat('dd MMM yyyy').format(item.expiresAt!),
+              ),
+            if (item.rejectionReason != null) ...[
+              SizedBox(height: AppSpacing.sm),
+              Text(
+                item.rejectionReason!,
+                style: TextStyle(fontSize: 12.sp, color: AppColors.error),
+              ),
+            ],
+            SizedBox(height: AppSpacing.xl),
+            if (item.documentUrl != null)
+              OutlinedButton.icon(
+                onPressed: _openExternal,
+                icon: Icon(LucideIcons.externalLink, size: 16.sp),
+                label: Text('certificate.open_document'.tr()),
+              ),
+            if (item.status == 'REJECTED' || item.status == 'PENDING') ...[
+              SizedBox(height: AppSpacing.sm),
+              if (item.status == 'REJECTED')
+                ElevatedButton.icon(
+                  onPressed: uploading ? null : onResubmit,
+                  icon: Icon(LucideIcons.upload, size: 16.sp),
+                  label: Text('certificate.resubmit'.tr()),
+                ),
+              if (item.status != 'APPROVED')
+                TextButton.icon(
+                  onPressed: uploading ? null : onDelete,
+                  icon: Icon(
+                    LucideIcons.trash2,
+                    size: 16.sp,
+                    color: AppColors.error,
+                  ),
+                  label: Text(
+                    'certificate.delete'.tr(),
+                    style: const TextStyle(color: AppColors.error),
+                  ),
+                ),
+            ],
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _MetaRow extends StatelessWidget {
+  const _MetaRow({required this.label, required this.value});
+
+  final String label;
+  final String value;
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: EdgeInsets.only(bottom: AppSpacing.xs),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          SizedBox(
+            width: 110.w,
+            child: Text(
+              label,
+              style: TextStyle(fontSize: 12.sp, color: AppColors.textSecondary),
+            ),
+          ),
+          Expanded(
+            child: Text(
+              value,
+              style: TextStyle(fontSize: 12.sp, fontWeight: FontWeight.w600),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _CertificateFormSheet extends StatefulWidget {
+  const _CertificateFormSheet({required this.titleText});
+
+  final String titleText;
+
+  @override
+  State<_CertificateFormSheet> createState() => _CertificateFormSheetState();
+}
+
+class _CertificateFormSheetState extends State<_CertificateFormSheet> {
+  final title = TextEditingController();
+  final type = TextEditingController();
+  final issuer = TextEditingController();
+  final number = TextEditingController();
+  DateTime? issuedAt;
+  DateTime? expiresAt;
+
+  @override
+  void dispose() {
+    title.dispose();
+    type.dispose();
+    issuer.dispose();
+    number.dispose();
+    super.dispose();
+  }
+
+  void _submit() {
+    if (title.text.trim().length < 2 || type.text.trim().length < 2) return;
+    if (!areCertificateDatesValid(issuedAt, expiresAt)) return;
+    Navigator.pop(context, {
+      'title': title.text.trim(),
+      'certificateType': type.text.trim(),
+      if (issuer.text.trim().isNotEmpty) 'issuerName': issuer.text.trim(),
+      if (number.text.trim().isNotEmpty)
+        'certificateNumber': number.text.trim(),
+      if (issuedAt != null) 'issuedAt': issuedAt!.toIso8601String(),
+      if (expiresAt != null) 'expiresAt': expiresAt!.toIso8601String(),
+    });
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      constraints: BoxConstraints(maxHeight: 0.9.sh),
+      decoration: BoxDecoration(
+        color: AppColors.surface,
+        borderRadius: BorderRadius.vertical(
+          top: Radius.circular(AppSpacing.xxlPx.r),
+        ),
+      ),
+      child: SingleChildScrollView(
+        padding: bisaSheetPadding(
+          context,
+          horizontal: AppSpacing.xl,
+          top: AppSpacing.md,
+          bottom: AppSpacing.xl,
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Center(
+              child: Container(
+                width: 40.w,
+                height: 4.h,
+                decoration: BoxDecoration(
+                  color: AppColors.grey300,
+                  borderRadius: BorderRadius.circular(AppRadius.pill),
+                ),
+              ),
+            ),
+            SizedBox(height: AppSpacing.md),
+            Text(
+              widget.titleText,
+              style: TextStyle(fontSize: 16.sp, fontWeight: FontWeight.w800),
+            ),
+            SizedBox(height: AppSpacing.lg),
+            TextField(
+              controller: title,
+              decoration: InputDecoration(labelText: 'certificate.name'.tr()),
+            ),
+            SizedBox(height: AppSpacing.md12),
+            TextField(
+              controller: type,
+              decoration: InputDecoration(labelText: 'certificate.type'.tr()),
+            ),
+            SizedBox(height: AppSpacing.md12),
+            TextField(
+              controller: issuer,
+              decoration: InputDecoration(labelText: 'certificate.issuer'.tr()),
+            ),
+            SizedBox(height: AppSpacing.md12),
+            TextField(
+              controller: number,
+              decoration: InputDecoration(labelText: 'certificate.number'.tr()),
+            ),
+            SizedBox(height: AppSpacing.md),
+            _DateButton(
+              label: 'certificate.issued_at'.tr(),
+              value: issuedAt,
+              onTap: () async {
+                final value = await showDatePicker(
+                  context: context,
+                  firstDate: DateTime(1950),
+                  lastDate: DateTime.now(),
+                  initialDate: issuedAt ?? DateTime.now(),
+                );
+                if (value != null) setState(() => issuedAt = value);
+              },
+            ),
+            _DateButton(
+              label: 'certificate.expires_at'.tr(),
+              value: expiresAt,
+              onTap: () async {
+                final value = await showDatePicker(
+                  context: context,
+                  firstDate: issuedAt ?? DateTime.now(),
+                  lastDate: DateTime.now().add(const Duration(days: 365 * 30)),
+                  initialDate:
+                      expiresAt ??
+                      DateTime.now().add(const Duration(days: 365)),
+                );
+                if (value != null) setState(() => expiresAt = value);
+              },
+            ),
+            SizedBox(height: AppSpacing.xl),
+            SizedBox(
+              width: double.infinity,
+              child: ElevatedButton(
+                onPressed: _submit,
+                child: Text('certificate.submit'.tr()),
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }

@@ -63,6 +63,8 @@ class _AddEditProductPageState extends State<AddEditProductPage> {
   String _selectedBiomassaType = 'BIOCHAR';
   String _selectedUnit = 'KG';
   String _selectedStatus = 'ACTIVE';
+  String _availabilityType = 'READY';
+  DateTime? _nextHarvestDate;
   String? _selectedGrade;
   String? _selectedCategoryId;
   String? _aiPredictionId;
@@ -99,6 +101,8 @@ class _AddEditProductPageState extends State<AddEditProductPage> {
       _selectedGrade = widget.product!.grade;
       _selectedStatus = widget.product!.status;
       _productMode = widget.product!.productMode;
+      _availabilityType = widget.product!.availabilityType;
+      _nextHarvestDate = widget.product!.nextHarvestDate;
       _selectedCategoryId = widget.product!.categoryId;
       if (widget.product!.images != null) {
         _imageDrafts = ProductImageDraft.fromProductImages(
@@ -325,6 +329,11 @@ class _AddEditProductPageState extends State<AddEditProductPage> {
           'description': _descriptionController.text.trim(),
         'status': _selectedStatus,
         'productMode': _productMode,
+        if (_productMode == 'ORGANIC_PRODUCE') ...{
+          'availabilityType': _availabilityType,
+          if (_nextHarvestDate != null)
+            'nextHarvestDate': _nextHarvestDate!.toIso8601String(),
+        },
         if (_selectedCategoryId != null) 'categoryId': _selectedCategoryId,
         if (_aiPredictionId != null) 'aiPredictionId': _aiPredictionId,
         'imageOrder': payload.imageOrderJson,
@@ -598,6 +607,10 @@ class _AddEditProductPageState extends State<AddEditProductPage> {
                               setState(() => _specsData = data),
                           onOpenFullEditor: _openSpecsSheet,
                         ),
+                        if (_productMode == 'ORGANIC_PRODUCE') ...[
+                          SizedBox(height: _sectionGap.h),
+                          _buildOrganicAvailabilitySection(),
+                        ],
                         SizedBox(height: _sectionGap.h),
                         _formSection(
                           title: 'marketplace.section_stock_desc'.tr(),
@@ -982,6 +995,105 @@ class _AddEditProductPageState extends State<AddEditProductPage> {
     );
   }
 
+  Widget _buildOrganicAvailabilitySection() {
+    final dateFmt = DateFormat('dd MMM yyyy');
+    return _formSection(
+      title: 'marketplace.section_availability'.tr(),
+      children: [
+        Text(
+          'marketplace.availability_hint'.tr(),
+          style: TextStyle(
+            fontSize: 11.sp,
+            color: AppColors.textSecondary,
+            height: 1.35,
+          ),
+        ),
+        SizedBox(height: AppSpacing.sm),
+        Wrap(
+          spacing: 8.w,
+          runSpacing: 8.h,
+          children: [
+            _availabilityChip(
+              'READY',
+              'marketplace.availability_ready'.tr(),
+            ),
+            _availabilityChip(
+              'PRE_HARVEST',
+              'marketplace.availability_preharvest'.tr(),
+            ),
+            _availabilityChip(
+              'MIXED',
+              'marketplace.availability_mixed'.tr(),
+            ),
+          ],
+        ),
+        if (_availabilityType == 'PRE_HARVEST' ||
+            _availabilityType == 'MIXED') ...[
+          SizedBox(height: AppSpacing.md),
+          InkWell(
+            onTap: () async {
+              final now = DateTime.now();
+              final picked = await showDatePicker(
+                context: context,
+                initialDate: _nextHarvestDate ?? now,
+                firstDate: now,
+                lastDate: now.add(const Duration(days: 365 * 3)),
+              );
+              if (picked != null) setState(() => _nextHarvestDate = picked);
+            },
+            borderRadius: BorderRadius.circular(AppRadius.md),
+            child: InputDecorator(
+              decoration: InputDecoration(
+                labelText: 'marketplace.next_harvest_date_label'.tr(),
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(AppRadius.md),
+                ),
+              ),
+              child: Text(
+                _nextHarvestDate != null
+                    ? dateFmt.format(_nextHarvestDate!)
+                    : 'marketplace.next_harvest_date_hint'.tr(),
+                style: TextStyle(
+                  fontSize: 13.sp,
+                  color: _nextHarvestDate != null
+                      ? AppColors.textPrimary
+                      : AppColors.textSecondary,
+                ),
+              ),
+            ),
+          ),
+          SizedBox(height: AppSpacing.sm),
+          Text(
+            'marketplace.harvest_lots_after_create_hint'.tr(),
+            style: TextStyle(
+              fontSize: 11.sp,
+              color: AppColors.textSecondary,
+              height: 1.35,
+            ),
+          ),
+        ],
+      ],
+    );
+  }
+
+  Widget _availabilityChip(String value, String label) {
+    final selected = _availabilityType == value;
+    return ChoiceChip(
+      label: Text(
+        label,
+        style: TextStyle(
+          fontSize: 12.sp,
+          fontWeight: FontWeight.w600,
+          color: selected ? AppColors.textOnPrimary : AppColors.textSecondary,
+        ),
+      ),
+      selected: selected,
+      selectedColor: AppColors.primary,
+      backgroundColor: AppColors.grey100,
+      onSelected: (_) => setState(() => _availabilityType = value),
+    );
+  }
+
   Widget _buildProductModeFormToggle() {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -1033,6 +1145,8 @@ class _AddEditProductPageState extends State<AddEditProductPage> {
                 _specsData = const ProductSpecsData();
                 if (mode == 'ORGANIC_PRODUCE') {
                   _selectedUnit = 'KG';
+                  _availabilityType = 'READY';
+                  _nextHarvestDate = null;
                 } else {
                   _selectedUnit = 'TON';
                   _selectedBiomassaType = 'BIOCHAR';

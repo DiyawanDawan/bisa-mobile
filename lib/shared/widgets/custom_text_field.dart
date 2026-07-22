@@ -23,6 +23,8 @@ class CustomTextField extends StatefulWidget {
   final bool isRequired;
   /// Tampilkan hint "(Opsional)" di label.
   final bool isOptional;
+  /// Mode kompak untuk form panjang (register, dll.).
+  final bool dense;
 
   const CustomTextField({
     super.key,
@@ -40,6 +42,7 @@ class CustomTextField extends StatefulWidget {
     this.inputFormatters,
     this.isRequired = false,
     this.isOptional = false,
+    this.dense = false,
   });
 
   @override
@@ -83,13 +86,15 @@ class _CustomTextFieldState extends State<CustomTextField> {
             ),
           ),
         ),
-        SizedBox(height: AppSpacing.sm),
+        SizedBox(height: widget.dense ? AppSpacing.xs : AppSpacing.sm),
         Focus(
           onFocusChange: (focused) => setState(() => _isFocused = focused),
           child: AnimatedContainer(
             duration: const Duration(milliseconds: 200),
             decoration: BoxDecoration(
-              borderRadius: BorderRadius.circular(AppRadius.xl),
+              borderRadius: BorderRadius.circular(
+                widget.dense ? AppRadius.lg : AppRadius.xl,
+              ),
               boxShadow: _isFocused ? AppColors.softShadow : [],
             ),
             child: TextFormField(
@@ -105,41 +110,70 @@ class _CustomTextFieldState extends State<CustomTextField> {
               decoration: InputDecoration(
                 hintText: widget.hint,
                 hintStyle: AppTextStyles.fieldHint(),
-                prefixIcon: widget.prefixIcon != null 
-                    ? Icon(widget.prefixIcon, size: 22.sp, color: _isFocused ? AppColors.primary : AppColors.grey400) 
+                isDense: widget.dense,
+                prefixIcon: widget.prefixIcon != null
+                    ? Icon(
+                        widget.prefixIcon,
+                        size: widget.dense ? 18.sp : 22.sp,
+                        color: _isFocused
+                            ? AppColors.primary
+                            : AppColors.grey400,
+                      )
                     : null,
                 suffixIcon: widget.isPassword
                     ? IconButton(
                         icon: Icon(
-                          _obscureText ? Icons.visibility_off_outlined : Icons.visibility_outlined,
-                          size: 20.sp,
+                          _obscureText
+                              ? Icons.visibility_off_outlined
+                              : Icons.visibility_outlined,
+                          size: widget.dense ? 18.sp : 20.sp,
                           color: AppColors.grey400,
                         ),
-                        onPressed: () => setState(() => _obscureText = !_obscureText),
+                        onPressed: () =>
+                            setState(() => _obscureText = !_obscureText),
                       )
                     : widget.suffixIcon,
                 filled: true,
                 fillColor: widget.enabled ? AppColors.surface : AppColors.grey50,
-                contentPadding: EdgeInsets.symmetric(horizontal: 20.w, vertical: 16.h),
+                contentPadding: EdgeInsets.symmetric(
+                  horizontal: widget.dense ? 14.w : 20.w,
+                  vertical: widget.dense ? 12.h : 16.h,
+                ),
                 border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(AppRadius.xl),
+                  borderRadius: BorderRadius.circular(
+                    widget.dense ? AppRadius.lg : AppRadius.xl,
+                  ),
                   borderSide: BorderSide(color: AppColors.grey200),
                 ),
                 enabledBorder: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(AppRadius.xl),
+                  borderRadius: BorderRadius.circular(
+                    widget.dense ? AppRadius.lg : AppRadius.xl,
+                  ),
                   borderSide: BorderSide(color: AppColors.grey200),
                 ),
                 focusedBorder: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(AppRadius.xl),
-                  borderSide: const BorderSide(color: AppColors.primary, width: 1.5),
+                  borderRadius: BorderRadius.circular(
+                    widget.dense ? AppRadius.lg : AppRadius.xl,
+                  ),
+                  borderSide: const BorderSide(
+                    color: AppColors.primary,
+                    width: 1.5,
+                  ),
                 ),
                 errorBorder: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(AppRadius.xl),
+                  borderRadius: BorderRadius.circular(
+                    widget.dense ? AppRadius.lg : AppRadius.xl,
+                  ),
                   borderSide: const BorderSide(color: AppColors.error, width: 1),
                 ),
                 focusedErrorBorder: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(AppRadius.xl),
-                  borderSide: const BorderSide(color: AppColors.error, width: 1.5),
+                  borderRadius: BorderRadius.circular(
+                    widget.dense ? AppRadius.lg : AppRadius.xl,
+                  ),
+                  borderSide: const BorderSide(
+                    color: AppColors.error,
+                    width: 1.5,
+                  ),
                 ),
               ),
             ),

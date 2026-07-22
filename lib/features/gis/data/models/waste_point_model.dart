@@ -3,7 +3,6 @@ import 'package:mobile_bisa/features/gis/data/province_centroids.dart';
 import 'package:mobile_bisa/features/gis/domain/entities/waste_point_entity.dart';
 
 part 'waste_point_model.freezed.dart';
-part 'waste_point_model.g.dart';
 
 double? _asDouble(dynamic value) {
   if (value == null) return null;

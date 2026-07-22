@@ -3385,6 +3385,15 @@ class _CartPageState extends State<CartPage> {
     final previewVat = toDoubleValue(_checkoutPreview?['vatAmount']);
     final previewLogistics = toDoubleValue(_checkoutPreview?['logisticsFee']);
     final previewTotal = toDoubleValue(_checkoutPreview?['totalAmount']);
+    final rawFeeLines = _checkoutPreview?['feeLines'];
+    final feeLines = rawFeeLines is List
+        ? rawFeeLines
+            .whereType<Map>()
+            .map((e) => Map<String, dynamic>.from(e))
+            .where((e) => (e['code']?.toString() ?? '') != 'LOGISTICS_FEE')
+            .toList()
+        : <Map<String, dynamic>>[];
+    final hasFeeLines = feeLines.isNotEmpty;
     final hasPreview = _checkoutPreview != null;
     final isPreviewRefreshing =
         _checkoutPreviewLoading && _checkoutPreview != null;
@@ -3579,12 +3588,24 @@ class _CartPageState extends State<CartPage> {
                         '-${formatMoneyIdr(previewVoucherDiscount)}',
                         valueColor: AppColors.success,
                       ),
-                    if (hasPreview)
+                    if (hasPreview && hasFeeLines)
+                      ...feeLines.map((line) {
+                        final label =
+                            line['label']?.toString() ??
+                            line['code']?.toString() ??
+                            'Fee';
+                        final amount = toDoubleValue(line['amount']);
+                        return _buildCheckoutPriceRow(
+                          label,
+                          formatMoneyIdr(amount),
+                        );
+                      }),
+                    if (hasPreview && !hasFeeLines)
                       _buildCheckoutPriceRow(
                         'cart.fee_admin'.tr(),
                         formatMoneyIdr(previewPlatformFee),
                       ),
-                    if (hasPreview)
+                    if (hasPreview && !hasFeeLines)
                       _buildCheckoutPriceRow(
                         'cart.fee_vat'.tr(),
                         formatMoneyIdr(previewVat),

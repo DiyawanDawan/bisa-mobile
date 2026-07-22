@@ -1,17 +1,26 @@
 import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
-import 'package:fl_chart/fl_chart.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
+import 'package:go_router/go_router.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
 import 'package:mobile_bisa/core/constants/app_colors.dart';
+import 'package:mobile_bisa/core/constants/app_layout.dart';
+import 'package:mobile_bisa/core/constants/app_text_styles.dart';
+import 'package:mobile_bisa/features/auth/presentation/bloc/auth_cubit.dart';
+import 'package:mobile_bisa/features/market/core/market_trend_metrics.dart';
 import 'package:mobile_bisa/features/market/data/models/market_trend_model.dart';
 import 'package:mobile_bisa/features/market/presentation/bloc/market_cubit.dart';
-import 'package:mobile_bisa/shared/widgets/bisa_app_bar.dart';
-import 'package:go_router/go_router.dart';
+import 'package:mobile_bisa/features/market/presentation/widgets/market_category_pills.dart';
+import 'package:mobile_bisa/features/market/presentation/widgets/market_cmc_table.dart';
+import 'package:mobile_bisa/features/market/presentation/widgets/market_featured_chart.dart';
+import 'package:mobile_bisa/features/market/presentation/widgets/market_index_carousel.dart';
+import 'package:mobile_bisa/features/market/presentation/widgets/market_movers_section.dart';
+import 'package:mobile_bisa/features/market/presentation/widgets/market_overview_kpis.dart';
+import 'package:mobile_bisa/features/market/presentation/widgets/market_section_header.dart';
 import 'package:mobile_bisa/injection_container.dart';
+import 'package:mobile_bisa/shared/widgets/bisa_app_bar.dart';
 import 'package:mobile_bisa/shared/widgets/shimmer_loading.dart';
-import 'package:mobile_bisa/features/auth/presentation/bloc/auth_cubit.dart';
 
 class MarketInsightPage extends StatefulWidget {
   const MarketInsightPage({super.key});
@@ -21,17 +30,29 @@ class MarketInsightPage extends StatefulWidget {
 }
 
 class _MarketInsightPageState extends State<MarketInsightPage> {
-  @override
-  void initState() {
-    super.initState();
-  }
+  String? _selectedCategory;
+  final _listKey = GlobalKey();
 
-  /// Analitik mendalam tersedia untuk Supplier (bukan fitur PRO).
   bool _isSupplier(BuildContext context) {
     return context.read<AuthCubit>().state.maybeWhen(
           authenticated: (u) => u.role == 'SUPPLIER',
           orElse: () => false,
         );
+  }
+
+  List<MarketTrendModel> _filtered(List<MarketTrendModel> trends) {
+    return MarketTrendMetrics.filterByCategory(trends, _selectedCategory);
+  }
+
+  void _scrollToList() {
+    final ctx = _listKey.currentContext;
+    if (ctx != null) {
+      Scrollable.ensureVisible(
+        ctx,
+        duration: const Duration(milliseconds: 350),
+        curve: Curves.easeOut,
+      );
+    }
   }
 
   @override
@@ -48,12 +69,12 @@ class _MarketInsightPageState extends State<MarketInsightPage> {
           builder: (context, state) {
             return state.maybeWhen(
               loading: () => Padding(
-                padding: EdgeInsets.all(20.w),
+                padding: AppSpacing.screenPaddingHorizontal,
                 child: const ShimmerListPlaceholder(),
               ),
               error: (message) => Center(
                 child: Padding(
-                  padding: EdgeInsets.all(24.w),
+                  padding: EdgeInsets.all(AppSpacing.md),
                   child: Column(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
@@ -62,16 +83,15 @@ class _MarketInsightPageState extends State<MarketInsightPage> {
                         size: 48.sp,
                         color: AppColors.error,
                       ),
-                      SizedBox(height: 12.h),
+                      SizedBox(height: AppSpacing.md12),
                       Text(
                         message,
                         textAlign: TextAlign.center,
-                        style: TextStyle(
+                        style: AppTextStyles.body(
                           color: AppColors.textSecondary,
-                          fontSize: 14.sp,
                         ),
                       ),
-                      SizedBox(height: 16.h),
+                      SizedBox(height: AppSpacing.md12),
                       TextButton(
                         onPressed: () =>
                             context.read<MarketCubit>().getMarketTrends(),
@@ -81,56 +101,76 @@ class _MarketInsightPageState extends State<MarketInsightPage> {
                   ),
                 ),
               ),
-              loaded: (trends) => RefreshIndicator(
-                onRefresh: () async =>
-                    context.read<MarketCubit>().getMarketTrends(),
-                child: SingleChildScrollView(
-                  padding: EdgeInsets.all(20.w),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      _buildHeroCard(),
-                      // Pro upsell card hanya tampil untuk Supplier.
-                      // Pembeli (Buyer) tidak diarahkan ke Pro karena
-                      // fitur Pro (analitik bisnis) bukan kebutuhan pembeli.
-                      if (_isSupplier(context)) ...[
-                        SizedBox(height: 16.h),
-                        _buildProDeepAnalyticsCard(context),
-                      ],
-                      SizedBox(height: 24.h),
-                      Text(
-                        'market.section_today_prices'.tr(),
-                        style: TextStyle(
-                          fontSize: 16.sp,
-                          fontWeight: FontWeight.bold,
-                          color: AppColors.textPrimary,
+              loaded: (trends) {
+                final filtered = _filtered(trends);
+                final featured = MarketTrendMetrics.featuredTrend(filtered);
+                final categories = MarketTrendMetrics.categories(trends);
+
+                return RefreshIndicator(
+                  onRefresh: () async =>
+                      context.read<MarketCubit>().getMarketTrends(),
+                  child: CustomScrollView(
+                    physics: const AlwaysScrollableScrollPhysics(),
+                    slivers: [
+                      SliverPadding(
+                        padding: EdgeInsets.fromLTRB(
+                          AppSpacing.pageGutter,
+                          AppSpacing.md12,
+                          AppSpacing.pageGutter,
+                          AppSpacing.md12 + MediaQuery.paddingOf(context).bottom,
                         ),
-                      ),
-                      Container(
-                        decoration: BoxDecoration(
-                          color: AppColors.surface,
-                          borderRadius: BorderRadius.circular(20.r),
-                          border: Border.all(color: AppColors.grey100),
-                        ),
-                        child: ListView.separated(
-                          shrinkWrap: true,
-                          padding: EdgeInsets.zero,
-                          physics: const NeverScrollableScrollPhysics(),
-                          itemCount: trends.length,
-                          separatorBuilder: (_, __) => Divider(
-                            height: 1,
-                            color: AppColors.grey100,
-                            indent: 16.w,
-                            endIndent: 16.w,
-                          ),
-                          itemBuilder: (context, index) =>
-                              _buildTrendCard(trends[index]),
+                        sliver: SliverList(
+                          delegate: SliverChildListDelegate([
+                            _buildPageHeader(),
+                            SizedBox(height: AppSpacing.sectionGap),
+                            MarketOverviewKpis(trends: filtered),
+                            if (_isSupplier(context)) ...[
+                              SizedBox(height: AppSpacing.sectionGap),
+                              _buildProDeepAnalyticsCard(context),
+                            ],
+                            SizedBox(height: AppSpacing.sectionGap),
+                            MarketCategoryPills(
+                              categories: categories,
+                              selectedCategory: _selectedCategory,
+                              onSelected: (cat) =>
+                                  setState(() => _selectedCategory = cat),
+                            ),
+                            if (filtered.isEmpty) ...[
+                              SizedBox(height: AppSpacing.sectionGap),
+                              _buildEmptyFilterState(),
+                            ] else ...[
+                            if (featured != null) ...[
+                              SizedBox(height: AppSpacing.sectionGap),
+                              MarketFeaturedChart(trend: featured),
+                            ],
+                            SizedBox(height: AppSpacing.sectionGap),
+                            MarketSectionHeader(
+                              title: 'market.major_commodities'.tr(),
+                            ),
+                            SizedBox(height: AppSpacing.compact),
+                            MarketIndexCarousel(trends: filtered),
+                            SizedBox(height: AppSpacing.sectionGap),
+                            MarketMoversSection(
+                              trends: filtered,
+                              onSeeAll: _scrollToList,
+                            ),
+                            SizedBox(height: AppSpacing.sectionGap),
+                            KeyedSubtree(
+                              key: _listKey,
+                              child: MarketSectionHeader(
+                                title: 'market.section_today_prices'.tr(),
+                              ),
+                            ),
+                            SizedBox(height: AppSpacing.compact),
+                            MarketCmcTable(trends: filtered),
+                            ],
+                          ]),
                         ),
                       ),
                     ],
                   ),
-                ),
-              ),
+                );
+              },
               orElse: () => const SizedBox(),
             );
           },
@@ -139,55 +179,43 @@ class _MarketInsightPageState extends State<MarketInsightPage> {
     );
   }
 
-  Widget _buildHeroCard() {
-    return Container(
-      padding: EdgeInsets.all(20.r),
-      decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(24.r),
-        gradient: LinearGradient(
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-          colors: [
-            AppColors.primary,
-            AppColors.primary.withValues(alpha: 0.85),
-            AppColors.primary.withValues(alpha: 0.65),
-          ],
+  Widget _buildPageHeader() {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          'market.page_subtitle'.tr(),
+          style: AppTextStyles.caption(color: AppColors.primary),
         ),
+        SizedBox(height: AppSpacing.xs),
+        Text(
+          'market.hero_title'.tr().replaceAll('\n', ' '),
+          style: AppTextStyles.pageTitle(),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildEmptyFilterState() {
+    return Container(
+      width: double.infinity,
+      padding: EdgeInsets.all(AppSpacing.md12),
+      decoration: BoxDecoration(
+        color: AppColors.surface,
+        borderRadius: BorderRadius.circular(AppRadius.xl),
+        border: Border.all(color: AppColors.grey100),
       ),
       child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Row(
-            children: [
-              Icon(LucideIcons.trendingUp, color: AppColors.textOnPrimary, size: 20.sp),
-              SizedBox(width: 8.w),
-              Text(
-                'market.hero_free_badge'.tr(),
-                style: TextStyle(
-                  color: AppColors.textOnPrimary.withValues(alpha: 0.9),
-                  fontWeight: FontWeight.bold,
-                  fontSize: 12.sp,
-                ),
-              ),
-            ],
-          ),
-          SizedBox(height: 12.h),
           Text(
-            'market.hero_title'.tr(),
-            style: TextStyle(
-              color: AppColors.textOnPrimary,
-              fontSize: 22.sp,
-              fontWeight: FontWeight.w900,
-              height: 1.2,
-            ),
+            'market.empty_filter'.tr(),
+            textAlign: TextAlign.center,
+            style: AppTextStyles.bodySecondary(),
           ),
-          SizedBox(height: 16.h),
-          Text(
-            'dapatkan_wawasan_pasar_berbasi'.tr(),
-            style: TextStyle(
-              color: AppColors.textOnPrimary.withValues(alpha: 0.9),
-              fontSize: 13.sp,
-            ),
+          SizedBox(height: AppSpacing.compact),
+          TextButton(
+            onPressed: () => setState(() => _selectedCategory = null),
+            child: Text('market.reset_filter'.tr()),
           ),
         ],
       ),
@@ -197,46 +225,48 @@ class _MarketInsightPageState extends State<MarketInsightPage> {
   Widget _buildProDeepAnalyticsCard(BuildContext context) {
     return InkWell(
       onTap: () => context.push('/market-deep-analytics'),
-      borderRadius: BorderRadius.circular(20.r),
+      borderRadius: BorderRadius.circular(AppRadius.xl),
       child: Container(
-        padding: EdgeInsets.all(16.r),
+        padding: EdgeInsets.all(AppSpacing.md12),
         decoration: BoxDecoration(
-          gradient: LinearGradient(
+          gradient: const LinearGradient(
             colors: [AppColors.warning, AppColors.primaryDark],
             begin: Alignment.topLeft,
             end: Alignment.bottomRight,
           ),
-          borderRadius: BorderRadius.circular(20.r),
+          borderRadius: BorderRadius.circular(AppRadius.xl),
         ),
         child: Row(
           children: [
             Container(
-              padding: EdgeInsets.all(10.r),
+              padding: EdgeInsets.all(AppSpacing.sm),
               decoration: BoxDecoration(
                 color: AppColors.textOnPrimary.withValues(alpha: 0.2),
-                borderRadius: BorderRadius.circular(12.r),
+                borderRadius: BorderRadius.circular(AppRadius.lg),
               ),
-              child: Icon(LucideIcons.sparkles, color: AppColors.textOnPrimary, size: 24.sp),
+              child: Icon(
+                LucideIcons.sparkles,
+                color: AppColors.textOnPrimary,
+                size: 22.sp,
+              ),
             ),
-            SizedBox(width: 12.w),
+            SizedBox(width: AppSpacing.sm),
             Expanded(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
                     'market.pro_card_title'.tr(),
-                    style: TextStyle(
+                    style: AppTextStyles.body(
                       color: AppColors.textOnPrimary,
-                      fontWeight: FontWeight.bold,
-                      fontSize: 15.sp,
+                      fontWeight: FontWeight.w800,
                     ),
                   ),
-                  SizedBox(height: 4.h),
+                  SizedBox(height: AppSpacing.xs / 2),
                   Text(
                     'market.deep_analytics_card_subtitle'.tr(),
-                    style: TextStyle(
+                    style: AppTextStyles.caption(
                       color: AppColors.textOnPrimary.withValues(alpha: 0.9),
-                      fontSize: 12.sp,
                     ),
                   ),
                 ],
@@ -251,176 +281,5 @@ class _MarketInsightPageState extends State<MarketInsightPage> {
         ),
       ),
     );
-  }
-
-  Widget _buildTrendCard(MarketTrendModel trend) {
-    final trendColor = _trendColor(trend.trendType);
-
-    return InkWell(
-      onTap: () => context.push('/market-detail/${trend.id}', extra: trend),
-      child: Container(
-        padding: EdgeInsets.all(16.r),
-        child: Row(
-          children: [
-            // Icon section
-            Container(
-              padding: EdgeInsets.all(10.r),
-              decoration: BoxDecoration(
-                color: trendColor.withValues(alpha: 0.1),
-                borderRadius: BorderRadius.circular(14.r),
-              ),
-              child: Icon(
-                _getCategoryIcon(trend.category),
-                color: trendColor,
-                size: 22.sp,
-              ),
-            ),
-            SizedBox(width: 12.w),
-            // Info section
-            Expanded(
-              flex: 3,
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    trend.label,
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                    style: TextStyle(
-                      fontWeight: FontWeight.bold,
-                      fontSize: 14.sp,
-                      color: AppColors.textPrimary,
-                    ),
-                  ),
-                  Text(
-                    trend.category,
-                    style: TextStyle(
-                      color: AppColors.textSecondary,
-                      fontSize: 11.sp,
-                      letterSpacing: 0.5,
-                    ),
-                  ),
-                ],
-              ),
-            ),
-            // Sparkline section (Mini Chart)
-            if (trend.historyData.isNotEmpty)
-              Expanded(
-                flex: 2,
-                child: Container(
-                  height: 30.h,
-                  padding: EdgeInsets.symmetric(horizontal: 8.w),
-                  child: LineChart(
-                    LineChartData(
-                      gridData: FlGridData(show: false),
-                      titlesData: FlTitlesData(show: false),
-                      borderData: FlBorderData(show: false),
-                      lineBarsData: [
-                        LineChartBarData(
-                          spots: trend.historyData
-                              .asMap()
-                              .entries
-                              .map(
-                                (e) => FlSpot(
-                                  e.key.toDouble(),
-                                  e.value.y.toDouble(),
-                                ),
-                              )
-                              .toList(),
-                          isCurved: true,
-                          color: trendColor,
-                          barWidth: 2,
-                          dotData: FlDotData(show: false),
-                          belowBarData: BarAreaData(show: false),
-                        ),
-                      ],
-                    ),
-                  ),
-                ),
-              ),
-            // Price section
-            Expanded(
-              flex: 3,
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.end,
-                children: [
-                  Text(
-                    trend.currentValue,
-                    style: TextStyle(
-                      fontWeight: FontWeight.w900,
-                      fontSize: 14.sp,
-                      color: AppColors.textPrimary,
-                    ),
-                  ),
-                  Container(
-                    padding: EdgeInsets.symmetric(
-                      horizontal: 6.w,
-                      vertical: 2.h,
-                    ),
-                    decoration: BoxDecoration(
-                      color: trendColor.withValues(alpha: 0.1),
-                      borderRadius: BorderRadius.circular(6.r),
-                    ),
-                    child: Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        Icon(
-                          trend.trendType == 'UP'
-                              ? LucideIcons.trendingUp
-                              : LucideIcons.trendingDown,
-                          color: trendColor,
-                          size: 10.sp,
-                        ),
-                        SizedBox(width: 2.w),
-                        Builder(
-                          builder: (context) {
-                            String percentage = '0.0%';
-                            if (trend.historyData.length >= 2) {
-                              final current = trend.historyData.last.y;
-                              final previous = trend.historyData[trend.historyData.length - 2].y;
-                              if (previous != 0) {
-                                final change = ((current - previous) / previous) * 100;
-                                percentage = '${change.abs().toStringAsFixed(1)}%';
-                              }
-                            }
-                            return Text(
-                              percentage,
-                              style: TextStyle(
-                                color: trendColor,
-                                fontSize: 10.sp,
-                                fontWeight: FontWeight.bold,
-                              ),
-                            );
-                          },
-                        ),
-                      ],
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Color _trendColor(String trendType) {
-    if (trendType == 'UP') return AppColors.success;
-    if (trendType == 'STABLE') return AppColors.warning;
-    return AppColors.error;
-  }
-
-  IconData _getCategoryIcon(String category) {
-    switch (category.toLowerCase()) {
-      case 'cangkang sawit':
-        return LucideIcons.nut;
-      case 'kayu':
-        return LucideIcons.treePine;
-      case 'sekam padi':
-        return LucideIcons.wheat;
-      default:
-        return LucideIcons.leaf;
-    }
   }
 }

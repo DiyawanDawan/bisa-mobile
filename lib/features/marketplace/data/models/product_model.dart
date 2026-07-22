@@ -46,6 +46,8 @@ abstract class ProductModel with _$ProductModel {
     @Default('READY') String availabilityType,
     String? nextHarvestDate,
     dynamic nextHarvestQtyTon,
+    int? shelfLifeDays,
+    dynamic landAreaHa,
     String? categoryId,
     @Default([]) List<ProductSpecModel> specs,
     String? videoUrl,
@@ -101,6 +103,8 @@ abstract class ProductModel with _$ProductModel {
       availabilityType: json['availabilityType'] as String? ?? 'READY',
       nextHarvestDate: json['nextHarvestDate'] as String?,
       nextHarvestQtyTon: json['nextHarvestQtyTon'],
+      shelfLifeDays: int.tryParse(json['shelfLifeDays']?.toString() ?? ''),
+      landAreaHa: json['landAreaHa'],
       categoryId: json['categoryId'] as String?,
       specs: parseSpecs(json['specs']),
       videoUrl: json['videoUrl'] as String?,
@@ -171,6 +175,10 @@ abstract class ProductModel with _$ProductModel {
         : null,
     nextHarvestQtyTon: nextHarvestQtyTon != null
         ? double.tryParse(nextHarvestQtyTon.toString())
+        : null,
+    shelfLifeDays: shelfLifeDays,
+    landAreaHa: landAreaHa != null
+        ? double.tryParse(landAreaHa.toString())
         : null,
     categoryId: categoryId,
     specs: specs

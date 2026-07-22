@@ -25,15 +25,7 @@ class AuthSheet extends StatefulWidget {
       context: context,
       isScrollControlled: true,
       backgroundColor: AppColors.transparent,
-      builder: (sheetContext) => Padding(
-        padding: bisaSheetPadding(
-          sheetContext,
-          horizontal: AppSpacing.xl,
-          top: AppSpacing.md,
-          bottom: AppSpacing.xl,
-        ),
-        child: const AuthSheet(),
-      ),
+      builder: (_) => const AuthSheet(),
     );
   }
 
@@ -58,7 +50,6 @@ class _AuthSheetState extends State<AuthSheet> {
   }
 
   // SEC-MOB-001: password TIDAK disimpan di SharedPreferences.
-  // Hanya email yang di-remember. Legacy `remember_password` key dibersihkan.
   Future<void> _loadSavedCredentials() async {
     final prefs = await SharedPreferences.getInstance();
     if (prefs.containsKey('remember_password')) {
@@ -111,14 +102,13 @@ class _AuthSheetState extends State<AuthSheet> {
       listener: (context, state) {
         state.maybeWhen(
           authenticated: (_) {
-            Navigator.pop(context); // Close sheet on success
+            Navigator.pop(context);
           },
           error: (message) => showErrorSnackBar(context, message),
           orElse: () {},
         );
       },
       child: Container(
-        padding: EdgeInsets.zero,
         decoration: BoxDecoration(
           color: AppColors.surface,
           borderRadius: BorderRadius.vertical(
@@ -126,13 +116,19 @@ class _AuthSheetState extends State<AuthSheet> {
           ),
           boxShadow: [
             BoxShadow(
-              color: AppColors.black.withValues(alpha: 0.1),
-              blurRadius: 20,
-              offset: const Offset(0, -5),
+              color: AppColors.black.withValues(alpha: 0.08),
+              blurRadius: 24,
+              offset: const Offset(0, -4),
             ),
           ],
         ),
         child: SingleChildScrollView(
+          padding: bisaSheetPadding(
+            context,
+            horizontal: AppSpacing.xl,
+            top: AppSpacing.md,
+            bottom: AppSpacing.xl,
+          ),
           child: Form(
             key: _formKey,
             child: Column(
@@ -141,32 +137,41 @@ class _AuthSheetState extends State<AuthSheet> {
               children: [
                 Center(
                   child: Container(
-                    width: 48.w,
-                    height: 6.h,
+                    width: 40.w,
+                    height: 4.h,
                     decoration: BoxDecoration(
                       color: AppColors.grey300,
-                      borderRadius: BorderRadius.circular(AppRadius.md),
+                      borderRadius: BorderRadius.circular(AppRadius.pill),
                     ),
                   ),
                 ),
-                SizedBox(height: 2.h),
+                SizedBox(height: AppSpacing.md),
                 Row(
-                  mainAxisAlignment: MainAxisAlignment.end,
-                  mainAxisSize: MainAxisSize.max,
                   children: [
-                    BisaLogo(width: 30.w, height: 20.h),
-                    SizedBox(width: 2.w),
+                    Container(
+                      padding: EdgeInsets.symmetric(
+                        horizontal: AppSpacing.md12,
+                        vertical: AppSpacing.sm,
+                      ),
+                      decoration: BoxDecoration(
+                        color: AppColors.primaryLight.withValues(alpha: 0.55),
+                        borderRadius: BorderRadius.circular(AppRadius.pill),
+                      ),
+                      child: BisaLogo(width: 72.w, height: 28.h),
+                    ),
+                    const Spacer(),
                     IconButton(
                       visualDensity: VisualDensity.compact,
-                      splashRadius: 18.r,
-                      constraints: BoxConstraints(minWidth: 28.w, minHeight: 28.h),
-                      padding: EdgeInsets.zero,
-                      icon: Icon(LucideIcons.x, color: AppColors.grey500, size: 18.sp),
+                      style: IconButton.styleFrom(
+                        backgroundColor: AppColors.grey100,
+                        foregroundColor: AppColors.grey600,
+                      ),
+                      icon: Icon(LucideIcons.x, size: 18.sp),
                       onPressed: () => Navigator.pop(context),
                     ),
                   ],
                 ),
-                SizedBox(height: 4.h),
+                SizedBox(height: AppSpacing.xl),
                 Text(
                   'shared.auth_sheet_title'.tr(),
                   style: AppTextStyles.sheetTitle(),
@@ -194,43 +199,53 @@ class _AuthSheetState extends State<AuthSheet> {
                   prefixIcon: LucideIcons.lock,
                   isRequired: true,
                 ),
-                SizedBox(height: AppSpacing.md12),
+                SizedBox(height: AppSpacing.md),
                 Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
-                    Row(
-                      children: [
-                        SizedBox(
-                          width: 24.w,
-                          height: 24.w,
-                          child: Checkbox(
-                            value: _rememberMe,
-                            onChanged: (value) {
-                              setState(() {
-                                _rememberMe = value ?? false;
-                              });
-                            },
-                            activeColor: AppColors.primary,
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(4.r),
+                    Expanded(
+                      child: InkWell(
+                        onTap: () => setState(() => _rememberMe = !_rememberMe),
+                        borderRadius: BorderRadius.circular(AppRadius.sm),
+                        child: Row(
+                          children: [
+                            SizedBox(
+                              width: 22.w,
+                              height: 22.w,
+                              child: Checkbox(
+                                value: _rememberMe,
+                                onChanged: (value) {
+                                  setState(() => _rememberMe = value ?? false);
+                                },
+                                activeColor: AppColors.primary,
+                                materialTapTargetSize:
+                                    MaterialTapTargetSize.shrinkWrap,
+                                visualDensity: VisualDensity.compact,
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(4.r),
+                                ),
+                              ),
                             ),
-                          ),
+                            SizedBox(width: AppSpacing.sm),
+                            Flexible(
+                              child: Text(
+                                'auth.remember_me'.tr(),
+                                style: AppTextStyles.bodySm(
+                                  fontWeight: FontWeight.w600,
+                                  color: AppColors.textSecondary,
+                                ),
+                              ),
+                            ),
+                          ],
                         ),
-                        SizedBox(width: AppSpacing.sm),
-                        Text(
-                          'auth.remember_me'.tr(),
-                          style: AppTextStyles.bodySm(
-                            fontWeight: FontWeight.w600,
-                            color: AppColors.textSecondary,
-                          ),
-                        ),
-                      ],
+                      ),
                     ),
                     TextButton(
                       onPressed: () => _closeSheetAndGo('/forgot-password'),
                       style: TextButton.styleFrom(
                         foregroundColor: AppColors.primary,
                         padding: EdgeInsets.zero,
+                        minimumSize: Size.zero,
+                        tapTargetSize: MaterialTapTargetSize.shrinkWrap,
                       ),
                       child: Text(
                         'forgot_password'.tr(),
@@ -250,15 +265,14 @@ class _AuthSheetState extends State<AuthSheet> {
                         orElse: () => false,
                       ),
                       onPressed: () async {
-                        if (_formKey.currentState!.validate()) {
-                          await _saveCredentials();
-                          if (mounted) {
-                            context.read<AuthCubit>().login(
-                              _emailController.text.trim(),
-                              _passwordController.text,
-                            );
-                          }
-                        }
+                        if (!_formKey.currentState!.validate()) return;
+                        final cubit = context.read<AuthCubit>();
+                        await _saveCredentials();
+                        if (!mounted) return;
+                        cubit.login(
+                          _emailController.text.trim(),
+                          _passwordController.text,
+                        );
                       },
                     );
                   },
@@ -269,6 +283,7 @@ class _AuthSheetState extends State<AuthSheet> {
                     Expanded(
                       child: _demoFillChip(
                         label: 'auth.demo_buyer'.tr(),
+                        icon: LucideIcons.shoppingBag,
                         onTap: () => _fillDemoCredentials(buyer: true),
                       ),
                     ),
@@ -276,12 +291,13 @@ class _AuthSheetState extends State<AuthSheet> {
                     Expanded(
                       child: _demoFillChip(
                         label: 'auth.demo_supplier'.tr(),
+                        icon: LucideIcons.store,
                         onTap: () => _fillDemoCredentials(buyer: false),
                       ),
                     ),
                   ],
                 ),
-                SizedBox(height: AppSpacing.xl),
+                SizedBox(height: AppSpacing.xxl),
                 Row(
                   children: [
                     const Expanded(child: Divider(color: AppColors.grey200)),
@@ -298,95 +314,37 @@ class _AuthSheetState extends State<AuthSheet> {
                     const Expanded(child: Divider(color: AppColors.grey200)),
                   ],
                 ),
-                SizedBox(height: AppSpacing.xl),
+                SizedBox(height: AppSpacing.lg),
                 BlocBuilder<AuthCubit, AuthState>(
                   builder: (context, state) {
                     final isLoading = state.maybeWhen(
                       loading: () => true,
                       orElse: () => false,
                     );
-                    Widget socialBtn({
-                      required String label,
-                      required String iconUrl,
-                      required IconData fallback,
-                      required VoidCallback? onTap,
-                    }) {
-                      return Expanded(
-                        child: Material(
-                          color: AppColors.transparent,
-                          child: InkWell(
-                            onTap: onTap,
-                            borderRadius: BorderRadius.circular(AppRadius.xl),
-                            child: Ink(
-                              height: AppSpacing.buttonHeightLg,
-                              decoration: BoxDecoration(
-                                color: AppColors.surface,
-                                borderRadius: BorderRadius.circular(AppRadius.xl),
-                                border: Border.all(color: AppColors.grey200),
-                              ),
-                              child: Row(
-                                mainAxisAlignment: MainAxisAlignment.center,
-                                children: [
-                                  if (isLoading)
-                                    SizedBox(
-                                      width: 18.w,
-                                      height: 18.w,
-                                      child: const CircularProgressIndicator(
-                                        strokeWidth: 2,
-                                        color: AppColors.primary,
-                                      ),
-                                    )
-                                  else
-                                    SvgPicture.network(
-                                      iconUrl,
-                                      width: 18.w,
-                                      height: 18.w,
-                                      placeholderBuilder: (context) => Icon(
-                                        fallback,
-                                        size: 22.sp,
-                                        color: AppColors.textPrimary,
-                                      ),
-                                    ),
-                                  SizedBox(width: AppSpacing.sm),
-                                  Flexible(
-                                    child: Text(
-                                      label,
-                                      overflow: TextOverflow.ellipsis,
-                                      style: AppTextStyles.body(
-                                        fontWeight: FontWeight.w700,
-                                        color: AppColors.textPrimary,
-                                      ),
-                                    ),
-                                  ),
-                                ],
-                              ),
-                            ),
-                          ),
-                        ),
-                      );
-                    }
-
                     return Row(
                       children: [
-                        socialBtn(
+                        _socialButton(
                           label: 'shared.google_sign_in'.tr(),
                           iconUrl:
                               'https://www.vectorlogo.zone/logos/google/google-icon.svg',
                           fallback: Icons.g_mobiledata_rounded,
+                          isLoading: isLoading,
                           onTap: isLoading
                               ? null
                               : () => context.read<AuthCubit>().loginWithGoogle(),
                         ),
                         SizedBox(width: AppSpacing.md),
-                        socialBtn(
+                        _socialButton(
                           label: 'facebook_1'.tr(),
                           iconUrl:
                               'https://www.vectorlogo.zone/logos/facebook/facebook-icon.svg',
                           fallback: Icons.facebook,
+                          isLoading: isLoading,
                           onTap: isLoading
                               ? null
-                              : () =>
-                                  context.read<AuthCubit>().loginWithFacebook(),
+                              : () => context
+                                    .read<AuthCubit>()
+                                    .loginWithFacebook(),
                         ),
                       ],
                     );
@@ -394,8 +352,8 @@ class _AuthSheetState extends State<AuthSheet> {
                 ),
                 SizedBox(height: AppSpacing.xl),
                 Center(
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.center,
+                  child: Wrap(
+                    crossAxisAlignment: WrapCrossAlignment.center,
                     children: [
                       Text(
                         'no_account'.tr(),
@@ -422,23 +380,100 @@ class _AuthSheetState extends State<AuthSheet> {
     );
   }
 
-  Widget _demoFillChip({required String label, required VoidCallback onTap}) {
-    return InkWell(
-      onTap: onTap,
+  Widget _demoFillChip({
+    required String label,
+    required IconData icon,
+    required VoidCallback onTap,
+  }) {
+    return Material(
+      color: AppColors.primaryLight.withValues(alpha: 0.45),
       borderRadius: BorderRadius.circular(AppRadius.md),
-      child: Container(
-        height: 36.h,
-        alignment: Alignment.center,
-        decoration: BoxDecoration(
-          color: AppColors.primary.withValues(alpha: 0.08),
-          border: Border.all(color: AppColors.primary.withValues(alpha: 0.2)),
-          borderRadius: BorderRadius.circular(AppRadius.md),
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(AppRadius.md),
+        child: Padding(
+          padding: EdgeInsets.symmetric(
+            horizontal: AppSpacing.sm,
+            vertical: AppSpacing.sm10,
+          ),
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Icon(icon, size: 14.sp, color: AppColors.primary),
+              SizedBox(width: AppSpacing.xs),
+              Flexible(
+                child: Text(
+                  label,
+                  overflow: TextOverflow.ellipsis,
+                  style: AppTextStyles.bodySecondary(
+                    fontWeight: FontWeight.w700,
+                    color: AppColors.primary,
+                  ),
+                ),
+              ),
+            ],
+          ),
         ),
-        child: Text(
-          label,
-          style: AppTextStyles.bodySecondary(
-            fontWeight: FontWeight.w700,
-            color: AppColors.primary,
+      ),
+    );
+  }
+
+  Widget _socialButton({
+    required String label,
+    required String iconUrl,
+    required IconData fallback,
+    required bool isLoading,
+    required VoidCallback? onTap,
+  }) {
+    return Expanded(
+      child: Material(
+        color: AppColors.transparent,
+        child: InkWell(
+          onTap: onTap,
+          borderRadius: BorderRadius.circular(AppRadius.xl),
+          child: Ink(
+            height: 52.h,
+            decoration: BoxDecoration(
+              color: AppColors.surface,
+              borderRadius: BorderRadius.circular(AppRadius.xl),
+              border: Border.all(color: AppColors.grey200),
+            ),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                if (isLoading)
+                  SizedBox(
+                    width: 18.w,
+                    height: 18.w,
+                    child: const CircularProgressIndicator(
+                      strokeWidth: 2,
+                      color: AppColors.primary,
+                    ),
+                  )
+                else
+                  SvgPicture.network(
+                    iconUrl,
+                    width: 18.w,
+                    height: 18.w,
+                    placeholderBuilder: (context) => Icon(
+                      fallback,
+                      size: 22.sp,
+                      color: AppColors.textPrimary,
+                    ),
+                  ),
+                SizedBox(width: AppSpacing.sm),
+                Flexible(
+                  child: Text(
+                    label,
+                    overflow: TextOverflow.ellipsis,
+                    style: AppTextStyles.body(
+                      fontWeight: FontWeight.w700,
+                      color: AppColors.textPrimary,
+                    ),
+                  ),
+                ),
+              ],
+            ),
           ),
         ),
       ),

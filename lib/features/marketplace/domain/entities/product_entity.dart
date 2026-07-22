@@ -43,6 +43,8 @@ abstract class ProductEntity with _$ProductEntity {
     @Default('READY') String availabilityType,
     DateTime? nextHarvestDate,
     double? nextHarvestQtyTon,
+    int? shelfLifeDays,
+    double? landAreaHa,
     String? categoryId,
     @Default([]) List<ProductSpecEntity> specs,
     String? videoUrl,

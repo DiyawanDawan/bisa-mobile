@@ -5,12 +5,17 @@ import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:fl_chart/fl_chart.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
 import 'package:mobile_bisa/core/constants/app_colors.dart';
+import 'package:mobile_bisa/core/constants/app_layout.dart';
+import 'package:mobile_bisa/core/constants/app_text_styles.dart';
 import 'package:mobile_bisa/features/market/core/market_price_format.dart';
+import 'package:mobile_bisa/features/market/core/market_trend_metrics.dart';
+import 'package:mobile_bisa/features/market/presentation/widgets/market_percent_badge.dart';
 import 'package:mobile_bisa/features/market/presentation/widgets/market_supply_demand_card.dart';
 import 'package:mobile_bisa/features/market/data/models/market_trend_model.dart';
 import 'package:mobile_bisa/features/market/domain/repositories/market_repository.dart';
 import 'package:mobile_bisa/injection_container.dart';
 import 'package:mobile_bisa/shared/widgets/bisa_app_bar.dart';
+import 'package:mobile_bisa/shared/widgets/bisa_filter_chip.dart';
 import 'package:mobile_bisa/shared/widgets/shimmer_loading.dart';
 
 class MarketTrendDetailPage extends StatefulWidget {
@@ -26,6 +31,7 @@ class _MarketTrendDetailPageState extends State<MarketTrendDetailPage> {
   MarketTrendModel? _prediction;
   bool _loadingPrediction = false;
   String? _predictionError;
+  MarketChartRange _range = MarketChartRange.all;
 
   MarketTrendModel get _displayTrend => _prediction ?? widget.trend;
 
@@ -55,8 +61,9 @@ class _MarketTrendDetailPageState extends State<MarketTrendDetailPage> {
         _loadingPrediction = false;
         _prediction = prediction.copyWith(
           id: prediction.id.isEmpty ? widget.trend.id : prediction.id,
-          category:
-              prediction.category.isEmpty ? widget.trend.category : prediction.category,
+          category: prediction.category.isEmpty
+              ? widget.trend.category
+              : prediction.category,
         );
       }),
     );
@@ -72,7 +79,7 @@ class _MarketTrendDetailPageState extends State<MarketTrendDetailPage> {
       ),
       body: _loadingPrediction
           ? SingleChildScrollView(
-              padding: EdgeInsets.all(20.w),
+              padding: EdgeInsets.all(AppSpacing.md12),
               child: ShimmerListPlaceholder(
                 itemCount: 4,
                 itemHeight: 100.h,
@@ -84,42 +91,39 @@ class _MarketTrendDetailPageState extends State<MarketTrendDetailPage> {
 
   Widget _buildContent(BuildContext context) {
     final trend = _displayTrend;
-    final trendColor = _trendColor(trend.trendType);
+    final change = MarketTrendMetrics.percentChange(trend);
+    final trendColor = MarketTrendMetrics.trendColorFromChange(change);
 
     return SingleChildScrollView(
       padding: EdgeInsets.fromLTRB(
-        20.w,
-        20.h,
-        20.w,
-        20.h + MediaQuery.of(context).padding.bottom,
+        AppSpacing.pageGutter,
+        AppSpacing.md12,
+        AppSpacing.pageGutter,
+        AppSpacing.md12 + MediaQuery.paddingOf(context).bottom,
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           if (_predictionError != null) ...[
             _buildErrorBanner(_predictionError!),
-            SizedBox(height: 16.h),
+            SizedBox(height: AppSpacing.sectionGap),
           ],
-          _buildInfoSection(trendColor, trend),
-          SizedBox(height: 24.h),
+          _buildInfoSection(trendColor, trend, change),
           if (trend.historyData.isNotEmpty) ...[
+            SizedBox(height: AppSpacing.sectionGap),
             _buildChartSection(trendColor, trend),
-            SizedBox(height: 24.h),
           ],
+          SizedBox(height: AppSpacing.sectionGap),
           _buildDataTable(trend),
-          SizedBox(height: 24.h),
+          SizedBox(height: AppSpacing.sectionGap),
           _buildInsightSection(trend),
           if (trend.supplyDemand != null) ...[
-            SizedBox(height: 16.h),
+            SizedBox(height: AppSpacing.sectionGap),
             Text(
               'market.sd_section_title'.tr(),
-              style: TextStyle(
-                fontWeight: FontWeight.bold,
-                fontSize: 14.sp,
-                color: AppColors.textPrimary,
-              ),
+              style: AppTextStyles.sectionTitle(),
             ),
-            SizedBox(height: 8.h),
+            SizedBox(height: AppSpacing.compact),
             MarketSupplyDemandCard(data: trend.supplyDemand!),
           ],
         ],
@@ -130,20 +134,20 @@ class _MarketTrendDetailPageState extends State<MarketTrendDetailPage> {
   Widget _buildErrorBanner(String message) {
     return Container(
       width: double.infinity,
-      padding: EdgeInsets.all(12.r),
+      padding: EdgeInsets.all(AppSpacing.md12),
       decoration: BoxDecoration(
         color: AppColors.error.withValues(alpha: 0.08),
-        borderRadius: BorderRadius.circular(12.r),
+        borderRadius: BorderRadius.circular(AppRadius.lg),
         border: Border.all(color: AppColors.error.withValues(alpha: 0.2)),
       ),
       child: Row(
         children: [
           Icon(LucideIcons.circleAlert, color: AppColors.error, size: 18.sp),
-          SizedBox(width: 8.w),
+          SizedBox(width: AppSpacing.sm),
           Expanded(
             child: Text(
               message.localizedFailure,
-              style: TextStyle(fontSize: 12.sp, color: AppColors.error),
+              style: AppTextStyles.caption(color: AppColors.error),
             ),
           ),
           TextButton(
@@ -155,7 +159,11 @@ class _MarketTrendDetailPageState extends State<MarketTrendDetailPage> {
     );
   }
 
-  Widget _buildInfoSection(Color trendColor, MarketTrendModel trend) {
+  Widget _buildInfoSection(
+    Color trendColor,
+    MarketTrendModel trend,
+    double change,
+  ) {
     final isUp = trend.trendType == 'UP';
     final isStable = trend.trendType == 'STABLE';
     final trendIcon = isUp
@@ -171,37 +179,46 @@ class _MarketTrendDetailPageState extends State<MarketTrendDetailPage> {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Container(
-          padding: EdgeInsets.symmetric(horizontal: 10.w, vertical: 4.h),
+          padding: EdgeInsets.symmetric(
+            horizontal: AppSpacing.sm10,
+            vertical: AppSpacing.xs,
+          ),
           decoration: BoxDecoration(
             color: trendColor.withValues(alpha: 0.1),
-            borderRadius: BorderRadius.circular(20.r),
+            borderRadius: BorderRadius.circular(AppRadius.pill),
           ),
           child: Row(
             mainAxisSize: MainAxisSize.min,
             children: [
               Icon(trendIcon, color: trendColor, size: 14.sp),
-              SizedBox(width: 4.w),
+              SizedBox(width: AppSpacing.xs),
               Text(
                 '${trend.category} · $trendLabel',
-                style: TextStyle(
-                  color: trendColor,
-                  fontSize: 12.sp,
-                  fontWeight: FontWeight.bold,
-                ),
+                style: AppTextStyles.chip(color: trendColor),
               ),
             ],
           ),
         ),
-        SizedBox(height: 8.h),
+        SizedBox(height: AppSpacing.compact),
         Text(
           trend.label,
-          style: TextStyle(
-            fontSize: 24.sp,
-            fontWeight: FontWeight.w900,
-            color: AppColors.textPrimary,
-          ),
+          style: AppTextStyles.sheetTitle().copyWith(fontSize: 22.sp),
         ),
-        SizedBox(height: 16.h),
+        SizedBox(height: AppSpacing.compact),
+        Row(
+          crossAxisAlignment: CrossAxisAlignment.end,
+          children: [
+            Expanded(
+              child: Text(
+                trend.currentValue,
+                style: AppTextStyles.price(fontWeight: FontWeight.w900)
+                    .copyWith(fontSize: 24.sp),
+              ),
+            ),
+            MarketPercentBadge(percentChange: change),
+          ],
+        ),
+        SizedBox(height: AppSpacing.sectionGap),
         Row(
           children: [
             _buildStatCard(
@@ -210,7 +227,7 @@ class _MarketTrendDetailPageState extends State<MarketTrendDetailPage> {
               AppColors.primary,
               LucideIcons.tag,
             ),
-            SizedBox(width: 12.w),
+            SizedBox(width: AppSpacing.sm),
             _buildStatCard(
               'market.stat_prediction_3mo'.tr(),
               hasProjection
@@ -236,10 +253,10 @@ class _MarketTrendDetailPageState extends State<MarketTrendDetailPage> {
   ) {
     return Expanded(
       child: Container(
-        padding: EdgeInsets.all(16.r),
+        padding: EdgeInsets.all(AppSpacing.md12),
         decoration: BoxDecoration(
           color: AppColors.surface,
-          borderRadius: BorderRadius.circular(16.r),
+          borderRadius: BorderRadius.circular(AppRadius.xl),
           border: Border.all(color: AppColors.grey100),
         ),
         child: Column(
@@ -248,23 +265,25 @@ class _MarketTrendDetailPageState extends State<MarketTrendDetailPage> {
             Row(
               children: [
                 Icon(icon, size: 14.sp, color: AppColors.textSecondary),
-                SizedBox(width: 4.w),
-                Text(
-                  label,
-                  style: TextStyle(
-                    fontSize: 11.sp,
-                    color: AppColors.textSecondary,
+                SizedBox(width: AppSpacing.xs),
+                Expanded(
+                  child: Text(
+                    label,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: AppTextStyles.caption(),
                   ),
                 ),
               ],
             ),
-            SizedBox(height: 6.h),
+            SizedBox(height: AppSpacing.xs6),
             Text(
               value,
-              style: TextStyle(
-                fontSize: 15.sp,
-                fontWeight: FontWeight.bold,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              style: AppTextStyles.bodySm(
                 color: color,
+                fontWeight: FontWeight.w800,
               ),
             ),
           ],
@@ -276,13 +295,16 @@ class _MarketTrendDetailPageState extends State<MarketTrendDetailPage> {
   Widget _buildChartSection(Color trendColor, MarketTrendModel trend) {
     final showProjection =
         trend.projectedData != null && trend.projectedData!.isNotEmpty;
+    final history = MarketTrendMetrics.sliceHistory(
+      trend.historyData,
+      _range,
+    );
 
     return Container(
-      height: 260.h,
-      padding: EdgeInsets.all(20.r),
+      padding: EdgeInsets.all(AppSpacing.md12),
       decoration: BoxDecoration(
         color: AppColors.surface,
-        borderRadius: BorderRadius.circular(20.r),
+        borderRadius: BorderRadius.circular(AppRadius.xl),
         border: Border.all(color: AppColors.grey100),
       ),
       child: Column(
@@ -292,51 +314,26 @@ class _MarketTrendDetailPageState extends State<MarketTrendDetailPage> {
             showProjection
                 ? 'market.chart_title_projection'.tr()
                 : 'market.chart_title_historical'.tr(),
-            style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14.sp),
+            style: AppTextStyles.sectionTitle(),
           ),
-          SizedBox(height: 16.h),
-          Expanded(
+          SizedBox(height: AppSpacing.compact),
+          SizedBox(
+            height: 200.h,
             child: LineChart(
               LineChartData(
                 gridData: FlGridData(
                   show: true,
                   drawVerticalLine: false,
-                  getDrawingHorizontalLine: (value) => FlLine(
-                    color: AppColors.grey100,
-                    strokeWidth: 1,
-                  ),
-                ),
-                titlesData: FlTitlesData(
-                  leftTitles:
-                      AxisTitles(sideTitles: SideTitles(showTitles: false)),
-                  rightTitles:
-                      AxisTitles(sideTitles: SideTitles(showTitles: false)),
-                  topTitles:
-                      AxisTitles(sideTitles: SideTitles(showTitles: false)),
-                  bottomTitles: AxisTitles(
-                    sideTitles: SideTitles(
-                      showTitles: true,
-                      interval: (trend.historyData.length / 4).ceilToDouble(),
-                      getTitlesWidget: (value, meta) {
-                        final index = value.toInt();
-                        if (index >= 0 && index < trend.historyData.length) {
-                          return Text(
-                            trend.historyData[index].x.substring(0, 4),
-                            style: TextStyle(
-                              fontSize: 9.sp,
-                              color: AppColors.textSecondary,
-                            ),
-                          );
-                        }
-                        return const SizedBox.shrink();
-                      },
+                    getDrawingHorizontalLine: (value) => const FlLine(
+                      color: AppColors.grey100,
+                      strokeWidth: 1,
                     ),
-                  ),
                 ),
+                titlesData: const FlTitlesData(show: false),
                 borderData: FlBorderData(show: false),
                 lineBarsData: [
                   LineChartBarData(
-                    spots: trend.historyData
+                    spots: history
                         .asMap()
                         .entries
                         .map(
@@ -345,8 +342,8 @@ class _MarketTrendDetailPageState extends State<MarketTrendDetailPage> {
                         .toList(),
                     isCurved: true,
                     color: trendColor,
-                    barWidth: 3,
-                    dotData: FlDotData(show: false),
+                    barWidth: 2.5,
+                    dotData: const FlDotData(show: false),
                     belowBarData: BarAreaData(
                       show: true,
                       gradient: LinearGradient(
@@ -354,7 +351,7 @@ class _MarketTrendDetailPageState extends State<MarketTrendDetailPage> {
                         end: Alignment.bottomCenter,
                         colors: [
                           trendColor.withValues(alpha: 0.2),
-                          trendColor.withValues(alpha: 0.0),
+                          trendColor.withValues(alpha: 0),
                         ],
                       ),
                     ),
@@ -363,37 +360,64 @@ class _MarketTrendDetailPageState extends State<MarketTrendDetailPage> {
                     LineChartBarData(
                       spots: [
                         FlSpot(
-                          (trend.historyData.length - 1).toDouble(),
-                          trend.historyData.last.y.toDouble(),
+                          (history.length - 1).toDouble(),
+                          history.last.y.toDouble(),
                         ),
                         ...trend.projectedData!
                             .asMap()
                             .entries
                             .map(
                               (e) => FlSpot(
-                                (trend.historyData.length + e.key).toDouble(),
+                                (history.length + e.key).toDouble(),
                                 e.value.y.toDouble(),
                               ),
                             ),
                       ],
                       isCurved: true,
                       color: AppColors.secondary,
-                      barWidth: 3,
+                      barWidth: 2.5,
                       dashArray: [5, 5],
-                      dotData: FlDotData(show: false),
+                      dotData: const FlDotData(show: false),
                     ),
                 ],
               ),
             ),
           ),
+          SizedBox(height: AppSpacing.compact),
+          Row(
+            children: [
+              BisaFilterChip(
+                label: 'market.range_1m'.tr(),
+                isSelected: _range == MarketChartRange.oneMonth,
+                onTap: () =>
+                    setState(() => _range = MarketChartRange.oneMonth),
+              ),
+              SizedBox(width: AppSpacing.sm),
+              BisaFilterChip(
+                label: 'market.range_3m'.tr(),
+                isSelected: _range == MarketChartRange.threeMonths,
+                onTap: () =>
+                    setState(() => _range = MarketChartRange.threeMonths),
+              ),
+              SizedBox(width: AppSpacing.sm),
+              BisaFilterChip(
+                label: 'market.range_all'.tr(),
+                isSelected: _range == MarketChartRange.all,
+                onTap: () => setState(() => _range = MarketChartRange.all),
+              ),
+            ],
+          ),
           if (showProjection) ...[
-            SizedBox(height: 12.h),
+            SizedBox(height: AppSpacing.compact),
             Row(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
                 _chartLegend(trendColor, 'market.chart_historical'.tr()),
-                SizedBox(width: 20.w),
-                _chartLegend(AppColors.secondary, 'market.chart_projection'.tr()),
+                SizedBox(width: AppSpacing.md),
+                _chartLegend(
+                  AppColors.secondary,
+                  'market.chart_projection'.tr(),
+                ),
               ],
             ),
           ],
@@ -413,11 +437,8 @@ class _MarketTrendDetailPageState extends State<MarketTrendDetailPage> {
             borderRadius: BorderRadius.circular(2.r),
           ),
         ),
-        SizedBox(width: 6.w),
-        Text(
-          label,
-          style: TextStyle(fontSize: 12.sp, color: AppColors.textSecondary),
-        ),
+        SizedBox(width: AppSpacing.xs6),
+        Text(label, style: AppTextStyles.caption()),
       ],
     );
   }
@@ -425,16 +446,16 @@ class _MarketTrendDetailPageState extends State<MarketTrendDetailPage> {
   Widget _buildDataTable(MarketTrendModel trend) {
     if (trend.historyData.isEmpty) {
       return Container(
-        padding: EdgeInsets.all(20.r),
+        padding: EdgeInsets.all(AppSpacing.md12),
         decoration: BoxDecoration(
           color: AppColors.surface,
-          borderRadius: BorderRadius.circular(20.r),
+          borderRadius: BorderRadius.circular(AppRadius.xl),
           border: Border.all(color: AppColors.grey100),
         ),
         child: Center(
           child: Text(
             'market.no_historical_data'.tr(),
-            style: TextStyle(color: AppColors.textSecondary, fontSize: 13.sp),
+            style: AppTextStyles.bodySecondary(),
           ),
         ),
       );
@@ -447,17 +468,22 @@ class _MarketTrendDetailPageState extends State<MarketTrendDetailPage> {
     return Container(
       decoration: BoxDecoration(
         color: AppColors.surface,
-        borderRadius: BorderRadius.circular(20.r),
+        borderRadius: BorderRadius.circular(AppRadius.xl),
         border: Border.all(color: AppColors.grey100),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Padding(
-            padding: EdgeInsets.fromLTRB(16.w, 16.h, 16.w, 8.h),
+            padding: EdgeInsets.fromLTRB(
+              AppSpacing.md12,
+              AppSpacing.md12,
+              AppSpacing.md12,
+              AppSpacing.compact,
+            ),
             child: Text(
               'market.latest_historical'.tr(),
-              style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14.sp),
+              style: AppTextStyles.sectionTitle(),
             ),
           ),
           ...displayData.asMap().entries.map((entry) {
@@ -467,25 +493,20 @@ class _MarketTrendDetailPageState extends State<MarketTrendDetailPage> {
             return Column(
               children: [
                 Padding(
-                  padding:
-                      EdgeInsets.symmetric(horizontal: 16.w, vertical: 12.h),
+                  padding: EdgeInsets.symmetric(
+                    horizontal: AppSpacing.md12,
+                    vertical: AppSpacing.sm10,
+                  ),
                   child: Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
+                      Text(point.x, style: AppTextStyles.bodySecondary()),
                       Text(
-                        point.x,
-                        style: TextStyle(
-                          color: AppColors.textSecondary,
-                          fontSize: 13.sp,
+                        formatMarketPriceLikeCurrent(
+                          point.y,
+                          trend.currentValue,
                         ),
-                      ),
-                      Text(
-                        formatMarketPriceLikeCurrent(point.y, trend.currentValue),
-                        style: TextStyle(
-                          fontWeight: FontWeight.bold,
-                          fontSize: 13.sp,
-                          color: AppColors.textPrimary,
-                        ),
+                        style: AppTextStyles.body(fontWeight: FontWeight.w800),
                       ),
                     ],
                   ),
@@ -494,8 +515,8 @@ class _MarketTrendDetailPageState extends State<MarketTrendDetailPage> {
                   Divider(
                     height: 1,
                     color: AppColors.grey100,
-                    indent: 16.w,
-                    endIndent: 16.w,
+                    indent: AppSpacing.md12,
+                    endIndent: AppSpacing.md12,
                   ),
               ],
             );
@@ -509,10 +530,10 @@ class _MarketTrendDetailPageState extends State<MarketTrendDetailPage> {
     final sourceLabel = _dataSourceLabel(trend.dataSources);
 
     return Container(
-      padding: EdgeInsets.all(20.r),
+      padding: EdgeInsets.all(AppSpacing.md12),
       decoration: BoxDecoration(
         color: AppColors.primary.withValues(alpha: 0.05),
-        borderRadius: BorderRadius.circular(20.r),
+        borderRadius: BorderRadius.circular(AppRadius.xl),
         border: Border.all(color: AppColors.primary.withValues(alpha: 0.1)),
       ),
       child: Column(
@@ -521,26 +542,20 @@ class _MarketTrendDetailPageState extends State<MarketTrendDetailPage> {
           Row(
             children: [
               Icon(LucideIcons.bot, color: AppColors.primary, size: 20.sp),
-              SizedBox(width: 8.w),
+              SizedBox(width: AppSpacing.sm),
               Expanded(
                 child: Text(
                   'BISA AI Insight',
-                  style: TextStyle(
-                    fontWeight: FontWeight.bold,
-                    fontSize: 14.sp,
-                    color: AppColors.primary,
-                  ),
+                  style: AppTextStyles.sectionTitle(color: AppColors.primary),
                 ),
               ),
               if (sourceLabel != null) _buildDataSourceChip(sourceLabel),
             ],
           ),
-          SizedBox(height: 12.h),
+          SizedBox(height: AppSpacing.compact),
           Text(
-            trend.insight ??
-                'market.ai_insight_processing'.tr(),
-            style: TextStyle(
-              fontSize: 13.sp,
+            trend.insight ?? 'market.ai_insight_processing'.tr(),
+            style: AppTextStyles.bodySecondary(
               color: AppColors.textPrimary,
               height: 1.6,
             ),
@@ -548,12 +563,6 @@ class _MarketTrendDetailPageState extends State<MarketTrendDetailPage> {
         ],
       ),
     );
-  }
-
-  Color _trendColor(String trendType) {
-    if (trendType == 'UP') return AppColors.success;
-    if (trendType == 'STABLE') return AppColors.warning;
-    return AppColors.error;
   }
 
   String? _dataSourceLabel(List<String> dataSources) {
@@ -573,19 +582,18 @@ class _MarketTrendDetailPageState extends State<MarketTrendDetailPage> {
 
   Widget _buildDataSourceChip(String label) {
     return Container(
-      padding: EdgeInsets.symmetric(horizontal: 8.w, vertical: 4.h),
+      padding: EdgeInsets.symmetric(
+        horizontal: AppSpacing.sm,
+        vertical: AppSpacing.xs,
+      ),
       decoration: BoxDecoration(
         color: AppColors.surface,
-        borderRadius: BorderRadius.circular(12.r),
+        borderRadius: BorderRadius.circular(AppRadius.lg),
         border: Border.all(color: AppColors.primary.withValues(alpha: 0.2)),
       ),
       child: Text(
         label,
-        style: TextStyle(
-          fontSize: 10.sp,
-          fontWeight: FontWeight.w600,
-          color: AppColors.primary,
-        ),
+        style: AppTextStyles.micro(color: AppColors.primary),
       ),
     );
   }

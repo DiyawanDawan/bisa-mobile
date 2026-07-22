@@ -1510,6 +1510,31 @@ class _ProductDetailPageState extends State<ProductDetailPage> {
                 ),
               ),
               if (p.productMode == 'ORGANIC_PRODUCE') ...[
+                _buildSmallBadge(
+                  LucideIcons.packageCheck,
+                  p.availabilityType == 'PRE_HARVEST'
+                      ? 'marketplace.availability_preharvest'.tr()
+                      : p.availabilityType == 'MIXED'
+                          ? 'marketplace.availability_mixed'.tr()
+                          : 'marketplace.availability_ready'.tr(),
+                  AppColors.secondary,
+                ),
+                if (p.shelfLifeDays != null && p.shelfLifeDays! > 0)
+                  _buildSmallBadge(
+                    LucideIcons.timer,
+                    'marketplace.shelf_life_days'.tr(
+                      namedArgs: {'days': '${p.shelfLifeDays}'},
+                    ),
+                    AppColors.warning,
+                  ),
+                if (p.landAreaHa != null && p.landAreaHa! > 0)
+                  _buildSmallBadge(
+                    LucideIcons.map,
+                    'marketplace.land_area_ha'.tr(
+                      namedArgs: {'ha': '${p.landAreaHa}'},
+                    ),
+                    AppColors.info,
+                  ),
                 if (p.isChemicalFree)
                   _buildSmallBadge(
                     LucideIcons.leaf,
@@ -1557,6 +1582,25 @@ class _ProductDetailPageState extends State<ProductDetailPage> {
                 ),
             ],
           ),
+          if (p.productMode == 'ORGANIC_PRODUCE' &&
+              p.nextHarvestDate != null) ...[
+            SizedBox(height: AppSpacing.sm),
+            Text(
+              'marketplace.next_harvest_line'.tr(
+                namedArgs: {
+                  'date': DateFormat('dd MMM yyyy').format(p.nextHarvestDate!),
+                  'qty': p.nextHarvestQtyTon != null
+                      ? '${p.nextHarvestQtyTon}'
+                      : '—',
+                },
+              ),
+              style: TextStyle(
+                fontSize: 12.sp,
+                fontWeight: FontWeight.w600,
+                color: AppColors.textSecondary,
+              ),
+            ),
+          ],
           SizedBox(height: AppSpacing.md12),
           Divider(color: AppColors.grey100, thickness: 1.5.h, height: 2.h),
           // Quick Info Grid
@@ -2246,7 +2290,11 @@ class _ProductDetailPageState extends State<ProductDetailPage> {
                       ),
                     ),
                   ),
-                if (p.status == 'ACTIVE' && p.stock >= p.minOrder)
+                if (p.status == 'ACTIVE' &&
+                    (p.availabilityType == 'PRE_HARVEST' ||
+                        p.availabilityType == 'MIXED' ||
+                        p.canBook ||
+                        p.stock >= p.minOrder))
                   Padding(
                     padding: EdgeInsets.fromLTRB(
                       AppSpacing.xl,
@@ -2266,7 +2314,11 @@ class _ProductDetailPageState extends State<ProductDetailPage> {
                           showBookingCreateSheet(context: context, product: p);
                         },
                         icon: Icon(LucideIcons.calendarClock, size: 18.sp),
-                        label: Text('booking.cta'.tr()),
+                        label: Text(
+                          p.availabilityType == 'PRE_HARVEST'
+                              ? 'booking.cta_preharvest'.tr()
+                              : 'booking.cta'.tr(),
+                        ),
                         style: OutlinedButton.styleFrom(
                           foregroundColor: AppColors.secondary,
                           side: BorderSide(color: AppColors.secondary),

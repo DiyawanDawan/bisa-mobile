@@ -6,12 +6,14 @@ import 'package:lucide_icons_flutter/lucide_icons.dart';
 import '../../../../core/constants/app_layout.dart';
 import '../../../../core/constants/app_colors.dart';
 import '../../../../core/readiness/readiness_gate.dart';
+import '../../../home/presentation/pages/main_screen.dart';
 
-/// Empat aksi utama supplier + tautan Semua Menu (sisanya di profile/all-menu).
+/// 12 aksi supplier dalam grid 4×3.
 class SupplierQuickActions extends StatelessWidget {
   const SupplierQuickActions({super.key});
 
-  static const int _columns = 2;
+  static const int _columns = 4;
+  static const int _rows = 3;
 
   @override
   Widget build(BuildContext context) {
@@ -27,9 +29,9 @@ class SupplierQuickActions extends StatelessWidget {
       child: Container(
         width: double.infinity,
         padding: EdgeInsets.fromLTRB(
-          AppSpacing.md,
-          AppSpacing.md,
-          AppSpacing.md,
+          AppSpacing.sm10,
+          AppSpacing.md12,
+          AppSpacing.sm10,
           AppSpacing.sm10,
         ),
         decoration: BoxDecoration(
@@ -40,46 +42,49 @@ class SupplierQuickActions extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Row(
-              children: [
-                Expanded(
-                  child: Text(
-                    'marketplace.quick_actions_title'.tr(),
-                    style: TextStyle(
-                      fontSize: 14.sp,
-                      fontWeight: FontWeight.w800,
-                      color: AppColors.textPrimary,
+            Padding(
+              padding: EdgeInsets.symmetric(horizontal: AppSpacing.xs),
+              child: Row(
+                children: [
+                  Expanded(
+                    child: Text(
+                      'marketplace.quick_actions_title'.tr(),
+                      style: TextStyle(
+                        fontSize: 14.sp,
+                        fontWeight: FontWeight.w800,
+                        color: AppColors.textPrimary,
+                      ),
                     ),
                   ),
-                ),
-                TextButton(
-                  onPressed: () => context.push('/profile/all-menu'),
-                  style: TextButton.styleFrom(
-                    foregroundColor: AppColors.primary,
-                    padding: EdgeInsets.symmetric(horizontal: 8.w),
-                    minimumSize: Size.zero,
-                    tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-                  ),
-                  child: Text(
-                    'profile.menu_all_menu'.tr(),
-                    style: TextStyle(
-                      fontSize: 12.sp,
-                      fontWeight: FontWeight.w700,
+                  TextButton(
+                    onPressed: () => context.push('/profile/all-menu'),
+                    style: TextButton.styleFrom(
+                      foregroundColor: AppColors.primary,
+                      padding: EdgeInsets.symmetric(horizontal: 8.w),
+                      minimumSize: Size.zero,
+                      tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                    ),
+                    child: Text(
+                      'profile.menu_all_menu'.tr(),
+                      style: TextStyle(
+                        fontSize: 12.sp,
+                        fontWeight: FontWeight.w700,
+                      ),
                     ),
                   ),
-                ),
-              ],
+                ],
+              ),
             ),
-            SizedBox(height: AppSpacing.sm10),
+            SizedBox(height: AppSpacing.sm),
             LayoutBuilder(
               builder: (context, constraints) {
-                const spacing = 8.0;
-                const cellAspectRatio = 1.35;
+                const spacing = 6.0;
+                const cellAspectRatio = 0.82;
                 final cellWidth =
                     (constraints.maxWidth - spacing * (_columns - 1)) /
                     _columns;
                 final cellHeight = cellWidth / cellAspectRatio;
-                final gridHeight = cellHeight * 2 + spacing;
+                final gridHeight = cellHeight * _rows + spacing * (_rows - 1);
 
                 return SizedBox(
                   height: gridHeight,
@@ -91,7 +96,7 @@ class SupplierQuickActions extends StatelessWidget {
                       mainAxisSpacing: spacing,
                       childAspectRatio: cellAspectRatio,
                     ),
-                    itemCount: actions.length,
+                    itemCount: actions.length.clamp(0, 12),
                     itemBuilder: (context, index) =>
                         _QuickActionItem(data: actions[index]),
                   ),
@@ -126,6 +131,46 @@ class SupplierQuickActions extends StatelessWidget {
         label: 'marketplace.action_analytics'.tr(),
         onTap: () => context.push('/sales-analytics'),
       ),
+      _QuickActionData(
+        icon: LucideIcons.heart,
+        label: 'marketplace.action_product_engagement'.tr(),
+        onTap: () => context.push('/product-engagement'),
+      ),
+      _QuickActionData(
+        icon: LucideIcons.wallet,
+        label: 'marketplace.action_wallet'.tr(),
+        onTap: () => context.push('/wallet'),
+      ),
+      _QuickActionData(
+        icon: LucideIcons.shoppingBag,
+        label: 'marketplace.action_orders'.tr(),
+        onTap: () => MainShellScope.maybeOf(context)?.selectTab(3),
+      ),
+      _QuickActionData(
+        icon: LucideIcons.messageSquare,
+        label: 'marketplace.action_negotiation'.tr(),
+        onTap: () => MainShellScope.maybeOf(context)?.selectTab(1),
+      ),
+      _QuickActionData(
+        icon: LucideIcons.truck,
+        label: 'marketplace.action_shipping_origin'.tr(),
+        onTap: () => context.push('/supplier-shipping-origin'),
+      ),
+      _QuickActionData(
+        icon: LucideIcons.cpu,
+        label: 'marketplace.action_iot_monitoring'.tr(),
+        onTap: () => context.push('/iot-dashboard'),
+      ),
+      _QuickActionData(
+        icon: LucideIcons.shieldCheck,
+        label: 'marketplace.action_verification'.tr(),
+        onTap: () => context.push('/verification'),
+      ),
+      _QuickActionData(
+        icon: LucideIcons.bell,
+        label: 'marketplace.action_notifications'.tr(),
+        onTap: () => context.push('/notifications'),
+      ),
     ];
   }
 }
@@ -152,38 +197,38 @@ class _QuickActionItem extends StatelessWidget {
     return Material(
       color: AppColors.surface,
       shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(AppRadius.tile),
+        borderRadius: BorderRadius.circular(AppRadius.lg),
         side: const BorderSide(color: AppColors.grey200),
       ),
       child: InkWell(
         onTap: data.onTap,
-        borderRadius: BorderRadius.circular(AppRadius.tile),
+        borderRadius: BorderRadius.circular(AppRadius.lg),
         child: Padding(
           padding: EdgeInsets.symmetric(
-            horizontal: AppSpacing.sm10,
-            vertical: 10.h,
+            horizontal: 4.w,
+            vertical: 6.h,
           ),
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
               Container(
-                width: 36.r,
-                height: 36.r,
+                width: 32.r,
+                height: 32.r,
                 decoration: BoxDecoration(
                   color: AppColors.primaryLight,
-                  borderRadius: BorderRadius.circular(AppRadius.lg),
+                  borderRadius: BorderRadius.circular(AppRadius.md),
                 ),
-                child: Icon(data.icon, color: AppColors.primary, size: 18.sp),
+                child: Icon(data.icon, color: AppColors.primary, size: 16.sp),
               ),
-              SizedBox(height: 6.h),
+              SizedBox(height: 4.h),
               Text(
                 data.label,
                 textAlign: TextAlign.center,
                 style: TextStyle(
-                  fontSize: 10.sp,
+                  fontSize: 9.sp,
                   fontWeight: FontWeight.w600,
                   color: AppColors.textPrimary,
-                  height: 1.2,
+                  height: 1.15,
                 ),
                 maxLines: 2,
                 overflow: TextOverflow.ellipsis,

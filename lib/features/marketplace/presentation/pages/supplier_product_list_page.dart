@@ -216,13 +216,29 @@ class _SupplierProductListPageState extends State<SupplierProductListPage> {
                                       ),
                                       SizedBox(height: AppSpacing.md),
                                       Text(
-                                        'Belum ada produk'.tr(),
+                                        _selectedCategoryId != null
+                                            ? 'marketplace.no_products_in_category'
+                                                .tr()
+                                            : 'marketplace.no_products_yet'.tr(),
                                         style: TextStyle(
                                           fontSize: 16.sp,
                                           fontWeight: FontWeight.bold,
                                           color: AppColors.textSecondary,
                                         ),
+                                        textAlign: TextAlign.center,
                                       ),
+                                      if (_selectedCategoryId != null) ...[
+                                        SizedBox(height: AppSpacing.sm),
+                                        Text(
+                                          'marketplace.no_products_in_category_hint'
+                                              .tr(),
+                                          style: TextStyle(
+                                            fontSize: 13.sp,
+                                            color: AppColors.textHint,
+                                          ),
+                                          textAlign: TextAlign.center,
+                                        ),
+                                      ],
                                     ],
                                   ),
                                 ),

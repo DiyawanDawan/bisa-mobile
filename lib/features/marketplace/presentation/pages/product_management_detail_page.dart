@@ -37,6 +37,7 @@ import 'dart:convert';
 import 'package:file_picker/file_picker.dart';
 import '../../../../shared/widgets/product_video_player.dart';
 import '../widgets/product_specs_sheet.dart';
+import '../widgets/harvest_lots_section.dart';
 
 class ProductManagementDetailPage extends StatelessWidget {
   final String productId;
@@ -204,6 +205,10 @@ class ProductManagementDetailPage extends StatelessWidget {
           _buildVideoSection(context, p),
           SizedBox(height: _secGap.h),
           ProductCertificateEditor(productId: p.id),
+          if (p.productMode == 'ORGANIC_PRODUCE') ...[
+            SizedBox(height: _secGap.h),
+            _section(child: HarvestLotsSection(productId: p.id)),
+          ],
           _section(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -835,8 +840,47 @@ class ProductManagementDetailPage extends StatelessWidget {
               p.regency ?? p.province,
               AppColors.info,
             ),
+            if (isOrganic)
+              _metaChip(
+                LucideIcons.packageCheck,
+                p.availabilityType == 'PRE_HARVEST'
+                    ? 'marketplace.availability_preharvest'.tr()
+                    : p.availabilityType == 'MIXED'
+                        ? 'marketplace.availability_mixed'.tr()
+                        : 'marketplace.availability_ready'.tr(),
+                AppColors.secondary,
+              ),
+            if (isOrganic && p.shelfLifeDays != null && p.shelfLifeDays! > 0)
+              _metaChip(
+                LucideIcons.timer,
+                'marketplace.shelf_life_days'.tr(
+                  namedArgs: {'days': '${p.shelfLifeDays}'},
+                ),
+                AppColors.warning,
+              ),
+            if (isOrganic && p.landAreaHa != null && p.landAreaHa! > 0)
+              _metaChip(
+                LucideIcons.map,
+                'marketplace.land_area_ha'.tr(
+                  namedArgs: {'ha': '${p.landAreaHa}'},
+                ),
+                AppColors.info,
+              ),
           ],
         ),
+        if (isOrganic && p.nextHarvestDate != null) ...[
+          SizedBox(height: AppSpacing.sm),
+          _dotRow(
+            'marketplace.next_harvest_line'.tr(
+              namedArgs: {
+                'date': context.formatDate(p.nextHarvestDate!),
+                'qty': p.nextHarvestQtyTon != null
+                    ? '${p.nextHarvestQtyTon}'
+                    : '—',
+              },
+            ),
+          ),
+        ],
         SizedBox(height: AppSpacing.sm),
         _dotRow(
           'marketplace.created_at'.tr(

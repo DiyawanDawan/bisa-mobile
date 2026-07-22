@@ -43,6 +43,7 @@ class _StoreManagementPageState extends State<StoreManagementPage> {
 
   void _reloadProducts(BuildContext blocContext) {
     blocContext.read<MarketplaceCubit>().getMyProducts(
+      categoryId: _selectedCategoryId,
       limit: StoreManagementPage._previewLimit,
     );
   }
@@ -98,7 +99,10 @@ class _StoreManagementPageState extends State<StoreManagementPage> {
                         selectedCategoryId: _selectedCategoryId,
                         onCategorySelected: (category) {
                           setState(() => _selectedCategoryId = category?.id);
-                          _reloadProducts(blocContext);
+                          blocContext.read<MarketplaceCubit>().getMyProducts(
+                            categoryId: category?.id,
+                            limit: StoreManagementPage._previewLimit,
+                          );
                         },
                       ),
                     ),
@@ -188,6 +192,7 @@ class _StoreManagementPageState extends State<StoreManagementPage> {
                             blocContext,
                             products,
                             user?.id,
+                            categoryFiltered: _selectedCategoryId != null,
                           ),
                         );
                       },
@@ -205,8 +210,9 @@ class _StoreManagementPageState extends State<StoreManagementPage> {
   Widget _buildProductPreview(
     BuildContext blocContext,
     List<ProductEntity> products,
-    String? userId,
-  ) {
+    String? userId, {
+    bool categoryFiltered = false,
+  }) {
     if (products.isEmpty) {
       return Padding(
         padding: EdgeInsets.symmetric(
@@ -222,25 +228,41 @@ class _StoreManagementPageState extends State<StoreManagementPage> {
             ),
             SizedBox(height: AppSpacing.md12),
             Text(
-              'marketplace.no_products_yet'.tr(),
+              categoryFiltered
+                  ? 'marketplace.no_products_in_category'.tr()
+                  : 'marketplace.no_products_yet'.tr(),
               style: TextStyle(
                 fontSize: 15.sp,
                 fontWeight: FontWeight.bold,
                 color: AppColors.textSecondary,
               ),
+              textAlign: TextAlign.center,
             ),
             SizedBox(height: AppSpacing.sm),
             Text(
-              'marketplace.add_first_product_hint'.tr(),
+              categoryFiltered
+                  ? 'marketplace.no_products_in_category_hint'.tr()
+                  : 'marketplace.add_first_product_hint'.tr(),
               style: TextStyle(fontSize: 13.sp, color: AppColors.textHint),
               textAlign: TextAlign.center,
             ),
-            SizedBox(height: AppSpacing.md),
-            OutlinedButton.icon(
-              onPressed: () => ReadinessGate.pushAddProduct(blocContext),
-              icon: Icon(LucideIcons.plus, size: 18.sp),
-              label: Text('marketplace.add_product'.tr()),
-            ),
+            if (!categoryFiltered) ...[
+              SizedBox(height: AppSpacing.md),
+              OutlinedButton.icon(
+                onPressed: () => ReadinessGate.pushAddProduct(blocContext),
+                icon: Icon(LucideIcons.plus, size: 18.sp),
+                label: Text('marketplace.add_product'.tr()),
+              ),
+            ] else ...[
+              SizedBox(height: AppSpacing.md),
+              TextButton(
+                onPressed: () {
+                  setState(() => _selectedCategoryId = null);
+                  _reloadProducts(blocContext);
+                },
+                child: Text('marketplace.category_all_products'.tr()),
+              ),
+            ],
           ],
         ),
       );

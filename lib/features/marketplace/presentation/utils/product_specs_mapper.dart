@@ -31,6 +31,8 @@ class ProductSpecsMapper {
     'Jenis Hasil Tani': 'marketplace.spec_label_crop_type',
     'Pupuk / Nutrisi': 'marketplace.spec_label_fertilizer',
     'Bebas Bahan Kimia': 'marketplace.spec_label_chemical_free',
+    'Ketahanan (hari)': 'marketplace.spec_label_shelf_life',
+    'Luas Lahan (ha)': 'marketplace.spec_label_land_area',
     'Metode Irigasi': 'marketplace.spec_label_irrigation',
     'Musim Tanam': 'marketplace.spec_label_planting_season',
     'Sertifikasi': 'marketplace.spec_label_certification',
@@ -69,6 +71,8 @@ class ProductSpecsMapper {
         'Jenis Hasil Tani',
         'Pupuk / Nutrisi',
         'Bebas Bahan Kimia',
+        'Ketahanan (hari)',
+        'Luas Lahan (ha)',
         'Metode Irigasi',
         'Musim Tanam',
         'Sertifikasi',
@@ -111,6 +115,18 @@ class ProductSpecsMapper {
         label: 'Bebas Bahan Kimia',
         value: product.isChemicalFree ? 'Ya (100% Organik)' : 'Tidak',
       ));
+      if (product.shelfLifeDays != null && product.shelfLifeDays! > 0) {
+        rows.add(ProductSpecEntry(
+          label: 'Ketahanan (hari)',
+          value: '${product.shelfLifeDays}',
+        ));
+      }
+      if (product.landAreaHa != null && product.landAreaHa! > 0) {
+        rows.add(ProductSpecEntry(
+          label: 'Luas Lahan (ha)',
+          value: '${product.landAreaHa}',
+        ));
+      }
     } else {
       final spec = product.technicalSpec;
       if (spec != null) {
@@ -171,6 +187,16 @@ class ProductSpecsMapper {
           case 'Bebas Bahan Kimia':
             api['isChemicalFree'] =
                 value.toLowerCase().contains('ya') || value.contains('100%');
+            break;
+          case 'Ketahanan (hari)':
+          case 'Ketahanan':
+            final n = _parseNum(value);
+            if (n != null) api['shelfLifeDays'] = n.round();
+            break;
+          case 'Luas Lahan (ha)':
+          case 'Luas Lahan':
+            final n = _parseNum(value);
+            if (n != null) api['landAreaHa'] = n;
             break;
         }
       } else {

@@ -225,62 +225,68 @@ class _RegisterPageState extends State<RegisterPage> {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      SizedBox(height: AppSpacing.xl),
+                      SizedBox(height: AppSpacing.md),
                       Row(
                         mainAxisAlignment: MainAxisAlignment.spaceBetween,
                         children: [_buildBackButton(), _buildBrandLogo()],
                       ),
-                      SizedBox(height: AppSpacing.spacious),
+                      SizedBox(height: AppSpacing.lg),
                       Text(
                         'auth.register_title'.tr(),
                         style: TextStyle(
-                          fontSize: 32.sp,
+                          fontSize: 26.sp,
                           fontWeight: FontWeight.w900,
                           color: AppColors.textPrimary,
-                          letterSpacing: -0.8,
-                          height: 1.1,
+                          letterSpacing: -0.6,
+                          height: 1.15,
                         ),
                       ),
-                      SizedBox(height: AppSpacing.sm10),
+                      SizedBox(height: AppSpacing.xs),
                       Text(
                         'auth.register_subtitle'.tr(),
                         style: TextStyle(
-                          fontSize: 15.sp,
+                          fontSize: 13.sp,
                           color: AppColors.textSecondary,
                           fontWeight: FontWeight.w500,
-                          height: 1.45,
-                        ),
-                      ),
-                      SizedBox(height: 28.h),
-                      Container(
-                        padding: EdgeInsets.symmetric(
-                          horizontal: AppSpacing.md12,
-                          vertical: 6.h,
-                        ),
-                        decoration: BoxDecoration(
-                          color: AppColors.primaryLight.withValues(alpha: 0.5),
-                          borderRadius: BorderRadius.circular(AppRadius.pill),
-                        ),
-                        child: Text(
-                          'auth.register_step'.tr(),
-                          style: TextStyle(
-                            fontSize: 11.sp,
-                            fontWeight: FontWeight.w800,
-                            color: AppColors.primary,
-                            letterSpacing: 0.4,
-                          ),
-                        ),
-                      ),
-                      SizedBox(height: AppSpacing.md),
-                      Text(
-                        'auth.register_as'.tr(),
-                        style: TextStyle(
-                          fontSize: 14.sp,
-                          fontWeight: FontWeight.w600,
-                          color: AppColors.textSecondary,
+                          height: 1.35,
                         ),
                       ),
                       SizedBox(height: AppSpacing.md12),
+                      Row(
+                        children: [
+                          Container(
+                            padding: EdgeInsets.symmetric(
+                              horizontal: AppSpacing.sm10,
+                              vertical: 4.h,
+                            ),
+                            decoration: BoxDecoration(
+                              color: AppColors.primaryLight.withValues(
+                                alpha: 0.5,
+                              ),
+                              borderRadius: BorderRadius.circular(AppRadius.pill),
+                            ),
+                            child: Text(
+                              'auth.register_step'.tr(),
+                              style: TextStyle(
+                                fontSize: 10.sp,
+                                fontWeight: FontWeight.w800,
+                                color: AppColors.primary,
+                                letterSpacing: 0.3,
+                              ),
+                            ),
+                          ),
+                          SizedBox(width: AppSpacing.sm),
+                          Text(
+                            'auth.register_as'.tr(),
+                            style: TextStyle(
+                              fontSize: 13.sp,
+                              fontWeight: FontWeight.w600,
+                              color: AppColors.textSecondary,
+                            ),
+                          ),
+                        ],
+                      ),
+                      SizedBox(height: AppSpacing.sm10),
                       Row(
                         children: [
                           Expanded(
@@ -295,7 +301,7 @@ class _RegisterPageState extends State<RegisterPage> {
                               }),
                             ),
                           ),
-                          SizedBox(width: AppSpacing.md12),
+                          SizedBox(width: AppSpacing.sm),
                           Expanded(
                             child: _roleCard(
                               title: 'auth.role_supplier'.tr(),
@@ -311,19 +317,17 @@ class _RegisterPageState extends State<RegisterPage> {
                           ),
                         ],
                       ),
-                      SizedBox(height: AppSpacing.xl),
+                      SizedBox(height: AppSpacing.md12),
                       Container(
-                        padding: EdgeInsets.all(AppSpacing.xl),
+                        padding: EdgeInsets.all(AppSpacing.md),
                         decoration: BoxDecoration(
                           color: AppColors.surface,
-                          borderRadius: BorderRadius.circular(
-                            AppSpacing.xlPx.r,
-                          ),
+                          borderRadius: BorderRadius.circular(AppRadius.xl),
                           boxShadow: [
                             BoxShadow(
                               color: AppColors.black.withValues(alpha: 0.04),
-                              blurRadius: 24,
-                              offset: const Offset(0, 8),
+                              blurRadius: 20,
+                              offset: const Offset(0, 6),
                             ),
                           ],
                         ),
@@ -335,11 +339,12 @@ class _RegisterPageState extends State<RegisterPage> {
                               controller: _fullNameController,
                               prefixIcon: Icons.person_outline_rounded,
                               isRequired: true,
+                              dense: true,
                               validator: (v) => v == null || v.isEmpty
                                   ? 'auth.name_required'.tr()
                                   : null,
                             ),
-                            SizedBox(height: 18.h),
+                            SizedBox(height: AppSpacing.md12),
                             CustomTextField(
                               label: 'email'.tr(),
                               hint: 'email_hint'.tr(),
@@ -347,9 +352,11 @@ class _RegisterPageState extends State<RegisterPage> {
                               keyboardType: TextInputType.emailAddress,
                               prefixIcon: Icons.alternate_email_rounded,
                               isRequired: true,
+                              dense: true,
                               validator: (v) {
-                                if (v == null || v.isEmpty)
+                                if (v == null || v.isEmpty) {
                                   return 'email_required'.tr();
+                                }
                                 if (!_emailFormat.hasMatch(v)) {
                                   return 'email_invalid'.tr();
                                 }
@@ -362,11 +369,11 @@ class _RegisterPageState extends State<RegisterPage> {
                             ),
                             if (_checkingEmail)
                               Padding(
-                                padding: EdgeInsets.only(top: 6.h),
+                                padding: EdgeInsets.only(top: 4.h),
                                 child: Text(
                                   'auth.checking_email'.tr(),
                                   style: TextStyle(
-                                    fontSize: 12.sp,
+                                    fontSize: 11.sp,
                                     color: AppColors.textSecondary,
                                   ),
                                 ),
@@ -375,16 +382,16 @@ class _RegisterPageState extends State<RegisterPage> {
                                 _emailController.text.trim() ==
                                     _lastCheckedEmail)
                               Padding(
-                                padding: EdgeInsets.only(top: 6.h),
+                                padding: EdgeInsets.only(top: 4.h),
                                 child: Text(
                                   'auth.email_available_msg'.tr(),
                                   style: TextStyle(
-                                    fontSize: 12.sp,
+                                    fontSize: 11.sp,
                                     color: AppColors.success,
                                   ),
                                 ),
                               ),
-                            SizedBox(height: 18.h),
+                            SizedBox(height: AppSpacing.md12),
                             CustomTextField(
                               label: 'nomor_telepon'.tr(),
                               hint: '0812xxxxxxxx'.tr(),
@@ -392,8 +399,9 @@ class _RegisterPageState extends State<RegisterPage> {
                               keyboardType: TextInputType.phone,
                               prefixIcon: Icons.phone_android_rounded,
                               isOptional: true,
+                              dense: true,
                             ),
-                            SizedBox(height: 18.h),
+                            SizedBox(height: AppSpacing.md12),
                             CustomTextField(
                               label: 'kata_sandi'.tr(),
                               hint: 'auth.password_hint_register'.tr(),
@@ -401,27 +409,31 @@ class _RegisterPageState extends State<RegisterPage> {
                               isPassword: true,
                               prefixIcon: Icons.lock_outline_rounded,
                               isRequired: true,
+                              dense: true,
                               validator: (v) {
-                                if (v == null || v.isEmpty)
+                                if (v == null || v.isEmpty) {
                                   return 'password_required'.tr();
-                                if (v.length < 8)
+                                }
+                                if (v.length < 8) {
                                   return 'auth.password_min_8'.tr();
+                                }
                                 return null;
                               },
                             ),
                             if (_isSupplier) ...[
-                              SizedBox(height: 22.h),
+                              SizedBox(height: AppSpacing.md12),
                               _buildSupplierLocationSection(),
                             ],
-                            SizedBox(height: 18.h),
+                            SizedBox(height: AppSpacing.md12),
                             CustomTextField(
                               label: 'auth.referral_code_label'.tr(),
                               hint: 'auth.referral_code_hint'.tr(),
                               controller: _referralCodeController,
                               prefixIcon: Icons.card_giftcard_outlined,
                               isOptional: true,
+                              dense: true,
                             ),
-                            SizedBox(height: 28.h),
+                            SizedBox(height: AppSpacing.xl),
                             BlocBuilder<AuthCubit, AuthState>(
                               builder: (context, state) {
                                 final loading = state.maybeWhen(
@@ -439,9 +451,9 @@ class _RegisterPageState extends State<RegisterPage> {
                           ],
                         ),
                       ),
-                      SizedBox(height: 28.h),
+                      SizedBox(height: AppSpacing.lg),
                       _buildLoginFooter(),
-                      SizedBox(height: AppSpacing.xxl),
+                      SizedBox(height: AppSpacing.xl),
                     ],
                   ),
                 ),
@@ -514,15 +526,15 @@ class _RegisterPageState extends State<RegisterPage> {
   Widget _buildBrandLogo() {
     return Container(
       padding: EdgeInsets.symmetric(
-        horizontal: AppSpacing.section,
-        vertical: AppSpacing.sm,
+        horizontal: AppSpacing.md12,
+        vertical: AppSpacing.xs,
       ),
       decoration: BoxDecoration(
         color: AppColors.surface,
-        borderRadius: BorderRadius.circular(50.r),
+        borderRadius: BorderRadius.circular(AppRadius.pill),
         boxShadow: AppColors.softShadow,
       ),
-      child: BisaLogo(width: 88.w, height: 36.h),
+      child: BisaLogo(width: 72.w, height: 28.h),
     );
   }
 
@@ -536,9 +548,14 @@ class _RegisterPageState extends State<RegisterPage> {
             context.go('/login');
           }
         },
+        style: TextButton.styleFrom(
+          padding: EdgeInsets.symmetric(vertical: AppSpacing.sm),
+          minimumSize: Size.zero,
+          tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+        ),
         child: RichText(
           text: TextSpan(
-            style: TextStyle(fontSize: 14.sp, color: AppColors.textSecondary),
+            style: TextStyle(fontSize: 13.sp, color: AppColors.textSecondary),
             children: [
               TextSpan(text: 'auth.have_account'.tr()),
               TextSpan(
@@ -567,42 +584,39 @@ class _RegisterPageState extends State<RegisterPage> {
         onTap: onTap,
         borderRadius: BorderRadius.circular(AppRadius.pill),
         child: AnimatedContainer(
-          duration: const Duration(milliseconds: 220),
-          padding: EdgeInsets.symmetric(vertical: AppSpacing.lg),
+          duration: const Duration(milliseconds: 200),
+          height: 44.h,
+          padding: EdgeInsets.symmetric(horizontal: AppSpacing.sm10),
           decoration: BoxDecoration(
-            color: isSelected ? AppColors.textOnPrimary : AppColors.grey50,
+            color: isSelected
+                ? AppColors.primary.withValues(alpha: 0.1)
+                : AppColors.surface,
             borderRadius: BorderRadius.circular(AppRadius.pill),
             border: Border.all(
               color: isSelected ? AppColors.primary : AppColors.grey200,
-              width: isSelected ? 2 : 1,
+              width: isSelected ? 1.5 : 1,
             ),
-            boxShadow: isSelected ? AppColors.softShadow : null,
           ),
-          child: Column(
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              Container(
-                padding: EdgeInsets.all(AppSpacing.sm10),
-                decoration: BoxDecoration(
-                  color: isSelected
-                      ? AppColors.primary.withValues(alpha: 0.12)
-                      : AppColors.grey100,
-                  shape: BoxShape.circle,
-                ),
-                child: Icon(
-                  icon,
-                  color: isSelected ? AppColors.primary : AppColors.grey400,
-                  size: 24.sp,
-                ),
+              Icon(
+                icon,
+                size: 16.sp,
+                color: isSelected ? AppColors.primary : AppColors.grey400,
               ),
-              SizedBox(height: AppSpacing.sm10),
-              Text(
-                title,
-                style: TextStyle(
-                  fontSize: 14.sp,
-                  fontWeight: FontWeight.w800,
-                  color: isSelected
-                      ? AppColors.primary
-                      : AppColors.textSecondary,
+              SizedBox(width: AppSpacing.xs),
+              Flexible(
+                child: Text(
+                  title,
+                  overflow: TextOverflow.ellipsis,
+                  style: TextStyle(
+                    fontSize: 13.sp,
+                    fontWeight: FontWeight.w800,
+                    color: isSelected
+                        ? AppColors.primary
+                        : AppColors.textSecondary,
+                  ),
                 ),
               ),
             ],

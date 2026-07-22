@@ -99,10 +99,7 @@ return authenticated(_that);case _Unauthenticated():
 return unauthenticated(_that);case _Success():
 return success(_that);case _ResetTokenReceived():
 return resetTokenReceived(_that);case _Error():
-return error(_that);case _:
-  throw StateError('Unexpected subclass');
-
-}
+return error(_that);}
 }
 /// A variant of `map` that fallback to returning `null`.
 ///
@@ -179,10 +176,7 @@ return authenticated(_that.user);case _Unauthenticated():
 return unauthenticated();case _Success():
 return success(_that.message);case _ResetTokenReceived():
 return resetTokenReceived(_that.token);case _Error():
-return error(_that.message);case _:
-  throw StateError('Unexpected subclass');
-
-}
+return error(_that.message);}
 }
 /// A variant of `when` that fallback to returning `null`
 ///
