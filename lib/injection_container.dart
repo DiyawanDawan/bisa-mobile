@@ -379,15 +379,6 @@ Future<void> init() async {
   await tokenRepository.repairStorageIfCorrupted();
   sl.registerLazySingleton<TokenRepository>(() => tokenRepository);
   sl.registerLazySingleton<AuthSessionBridge>(() => AuthSessionBridge());
-
-  // Android Emulator: 10.0.2.2 = host machine's localhost
-  // Physical Device: set API_URL via `--dart-define`
-  // (e.g. --dart-define=API_URL=http://192.168.1.x:3000/api/v1)
-  //
-  // SEC-MOB-012: log peringatan tanpa hard-crash. Sebelum patch ini kita
-  // throw StateError, yang membuat app blank/dark screen pasca splash bila
-  // Config build-time tidak diisi. Sekarang fallback ke empty string;
-  // semua call API akan gagal dengan DioException yang jelas, app tetap render.
   final apiUrl = AppConfig.effectiveApiUrl;
   if (apiUrl.isEmpty && !kDebugMode) {
     debugPrint(

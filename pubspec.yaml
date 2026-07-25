@@ -2,7 +2,7 @@ name: mobile_bisa
 description: "Mobile BISA - Flutter Clean Architecture App"
 publish_to: "none"
 
-version: 1.0.0+1
+version: 1.0.0+2003
 
 environment:
   sdk: ^3.8.0
