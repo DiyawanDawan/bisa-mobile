@@ -15,7 +15,7 @@ T _$identity<T>(T value) => value;
 /// @nodoc
 mixin _$CategoryModel {
 
- String get id; String get name; String? get description; String? get icon; String? get productMode; String? get biomassaType;
+ String get id; String get name; String? get description; String? get icon; String? get productMode; String? get biomassaType; String? get parentId; int? get level; List<CategoryModel> get children;
 /// Create a copy of CategoryModel
 /// with the given fields replaced by the non-null parameter values.
 @JsonKey(includeFromJson: false, includeToJson: false)
@@ -28,16 +28,16 @@ $CategoryModelCopyWith<CategoryModel> get copyWith => _$CategoryModelCopyWithImp
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is CategoryModel&&(identical(other.id, id) || other.id == id)&&(identical(other.name, name) || other.name == name)&&(identical(other.description, description) || other.description == description)&&(identical(other.icon, icon) || other.icon == icon)&&(identical(other.productMode, productMode) || other.productMode == productMode)&&(identical(other.biomassaType, biomassaType) || other.biomassaType == biomassaType));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is CategoryModel&&(identical(other.id, id) || other.id == id)&&(identical(other.name, name) || other.name == name)&&(identical(other.description, description) || other.description == description)&&(identical(other.icon, icon) || other.icon == icon)&&(identical(other.productMode, productMode) || other.productMode == productMode)&&(identical(other.biomassaType, biomassaType) || other.biomassaType == biomassaType)&&(identical(other.parentId, parentId) || other.parentId == parentId)&&(identical(other.level, level) || other.level == level)&&const DeepCollectionEquality().equals(other.children, children));
 }
 
 @JsonKey(includeFromJson: false, includeToJson: false)
 @override
-int get hashCode => Object.hash(runtimeType,id,name,description,icon,productMode,biomassaType);
+int get hashCode => Object.hash(runtimeType,id,name,description,icon,productMode,biomassaType,parentId,level,const DeepCollectionEquality().hash(children));
 
 @override
 String toString() {
-  return 'CategoryModel(id: $id, name: $name, description: $description, icon: $icon, productMode: $productMode, biomassaType: $biomassaType)';
+  return 'CategoryModel(id: $id, name: $name, description: $description, icon: $icon, productMode: $productMode, biomassaType: $biomassaType, parentId: $parentId, level: $level, children: $children)';
 }
 
 
@@ -48,7 +48,7 @@ abstract mixin class $CategoryModelCopyWith<$Res>  {
   factory $CategoryModelCopyWith(CategoryModel value, $Res Function(CategoryModel) _then) = _$CategoryModelCopyWithImpl;
 @useResult
 $Res call({
- String id, String name, String? description, String? icon, String? productMode, String? biomassaType
+ String id, String name, String? description, String? icon, String? productMode, String? biomassaType, String? parentId, int? level, List<CategoryModel> children
 });
 
 
@@ -65,7 +65,7 @@ class _$CategoryModelCopyWithImpl<$Res>
 
 /// Create a copy of CategoryModel
 /// with the given fields replaced by the non-null parameter values.
-@pragma('vm:prefer-inline') @override $Res call({Object? id = null,Object? name = null,Object? description = freezed,Object? icon = freezed,Object? productMode = freezed,Object? biomassaType = freezed,}) {
+@pragma('vm:prefer-inline') @override $Res call({Object? id = null,Object? name = null,Object? description = freezed,Object? icon = freezed,Object? productMode = freezed,Object? biomassaType = freezed,Object? parentId = freezed,Object? level = freezed,Object? children = null,}) {
   return _then(_self.copyWith(
 id: null == id ? _self.id : id // ignore: cast_nullable_to_non_nullable
 as String,name: null == name ? _self.name : name // ignore: cast_nullable_to_non_nullable
@@ -73,7 +73,10 @@ as String,description: freezed == description ? _self.description : description 
 as String?,icon: freezed == icon ? _self.icon : icon // ignore: cast_nullable_to_non_nullable
 as String?,productMode: freezed == productMode ? _self.productMode : productMode // ignore: cast_nullable_to_non_nullable
 as String?,biomassaType: freezed == biomassaType ? _self.biomassaType : biomassaType // ignore: cast_nullable_to_non_nullable
-as String?,
+as String?,parentId: freezed == parentId ? _self.parentId : parentId // ignore: cast_nullable_to_non_nullable
+as String?,level: freezed == level ? _self.level : level // ignore: cast_nullable_to_non_nullable
+as int?,children: null == children ? _self.children : children // ignore: cast_nullable_to_non_nullable
+as List<CategoryModel>,
   ));
 }
 
@@ -158,10 +161,10 @@ return $default(_that);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( String id,  String name,  String? description,  String? icon,  String? productMode,  String? biomassaType)?  $default,{required TResult orElse(),}) {final _that = this;
+@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( String id,  String name,  String? description,  String? icon,  String? productMode,  String? biomassaType,  String? parentId,  int? level,  List<CategoryModel> children)?  $default,{required TResult orElse(),}) {final _that = this;
 switch (_that) {
 case _CategoryModel() when $default != null:
-return $default(_that.id,_that.name,_that.description,_that.icon,_that.productMode,_that.biomassaType);case _:
+return $default(_that.id,_that.name,_that.description,_that.icon,_that.productMode,_that.biomassaType,_that.parentId,_that.level,_that.children);case _:
   return orElse();
 
 }
@@ -179,10 +182,10 @@ return $default(_that.id,_that.name,_that.description,_that.icon,_that.productMo
 /// }
 /// ```
 
-@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( String id,  String name,  String? description,  String? icon,  String? productMode,  String? biomassaType)  $default,) {final _that = this;
+@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( String id,  String name,  String? description,  String? icon,  String? productMode,  String? biomassaType,  String? parentId,  int? level,  List<CategoryModel> children)  $default,) {final _that = this;
 switch (_that) {
 case _CategoryModel():
-return $default(_that.id,_that.name,_that.description,_that.icon,_that.productMode,_that.biomassaType);case _:
+return $default(_that.id,_that.name,_that.description,_that.icon,_that.productMode,_that.biomassaType,_that.parentId,_that.level,_that.children);case _:
   throw StateError('Unexpected subclass');
 
 }
@@ -199,10 +202,10 @@ return $default(_that.id,_that.name,_that.description,_that.icon,_that.productMo
 /// }
 /// ```
 
-@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( String id,  String name,  String? description,  String? icon,  String? productMode,  String? biomassaType)?  $default,) {final _that = this;
+@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( String id,  String name,  String? description,  String? icon,  String? productMode,  String? biomassaType,  String? parentId,  int? level,  List<CategoryModel> children)?  $default,) {final _that = this;
 switch (_that) {
 case _CategoryModel() when $default != null:
-return $default(_that.id,_that.name,_that.description,_that.icon,_that.productMode,_that.biomassaType);case _:
+return $default(_that.id,_that.name,_that.description,_that.icon,_that.productMode,_that.biomassaType,_that.parentId,_that.level,_that.children);case _:
   return null;
 
 }
@@ -214,7 +217,7 @@ return $default(_that.id,_that.name,_that.description,_that.icon,_that.productMo
 @JsonSerializable()
 
 class _CategoryModel implements CategoryModel {
-  const _CategoryModel({required this.id, required this.name, this.description, this.icon, this.productMode, this.biomassaType});
+  const _CategoryModel({required this.id, required this.name, this.description, this.icon, this.productMode, this.biomassaType, this.parentId, this.level, final  List<CategoryModel> children = const <CategoryModel>[]}): _children = children;
   factory _CategoryModel.fromJson(Map<String, dynamic> json) => _$CategoryModelFromJson(json);
 
 @override final  String id;
@@ -223,6 +226,15 @@ class _CategoryModel implements CategoryModel {
 @override final  String? icon;
 @override final  String? productMode;
 @override final  String? biomassaType;
+@override final  String? parentId;
+@override final  int? level;
+ final  List<CategoryModel> _children;
+@override@JsonKey() List<CategoryModel> get children {
+  if (_children is EqualUnmodifiableListView) return _children;
+  // ignore: implicit_dynamic_type
+  return EqualUnmodifiableListView(_children);
+}
+
 
 /// Create a copy of CategoryModel
 /// with the given fields replaced by the non-null parameter values.
@@ -237,16 +249,16 @@ Map<String, dynamic> toJson() {
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is _CategoryModel&&(identical(other.id, id) || other.id == id)&&(identical(other.name, name) || other.name == name)&&(identical(other.description, description) || other.description == description)&&(identical(other.icon, icon) || other.icon == icon)&&(identical(other.productMode, productMode) || other.productMode == productMode)&&(identical(other.biomassaType, biomassaType) || other.biomassaType == biomassaType));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is _CategoryModel&&(identical(other.id, id) || other.id == id)&&(identical(other.name, name) || other.name == name)&&(identical(other.description, description) || other.description == description)&&(identical(other.icon, icon) || other.icon == icon)&&(identical(other.productMode, productMode) || other.productMode == productMode)&&(identical(other.biomassaType, biomassaType) || other.biomassaType == biomassaType)&&(identical(other.parentId, parentId) || other.parentId == parentId)&&(identical(other.level, level) || other.level == level)&&const DeepCollectionEquality().equals(other._children, _children));
 }
 
 @JsonKey(includeFromJson: false, includeToJson: false)
 @override
-int get hashCode => Object.hash(runtimeType,id,name,description,icon,productMode,biomassaType);
+int get hashCode => Object.hash(runtimeType,id,name,description,icon,productMode,biomassaType,parentId,level,const DeepCollectionEquality().hash(_children));
 
 @override
 String toString() {
-  return 'CategoryModel(id: $id, name: $name, description: $description, icon: $icon, productMode: $productMode, biomassaType: $biomassaType)';
+  return 'CategoryModel(id: $id, name: $name, description: $description, icon: $icon, productMode: $productMode, biomassaType: $biomassaType, parentId: $parentId, level: $level, children: $children)';
 }
 
 
@@ -257,7 +269,7 @@ abstract mixin class _$CategoryModelCopyWith<$Res> implements $CategoryModelCopy
   factory _$CategoryModelCopyWith(_CategoryModel value, $Res Function(_CategoryModel) _then) = __$CategoryModelCopyWithImpl;
 @override @useResult
 $Res call({
- String id, String name, String? description, String? icon, String? productMode, String? biomassaType
+ String id, String name, String? description, String? icon, String? productMode, String? biomassaType, String? parentId, int? level, List<CategoryModel> children
 });
 
 
@@ -274,7 +286,7 @@ class __$CategoryModelCopyWithImpl<$Res>
 
 /// Create a copy of CategoryModel
 /// with the given fields replaced by the non-null parameter values.
-@override @pragma('vm:prefer-inline') $Res call({Object? id = null,Object? name = null,Object? description = freezed,Object? icon = freezed,Object? productMode = freezed,Object? biomassaType = freezed,}) {
+@override @pragma('vm:prefer-inline') $Res call({Object? id = null,Object? name = null,Object? description = freezed,Object? icon = freezed,Object? productMode = freezed,Object? biomassaType = freezed,Object? parentId = freezed,Object? level = freezed,Object? children = null,}) {
   return _then(_CategoryModel(
 id: null == id ? _self.id : id // ignore: cast_nullable_to_non_nullable
 as String,name: null == name ? _self.name : name // ignore: cast_nullable_to_non_nullable
@@ -282,7 +294,10 @@ as String,description: freezed == description ? _self.description : description 
 as String?,icon: freezed == icon ? _self.icon : icon // ignore: cast_nullable_to_non_nullable
 as String?,productMode: freezed == productMode ? _self.productMode : productMode // ignore: cast_nullable_to_non_nullable
 as String?,biomassaType: freezed == biomassaType ? _self.biomassaType : biomassaType // ignore: cast_nullable_to_non_nullable
-as String?,
+as String?,parentId: freezed == parentId ? _self.parentId : parentId // ignore: cast_nullable_to_non_nullable
+as String?,level: freezed == level ? _self.level : level // ignore: cast_nullable_to_non_nullable
+as int?,children: null == children ? _self._children : children // ignore: cast_nullable_to_non_nullable
+as List<CategoryModel>,
   ));
 }
 

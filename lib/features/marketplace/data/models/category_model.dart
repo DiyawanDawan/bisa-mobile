@@ -12,6 +12,9 @@ abstract class CategoryModel with _$CategoryModel {
     String? icon,
     String? productMode,
     String? biomassaType,
+    String? parentId,
+    int? level,
+    @Default(<CategoryModel>[]) List<CategoryModel> children,
   }) = _CategoryModel;
 
   factory CategoryModel.fromJson(Map<String, dynamic> json) => _$CategoryModelFromJson(json);

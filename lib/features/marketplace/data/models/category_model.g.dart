@@ -14,6 +14,13 @@ _CategoryModel _$CategoryModelFromJson(Map<String, dynamic> json) =>
       icon: json['icon'] as String?,
       productMode: json['productMode'] as String?,
       biomassaType: json['biomassaType'] as String?,
+      parentId: json['parentId'] as String?,
+      level: (json['level'] as num?)?.toInt(),
+      children:
+          (json['children'] as List<dynamic>?)
+              ?.map((e) => CategoryModel.fromJson(e as Map<String, dynamic>))
+              .toList() ??
+          const <CategoryModel>[],
     );
 
 Map<String, dynamic> _$CategoryModelToJson(_CategoryModel instance) =>
@@ -24,4 +31,7 @@ Map<String, dynamic> _$CategoryModelToJson(_CategoryModel instance) =>
       'icon': instance.icon,
       'productMode': instance.productMode,
       'biomassaType': instance.biomassaType,
+      'parentId': instance.parentId,
+      'level': instance.level,
+      'children': instance.children,
     };

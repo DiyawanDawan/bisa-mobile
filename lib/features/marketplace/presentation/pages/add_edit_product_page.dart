@@ -11,7 +11,9 @@ import '../../../../core/constants/app_colors.dart';
 import '../../../../core/readiness/readiness_gate.dart';
 import '../../../../shared/widgets/custom_button.dart';
 import '../../../../shared/widgets/custom_text_field.dart';
+import '../../../../shared/widgets/quill_editor_field.dart';
 import '../../../../shared/widgets/bisa_app_bar.dart';
+import 'quill_full_editor_page.dart';
 import '../../domain/entities/product_entity.dart';
 import '../../domain/entities/product_image_draft.dart';
 import '../widgets/product_image_editor.dart';
@@ -26,6 +28,7 @@ import '../bloc/marketplace_cubit.dart';
 import '../bloc/category_cubit.dart';
 import '../bloc/category_state.dart';
 import '../widgets/category_search_picker.dart';
+import '../widgets/category_tree_picker.dart';
 import '../../data/models/category_model.dart';
 import '../../../../core/media/media_upload_progress_banner.dart';
 import '../../../../core/media/media_upload_progress_controller.dart';
@@ -53,6 +56,7 @@ class _AddEditProductPageState extends State<AddEditProductPage> {
   late TextEditingController _originalPriceController;
   late TextEditingController _stockController;
   late TextEditingController _descriptionController;
+  String _descriptionDelta = '';
   late TextEditingController _minOrderController;
 
   ProductSpecsData _specsData = const ProductSpecsData();
@@ -90,6 +94,7 @@ class _AddEditProductPageState extends State<AddEditProductPage> {
     _descriptionController = TextEditingController(
       text: widget.product?.description,
     );
+    _descriptionDelta = widget.product?.description ?? '';
     _minOrderController = TextEditingController(
       text: widget.product?.minOrder.toString() ?? '100',
     );
@@ -239,7 +244,7 @@ class _AddEditProductPageState extends State<AddEditProductPage> {
       }
 
       if (description.isNotEmpty && mounted) {
-        setState(() => _descriptionController.text = description);
+        setState(() => _descriptionDelta = description);
       }
     } catch (e) {
       if (mounted) {
@@ -248,6 +253,94 @@ class _AddEditProductPageState extends State<AddEditProductPage> {
     } finally {
       if (mounted) setState(() => _isGeneratingDesc = false);
     }
+  }
+
+  Future<void> _openFullEditor() async {
+    final result = await Navigator.of(context).push<String>(
+      MaterialPageRoute(
+        fullscreenDialog: true,
+        builder: (_) => QuillFullEditorPage(
+          initialValue: _descriptionDelta.isNotEmpty ? _descriptionDelta : null,
+          title: 'deskripsi'.tr(),
+        ),
+      ),
+    );
+    if (result != null && mounted) {
+      setState(() => _descriptionDelta = result);
+    }
+  }
+
+  Widget _buildDescriptionEditorButton() {
+    final plainText =
+        QuillEditorField.deltaToPlainText(_descriptionDelta);
+    final hasContent = plainText.isNotEmpty;
+
+    return GestureDetector(
+      onTap: _openFullEditor,
+      child: Container(
+        width: double.infinity,
+        padding: EdgeInsets.all(14.r),
+        decoration: BoxDecoration(
+          border: Border.all(
+            color: hasContent ? AppColors.primary : AppColors.grey300,
+          ),
+          borderRadius: BorderRadius.circular(12.r),
+        ),
+        child: Row(
+          children: [
+            Icon(
+              Icons.edit_note,
+              size: 24.sp,
+              color: hasContent ? AppColors.primary : AppColors.textHint,
+            ),
+            SizedBox(width: 10.w),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  if (hasContent)
+                    Text(
+                      plainText,
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
+                      style: TextStyle(
+                        fontSize: 13.sp,
+                        color: AppColors.textPrimary,
+                        height: 1.3,
+                      ),
+                    )
+                  else
+                    Text(
+                      'jelaskan_kualitas_produk'.tr(),
+                      style: TextStyle(
+                        fontSize: 13.sp,
+                        color: AppColors.textHint,
+                      ),
+                    ),
+                ],
+              ),
+            ),
+            SizedBox(width: 8.w),
+            Container(
+              padding: EdgeInsets.symmetric(horizontal: 10.w, vertical: 4.h),
+              decoration: BoxDecoration(
+                gradient: AppColors.primaryGradient,
+                borderRadius: BorderRadius.circular(16.r),
+              ),
+              child: Text(
+                'Edit',
+                style: TextStyle(
+                  fontSize: 11.sp,
+                  color: AppColors.textOnPrimary,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
   }
 
   void _onBiomassaTypeChanged(BuildContext context, String? v) {
@@ -325,8 +418,8 @@ class _AddEditProductPageState extends State<AddEditProductPage> {
         'stock': double.parse(_stockController.text),
         'minOrder': double.parse(_minOrderController.text),
         'unit': _selectedUnit,
-        if (_descriptionController.text.isNotEmpty)
-          'description': _descriptionController.text.trim(),
+        if (_descriptionDelta.isNotEmpty)
+          'description': _descriptionDelta,
         'status': _selectedStatus,
         'productMode': _productMode,
         if (_productMode == 'ORGANIC_PRODUCE') ...{
@@ -722,12 +815,7 @@ class _AddEditProductPageState extends State<AddEditProductPage> {
                                   ],
                                 ),
                                 SizedBox(height: 4.h),
-                                CustomTextField(
-                                  label: '',
-                                  controller: _descriptionController,
-                                  maxLines: 3,
-                                  hint: 'jelaskan_kualitas_produk'.tr(),
-                                ),
+                                _buildDescriptionEditorButton(),
                               ],
                             ),
                             _buildDropdown(
@@ -882,14 +970,20 @@ class _AddEditProductPageState extends State<AddEditProductPage> {
 
     return BlocBuilder<CategoryCubit, CategoryState>(
       builder: (context, state) {
-        List<CategoryModel> categories = [];
+        List<CategoryModel> roots = [];
+        String displayName = '';
         if (state is CategoryLoaded) {
-          categories = _categoriesForCurrentSelection(state.categories);
-          if (_selectedCategoryId != null &&
-              !categories.any((c) => c.id == _selectedCategoryId)) {
-            WidgetsBinding.instance.addPostFrameCallback((_) {
-              if (mounted) setState(() => _selectedCategoryId = null);
-            });
+          roots = state.roots
+              .where((c) => _categoriesForCurrentSelection([c]).isNotEmpty)
+              .toList();
+          if (_selectedCategoryId != null) {
+            displayName = state.categoryPath(_selectedCategoryId!);
+            final validIds = state.flatList.map((c) => c.id).toSet();
+            if (!validIds.contains(_selectedCategoryId)) {
+              WidgetsBinding.instance.addPostFrameCallback((_) {
+                if (mounted) setState(() => _selectedCategoryId = null);
+              });
+            }
           }
         }
 
@@ -898,34 +992,115 @@ class _AddEditProductPageState extends State<AddEditProductPage> {
         return Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            CategoryPickerField(
-              label: isBiomass
+            Text(
+              isBiomass
                   ? 'marketplace.category_biomass'.tr()
                   : 'marketplace.category_organic'.tr(),
-              enabled: state is! CategoryError,
-              isLoading: state is CategoryLoading,
-              categories: categories,
-              selectedId: _selectedCategoryId,
-              disabledHint: isBiomass
-                  ? 'marketplace.loading_biomass_categories'.tr()
-                  : 'marketplace.loading_organic_categories'.tr(),
-              emptyHint: isBiomass
-                  ? 'marketplace.no_category_for_type'.tr(
-                      namedArgs: {'type': biomassaLabel},
-                    )
-                  : 'marketplace.no_organic_categories'.tr(),
-              pickerTitle: isBiomass
-                  ? 'marketplace.category_picker_biomass'.tr(
-                      namedArgs: {'type': biomassaLabel},
-                    )
-                  : 'marketplace.category_picker_organic'.tr(),
-              searchHint: isBiomass
-                  ? 'marketplace.search_category_biomass'.tr(
-                      namedArgs: {'type': biomassaLabel},
-                    )
-                  : 'marketplace.search_category_organic'.tr(),
-              onSelected: (cat) =>
-                  setState(() => _selectedCategoryId = cat?.id),
+              style: TextStyle(
+                fontSize: 14.sp,
+                fontWeight: FontWeight.bold,
+                color: AppColors.textPrimary,
+              ),
+            ),
+            SizedBox(height: AppSpacing.sm),
+            Material(
+              color: state is CategoryLoading
+                  ? AppColors.grey50
+                  : AppColors.white,
+              borderRadius: BorderRadius.circular(AppRadius.button),
+              child: InkWell(
+                onTap: state is CategoryLoaded && roots.isNotEmpty
+                    ? () async {
+                        final flat = roots.expand((r) => _flattenTree(r));
+                        CategoryModel? current;
+                        for (final c in flat) {
+                          if (c.id == _selectedCategoryId) {
+                            current = c;
+                            break;
+                          }
+                        }
+                        final picked = await showCategoryTreePicker(
+                          context: context,
+                          roots: roots,
+                          selected: current,
+                          title: isBiomass
+                              ? 'marketplace.category_picker_biomass'.tr(
+                                  namedArgs: {'type': biomassaLabel},
+                                )
+                              : 'marketplace.category_picker_organic'.tr(),
+                          searchHint: isBiomass
+                              ? 'marketplace.search_category_biomass'.tr(
+                                  namedArgs: {'type': biomassaLabel},
+                                )
+                              : 'marketplace.search_category_organic'.tr(),
+                        );
+                        if (picked != null) {
+                          setState(() => _selectedCategoryId = picked.id);
+                        }
+                      }
+                    : null,
+                borderRadius: BorderRadius.circular(AppRadius.button),
+                child: Container(
+                  width: double.infinity,
+                  padding:
+                      EdgeInsets.symmetric(horizontal: 12.w, vertical: 14.h),
+                  decoration: BoxDecoration(
+                    border: Border.all(
+                      color: state is CategoryLoaded && roots.isNotEmpty
+                          ? AppColors.grey300
+                          : AppColors.grey200,
+                    ),
+                    borderRadius: BorderRadius.circular(AppRadius.button),
+                  ),
+                  child: Row(
+                    children: [
+                      Icon(
+                        LucideIcons.folderTree,
+                        size: 18.sp,
+                        color: state is CategoryLoaded && roots.isNotEmpty
+                            ? AppColors.primary
+                            : AppColors.grey300,
+                      ),
+                      SizedBox(width: AppSpacing.sm10),
+                      Expanded(
+                        child: Text(
+                          displayName.isNotEmpty
+                              ? displayName
+                              : state is CategoryLoading
+                                  ? 'marketplace.loading_categories'.tr()
+                                  : roots.isEmpty
+                                      ? isBiomass
+                                          ? 'marketplace.no_category_for_type'
+                                              .tr(namedArgs: {
+                                              'type': biomassaLabel,
+                                            })
+                                          : 'marketplace.no_organic_categories'
+                                              .tr()
+                                      : 'marketplace.pick_category'.tr(),
+                          style: TextStyle(
+                            fontSize: 13.sp,
+                            color: displayName.isNotEmpty
+                                ? AppColors.textPrimary
+                                : AppColors.textSecondary,
+                            fontWeight: displayName.isNotEmpty
+                                ? FontWeight.w600
+                                : FontWeight.normal,
+                          ),
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                      ),
+                      Icon(
+                        LucideIcons.search,
+                        size: 16.sp,
+                        color: state is CategoryLoaded && roots.isNotEmpty
+                            ? AppColors.textSecondary
+                            : AppColors.grey300,
+                      ),
+                    ],
+                  ),
+                ),
+              ),
             ),
             if (state is CategoryError)
               Padding(
@@ -952,6 +1127,14 @@ class _AddEditProductPageState extends State<AddEditProductPage> {
         );
       },
     );
+  }
+
+  List<CategoryModel> _flattenTree(CategoryModel node) {
+    final result = <CategoryModel>[node];
+    for (final child in node.children) {
+      result.addAll(_flattenTree(child));
+    }
+    return result;
   }
 
   Widget _buildDropdown({
