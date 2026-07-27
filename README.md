@@ -39,8 +39,10 @@ Jangan klik Run langsung tanpa memilih config di atas.
 
 ```powershell
 flutter build apk --release --target-platform=android-arm64 `
-  --dart-define-from-file=dart_define.development.json
+--dart-define-from-file=dart_define.development.json
 ```
+
+flutter build apk --release --target-platform=android-arm64 --dart-define-from-file=dart_define.development.json
 
 ### Opsi 2 — HP fisik via USB (disarankan, tanpa firewall)
 

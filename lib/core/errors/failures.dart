@@ -46,7 +46,11 @@ class UnauthorizedFailure extends Failure {
 
 /// Akses terlarang (403)
 class ForbiddenFailure extends Failure {
-  const ForbiddenFailure([super.message = 'errors.forbidden']);
+  final String? code;
+  const ForbiddenFailure([super.message = 'errors.forbidden', this.code]);
+
+  @override
+  List<Object> get props => [message, code ?? ''];
 }
 
 /// Validasi data gagal (422)

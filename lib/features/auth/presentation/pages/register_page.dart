@@ -442,6 +442,7 @@ class _RegisterPageState extends State<RegisterPage> {
                                 );
                                 return CustomButton(
                                   text: 'daftar_sekarang'.tr(),
+                                  size: BisaButtonSize.md,
                                   useGradient: true,
                                   isLoading: loading,
                                   onPressed: loading ? null : _submit,

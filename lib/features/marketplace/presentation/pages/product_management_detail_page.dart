@@ -22,6 +22,8 @@ import '../../../../shared/widgets/product_detail_skeleton.dart';
 import '../../../../shared/widgets/shimmer_loading.dart';
 import '../../../../shared/widgets/custom_button.dart';
 import '../../../../shared/widgets/custom_text_field.dart';
+import '../../../../shared/widgets/quill_editor_field.dart';
+import 'quill_full_editor_page.dart';
 import '../../../auth/presentation/bloc/auth_cubit.dart';
 import '../../../negotiation/domain/entities/negotiation_entity.dart';
 import '../../../negotiation/presentation/bloc/negotiation_cubit.dart';
@@ -1080,15 +1082,13 @@ class ProductManagementDetailPage extends StatelessWidget {
   }
 
   Widget _buildDescriptionBody(ProductEntity p) {
+    final text = QuillEditorField.deltaToPlainText(p.description ?? '');
+    final hasDesc = text.isNotEmpty;
     return Text(
-      p.description?.isNotEmpty == true
-          ? p.description!
-          : 'marketplace.no_description_short'.tr(),
+      hasDesc ? text : 'marketplace.no_description_short'.tr(),
       style: TextStyle(
         fontSize: 13.sp,
-        color: p.description?.isNotEmpty == true
-            ? AppColors.textSecondary
-            : AppColors.textHint,
+        color: hasDesc ? AppColors.textSecondary : AppColors.textHint,
         height: 1.4,
       ),
     );
@@ -1595,31 +1595,25 @@ class ProductManagementDetailPage extends StatelessWidget {
     );
   }
 
-  void _editDescription(BuildContext context, ProductEntity p) {
-    final ctrl = TextEditingController(text: p.description ?? '');
-    _showManagementEditDialog(
-      context,
-      title: 'marketplace.edit_description'.tr(),
-      fields: [
-        CustomTextField(
-          label: 'marketplace.section_description'.tr(),
-          hint: 'marketplace.description_hint'.tr(),
-          controller: ctrl,
-          maxLines: 5,
+  void _editDescription(BuildContext context, ProductEntity p) async {
+    final result = await Navigator.of(context).push<String>(
+      MaterialPageRoute(
+        fullscreenDialog: true,
+        builder: (_) => QuillFullEditorPage(
+          initialValue: p.description,
+          title: 'marketplace.edit_description'.tr(),
         ),
-      ],
-      onSave: () async {
-        final error = await context.read<ProductManagementCubit>().updateField(
-          p.id,
-          {'description': ctrl.text.trim()},
-        );
-        if (error != null && context.mounted) {
-          showFailureSnackBarFromMessage(context, error);
-          return false;
-        }
-        return true;
-      },
+      ),
     );
+    if (result != null && context.mounted) {
+      final error = await context.read<ProductManagementCubit>().updateField(
+        p.id,
+        {'description': result},
+      );
+      if (error != null && context.mounted) {
+        showErrorSnackBar(context, error);
+      }
+    }
   }
 
   void _editSpecs(BuildContext context, ProductEntity p) async {

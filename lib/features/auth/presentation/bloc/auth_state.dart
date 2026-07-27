@@ -8,5 +8,6 @@ sealed class AuthState with _$AuthState {
   const factory AuthState.unauthenticated() = _Unauthenticated;
   const factory AuthState.success(String message) = _Success;
   const factory AuthState.resetTokenReceived(String token) = _ResetTokenReceived;
+  const factory AuthState.emailNotVerified(String email) = _EmailNotVerified;
   const factory AuthState.error(String message) = _Error;
 }

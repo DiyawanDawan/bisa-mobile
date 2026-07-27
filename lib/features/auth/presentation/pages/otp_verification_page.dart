@@ -68,9 +68,11 @@ class _OtpVerificationPageState extends State<OtpVerificationPage> {
         listener: (context, state) {
           state.maybeWhen(
             success: (message) {
-              if (widget.type == 'EMAIL_VERIFICATION') {
+              if (message == 'auth.verify_email_success') {
                 showSuccessSnackBar(context, message);
                 context.go('/login');
+              } else {
+                showSuccessSnackBar(context, message);
               }
             },
             resetTokenReceived: (token) {

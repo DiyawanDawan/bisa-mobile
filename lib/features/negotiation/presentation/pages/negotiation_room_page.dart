@@ -1816,7 +1816,9 @@ class _NegotiationRoomPageState extends State<NegotiationRoomPage> {
                 ),
               ),
             ],
-            Row(
+            Padding(
+              padding: EdgeInsets.only(bottom: MediaQuery.of(context).viewInsets.bottom),
+              child: Row(
               children: [
                 Expanded(
                   child: Container(
@@ -1939,6 +1941,7 @@ class _NegotiationRoomPageState extends State<NegotiationRoomPage> {
                   ),
                 ),
               ],
+            ),
             ),
           ],
         ],

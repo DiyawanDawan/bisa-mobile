@@ -29,6 +29,13 @@ Future<CategoryModel?> showCategoryTreePicker({
   );
 }
 
+class _CategoryWithPath {
+  final CategoryModel category;
+  final List<String> path;
+
+  _CategoryWithPath(this.category, this.path);
+}
+
 class _CategoryTreeSheet extends StatefulWidget {
   const _CategoryTreeSheet({
     required this.roots,
@@ -53,6 +60,15 @@ class _CategoryTreeSheetState extends State<_CategoryTreeSheet> {
   String _query = '';
 
   @override
+  void initState() {
+    super.initState();
+    // Default expand level 1 roots for Tokopedia-style multi-tree list
+    for (final root in widget.roots) {
+      _expandedIds.add(root.id);
+    }
+  }
+
+  @override
   void dispose() {
     _searchController.dispose();
     _scrollController.dispose();
@@ -69,27 +85,27 @@ class _CategoryTreeSheetState extends State<_CategoryTreeSheet> {
     });
   }
 
-  List<CategoryModel> _searchRecursive(
-    List<CategoryModel> nodes,
-    String query,
-  ) {
-    final result = <CategoryModel>[];
-    final q = query.toLowerCase();
-    for (final node in nodes) {
+  List<_CategoryWithPath> _getSearchResults(List<CategoryModel> roots, String query) {
+    final results = <_CategoryWithPath>[];
+    final q = query.trim().toLowerCase();
+    if (q.isEmpty) return results;
+
+    void traverse(CategoryModel node, List<String> parentPath) {
+      final currentPath = [...parentPath, node.name];
       final matches = node.name.toLowerCase().contains(q) ||
           (node.description ?? '').toLowerCase().contains(q);
-      final childMatches = _searchRecursive(node.children, query);
-      if (matches || childMatches.isNotEmpty) {
-        result.add(node.copyWith(children: childMatches));
+      if (matches && node.children.isEmpty) {
+        results.add(_CategoryWithPath(node, currentPath));
+      }
+      for (final child in node.children) {
+        traverse(child, currentPath);
       }
     }
-    return result;
-  }
 
-  List<CategoryModel> get _filteredRoots {
-    final q = _query.trim();
-    if (q.isEmpty) return widget.roots;
-    return _searchRecursive(widget.roots, q);
+    for (final root in roots) {
+      traverse(root, []);
+    }
+    return results;
   }
 
   int _indentFor(CategoryModel node) {
@@ -121,16 +137,16 @@ class _CategoryTreeSheetState extends State<_CategoryTreeSheet> {
 
   @override
   Widget build(BuildContext context) {
-    final displayRoots = _filteredRoots;
+    final isSearching = _query.trim().isNotEmpty;
+    final searchResults = isSearching ? _getSearchResults(widget.roots, _query) : <_CategoryWithPath>[];
 
     return Padding(
       padding: sheetBottomPadding(context),
       child: Container(
-        constraints: BoxConstraints(maxHeight: 0.8.sh),
+        constraints: BoxConstraints(maxHeight: 0.85.sh),
         decoration: BoxDecoration(
           color: AppColors.surface,
-          borderRadius:
-              BorderRadius.vertical(top: Radius.circular(AppRadius.pill)),
+          borderRadius: BorderRadius.vertical(top: Radius.circular(AppRadius.pill)),
         ),
         child: Column(
           mainAxisSize: MainAxisSize.min,
@@ -191,25 +207,26 @@ class _CategoryTreeSheetState extends State<_CategoryTreeSheet> {
                     borderRadius: BorderRadius.circular(AppRadius.lg),
                     borderSide: BorderSide.none,
                   ),
-                  contentPadding:
-                      EdgeInsets.symmetric(vertical: AppSpacing.md12),
+                  contentPadding: EdgeInsets.symmetric(vertical: AppSpacing.md12),
                 ),
               ),
             ),
             SizedBox(height: AppSpacing.sm),
             Flexible(
-              child: displayRoots.isEmpty
-                  ? Padding(
-                      padding: EdgeInsets.all(AppSpacing.xxl),
-                      child: Text(
-                        'marketplace.category_not_found'.tr(),
-                        style: TextStyle(
-                          color: AppColors.textSecondary,
-                          fontSize: 14.sp,
-                        ),
-                      ),
-                    )
-                  : _buildTreeList(displayRoots),
+              child: isSearching
+                  ? _buildSearchResults(searchResults)
+                  : widget.roots.isEmpty
+                      ? Padding(
+                          padding: EdgeInsets.all(AppSpacing.xxl),
+                          child: Text(
+                            'marketplace.category_not_found'.tr(),
+                            style: TextStyle(
+                              color: AppColors.textSecondary,
+                              fontSize: 14.sp,
+                            ),
+                          ),
+                        )
+                      : _buildTreeList(widget.roots),
             ),
           ],
         ),
@@ -217,11 +234,110 @@ class _CategoryTreeSheetState extends State<_CategoryTreeSheet> {
     );
   }
 
+  /// Tokopedia-style Search Highlight View with Full Breadcrumb Path
+  Widget _buildSearchResults(List<_CategoryWithPath> results) {
+    if (results.isEmpty) {
+      return Padding(
+        padding: EdgeInsets.all(AppSpacing.xxl),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(LucideIcons.searchX, size: 40.sp, color: AppColors.grey300),
+            SizedBox(height: 8.h),
+            Text(
+              'marketplace.category_not_found'.tr(),
+              style: TextStyle(
+                color: AppColors.textSecondary,
+                fontSize: 14.sp,
+              ),
+            ),
+          ],
+        ),
+      );
+    }
+
+    return ListView.separated(
+      controller: _scrollController,
+      shrinkWrap: true,
+      padding: EdgeInsets.fromLTRB(16.w, 8.h, 16.w, 24.h),
+      itemCount: results.length,
+      separatorBuilder: (_, __) => Divider(height: 1, color: AppColors.grey100),
+      itemBuilder: (context, index) {
+        final item = results[index];
+        final cat = item.category;
+        final isSel = widget.selected?.id == cat.id;
+        final breadcrumb = item.path.join(' > ');
+
+        return ListTile(
+          key: ValueKey(cat.id),
+          contentPadding: EdgeInsets.symmetric(horizontal: 8.w, vertical: 4.h),
+          onTap: () => Navigator.pop(context, cat),
+          leading: CircleAvatar(
+            backgroundColor: isSel
+                ? AppColors.primary.withValues(alpha: 0.12)
+                : AppColors.grey50,
+            child: Icon(
+              LucideIcons.tag,
+              size: 18.sp,
+              color: isSel ? AppColors.primary : AppColors.textSecondary,
+            ),
+          ),
+          title: Text(
+            cat.name,
+            style: TextStyle(
+              fontWeight: isSel ? FontWeight.bold : FontWeight.w600,
+              fontSize: 14.sp,
+              color: AppColors.textPrimary,
+            ),
+          ),
+          subtitle: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              SizedBox(height: 2.h),
+              Row(
+                children: [
+                  Icon(LucideIcons.gitCommitHorizontal, size: 12.sp, color: AppColors.primary),
+                  SizedBox(width: 4.w),
+                  Expanded(
+                    child: Text(
+                      breadcrumb,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: TextStyle(
+                        fontSize: 11.sp,
+                        fontWeight: FontWeight.w500,
+                        color: AppColors.primary,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+              if (cat.description != null && cat.description!.isNotEmpty)
+                Text(
+                  cat.description!,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: TextStyle(
+                    fontSize: 11.sp,
+                    color: AppColors.textSecondary,
+                  ),
+                ),
+            ],
+          ),
+          trailing: isSel
+              ? Icon(LucideIcons.check, color: AppColors.primary, size: 20.sp)
+              : Icon(LucideIcons.chevronRight, color: AppColors.grey300, size: 18.sp),
+        );
+      },
+    );
+  }
+
+  /// Multi-Tree Navigation List
   Widget _buildTreeList(List<CategoryModel> nodes) {
     return ListView.builder(
       controller: _scrollController,
       shrinkWrap: true,
-      padding: EdgeInsets.fromLTRB(8.w, 8.h, 8.w, 24.h),
+      padding: EdgeInsets.fromLTRB(12.w, 8.h, 12.w, 24.h),
       itemCount: nodes.length,
       itemBuilder: (context, index) {
         return _buildTreeNode(nodes[index]);
@@ -234,58 +350,65 @@ class _CategoryTreeSheetState extends State<_CategoryTreeSheet> {
     final hasChildren = node.children.isNotEmpty;
     final isExpanded = _expandedIds.contains(node.id);
     final isSelected = widget.selected?.id == node.id;
-    final canExpand = hasChildren && depth < _kMaxTreeDepth;
+    final isLeaf = !hasChildren;
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        Material(
-          color:
-              isSelected ? AppColors.primary.withValues(alpha: 0.08) : null,
-          borderRadius: BorderRadius.circular(AppRadius.md),
+        Container(
+          margin: EdgeInsets.symmetric(vertical: 2.h),
+          decoration: BoxDecoration(
+            color: isSelected
+                ? AppColors.primary.withValues(alpha: 0.08)
+                : depth == 1
+                    ? AppColors.grey50.withValues(alpha: 0.5)
+                    : AppColors.white,
+            borderRadius: BorderRadius.circular(AppRadius.md),
+            border: isSelected
+                ? Border.all(color: AppColors.primary.withValues(alpha: 0.4))
+                : Border.all(color: AppColors.grey100),
+          ),
           child: InkWell(
-            onTap: () => Navigator.pop(context, node),
+            onTap: () {
+              if (hasChildren) {
+                _toggleExpand(node.id);
+              } else {
+                Navigator.pop(context, node);
+              }
+            },
             borderRadius: BorderRadius.circular(AppRadius.md),
             child: Padding(
               padding: EdgeInsets.only(
-                left: 8.w + (depth - 1) * 20.w,
-                right: 8.w,
+                left: 10.w + (depth - 1) * 18.w,
+                right: 12.w,
                 top: 12.h,
                 bottom: 12.h,
               ),
               child: Row(
                 children: [
-                  if (canExpand)
+                  if (hasChildren)
                     GestureDetector(
                       onTap: () => _toggleExpand(node.id),
                       child: Container(
-                        width: 24.w,
-                        height: 24.w,
+                        width: 26.w,
+                        height: 26.w,
+                        decoration: BoxDecoration(
+                          color: AppColors.grey100,
+                          borderRadius: BorderRadius.circular(6.r),
+                        ),
                         alignment: Alignment.center,
                         child: Icon(
                           isExpanded
                               ? LucideIcons.chevronDown
                               : LucideIcons.chevronRight,
                           size: 16.sp,
-                          color: AppColors.textSecondary,
+                          color: AppColors.textPrimary,
                         ),
                       ),
                     )
-                  else if (depth < _kMaxTreeDepth)
-                    SizedBox(width: 24.w),
-                  Icon(
-                    depth == 1
-                        ? LucideIcons.folderOpen
-                        : depth == 2
-                            ? LucideIcons.folder
-                            : LucideIcons.tag,
-                    size: 18.sp,
-                    color: isSelected
-                        ? AppColors.primary
-                        : depth == 1
-                            ? AppColors.primary
-                            : AppColors.textSecondary,
-                  ),
+                  else
+                    SizedBox(width: 26.w),
+
                   SizedBox(width: AppSpacing.sm10),
                   Expanded(
                     child: Column(
@@ -300,11 +423,10 @@ class _CategoryTreeSheetState extends State<_CategoryTreeSheet> {
                                     ? FontWeight.w700
                                     : FontWeight.w500,
                             fontSize: depth == 1 ? 14.sp : 13.sp,
-                            color: AppColors.textPrimary,
+                            color: isLeaf ? AppColors.textPrimary : AppColors.textSecondary,
                           ),
                         ),
-                        if (node.description != null &&
-                            node.description!.isNotEmpty)
+                        if (node.description != null && node.description!.isNotEmpty)
                           Text(
                             node.description!,
                             maxLines: 1,
@@ -317,53 +439,26 @@ class _CategoryTreeSheetState extends State<_CategoryTreeSheet> {
                       ],
                     ),
                   ),
-                  Container(
-                    padding: EdgeInsets.symmetric(
-                        horizontal: 8.w, vertical: 3.h),
-                    decoration: BoxDecoration(
-                      color: depth == 1
-                          ? AppColors.primary.withValues(alpha: 0.1)
-                          : depth == 2
-                              ? Colors.blue.withValues(alpha: 0.1)
-                              : AppColors.grey100,
-                      borderRadius: BorderRadius.circular(AppRadius.pill),
+                  if (isLeaf && isSelected)
+                    Icon(LucideIcons.check, color: AppColors.primary, size: 20.sp)
+                  else if (hasChildren)
+                    Icon(
+                      isExpanded ? LucideIcons.chevronDown : LucideIcons.chevronRight,
+                      color: AppColors.grey300,
+                      size: 16.sp,
                     ),
-                    child: Text(
-                      depth == 1
-                          ? 'L1'
-                          : depth == 2
-                              ? 'L2'
-                              : 'L3',
-                      style: TextStyle(
-                        fontSize: 10.sp,
-                        fontWeight: FontWeight.w600,
-                        color: depth == 1
-                            ? AppColors.primary
-                            : depth == 2
-                                ? Colors.blue
-                                : AppColors.textSecondary,
-                      ),
-                    ),
-                  ),
-                  SizedBox(width: AppSpacing.sm),
-                  if (isSelected)
-                    Icon(LucideIcons.check,
-                        color: AppColors.primary, size: 20.sp),
                 ],
               ),
             ),
           ),
         ),
-        if (canExpand && isExpanded)
+        if (hasChildren && isExpanded)
           ...node.children.map((child) => _buildTreeNode(child)),
-        if (depth < _kMaxTreeDepth)
-          SizedBox(height: 1.h),
       ],
     );
   }
 }
 
-/// Returns a search hint or empty.
 String placeholderHint(BuildContext context, {String? fallback}) {
   return fallback ?? 'marketplace.search_category_hint'.tr();
 }

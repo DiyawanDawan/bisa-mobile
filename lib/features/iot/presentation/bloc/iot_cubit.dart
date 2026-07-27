@@ -180,9 +180,19 @@ class IotCubit extends Cubit<IotState> {
     );
   }
 
-  Future<void> subscribePro(String channelCode, String method) async {
+  Future<void> subscribePro(
+    String channelCode,
+    String method, {
+    String planType = 'rental',
+    int durationMonths = 1,
+  }) async {
     emit(const IotState.loading());
-    final result = await _repository.subscribePro(channelCode, method);
+    final result = await _repository.subscribePro(
+      channelCode,
+      method,
+      planType: planType,
+      durationMonths: durationMonths,
+    );
     result.fold(
       (failure) => emit(IotState.error(failure.message)),
       (data) => emit(IotState.subscriptionSuccess(data)),

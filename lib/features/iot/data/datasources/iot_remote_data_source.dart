@@ -23,7 +23,13 @@ abstract class IotRemoteDataSource {
   Future<String> exportDeviceReadingsCsv(String deviceId, {String range = '24h'});
   Future<void> updateDevice(String deviceId, Map<String, dynamic> data);
   Future<void> deleteDevice(String deviceId);
-  Future<Map<String, dynamic>> subscribePro(String channelCode, String method);
+  Future<Map<String, dynamic>> getSubscriptionPlans();
+  Future<Map<String, dynamic>> subscribePro(
+    String channelCode,
+    String method, {
+    String planType = 'rental',
+    int durationMonths = 1,
+  });
   Future<Map<String, dynamic>?> getPyrolysisSession(String deviceId);
   Future<Map<String, dynamic>> startPyrolysisSession(
     String deviceId, {
@@ -152,10 +158,23 @@ class IotRemoteDataSourceImpl implements IotRemoteDataSource {
   }
 
   @override
-  Future<Map<String, dynamic>> subscribePro(String channelCode, String method) async {
+  Future<Map<String, dynamic>> getSubscriptionPlans() async {
+    final response = await dio.get('/iot/plans');
+    return Map<String, dynamic>.from(response.data['data'] as Map);
+  }
+
+  @override
+  Future<Map<String, dynamic>> subscribePro(
+    String channelCode,
+    String method, {
+    String planType = 'rental',
+    int durationMonths = 1,
+  }) async {
     final response = await dio.post('/iot/subscribe', data: {
       'channel_code': channelCode,
       'method': method,
+      'plan_type': planType,
+      'duration_months': durationMonths,
     });
     return response.data['data'];
   }

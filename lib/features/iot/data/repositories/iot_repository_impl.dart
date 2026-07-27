@@ -163,9 +163,19 @@ class IotRepositoryImpl implements IotRepository {
   }
 
   @override
-  Future<Either<Failure, Map<String, dynamic>>> subscribePro(String channelCode, String method) async {
+  Future<Either<Failure, Map<String, dynamic>>> subscribePro(
+    String channelCode,
+    String method, {
+    String planType = 'rental',
+    int durationMonths = 1,
+  }) async {
     try {
-      final result = await remoteDataSource.subscribePro(channelCode, method);
+      final result = await remoteDataSource.subscribePro(
+        channelCode,
+        method,
+        planType: planType,
+        durationMonths: durationMonths,
+      );
       return Right(result);
     } on DioException catch (e) {
       return Left(_handleDioError(e));

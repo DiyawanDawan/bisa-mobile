@@ -8,11 +8,13 @@ class FloatingBottomNavItem {
   final IconData icon;
   final String label;
   final int? badgeCount;
+  final GlobalKey? key;
 
   const FloatingBottomNavItem({
     required this.icon,
     required this.label,
     this.badgeCount,
+    this.key,
   });
 }
 
@@ -54,9 +56,11 @@ class FloatingBottomNav extends StatelessWidget {
                 final item = items[index];
                 final selected = currentIndex == index;
                 return Expanded(
-                  child: InkWell(
-                    onTap: () => onTap(index),
-                    child: Column(
+                  child: Container(
+                    key: item.key,
+                    child: InkWell(
+                      onTap: () => onTap(index),
+                      child: Column(
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
                         Stack(
@@ -118,7 +122,8 @@ class FloatingBottomNav extends StatelessWidget {
                       ],
                     ),
                   ),
-                );
+                ),
+              );
               }),
             ),
           ),

@@ -40,6 +40,7 @@ import '../widgets/product_specs_sheet.dart';
 import '../../../../shared/widgets/product_video_player.dart';
 import '../../../../shared/widgets/auth_sheet.dart';
 import '../../../../shared/widgets/bisa_network_image.dart';
+import '../../../../shared/widgets/quill_editor_field.dart';
 import '../../../../core/utils/media_url_utils.dart';
 import '../../../commerce/presentation/bloc/commerce_cubit.dart';
 import '../../../orders/presentation/bloc/order_cubit.dart';
@@ -1861,6 +1862,7 @@ class _ProductDetailPageState extends State<ProductDetailPage> {
   }
 
   Widget _buildProductDescription(ProductEntity p) {
+    final descText = QuillEditorField.deltaToPlainText(p.description ?? '');
     return Padding(
       padding: EdgeInsets.fromLTRB(
         AppSpacing.xl,
@@ -1881,7 +1883,7 @@ class _ProductDetailPageState extends State<ProductDetailPage> {
           ),
           SizedBox(height: 4.h),
           Text(
-            p.description ?? 'marketplace.no_description'.tr(),
+            descText.isNotEmpty ? descText : 'marketplace.no_description'.tr(),
             maxLines: _isDescriptionExpanded ? null : 3,
             overflow: _isDescriptionExpanded ? null : TextOverflow.ellipsis,
             style: TextStyle(
@@ -1890,7 +1892,7 @@ class _ProductDetailPageState extends State<ProductDetailPage> {
               height: 1.4,
             ),
           ),
-          if ((p.description?.length ?? 0) > 100)
+          if (descText.length > 100)
             InkWell(
               onTap: () {
                 setState(() {

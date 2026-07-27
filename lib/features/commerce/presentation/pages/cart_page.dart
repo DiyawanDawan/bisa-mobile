@@ -40,7 +40,9 @@ import '../../../orders/presentation/widgets/payment_method_picker_sheet.dart';
 import '../../data/datasources/commerce_remote_data_source.dart';
 import '../../domain/repositories/commerce_repository.dart';
 import '../widgets/mode_product_catalog.dart';
+import '../widgets/voucher_picker_sheet.dart';
 import '../bloc/commerce_cubit.dart';
+
 
 class CartPage extends StatefulWidget {
   /// `true` pada rute `/checkout`: alamat, ongkir, breakdown, bayar.
@@ -3497,33 +3499,35 @@ class _CartPageState extends State<CartPage> {
               ),
               if (_isCheckoutFlow && selectedCount > 0) ...[
                 SizedBox(height: AppSpacing.sm),
-                Row(
-                  children: [
-                    Expanded(
-                      child: TextField(
-                        controller: _voucherCtrl,
-                        decoration: InputDecoration(
-                          isDense: true,
-                          hintText: 'cart.voucher_hint'.tr(),
-                          border: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(AppRadius.md),
-                          ),
-                        ),
-                        textCapitalization: TextCapitalization.characters,
-                      ),
+                // Tombol browse voucher
+                OutlinedButton.icon(
+                  onPressed: () async {
+                    final picked = await VoucherPickerSheet.show(context);
+                    if (picked != null && mounted) {
+                      setState(() {
+                        _voucherCtrl.text = picked;
+                        _appliedVoucherCode = null;
+                        _voucherError = null;
+                      });
+                      // Langsung validasi kode yang dipilih
+                      await _applyVoucher(cart);
+                    }
+                  },
+                  icon: Icon(LucideIcons.ticket, size: 14.sp),
+                  label: Text(
+                    _appliedVoucherCode != null
+                        ? 'Ganti Voucher'
+                        : 'Pilih Voucher',
+                    style: TextStyle(fontSize: 12.sp),
+                  ),
+                  style: OutlinedButton.styleFrom(
+                    minimumSize: const Size(double.infinity, 40),
+                    side: BorderSide(color: AppColors.primary),
+                    foregroundColor: AppColors.primary,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(AppRadius.md),
                     ),
-                    SizedBox(width: AppSpacing.sm),
-                    TextButton(
-                      onPressed: _voucherApplying
-                          ? null
-                          : () => _applyVoucher(cart),
-                      child: Text(
-                        _appliedVoucherCode != null
-                            ? 'cart.voucher_change'.tr()
-                            : 'cart.voucher_apply'.tr(),
-                      ),
-                    ),
-                  ],
+                  ),
                 ),
                 if (_voucherError != null)
                   Align(

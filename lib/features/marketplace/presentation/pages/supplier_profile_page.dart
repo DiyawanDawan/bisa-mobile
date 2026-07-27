@@ -11,6 +11,7 @@ import '../../../../injection_container.dart';
 import '../../../../shared/widgets/bisa_app_bar.dart';
 import '../../../../shared/widgets/bisa_avatar.dart';
 import '../../../../shared/widgets/bisa_search_field.dart';
+import '../../../../shared/widgets/quill_editor_field.dart';
 import '../../../auth/domain/entities/user_entity.dart';
 import '../../../auth/domain/repositories/auth_repository.dart';
 import '../../../auth/presentation/bloc/auth_cubit.dart';
@@ -151,7 +152,9 @@ class _SupplierProfilePageState extends State<SupplierProfilePage> {
       if (_searchQuery.isEmpty) return true;
       final q = _searchQuery.toLowerCase();
       return p.name.toLowerCase().contains(q) ||
-          (p.description?.toLowerCase().contains(q) ?? false) ||
+          (QuillEditorField.deltaToPlainText(p.description ?? '')
+              .toLowerCase()
+              .contains(q)) ||
           p.biomassaType.toLowerCase().contains(q);
     }).toList();
 

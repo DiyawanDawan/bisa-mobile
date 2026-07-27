@@ -409,14 +409,17 @@ class AuthRepositoryImpl implements AuthRepository {
       final statusCode = e.response?.statusCode;
       final rawData = e.response?.data;
       final data = rawData is Map<String, dynamic> ? rawData : null;
-      final message =
-          data?['meta']?['message'] ?? data?['message'] ?? 'errors.generic';
+      final rawMessage = data?['meta']?['message'] ??
+          data?['message'] ??
+          (rawData is String ? rawData : null);
+      final message = rawMessage ?? 'errors.generic';
+      final code = _extractErrorCode(data, statusCode, message);
 
       switch (statusCode) {
         case 401:
           return UnauthorizedFailure(message);
         case 403:
-          return ForbiddenFailure(message);
+          return ForbiddenFailure(message, code);
         case 404:
           return const NotFoundFailure();
         case 422:
@@ -431,6 +434,29 @@ class AuthRepositoryImpl implements AuthRepository {
       return const NetworkFailure();
     }
     return const UnexpectedFailure();
+  }
+
+  String? _extractErrorCode(
+    Map<String, dynamic>? data,
+    int? statusCode,
+    String message,
+  ) {
+    final code = data?['meta']?['code']?.toString() ??
+        data?['code']?.toString();
+    if (code != null && code.isNotEmpty) return code;
+
+    if (statusCode == 403) {
+      final lower = message.toLowerCase();
+      if (lower.contains('email') &&
+          (lower.contains('verified') ||
+           lower.contains('verif') ||
+           lower.contains('belum diverifikasi') ||
+           lower.contains('diverifikasi'))) {
+        return 'EMAIL_NOT_VERIFIED';
+      }
+    }
+
+    return null;
   }
 
   Map<String, List<String>>? _extractErrors(dynamic data) {

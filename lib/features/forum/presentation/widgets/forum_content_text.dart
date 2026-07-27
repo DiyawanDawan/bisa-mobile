@@ -1,18 +1,13 @@
+import 'dart:convert';
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_quill/flutter_quill.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:go_router/go_router.dart';
 import 'package:mobile_bisa/core/constants/app_layout.dart';
 import 'package:mobile_bisa/core/constants/app_colors.dart';
 import 'package:mobile_bisa/features/forum/domain/entities/forum_entity.dart';
 
-/// Render konten forum sebagai `RichText` dengan highlight pada token
-/// `#hashtag` (tap → filter forum by tag) dan `@nama-produk` (tap →
-/// navigasi ke product detail bila ada di daftar mention).
-///
-/// `productMentions` adalah snapshot dari backend; mapping `slug` (token
-/// yang user ketik) → produk asli. Kalau tidak ada match, token tetap
-/// di-highlight tapi tap-nya tidak melakukan apa-apa.
 class ForumContentText extends StatelessWidget {
   final String content;
   final List<ForumProductMentionEntity> productMentions;
@@ -31,9 +26,6 @@ class ForumContentText extends StatelessWidget {
     this.onTagTap,
   });
 
-  // Catatan: regex ini intentionally lebih longgar dari backend supaya
-  // semua token yang user ketik sempat di-highlight (server tetap
-  // sumber kebenaran untuk persistence).
   static final RegExp _tokenRe =
       RegExp(r'(?<![A-Za-z0-9_])([#@])([A-Za-z0-9_-]{2,60})');
 
@@ -45,8 +37,21 @@ class ForumContentText extends StatelessWidget {
     return null;
   }
 
+  static String extractPlainText(String raw) {
+    if (raw.isEmpty) return raw;
+    final trimmed = raw.trim();
+    if (trimmed.startsWith('[') && trimmed.endsWith(']')) {
+      try {
+        final doc = Document.fromJson(jsonDecode(trimmed));
+        return doc.toPlainText().trim();
+      } catch (_) {}
+    }
+    return raw;
+  }
+
   @override
   Widget build(BuildContext context) {
+    final text = extractPlainText(content);
     final base = baseStyle ??
         TextStyle(
           fontSize: 14.sp,
@@ -60,9 +65,9 @@ class ForumContentText extends StatelessWidget {
 
     final spans = <InlineSpan>[];
     int last = 0;
-    for (final match in _tokenRe.allMatches(content)) {
+    for (final match in _tokenRe.allMatches(text)) {
       if (match.start > last) {
-        spans.add(TextSpan(text: content.substring(last, match.start)));
+        spans.add(TextSpan(text: text.substring(last, match.start)));
       }
       final symbol = match.group(1)!;
       final token = match.group(2)!;
@@ -94,8 +99,8 @@ class ForumContentText extends StatelessWidget {
       );
       last = match.end;
     }
-    if (last < content.length) {
-      spans.add(TextSpan(text: content.substring(last)));
+    if (last < text.length) {
+      spans.add(TextSpan(text: text.substring(last)));
     }
 
     return RichText(

@@ -2,6 +2,7 @@ import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
+import 'package:go_router/go_router.dart';
 import '../../../../core/constants/app_colors.dart';
 import '../../../../core/constants/app_layout.dart';
 import '../../../../core/utils/app_feedback.dart';
@@ -38,7 +39,17 @@ class _ForgotPasswordPageState extends State<ForgotPasswordPage> {
       body: BlocListener<AuthCubit, AuthState>(
         listener: (context, state) {
           state.maybeWhen(
-            success: (message) => showSuccessSnackBar(context, message),
+            success: (message) {
+              if (message == 'auth.reset_code_sent') {
+                showSuccessSnackBar(context, message);
+                context.push('/otp-verification', extra: {
+                  'email': _emailController.text.trim(),
+                  'type': 'RESET_PASSWORD',
+                });
+              } else {
+                showSuccessSnackBar(context, message);
+              }
+            },
             error: (message) => showErrorSnackBar(context, message),
             orElse: () {},
           );

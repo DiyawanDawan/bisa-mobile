@@ -55,7 +55,7 @@ class CustomButton extends StatelessWidget {
       if (height! <= AppSpacing.buttonHeight + 2.h) return BisaButtonSize.md;
       return BisaButtonSize.lg;
     }
-    return BisaButtonSize.lg;
+    return BisaButtonSize.md;
   }
 
   double get _effectiveHeight {

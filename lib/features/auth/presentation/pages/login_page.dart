@@ -89,6 +89,12 @@ class _LoginPageState extends State<LoginPage> {
         listener: (context, state) {
           state.maybeWhen(
             authenticated: (_) => context.go('/'),
+            emailNotVerified: (email) {
+              context.push(
+                '/otp-verification',
+                extra: {'email': email, 'type': 'EMAIL_VERIFICATION'},
+              );
+            },
             error: (message) => showErrorSnackBar(context, message),
             orElse: () {},
           );
@@ -338,6 +344,7 @@ class _LoginPageState extends State<LoginPage> {
       builder: (context, state) {
         return CustomButton(
           text: 'login'.tr(),
+          size: BisaButtonSize.md,
           useGradient: true,
           isLoading: state.maybeWhen(loading: () => true, orElse: () => false),
           onPressed: () async {

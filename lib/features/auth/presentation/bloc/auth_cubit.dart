@@ -10,8 +10,9 @@ import 'package:freezed_annotation/freezed_annotation.dart';
 import 'package:google_sign_in/google_sign_in.dart';
 import 'package:mobile_bisa/firebase_options.dart';
 import '../../../../core/config/app_config.dart';
-import '../../domain/entities/user_entity.dart';
+import '../../../../core/errors/failures.dart';
 import '../../../profile/domain/entities/address_entity.dart';
+import '../../domain/entities/user_entity.dart';
 import '../../domain/repositories/auth_repository.dart';
 
 part 'auth_state.dart';
@@ -88,7 +89,13 @@ class AuthCubit extends Cubit<AuthState> {
     emit(const AuthState.loading());
     final result = await _repository.login(email, password);
     await result.fold(
-      (failure) async => emit(AuthState.error(failure.message)),
+      (failure) async {
+        if (failure is ForbiddenFailure && failure.code == 'EMAIL_NOT_VERIFIED') {
+          emit(AuthState.emailNotVerified(email));
+        } else {
+          emit(AuthState.error(failure.message));
+        }
+      },
       (_) async {
         final refreshed = await _repository.getCurrentUser();
         refreshed.fold(
@@ -346,6 +353,7 @@ class AuthCubit extends Cubit<AuthState> {
   }
 
   Future<void> resendOtp(String email, String type) async {
+    emit(const AuthState.loading());
     final result = await _repository.resendOtp(email, type);
     result.fold(
       (failure) => emit(AuthState.error(failure.message)),

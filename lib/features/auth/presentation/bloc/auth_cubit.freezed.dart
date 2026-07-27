@@ -61,7 +61,7 @@ extension AuthStatePatterns on AuthState {
 /// }
 /// ```
 
-@optionalTypeArgs TResult maybeMap<TResult extends Object?>({TResult Function( _Initial value)?  initial,TResult Function( _Loading value)?  loading,TResult Function( _Authenticated value)?  authenticated,TResult Function( _Unauthenticated value)?  unauthenticated,TResult Function( _Success value)?  success,TResult Function( _ResetTokenReceived value)?  resetTokenReceived,TResult Function( _Error value)?  error,required TResult orElse(),}){
+@optionalTypeArgs TResult maybeMap<TResult extends Object?>({TResult Function( _Initial value)?  initial,TResult Function( _Loading value)?  loading,TResult Function( _Authenticated value)?  authenticated,TResult Function( _Unauthenticated value)?  unauthenticated,TResult Function( _Success value)?  success,TResult Function( _ResetTokenReceived value)?  resetTokenReceived,TResult Function( _EmailNotVerified value)?  emailNotVerified,TResult Function( _Error value)?  error,required TResult orElse(),}){
 final _that = this;
 switch (_that) {
 case _Initial() when initial != null:
@@ -70,7 +70,8 @@ return loading(_that);case _Authenticated() when authenticated != null:
 return authenticated(_that);case _Unauthenticated() when unauthenticated != null:
 return unauthenticated(_that);case _Success() when success != null:
 return success(_that);case _ResetTokenReceived() when resetTokenReceived != null:
-return resetTokenReceived(_that);case _Error() when error != null:
+return resetTokenReceived(_that);case _EmailNotVerified() when emailNotVerified != null:
+return emailNotVerified(_that);case _Error() when error != null:
 return error(_that);case _:
   return orElse();
 
@@ -89,7 +90,7 @@ return error(_that);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult map<TResult extends Object?>({required TResult Function( _Initial value)  initial,required TResult Function( _Loading value)  loading,required TResult Function( _Authenticated value)  authenticated,required TResult Function( _Unauthenticated value)  unauthenticated,required TResult Function( _Success value)  success,required TResult Function( _ResetTokenReceived value)  resetTokenReceived,required TResult Function( _Error value)  error,}){
+@optionalTypeArgs TResult map<TResult extends Object?>({required TResult Function( _Initial value)  initial,required TResult Function( _Loading value)  loading,required TResult Function( _Authenticated value)  authenticated,required TResult Function( _Unauthenticated value)  unauthenticated,required TResult Function( _Success value)  success,required TResult Function( _ResetTokenReceived value)  resetTokenReceived,required TResult Function( _EmailNotVerified value)  emailNotVerified,required TResult Function( _Error value)  error,}){
 final _that = this;
 switch (_that) {
 case _Initial():
@@ -98,7 +99,8 @@ return loading(_that);case _Authenticated():
 return authenticated(_that);case _Unauthenticated():
 return unauthenticated(_that);case _Success():
 return success(_that);case _ResetTokenReceived():
-return resetTokenReceived(_that);case _Error():
+return resetTokenReceived(_that);case _EmailNotVerified():
+return emailNotVerified(_that);case _Error():
 return error(_that);}
 }
 /// A variant of `map` that fallback to returning `null`.
@@ -113,7 +115,7 @@ return error(_that);}
 /// }
 /// ```
 
-@optionalTypeArgs TResult? mapOrNull<TResult extends Object?>({TResult? Function( _Initial value)?  initial,TResult? Function( _Loading value)?  loading,TResult? Function( _Authenticated value)?  authenticated,TResult? Function( _Unauthenticated value)?  unauthenticated,TResult? Function( _Success value)?  success,TResult? Function( _ResetTokenReceived value)?  resetTokenReceived,TResult? Function( _Error value)?  error,}){
+@optionalTypeArgs TResult? mapOrNull<TResult extends Object?>({TResult? Function( _Initial value)?  initial,TResult? Function( _Loading value)?  loading,TResult? Function( _Authenticated value)?  authenticated,TResult? Function( _Unauthenticated value)?  unauthenticated,TResult? Function( _Success value)?  success,TResult? Function( _ResetTokenReceived value)?  resetTokenReceived,TResult? Function( _EmailNotVerified value)?  emailNotVerified,TResult? Function( _Error value)?  error,}){
 final _that = this;
 switch (_that) {
 case _Initial() when initial != null:
@@ -122,7 +124,8 @@ return loading(_that);case _Authenticated() when authenticated != null:
 return authenticated(_that);case _Unauthenticated() when unauthenticated != null:
 return unauthenticated(_that);case _Success() when success != null:
 return success(_that);case _ResetTokenReceived() when resetTokenReceived != null:
-return resetTokenReceived(_that);case _Error() when error != null:
+return resetTokenReceived(_that);case _EmailNotVerified() when emailNotVerified != null:
+return emailNotVerified(_that);case _Error() when error != null:
 return error(_that);case _:
   return null;
 
@@ -140,7 +143,7 @@ return error(_that);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult maybeWhen<TResult extends Object?>({TResult Function()?  initial,TResult Function()?  loading,TResult Function( UserEntity user)?  authenticated,TResult Function()?  unauthenticated,TResult Function( String message)?  success,TResult Function( String token)?  resetTokenReceived,TResult Function( String message)?  error,required TResult orElse(),}) {final _that = this;
+@optionalTypeArgs TResult maybeWhen<TResult extends Object?>({TResult Function()?  initial,TResult Function()?  loading,TResult Function( UserEntity user)?  authenticated,TResult Function()?  unauthenticated,TResult Function( String message)?  success,TResult Function( String token)?  resetTokenReceived,TResult Function( String email)?  emailNotVerified,TResult Function( String message)?  error,required TResult orElse(),}) {final _that = this;
 switch (_that) {
 case _Initial() when initial != null:
 return initial();case _Loading() when loading != null:
@@ -148,7 +151,8 @@ return loading();case _Authenticated() when authenticated != null:
 return authenticated(_that.user);case _Unauthenticated() when unauthenticated != null:
 return unauthenticated();case _Success() when success != null:
 return success(_that.message);case _ResetTokenReceived() when resetTokenReceived != null:
-return resetTokenReceived(_that.token);case _Error() when error != null:
+return resetTokenReceived(_that.token);case _EmailNotVerified() when emailNotVerified != null:
+return emailNotVerified(_that.email);case _Error() when error != null:
 return error(_that.message);case _:
   return orElse();
 
@@ -167,7 +171,7 @@ return error(_that.message);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult when<TResult extends Object?>({required TResult Function()  initial,required TResult Function()  loading,required TResult Function( UserEntity user)  authenticated,required TResult Function()  unauthenticated,required TResult Function( String message)  success,required TResult Function( String token)  resetTokenReceived,required TResult Function( String message)  error,}) {final _that = this;
+@optionalTypeArgs TResult when<TResult extends Object?>({required TResult Function()  initial,required TResult Function()  loading,required TResult Function( UserEntity user)  authenticated,required TResult Function()  unauthenticated,required TResult Function( String message)  success,required TResult Function( String token)  resetTokenReceived,required TResult Function( String email)  emailNotVerified,required TResult Function( String message)  error,}) {final _that = this;
 switch (_that) {
 case _Initial():
 return initial();case _Loading():
@@ -175,7 +179,8 @@ return loading();case _Authenticated():
 return authenticated(_that.user);case _Unauthenticated():
 return unauthenticated();case _Success():
 return success(_that.message);case _ResetTokenReceived():
-return resetTokenReceived(_that.token);case _Error():
+return resetTokenReceived(_that.token);case _EmailNotVerified():
+return emailNotVerified(_that.email);case _Error():
 return error(_that.message);}
 }
 /// A variant of `when` that fallback to returning `null`
@@ -190,7 +195,7 @@ return error(_that.message);}
 /// }
 /// ```
 
-@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>({TResult? Function()?  initial,TResult? Function()?  loading,TResult? Function( UserEntity user)?  authenticated,TResult? Function()?  unauthenticated,TResult? Function( String message)?  success,TResult? Function( String token)?  resetTokenReceived,TResult? Function( String message)?  error,}) {final _that = this;
+@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>({TResult? Function()?  initial,TResult? Function()?  loading,TResult? Function( UserEntity user)?  authenticated,TResult? Function()?  unauthenticated,TResult? Function( String message)?  success,TResult? Function( String token)?  resetTokenReceived,TResult? Function( String email)?  emailNotVerified,TResult? Function( String message)?  error,}) {final _that = this;
 switch (_that) {
 case _Initial() when initial != null:
 return initial();case _Loading() when loading != null:
@@ -198,7 +203,8 @@ return loading();case _Authenticated() when authenticated != null:
 return authenticated(_that.user);case _Unauthenticated() when unauthenticated != null:
 return unauthenticated();case _Success() when success != null:
 return success(_that.message);case _ResetTokenReceived() when resetTokenReceived != null:
-return resetTokenReceived(_that.token);case _Error() when error != null:
+return resetTokenReceived(_that.token);case _EmailNotVerified() when emailNotVerified != null:
+return emailNotVerified(_that.email);case _Error() when error != null:
 return error(_that.message);case _:
   return null;
 
@@ -539,6 +545,78 @@ class __$ResetTokenReceivedCopyWithImpl<$Res>
 @pragma('vm:prefer-inline') $Res call({Object? token = null,}) {
   return _then(_ResetTokenReceived(
 null == token ? _self.token : token // ignore: cast_nullable_to_non_nullable
+as String,
+  ));
+}
+
+
+}
+
+/// @nodoc
+
+
+class _EmailNotVerified with DiagnosticableTreeMixin implements AuthState {
+  const _EmailNotVerified(this.email);
+  
+
+ final  String email;
+
+/// Create a copy of AuthState
+/// with the given fields replaced by the non-null parameter values.
+@JsonKey(includeFromJson: false, includeToJson: false)
+@pragma('vm:prefer-inline')
+_$EmailNotVerifiedCopyWith<_EmailNotVerified> get copyWith => __$EmailNotVerifiedCopyWithImpl<_EmailNotVerified>(this, _$identity);
+
+
+@override
+void debugFillProperties(DiagnosticPropertiesBuilder properties) {
+  properties
+    ..add(DiagnosticsProperty('type', 'AuthState.emailNotVerified'))
+    ..add(DiagnosticsProperty('email', email));
+}
+
+@override
+bool operator ==(Object other) {
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is _EmailNotVerified&&(identical(other.email, email) || other.email == email));
+}
+
+
+@override
+int get hashCode => Object.hash(runtimeType,email);
+
+@override
+String toString({ DiagnosticLevel minLevel = DiagnosticLevel.info }) {
+  return 'AuthState.emailNotVerified(email: $email)';
+}
+
+
+}
+
+/// @nodoc
+abstract mixin class _$EmailNotVerifiedCopyWith<$Res> implements $AuthStateCopyWith<$Res> {
+  factory _$EmailNotVerifiedCopyWith(_EmailNotVerified value, $Res Function(_EmailNotVerified) _then) = __$EmailNotVerifiedCopyWithImpl;
+@useResult
+$Res call({
+ String email
+});
+
+
+
+
+}
+/// @nodoc
+class __$EmailNotVerifiedCopyWithImpl<$Res>
+    implements _$EmailNotVerifiedCopyWith<$Res> {
+  __$EmailNotVerifiedCopyWithImpl(this._self, this._then);
+
+  final _EmailNotVerified _self;
+  final $Res Function(_EmailNotVerified) _then;
+
+/// Create a copy of AuthState
+/// with the given fields replaced by the non-null parameter values.
+@pragma('vm:prefer-inline') $Res call({Object? email = null,}) {
+  return _then(_EmailNotVerified(
+null == email ? _self.email : email // ignore: cast_nullable_to_non_nullable
 as String,
   ));
 }

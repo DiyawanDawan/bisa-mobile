@@ -15,7 +15,9 @@ import '../../../../injection_container.dart';
 import '../../../../shared/widgets/bisa_app_bar.dart';
 import '../../../../shared/widgets/custom_button.dart';
 import '../../../../shared/widgets/custom_text_field.dart';
+import '../../../../shared/widgets/quill_editor_field.dart';
 import '../../../../shared/widgets/bisa_network_image.dart';
+import '../../../marketplace/presentation/pages/quill_full_editor_page.dart';
 import '../bloc/forum_cubit.dart';
 import '../../domain/entities/forum_entity.dart';
 import '../../domain/entities/forum_media.dart';
@@ -44,7 +46,8 @@ class AddPostPage extends StatefulWidget {
 
 class _AddPostPageState extends State<AddPostPage> {
   late final TextEditingController _titleController;
-  late final TextEditingController _contentController;
+  late String _contentDelta;
+  String get _contentPlainText => QuillEditorField.deltaToPlainText(_contentDelta);
   final _picker = ImagePicker();
   String? _selectedCategoryId;
   List<ForumCategoryEntity> _categories = [];
@@ -59,7 +62,7 @@ class _AddPostPageState extends State<AddPostPage> {
     super.initState();
     final post = widget.editPost;
     _titleController = TextEditingController(text: post?.title ?? '');
-    _contentController = TextEditingController(text: post?.content ?? '');
+    _contentDelta = post?.content ?? '';
     _selectedCategoryId = (post?.categoryId.isEmpty ?? true)
         ? null
         : post!.categoryId;
@@ -67,7 +70,6 @@ class _AddPostPageState extends State<AddPostPage> {
     _status = post?.status ?? 'PUBLISHED';
     // Listener untuk live-preview chip tag & mention saat user ngetik.
     _titleController.addListener(_onTextChanged);
-    _contentController.addListener(_onTextChanged);
   }
 
   // Tag/mention yang sedang ter-detect untuk preview.
@@ -75,7 +77,7 @@ class _AddPostPageState extends State<AddPostPage> {
   List<String> _detectedMentions = [];
 
   void _onTextChanged() {
-    final combined = '${_titleController.text}\n${_contentController.text}';
+    final combined = '${_titleController.text}\n$_contentPlainText';
     final tags = <String>{};
     for (final m in _hashtagRe.allMatches(combined)) {
       tags.add(m.group(1)!.toLowerCase());
@@ -104,16 +106,106 @@ class _AddPostPageState extends State<AddPostPage> {
     return true;
   }
 
+  Future<void> _openContentEditor() async {
+    final result = await Navigator.of(context).push<String>(
+      MaterialPageRoute(
+        fullscreenDialog: true,
+        builder: (_) => QuillFullEditorPage(
+          initialValue: _contentDelta.isNotEmpty ? _contentDelta : null,
+          title: 'forum.label_content'.tr(),
+          hint: 'forum.hint_content'.tr(),
+        ),
+      ),
+    );
+    if (result != null && mounted) {
+      setState(() {
+        _contentDelta = result;
+      });
+      _onTextChanged();
+    }
+  }
+
+  Widget _buildContentEditorButton() {
+    final plainText = _contentPlainText;
+    final hasContent = plainText.isNotEmpty;
+
+    return GestureDetector(
+      onTap: _openContentEditor,
+      child: Container(
+        width: double.infinity,
+        padding: EdgeInsets.all(14.r),
+        decoration: BoxDecoration(
+          border: Border.all(
+            color: hasContent ? AppColors.primary : AppColors.grey300,
+          ),
+          borderRadius: BorderRadius.circular(12.r),
+        ),
+        child: Row(
+          children: [
+            Icon(
+              Icons.edit_note,
+              size: 24.sp,
+              color: hasContent ? AppColors.primary : AppColors.textHint,
+            ),
+            SizedBox(width: 10.w),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  if (hasContent)
+                    Text(
+                      plainText,
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
+                      style: TextStyle(
+                        fontSize: 13.sp,
+                        color: AppColors.textPrimary,
+                        height: 1.3,
+                      ),
+                    )
+                  else
+                    Text(
+                      'forum.hint_content'.tr(),
+                      style: TextStyle(
+                        fontSize: 13.sp,
+                        color: AppColors.textHint,
+                      ),
+                    ),
+                ],
+              ),
+            ),
+            SizedBox(width: 8.w),
+            Container(
+              padding: EdgeInsets.symmetric(horizontal: 10.w, vertical: 4.h),
+              decoration: BoxDecoration(
+                gradient: AppColors.primaryGradient,
+                borderRadius: BorderRadius.circular(16.r),
+              ),
+              child: Text(
+                'Edit',
+                style: TextStyle(
+                  fontSize: 11.sp,
+                  color: AppColors.textOnPrimary,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
   @override
   void dispose() {
     _titleController.dispose();
-    _contentController.dispose();
     super.dispose();
   }
 
   bool _isValid({required bool publishing}) {
     final title = _titleController.text.trim();
-    final content = _contentController.text.trim();
+    final content = _contentPlainText.trim();
     final hasMedia = _attachments.isNotEmpty || _existingMedia.isNotEmpty;
     if (publishing) {
       // Publish: butuh title min 5 char + (content min 10 char ATAU ada media).
@@ -135,10 +227,10 @@ class _AddPostPageState extends State<AddPostPage> {
     }
 
     final title = _titleController.text.trim();
-    final content = _contentController.text.trim();
+    final contentPlain = _contentPlainText.trim();
 
     if (publishing) {
-      final combinedText = '$title $content'.toLowerCase();
+      final combinedText = '$title $contentPlain'.toLowerCase();
       // Minimal 2 kata — hindari false positive (mis. "slot" = slot pickup logistik).
       const bannedPhrases = [
         // Judi / togel
@@ -283,7 +375,7 @@ class _AddPostPageState extends State<AddPostPage> {
       cubit.updatePost(
         widget.editPost!.id,
         title: title,
-        content: content,
+        content: _contentDelta,
         categoryId: _selectedCategoryId,
         existingMedia: _existingMedia,
         newAttachments: List.from(_attachments),
@@ -292,7 +384,7 @@ class _AddPostPageState extends State<AddPostPage> {
     } else {
       cubit.createPost(
         title,
-        content,
+        _contentDelta,
         _selectedCategoryId,
         groupId: widget.groupId,
         attachments: List.from(_attachments),
@@ -368,13 +460,7 @@ class _AddPostPageState extends State<AddPostPage> {
                           isRequired: true,
                         ),
                         SizedBox(height: AppSpacing.md),
-                        CustomTextField(
-                          label: 'forum.label_content'.tr(),
-                          hint: 'forum.hint_content'.tr(),
-                          controller: _contentController,
-                          maxLines: 10,
-                          isRequired: true,
-                        ),
+                        _buildContentEditorButton(),
                         SizedBox(height: AppSpacing.md),
                         if (_existingMedia.isNotEmpty) ...[
                           _buildExistingMediaList(),

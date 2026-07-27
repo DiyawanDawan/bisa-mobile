@@ -6,6 +6,7 @@ import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter_quill/flutter_quill.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:hydrated_bloc/hydrated_bloc.dart';
 import 'package:path_provider/path_provider.dart';
@@ -193,7 +194,10 @@ class MyApp extends StatelessWidget {
             ),
           ),
           routerConfig: goRouter,
-          localizationsDelegates: context.localizationDelegates,
+          localizationsDelegates: [
+            ...context.localizationDelegates,
+            FlutterQuillLocalizations.delegate,
+          ],
           supportedLocales: context.supportedLocales,
           locale: locale,
         );

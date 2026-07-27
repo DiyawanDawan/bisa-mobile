@@ -199,7 +199,10 @@ class AuthRemoteDataSourceImpl implements AuthRemoteDataSource {
 
   @override
   Future<void> forgotPassword(String email) async {
-    await dio.post('/auth/forgot-password', data: {'email': email});
+    await dio.post('/auth/resend-otp', data: {
+      'email': email,
+      'type': 'RESET_PASSWORD',
+    });
   }
 
   @override
