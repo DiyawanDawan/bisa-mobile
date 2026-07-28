@@ -340,12 +340,7 @@ class _IotSubscriptionPageState extends State<IotSubscriptionPage> {
             body: Stack(
               children: [
                 SingleChildScrollView(
-                  padding: fullScreenScrollPadding(
-                    context,
-                    horizontal: 20,
-                    top: 20,
-                    baseBottom: 20,
-                  ),
+                  padding: EdgeInsets.fromLTRB(20.w, 20.h, 20.w, 30.h),
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
@@ -379,88 +374,103 @@ class _IotSubscriptionPageState extends State<IotSubscriptionPage> {
 
                       SizedBox(height: AppSpacing.xl),
 
-                      // STAGE 4: PILIH METODE PEMBAYARAN
+                      // STAGE 4: PILIH METODE PEMBAYARAN (VIA BOTTOM SHEET)
                       _buildSectionTitle('4. Pilih Metode Pembayaran'),
                       SizedBox(height: AppSpacing.md12),
-                      _buildPaymentMethodsList(),
+                      _buildPaymentMethodSelectorCard(),
 
                       SizedBox(height: AppSpacing.xl),
 
-                      // SECTION FITUR & MATRIKS PRO
-                      _buildSectionTitle('pro.matrix_section_title'.tr()),
-                      SizedBox(height: AppSpacing.md12),
-                      const ProTierMatrix(),
-                      SizedBox(height: AppSpacing.xl),
-                      _buildSectionTitle('iot.subscription_benefits_title'.tr()),
-                      SizedBox(height: AppSpacing.md12),
-                      _buildFeatureItem(
-                        LucideIcons.thermometer,
-                        'iot.subscription_feature_temp_title'.tr(),
-                        'iot.subscription_feature_temp_desc'.tr(),
-                      ),
-                      _buildFeatureItem(
-                        LucideIcons.bellRing,
-                        'iot.subscription_feature_alert_title'.tr(),
-                        'iot.subscription_feature_alert_desc'.tr(),
-                      ),
-                      _buildFeatureItem(
-                        LucideIcons.chartBar,
-                        'iot.subscription_feature_analytics_title'.tr(),
-                        'iot.subscription_feature_analytics_desc'.tr(),
-                      ),
-                      _buildFeatureItem(
-                        LucideIcons.sparkles,
-                        'iot.subscription_feature_market_title'.tr(),
-                        'iot.subscription_feature_market_desc'.tr(),
-                      ),
-                      _buildFeatureItem(
-                        LucideIcons.map,
-                        'iot.subscription_feature_gis_title'.tr(),
-                        'iot.subscription_feature_gis_desc'.tr(),
-                      ),
-                      SizedBox(height: AppSpacing.xxl),
+                      // SECTION FITUR & MATRIKS PRO (VIA BOTTOM SHEET)
+                      _buildProBenefitsCard(),
 
-                      // TOMBOL CHECKOUT / BAYAR
-                      CustomButton(
-                        text: 'Bayar ${formatMoneyIdr(_grandTotal)}',
-                        useGradient: true,
-                        onPressed: _selectedChannelCode == null || _selectedMethod == null
-                            ? null
-                            : () {
-                                context.read<IotCubit>().subscribePro(
-                                      _selectedChannelCode!,
-                                      _selectedMethod!,
-                                      planType: _selectedPlanType,
-                                      durationMonths: _selectedDurationMonths,
-                                    );
-                              },
-                      ),
-                      if (isRenewal) ...[
-                        SizedBox(height: AppSpacing.sm10),
-                        Text(
-                          'iot.subscription_extend_note'.tr(),
-                          textAlign: TextAlign.center,
-                          style: TextStyle(
-                            fontSize: 11.sp,
-                            color: AppColors.textSecondary,
-                            height: 1.4,
-                          ),
-                        ),
-                      ],
                       SizedBox(height: AppSpacing.xl),
                     ],
                   ),
                 ),
                 if (isLoading)
                   Container(
-                    color: AppColors.black.withValues(alpha: 0.3),
+                    color: Colors.black26,
                     child: const Center(
-                      child: CircularProgressIndicator(
-                        color: AppColors.primary,
-                      ),
+                      child: CircularProgressIndicator(),
                     ),
                   ),
               ],
+            ),
+            // TOMBOL CHECKOUT / BAYAR FIXED DI BAGIAN BAWAH
+            bottomNavigationBar: Container(
+              padding: EdgeInsets.symmetric(horizontal: AppSpacing.md, vertical: 12.h),
+              decoration: BoxDecoration(
+                color: AppColors.surface,
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withValues(alpha: 0.08),
+                    blurRadius: 10,
+                    offset: const Offset(0, -4),
+                  ),
+                ],
+                border: const Border(top: BorderSide(color: AppColors.grey200, width: 0.8)),
+              ),
+              child: SafeArea(
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Row(
+                      children: [
+                        Expanded(
+                          child: Column(
+                            mainAxisSize: MainAxisSize.min,
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                'Total Pembayaran',
+                                style: TextStyle(fontSize: 11.sp, color: AppColors.textSecondary),
+                              ),
+                              SizedBox(height: 2.h),
+                              Text(
+                                formatMoneyIdr(_grandTotal),
+                                style: TextStyle(
+                                  fontSize: 16.5.sp,
+                                  fontWeight: FontWeight.bold,
+                                  color: AppColors.primary,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                        SizedBox(width: AppSpacing.md),
+                        Expanded(
+                          child: CustomButton(
+                            text: 'Bayar Sekarang',
+                            useGradient: true,
+                            onPressed: _selectedChannelCode == null || _selectedMethod == null || isLoading
+                                ? null
+                                : () {
+                                    context.read<IotCubit>().subscribePro(
+                                          _selectedChannelCode!,
+                                          _selectedMethod!,
+                                          planType: _selectedPlanType,
+                                          durationMonths: _selectedDurationMonths,
+                                        );
+                                  },
+                          ),
+                        ),
+                      ],
+                    ),
+                    if (isRenewal) ...[
+                      SizedBox(height: 6.h),
+                      Text(
+                        'iot.subscription_extend_note'.tr(),
+                        textAlign: TextAlign.center,
+                        style: TextStyle(
+                          fontSize: 10.5.sp,
+                          color: AppColors.textSecondary,
+                        ),
+                      ),
+                    ],
+                  ],
+                ),
+              ),
             ),
           );
         },
@@ -938,7 +948,313 @@ class _IotSubscriptionPageState extends State<IotSubscriptionPage> {
     );
   }
 
-  Widget _buildPaymentMethodsList() {
+  Widget _buildPaymentMethodSelectorCard() {
+    Map<String, dynamic>? selectedChannel;
+    if (_selectedChannelCode != null && _channels.isNotEmpty) {
+      selectedChannel = _channels.firstWhere(
+        (c) => c['code']?.toString() == _selectedChannelCode,
+        orElse: () => {},
+      );
+    }
+
+    final channelName = selectedChannel?['name']?.toString() ?? 'Pilih Metode Pembayaran';
+    final groupKey = _selectedMethod ?? selectedChannel?['group']?.toString();
+    final isSelected = _selectedChannelCode != null;
+
+    return InkWell(
+      onTap: _showPaymentMethodBottomSheet,
+      borderRadius: BorderRadius.circular(AppRadius.tile),
+      child: Container(
+        padding: EdgeInsets.all(AppSpacing.md),
+        decoration: BoxDecoration(
+          color: AppColors.surface,
+          borderRadius: BorderRadius.circular(AppRadius.tile),
+          border: Border.all(
+            color: isSelected ? AppColors.primary : AppColors.grey300,
+            width: isSelected ? 1.5 : 1,
+          ),
+        ),
+        child: Row(
+          children: [
+            Container(
+              padding: EdgeInsets.all(AppSpacing.sm10),
+              decoration: BoxDecoration(
+                color: isSelected
+                    ? AppColors.primary.withValues(alpha: 0.1)
+                    : AppColors.grey100,
+                shape: BoxShape.circle,
+              ),
+              child: Icon(
+                _channelIcon(groupKey),
+                color: isSelected ? AppColors.primary : AppColors.grey600,
+                size: 22.sp,
+              ),
+            ),
+            SizedBox(width: AppSpacing.md),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    isSelected ? channelName : 'Pilih Metode Pembayaran',
+                    style: TextStyle(
+                      fontSize: 14.sp,
+                      fontWeight: FontWeight.bold,
+                      color: AppColors.textPrimary,
+                    ),
+                  ),
+                  SizedBox(height: 2.h),
+                  Text(
+                    isSelected ? _groupLabel(groupKey) : 'Tap untuk memilih channel & metode',
+                    style: TextStyle(
+                      fontSize: 11.5.sp,
+                      color: isSelected ? AppColors.primary : AppColors.textSecondary,
+                      fontWeight: isSelected ? FontWeight.w600 : FontWeight.w400,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            Icon(
+              LucideIcons.chevronRight,
+              size: 20.sp,
+              color: AppColors.grey400,
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  void _showPaymentMethodBottomSheet() {
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (sheetContext) {
+        return StatefulBuilder(
+          builder: (context, setSheetState) {
+            return Container(
+              constraints: BoxConstraints(
+                maxHeight: MediaQuery.of(context).size.height * 0.78,
+              ),
+              decoration: BoxDecoration(
+                color: AppColors.background,
+                borderRadius: BorderRadius.vertical(top: Radius.circular(AppRadius.md)),
+              ),
+              padding: EdgeInsets.fromLTRB(AppSpacing.md, AppSpacing.md, AppSpacing.md, AppSpacing.lg),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Center(
+                    child: Container(
+                      width: 40.w,
+                      height: 4.h,
+                      margin: EdgeInsets.only(bottom: AppSpacing.md),
+                      decoration: BoxDecoration(
+                        color: AppColors.grey300,
+                        borderRadius: BorderRadius.circular(2.r),
+                      ),
+                    ),
+                  ),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Text(
+                        'Pilih Metode Pembayaran',
+                        style: TextStyle(fontSize: 16.sp, fontWeight: FontWeight.bold, color: AppColors.textPrimary),
+                      ),
+                      IconButton(
+                        icon: const Icon(LucideIcons.x, size: 20),
+                        onPressed: () => Navigator.pop(sheetContext),
+                      ),
+                    ],
+                  ),
+                  SizedBox(height: AppSpacing.sm),
+                  Flexible(
+                    child: SingleChildScrollView(
+                      child: _buildPaymentMethodsList(
+                        onChannelSelected: () {
+                          setSheetState(() {});
+                          setState(() {});
+                          Navigator.pop(sheetContext);
+                        },
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            );
+          },
+        );
+      },
+    );
+  }
+
+  Widget _buildProBenefitsCard() {
+    return InkWell(
+      onTap: _showProBenefitsBottomSheet,
+      borderRadius: BorderRadius.circular(AppRadius.tile),
+      child: Container(
+        padding: EdgeInsets.all(AppSpacing.md),
+        decoration: BoxDecoration(
+          gradient: LinearGradient(
+            colors: [
+              AppColors.primary.withValues(alpha: 0.08),
+              AppColors.primary.withValues(alpha: 0.02),
+            ],
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+          ),
+          borderRadius: BorderRadius.circular(AppRadius.tile),
+          border: Border.all(color: AppColors.primary.withValues(alpha: 0.3)),
+        ),
+        child: Row(
+          children: [
+            Container(
+              padding: EdgeInsets.all(AppSpacing.sm10),
+              decoration: BoxDecoration(
+                color: AppColors.primary,
+                borderRadius: BorderRadius.circular(AppRadius.sm),
+              ),
+              child: const Icon(LucideIcons.sparkles, color: Colors.white, size: 20),
+            ),
+            SizedBox(width: AppSpacing.md),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    'Keuntungan & Fitur Unggulan PRO',
+                    style: TextStyle(
+                      fontSize: 13.5.sp,
+                      fontWeight: FontWeight.bold,
+                      color: AppColors.textPrimary,
+                    ),
+                  ),
+                  SizedBox(height: 2.h),
+                  Text(
+                    'Lihat matriks perbandingan & 5 fasilitas PRO',
+                    style: TextStyle(
+                      fontSize: 11.sp,
+                      color: AppColors.textSecondary,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            Container(
+              padding: EdgeInsets.symmetric(horizontal: 10.w, vertical: 6.h),
+              decoration: BoxDecoration(
+                color: AppColors.primary,
+                borderRadius: BorderRadius.circular(AppRadius.md),
+              ),
+              child: Text(
+                'Lihat Detail',
+                style: TextStyle(
+                  fontSize: 11.5.sp,
+                  fontWeight: FontWeight.bold,
+                  color: Colors.white,
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  void _showProBenefitsBottomSheet() {
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (sheetContext) {
+        return Container(
+          constraints: BoxConstraints(
+            maxHeight: MediaQuery.of(context).size.height * 0.85,
+          ),
+          decoration: BoxDecoration(
+            color: AppColors.background,
+            borderRadius: BorderRadius.vertical(top: Radius.circular(AppRadius.md)),
+          ),
+          padding: EdgeInsets.fromLTRB(AppSpacing.md, AppSpacing.md, AppSpacing.md, AppSpacing.lg),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Center(
+                child: Container(
+                  width: 40.w,
+                  height: 4.h,
+                  margin: EdgeInsets.only(bottom: AppSpacing.md),
+                  decoration: BoxDecoration(
+                    color: AppColors.grey300,
+                    borderRadius: BorderRadius.circular(2.r),
+                  ),
+                ),
+              ),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Text(
+                    'Keuntungan & Fitur PRO',
+                    style: TextStyle(fontSize: 16.sp, fontWeight: FontWeight.bold, color: AppColors.textPrimary),
+                  ),
+                  IconButton(
+                    icon: const Icon(LucideIcons.x, size: 20),
+                    onPressed: () => Navigator.pop(sheetContext),
+                  ),
+                ],
+              ),
+              SizedBox(height: AppSpacing.sm),
+              Expanded(
+                child: SingleChildScrollView(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      const ProTierMatrix(),
+                      SizedBox(height: AppSpacing.xl),
+                      _buildSectionTitle('iot.subscription_benefits_title'.tr()),
+                      SizedBox(height: AppSpacing.md12),
+                      _buildFeatureItem(
+                        LucideIcons.thermometer,
+                        'iot.subscription_feature_temp_title'.tr(),
+                        'iot.subscription_feature_temp_desc'.tr(),
+                      ),
+                      _buildFeatureItem(
+                        LucideIcons.bellRing,
+                        'iot.subscription_feature_alert_title'.tr(),
+                        'iot.subscription_feature_alert_desc'.tr(),
+                      ),
+                      _buildFeatureItem(
+                        LucideIcons.chartBar,
+                        'iot.subscription_feature_analytics_title'.tr(),
+                        'iot.subscription_feature_analytics_desc'.tr(),
+                      ),
+                      _buildFeatureItem(
+                        LucideIcons.sparkles,
+                        'iot.subscription_feature_market_title'.tr(),
+                        'iot.subscription_feature_market_desc'.tr(),
+                      ),
+                      _buildFeatureItem(
+                        LucideIcons.map,
+                        'iot.subscription_feature_gis_title'.tr(),
+                        'iot.subscription_feature_gis_desc'.tr(),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            ],
+          ),
+        );
+      },
+    );
+  }
+
+  Widget _buildPaymentMethodsList({VoidCallback? onChannelSelected}) {
     if (_loadingChannels) {
       return Padding(
         padding: EdgeInsets.symmetric(vertical: AppSpacing.sm),
@@ -1114,6 +1430,7 @@ class _IotSubscriptionPageState extends State<IotSubscriptionPage> {
                                     _selectedChannelCode = code;
                                     _selectedMethod = groupKey;
                                   });
+                                  onChannelSelected?.call();
                                 },
                                 child: Container(
                                   padding: EdgeInsets.symmetric(
